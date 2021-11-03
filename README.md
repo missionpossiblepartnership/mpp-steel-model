@@ -1,2 +1,2 @@
 # mpp-steel
-Repository for mpp-steel project
+Repository for mpp-steel model
