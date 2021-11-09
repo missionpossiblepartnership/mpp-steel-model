@@ -6,6 +6,13 @@ import numpy as np
 # For logger and units dict
 from utils import get_logger
 
+# Get model parameters
+from model_config import (
+    BIOMASS_AV_TS_END_VALUE, BIOMASS_AV_TS_END_YEAR, 
+    BIOMASS_AV_TS_START_YEAR, CARBON_TAX_END_VALUE, 
+    CARBON_TAX_END_YEAR, CARBON_TAX_START_VALUE, 
+    CARBON_TAX_START_YEAR)
+
 # Create logger
 logger = get_logger('Data Import')
 
@@ -92,15 +99,6 @@ def timeseries_generator(
     for key in df_schema.keys():
         df[key].astype(df_schema[key])
     return df
-
-BIOMASS_AV_TS_START_YEAR = 2020
-BIOMASS_AV_TS_END_YEAR = 2050
-BIOMASS_AV_TS_END_VALUE = 2000
-
-CARBON_TAX_START_YEAR = 2020
-CARBON_TAX_END_YEAR = 2050
-CARBON_TAX_START_VALUE = 0
-CARBON_TAX_END_VALUE = 210
 
 biomass_availability = timeseries_generator(
     'biomass', BIOMASS_AV_TS_START_YEAR, BIOMASS_AV_TS_END_YEAR, BIOMASS_AV_TS_END_VALUE)
