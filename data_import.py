@@ -1,10 +1,7 @@
 """Manages data imports"""
-import os
-
 # For Data Manipulation
-import pandas as pd
-import numpy as np
 import pickle
+import pandas as pd
 
 # For logger and units dict
 from utils import get_logger, read_pickle_folder
