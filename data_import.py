@@ -6,6 +6,9 @@ import pandas as pd
 # For logger and units dict
 from utils import get_logger, read_pickle_folder
 
+# Get model parameters
+from model_config import IMPORT_DATA_PATH, PKL_FOLDER
+
 # Create logger
 logger = get_logger('Data Import')
 
@@ -60,11 +63,6 @@ def df_serializer(data_path: str, data_dict: dict):
             # Pickle the 'data' dictionary using the highest protocol available.
             logger.info(f'* Saving df {df_name} to pickle')
             pickle.dump(data_dict[df_name], f, pickle.HIGHEST_PROTOCOL)
-
-# Define Data Path
-IMPORT_DATA_PATH = "./import_data"
-PKL_FOLDER = "./pkl_data"
-
 
 # Import capex numbers
 greenfield_capex = extract_data(IMPORT_DATA_PATH, "CAPEX OPEX Per Technology", "xlsx", 0)
