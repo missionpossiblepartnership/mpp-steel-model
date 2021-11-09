@@ -6,6 +6,11 @@ import pandas as pd
 import numpy as np
 import pickle
 
+# For logger and units dict
+from utils import get_logger, read_pickle_folder
+
+# Create logger
+logger = get_logger('Data Import')
 
 def extract_data(data_path: str, filename: str, ext: str, sheet: int=0) -> pd.DataFrame:
     """Extracts data from excel or csv files based on input parameters
@@ -22,6 +27,7 @@ def extract_data(data_path: str, filename: str, ext: str, sheet: int=0) -> pd.Da
     # Full path of the file
     full_filename = fr'{data_path}/{filename}.{ext}'
     # If else logic that determines which pandas function to call based on the extension
+    logger.info(f'|| Extracting file {filename}.{ext}')
     if ext == 'xlsx':
         return pd.read_excel(full_filename, sheet_name=sheet)
     elif ext == 'csv':
@@ -51,11 +57,11 @@ def df_serializer(data_path: str, data_dict: dict):
         data_ref (dict): A data dictionary where the DataFrames are stored
         data_path (str): The path where the pickle files will be stored
     """
-    print(f'||| Serializing each df to a pickle file {data_path}')
+    logger.info(f'||| Serializing each df to a pickle file {data_path}')
     for df_name in data_dict.keys():
         with open(f'{data_path}/{df_name}.pickle', 'wb') as f:
             # Pickle the 'data' dictionary using the highest protocol available.
-            print(f'* Saving df {df_name} to pickle')
+            logger.info(f'* Saving df {df_name} to pickle')
             pickle.dump(data_dict[df_name], f, pickle.HIGHEST_PROTOCOL)
 
 # Define Data Path
@@ -129,4 +135,8 @@ df_dict = {
     "scrap_trade" : scrap_trade
 }
 
+# Turn dataframes into pickle files
 df_serializer(PKL_FOLDER, df_dict)
+
+# Unload dataframes from pickle files
+pkl_dict = read_pickle_folder(PKL_FOLDER)
