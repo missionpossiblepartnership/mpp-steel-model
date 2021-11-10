@@ -76,16 +76,19 @@ ccs_co2 = extract_data(IMPORT_DATA_PATH, "CO2 CCS Capacity", "csv")
 country_ref = extract_data(IMPORT_DATA_PATH, "Country Reference", "xlsx").fillna("")
 
 # Import emissions factors
-emissions_factors = extract_data(IMPORT_DATA_PATH, "Emissions Factors", "xlsx")
+s1_emissions_factors = extract_data(IMPORT_DATA_PATH, "Scope 1 Emissions Factors", "xlsx")
+
+# Import scope 3 EF data
+s3_emissions_factors = extract_data(IMPORT_DATA_PATH, "Scope 3 Emissions Factors", "xlsx", 1)
+
+# Import grid emissivity
+grid_emissivity = extract_data(IMPORT_DATA_PATH, "Grid Emissivity", "xlsx")
 
 # Import static energy prices
 static_energy_prices = extract_data(IMPORT_DATA_PATH, "Energy Prices - Static", "xlsx")
 
 # Import feedstock prices
 feedstock_prices = extract_data(IMPORT_DATA_PATH, "Feedstock Prices", "xlsx")
-
-# Import grid emissivity
-grid_emissivity = extract_data(IMPORT_DATA_PATH, "Grid Emissivity", "xlsx")
 
 # Import steel demand
 steel_demand = extract_data(IMPORT_DATA_PATH, "Steel Demand", "csv")
@@ -108,6 +111,9 @@ iron_ore_trade = replace_rows(
 scrap_trade = replace_rows(
     extract_data(IMPORT_DATA_PATH, "WSA World Steel In Figures 2021", "xlsx", 5), 1).fillna(0)
 
+# Import Technology Business Cases
+business_cases = replace_rows(extract_data(IMPORT_DATA_PATH, "Business Cases One Table", "xlsx"), 1).fillna(0)
+print(business_cases)
 # Define a data dictionary
 df_dict = {
     "greenfield_capex" : greenfield_capex, 
@@ -115,7 +121,7 @@ df_dict = {
     "other_opex" : other_opex,
     "ccs_co2" : ccs_co2,
     "country_ref" : country_ref,
-    "emissions_factors" : emissions_factors,
+    "s1_emissions_factors" : s1_emissions_factors,
     "static_energy_prices" : static_energy_prices,
     "feedstock_prices" : feedstock_prices,
     "grid_emissivity" : grid_emissivity,
@@ -127,7 +133,9 @@ df_dict = {
     "iron_ore_pig_iron" : iron_ore_pig_iron,
     "crude_trade" : crude_trade,
     "iron_ore_trade" : iron_ore_trade,
-    "scrap_trade" : scrap_trade
+    "scrap_trade" : scrap_trade,
+    "s3_emissions_factors" : s3_emissions_factors,
+    "business_cases": business_cases
 }
 
 # Turn dataframes into pickle files
