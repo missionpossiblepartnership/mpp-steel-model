@@ -14,7 +14,7 @@ from model_config import (
     CARBON_TAX_START_YEAR)
 
 # Create logger
-logger = get_logger('Data Import')
+logger = get_logger('Timeseries generator')
 
 def timeseries_generator(
     timeseries_type: str,
@@ -91,6 +91,7 @@ def timeseries_generator(
                 df_c.loc[row.Index, 'value'] = end_value # logic for last year
         return df_c
     # Setting values: BUSINESS LOGIC
+    logger.info(f'Running {timeseries_type} timeseries generator')
     if timeseries_type == 'biomass':
         df = biomass_logic(df)
     if timeseries_type == 'carbon_tax':
@@ -98,6 +99,7 @@ def timeseries_generator(
     # change the column types
     for key in df_schema.keys():
         df[key].astype(df_schema[key])
+    logger.info(f'{timeseries_type} timeseries complete')
     return df
 
 biomass_availability = timeseries_generator(
@@ -107,5 +109,3 @@ carbon_tax = timeseries_generator(
     'carbon_tax', CARBON_TAX_START_YEAR, CARBON_TAX_END_YEAR,
     CARBON_TAX_END_VALUE, CARBON_TAX_START_VALUE
 )
-
-print(carbon_tax)
