@@ -20,6 +20,7 @@ from model_config import (
 # Create logger
 logger = get_logger('Timeseries generator')
 
+# Power Grid Assumptions & Functions
 PowerGridTuple = namedtuple('Power_Grid_Assumptions', ['metric', 'unit', 'year', 'value'])
 grid_electricity_price_favorable_2035 = PowerGridTuple(metric='grid_electricity_price_favorable', unit='USD/MWh', year=2035, value=29)
 grid_electricity_price_avg_2035 = PowerGridTuple(metric='grid_electricity_price_avg', unit='USD/MWh', year=2035, value=57)
@@ -55,6 +56,7 @@ def grid_price_last_year(scenario: str):
     elif scenario == 'average':
         return grid_price_selector(2020, scenario)*(1-deeply_decarbonised_power_system_price_avg.value)
 
+# Main timeseries function
 def timeseries_generator(
     timeseries_type: str,
     start_year: int,
@@ -95,9 +97,9 @@ def timeseries_generator(
     df['units'] = units
     df['units'] = df['units'].apply(lambda x: x.lower())
 
-    power_projection_type = ''
+    power_scenario = ''
     if kwargs:
-        power_projection_type = kwargs['projection_type']
+        power_scenario = kwargs['scenario']
 
     def biomass_logic(df: pd.DataFrame) -> pd.DataFrame:
         """Applies logic to generate biomass timeseries
@@ -117,6 +119,7 @@ def timeseries_generator(
             else:
                 df_c.loc[row.Index, 'value'] = end_value # logic for last year
         return df_c
+        
     def carbon_tax_logic(df: pd.DataFrame) -> pd.DataFrame:
         """Applies logic to generate carbon tax timeseries
 
@@ -137,27 +140,27 @@ def timeseries_generator(
                 df_c.loc[row.Index, 'value'] = end_value # logic for last year
         return df_c
 
-    def power_grid_logic(df: pd.DataFrame, projection_type: str = power_projection_type, lowest_price_year: int = 2035):
+    def power_grid_logic(df: pd.DataFrame, scenario: str = power_scenario, lowest_price_year: int = 2035):
         df_c = df.copy()
         for row in df_c.itertuples():
             # skip first x years
             if row.Index == 0:
-                df_c.loc[row.Index, 'value'] = grid_price_selector(2020, projection_type)
+                df_c.loc[row.Index, 'value'] = grid_price_selector(2020, scenario)
             # first half years
             elif row.Index < lowest_price_year-start_year:
-                df_c.loc[row.Index, 'value'] = ((grid_price_2035(projection_type)/grid_price_selector(2020, projection_type))**(1/(lowest_price_year-start_year)))*df_c.loc[row.Index-1, 'value']
+                df_c.loc[row.Index, 'value'] = ((grid_price_2035(scenario)/grid_price_selector(2020, scenario))**(1/(lowest_price_year-start_year)))*df_c.loc[row.Index-1, 'value']
             # middle year
             elif row.Index == lowest_price_year-start_year:
-                df_c.loc[row.Index, 'value'] = grid_price_2035(projection_type)
+                df_c.loc[row.Index, 'value'] = grid_price_2035(scenario)
             # second half years    
-            elif row.Index > lowest_price_year-start_year:
-                df_c.loc[row.Index, 'value'] = ((grid_price_last_year(projection_type)/grid_price_2035(projection_type))**(1/(end_year-lowest_price_year)))*df_c.loc[row.Index-1, 'value']
+            elif row.Index > lowest_price_year-start_year < len(year_range)-1:
+                df_c.loc[row.Index, 'value'] = ((grid_price_last_year(scenario)/grid_price_2035(scenario))**(1/(end_year-lowest_price_year)))*df_c.loc[row.Index-1, 'value']
             # final years
             else:
-                df_c.loc[row.Index, 'value'] = grid_price_last_year(projection_type)
+                df_c.loc[row.Index, 'value'] = grid_price_last_year(scenario)
         # create a column
         df_c['category'] = 'grid electricity price'
-        df_c['scenario'] = f'{projection_type}'
+        df_c['scenario'] = f'{scenario}'
         return df_c
     
     # Setting values: BUSINESS LOGIC
@@ -185,8 +188,8 @@ carbon_tax = timeseries_generator(
 )
 
 # Create Electricity timeseries
-favorable_ts = timeseries_generator('power', ELECTRICITY_PRICE_START_YEAR, ELECTRICITY_PRICE_END_YEAR, 0, units='USD', projection_type='favorable')
-average_ts = timeseries_generator('power', ELECTRICITY_PRICE_START_YEAR, ELECTRICITY_PRICE_END_YEAR, 0, units='USD', projection_type='average')
+favorable_ts = timeseries_generator('power', ELECTRICITY_PRICE_START_YEAR, ELECTRICITY_PRICE_END_YEAR, 0, units='USD', scenario='favorable')
+average_ts = timeseries_generator('power', ELECTRICITY_PRICE_START_YEAR, ELECTRICITY_PRICE_END_YEAR, 0, units='USD', scenario='average')
 electricity_minimodel_timeseries = pd.concat([favorable_ts, average_ts])
 
 # Serialize timeseries
