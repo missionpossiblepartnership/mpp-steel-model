@@ -80,7 +80,11 @@ scrap_trade = replace_rows(
 
 # Import Technology Business Cases
 business_cases = replace_rows(extract_data(IMPORT_DATA_PATH, "Business Cases One Table", "xlsx"), 1).fillna(0)
-print(business_cases)
+
+# Import Technology Business Cases
+hydrogen_electrolyzer_capex = extract_data(IMPORT_DATA_PATH, "Hydrogen Electrolyzer Capex", "xlsx")
+
+
 # Define a data dictionary
 df_dict = {
     "greenfield_capex" : greenfield_capex, 
@@ -104,6 +108,7 @@ df_dict = {
     "s3_emissions_factors" : s3_emissions_factors,
     "business_cases": business_cases,
     "power_grid_assumptions": power_grid_assumptions,
+    "hydrogen_electrolyzer_capex": hydrogen_electrolyzer_capex,
 }
 
 # Turn dataframes into pickle files
