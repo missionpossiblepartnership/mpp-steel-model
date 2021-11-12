@@ -1,6 +1,4 @@
 """Module that generates a timeseries for various purposes"""
-from collections import namedtuple
-
 # For Data Manipulation
 import pandas as pd
 import numpy as np
@@ -15,46 +13,53 @@ from model_config import (
     BIOMASS_AV_TS_START_YEAR, CARBON_TAX_END_VALUE,
     CARBON_TAX_END_YEAR, CARBON_TAX_START_VALUE,
     CARBON_TAX_START_YEAR, ELECTRICITY_PRICE_START_YEAR,
-    ELECTRICITY_PRICE_END_YEAR)
+    ELECTRICITY_PRICE_MID_YEAR, ELECTRICITY_PRICE_END_YEAR, 
+    EUR_USD_CONVERSION
+    )
+
+from electricity_assumptions import (
+    GRID_ELECTRICITY_PRICE_FAVORABLE_MID, 
+    GRID_ELECTRICITY_PRICE_AVG_MID,
+    DEEPLY_DECARBONISED_POWER_SYSTEM_PRICE_AVG,
+    DEEPLY_DECARBONISED_POWER_SYSTEM_PRICE_INCREASE
+    )
 
 # Create logger
 logger = get_logger('Timeseries generator')
 
-# Power Grid Assumptions & Functions
-PowerGridTuple = namedtuple('Power_Grid_Assumptions', ['metric', 'unit', 'year', 'value'])
-grid_electricity_price_favorable_2035 = PowerGridTuple(metric='grid_electricity_price_favorable', unit='USD/MWh', year=2035, value=29)
-grid_electricity_price_avg_2035 = PowerGridTuple(metric='grid_electricity_price_avg', unit='USD/MWh', year=2035, value=57)
-deeply_decarbonised_power_system_price_avg = PowerGridTuple(metric='deeply_decarbonised_power_system_price_avg', unit='percentage', year=2050, value=0.19)
-deeply_decarbonised_power_system_price_increase = PowerGridTuple(metric='deeply_decarbonised_power_system_price_increase', unit='USD/MWh', year=2050, value=15)
-grid_electricity_price_favorable_2020 = PowerGridTuple(metric='grid_electricity_price_favorable', unit='USD/MWh', year=202, value=29)
-eur_usd_conversion = 0.877
-
 def get_grid_refs(df: pd.DataFrame, geography: str, metrics: list) -> pd.DataFrame:
     return df[(df['Geography (NRG_PRC)'] == geography) & (df['Metric'].isin(metrics))]['Value'].tolist()
+
 power_grid_assumptions = read_pickle_folder(PKL_FOLDER)['power_grid_assumptions']
-grid_electricity_price_sweden = sum(get_grid_refs(power_grid_assumptions, 'Sweden', ['Energy and supply','Network costs']))*1000
-grid_electricity_price_eu = sum(get_grid_refs(power_grid_assumptions, 'European Union A', ['Energy and supply','Network costs']))*1000
+
+grid_electricity_price_sweden = sum(get_grid_refs(
+    power_grid_assumptions, 'Sweden', ['Energy and supply','Network costs']))*1000
+
+grid_electricity_price_eu = sum(get_grid_refs
+(power_grid_assumptions, 'European Union A', ['Energy and supply','Network costs']))*1000
+
 t_and_d_premium = sum(get_grid_refs(power_grid_assumptions, 'European Union A', ['Network costs'])) / sum(get_grid_refs(power_grid_assumptions, 'European Union A', ['Energy and supply','Network costs']))
-diff_in_price_between_mid_and_large_business = 1 - ( sum(get_grid_refs(power_grid_assumptions, 'European Union A', ['Energy and supply'])) / sum(get_grid_refs(power_grid_assumptions, 'European Union B', ['Energy and supply'])) )
+
+diff_in_price_between_mid_and_large_business = 1 - (sum(get_grid_refs(power_grid_assumptions, 'European Union A', ['Energy and supply'])) / sum(get_grid_refs(power_grid_assumptions, 'European Union B', ['Energy and supply'])) )
 
 def grid_price_selector(year:int, scenario: str):
-    if (scenario == 'favorable') & (year == 2020):
+    if (scenario == 'favorable') & (year == ELECTRICITY_PRICE_START_YEAR):
         return grid_electricity_price_sweden
-    elif (scenario == 'average') & (year == 2020):
+    elif (scenario == 'average') & (year == ELECTRICITY_PRICE_START_YEAR):
         return grid_electricity_price_eu
-    elif (scenario == 'favorable') & (year == 2035):
-        return grid_electricity_price_favorable_2035.value
-    elif (scenario == 'average') & (year == 2035):
-        return grid_electricity_price_avg_2035.value
+    elif (scenario == 'favorable') & (year == ELECTRICITY_PRICE_MID_YEAR):
+        return GRID_ELECTRICITY_PRICE_FAVORABLE_MID.value
+    elif (scenario == 'average') & (year == ELECTRICITY_PRICE_MID_YEAR):
+        return GRID_ELECTRICITY_PRICE_AVG_MID.value
 
-def grid_price_2035(scenario: str):
-    return grid_price_selector(2035, scenario)*eur_usd_conversion*(1+t_and_d_premium)*(1-diff_in_price_between_mid_and_large_business)
+def grid_price_mid(scenario: str):
+    return grid_price_selector(ELECTRICITY_PRICE_MID_YEAR, scenario)*EUR_USD_CONVERSION*(1+t_and_d_premium)*(1-diff_in_price_between_mid_and_large_business)
 
 def grid_price_last_year(scenario: str):
     if scenario == 'favorable':
-        return grid_price_2035(scenario)+(deeply_decarbonised_power_system_price_increase.value*eur_usd_conversion)
+        return grid_price_mid(scenario)+(DEEPLY_DECARBONISED_POWER_SYSTEM_PRICE_INCREASE.value*EUR_USD_CONVERSION)
     elif scenario == 'average':
-        return grid_price_selector(2020, scenario)*(1-deeply_decarbonised_power_system_price_avg.value)
+        return grid_price_selector(ELECTRICITY_PRICE_START_YEAR, scenario)*(1-DEEPLY_DECARBONISED_POWER_SYSTEM_PRICE_AVG.value)
 
 # Main timeseries function
 def timeseries_generator(
@@ -115,7 +120,7 @@ def timeseries_generator(
             if row.Index < 2: # skip first 2 years
                 df_c.loc[row.Index, 'value'] = 0
             elif row.Index < len(year_range)-1: # logic for remaining years except last year
-                df_c.loc[row.Index, 'value'] = end_value / (1+(np.exp(-0.45 * (row.year - 2035))))
+                df_c.loc[row.Index, 'value'] = end_value / (1+(np.exp(-0.45 * (row.year - ELECTRICITY_PRICE_MID_YEAR))))
             else:
                 df_c.loc[row.Index, 'value'] = end_value # logic for last year
         return df_c
@@ -140,21 +145,32 @@ def timeseries_generator(
                 df_c.loc[row.Index, 'value'] = end_value # logic for last year
         return df_c
 
-    def power_grid_logic(df: pd.DataFrame, scenario: str = power_scenario, lowest_price_year: int = 2035):
+    def power_grid_logic(
+        df: pd.DataFrame, scenario: str = power_scenario, mid_price_year: int = ELECTRICITY_PRICE_MID_YEAR) -> pd.DataFrame:
+        """Applies logic to generate electricity timeseries
+
+        Args:
+            df (pd.DataFrame): A dataframe with empty values column.
+            scenario (str, optional): A scenario either 'favorable' or 'average'. Defaults to power_scenario.
+            mid_price_year (int, optional): Defines the year that the model uses to calculate the middle price. Defaults to ELECTRICITY_PRICE_MID_YEAR.
+
+        Returns:
+            pd.DataFrame: [description]
+        """
         df_c = df.copy()
         for row in df_c.itertuples():
             # skip first x years
             if row.Index == 0:
-                df_c.loc[row.Index, 'value'] = grid_price_selector(2020, scenario)
+                df_c.loc[row.Index, 'value'] = grid_price_selector(ELECTRICITY_PRICE_START_YEAR, scenario)
             # first half years
-            elif row.Index < lowest_price_year-start_year:
-                df_c.loc[row.Index, 'value'] = ((grid_price_2035(scenario)/grid_price_selector(2020, scenario))**(1/(lowest_price_year-start_year)))*df_c.loc[row.Index-1, 'value']
+            elif row.Index < mid_price_year-start_year:
+                df_c.loc[row.Index, 'value'] = ((grid_price_mid(scenario)/grid_price_selector(ELECTRICITY_PRICE_START_YEAR, scenario))**(1/(mid_price_year-start_year)))*df_c.loc[row.Index-1, 'value']
             # middle year
-            elif row.Index == lowest_price_year-start_year:
-                df_c.loc[row.Index, 'value'] = grid_price_2035(scenario)
+            elif row.Index == mid_price_year-start_year:
+                df_c.loc[row.Index, 'value'] = grid_price_mid(scenario)
             # second half years    
-            elif row.Index > lowest_price_year-start_year < len(year_range)-1:
-                df_c.loc[row.Index, 'value'] = ((grid_price_last_year(scenario)/grid_price_2035(scenario))**(1/(end_year-lowest_price_year)))*df_c.loc[row.Index-1, 'value']
+            elif row.Index > mid_price_year-start_year < len(year_range)-1:
+                df_c.loc[row.Index, 'value'] = ((grid_price_last_year(scenario)/grid_price_mid(scenario))**(1/(end_year-mid_price_year)))*df_c.loc[row.Index-1, 'value']
             # final years
             else:
                 df_c.loc[row.Index, 'value'] = grid_price_last_year(scenario)
@@ -188,8 +204,12 @@ carbon_tax = timeseries_generator(
 )
 
 # Create Electricity timeseries
-favorable_ts = timeseries_generator('power', ELECTRICITY_PRICE_START_YEAR, ELECTRICITY_PRICE_END_YEAR, 0, units='USD', scenario='favorable')
-average_ts = timeseries_generator('power', ELECTRICITY_PRICE_START_YEAR, ELECTRICITY_PRICE_END_YEAR, 0, units='USD', scenario='average')
+favorable_ts = timeseries_generator(
+    'power', ELECTRICITY_PRICE_START_YEAR, ELECTRICITY_PRICE_END_YEAR, 0, units='USD', scenario='favorable')
+
+average_ts = timeseries_generator(
+    'power', ELECTRICITY_PRICE_START_YEAR, ELECTRICITY_PRICE_END_YEAR, 0, units='USD', scenario='average')
+
 electricity_minimodel_timeseries = pd.concat([favorable_ts, average_ts])
 
 # Serialize timeseries
