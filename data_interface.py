@@ -14,8 +14,8 @@ from model_config import PKL_FOLDER
 # Create logger
 logger = get_logger('Data Interface')
 
-def capex_melt_and_index(df: pd.DataFrame) -> pd.DataFrame:
-    """Make the capex dataframes tabular and create a multiindex
+def melt_and_index(df: pd.DataFrame, id_vars: list, var_name: str, index: list) -> pd.DataFrame:
+    """Make the dataframes tabular and create a multiindex
 
     Args:
         df (pd.DataFrame): The data import of the capex tables
@@ -24,8 +24,8 @@ def capex_melt_and_index(df: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: A datframe of the tabular dataframe
     """
     df_c = df.copy()
-    df_c = pd.melt(frame=df_c, id_vars=['Technology'], var_name='Year')
-    df_c.set_index(['Technology', 'Year'], inplace=True)
+    df_c = pd.melt(frame=df_c, id_vars=id_vars, var_name=var_name)
+    df_c.set_index(index, inplace=True)
     return df_c
 
 def capex_generator(
@@ -39,7 +39,7 @@ def capex_generator(
         output_type (str, optional): Flag whether to access all the the capex values or whichever you specify. Defaults to 'all'.
 
     Returns:
-        A (dict) if output_type is set to 'all'. 
+        A (dict) if output_type is set to 'all'.
         Otherwise returns the specific output_type specified (as float).
     """
 
@@ -52,7 +52,7 @@ def capex_generator(
         'brownfield': brownfield,
         'other_opex': other_opex
     }
-    
+
     if output_type == 'all':
         logger.info(f'Creating capex values dictionary')
         return capex_dict
@@ -86,13 +86,22 @@ brownfield_capex_df.drop(
     ['Available from', 'Available until', 'Technology type'], axis=1, inplace=True)
 
 capex_dictionary = {
-    'greenfield': capex_melt_and_index(greenfield_capex_df),
-    'brownfield': capex_melt_and_index(brownfield_capex_df),
-    'other_opex': capex_melt_and_index(other_opex_df)
+    'greenfield': melt_and_index(greenfield_capex_df, ['Technology'], 'Year', ['Technology', 'Year']),
+    'brownfield': melt_and_index(brownfield_capex_df, ['Technology'], 'Year', ['Technology', 'Year']),
+    'other_opex': melt_and_index(other_opex_df, ['Technology'], 'Year', ['Technology', 'Year'])
 }
 
-example_result = capex_generator(capex_dictionary, 'DRI-EAF', 2025)
-
 feedstock_prices = read_pickle_folder(PKL_FOLDER, 'feedstock_prices')
+
+steel_demand = read_pickle_folder(PKL_FOLDER, 'steel_demand')[['Steel Type', 'Scenario', 'Year', 'Value']]
+
+def steel_demand_getter(df: pd.DataFrame, steel_type: str, scenario: str, year: str):
+    df_c = df.copy()
+    df_c.set_index(['Steel Type', 'Scenario', 'Year'], inplace=True)
+    logger.info(f'Getting Steel Demand value for: {steel_type} - {scenario} - {year}')
+    value = df_c.loc[steel_type, scenario, year]['Value']
+    return value
+
+steel_demand_exmaple = steel_demand_getter(steel_demand, 'Crude', 'BAU', 2030)
 
 create_data_tuples(feedstock_prices, 'FeedstockPrices')
