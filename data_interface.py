@@ -104,4 +104,17 @@ def steel_demand_getter(df: pd.DataFrame, steel_type: str, scenario: str, year: 
 
 steel_demand_exmaple = steel_demand_getter(steel_demand, 'Crude', 'BAU', 2030)
 
+carbon_tax_assumptions = read_pickle_folder(PKL_FOLDER, 'carbon_tax_assumptions')[['Year', 'Value']]
+
+def carbon_tax_getter(df: pd.DataFrame, year: str):
+    df_c = df.copy()
+    df_c.set_index(['Year'], inplace=True)
+    logger.info(f'Getting Carbon Tax value for: {year}')
+    value = df_c.loc[year]['Value']
+    return value
+
+print(carbon_tax_getter(carbon_tax_assumptions, 2040))
+
+steel_demand_example = steel_demand_getter(steel_demand, 'Crude', 'BAU', 2030)
+
 create_data_tuples(feedstock_prices, 'FeedstockPrices')

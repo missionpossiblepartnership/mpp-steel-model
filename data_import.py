@@ -65,6 +65,9 @@ tech_availability = extract_data(IMPORT_DATA_PATH, "Technology Availability", "c
 # Import power grid assumptions
 power_grid_assumptions = extract_data(IMPORT_DATA_PATH, 'Power Grid Assumptions', 'xlsx')
 
+# Import technology availability
+carbon_tax_assumptions = extract_data(IMPORT_DATA_PATH, "Carbon Tax Assumptions", "csv")
+
 # Import WSA data
 crude_regional_shares = extract_data(IMPORT_DATA_PATH, "WSA World Steel In Figures 2021", "xlsx", 0)
 crude_regional_real = extract_data(IMPORT_DATA_PATH, "WSA World Steel In Figures 2021", "xlsx", 1)
@@ -108,6 +111,7 @@ df_dict = {
     "business_cases": business_cases,
     "power_grid_assumptions": power_grid_assumptions,
     "hydrogen_electrolyzer_capex": hydrogen_electrolyzer_capex,
+    "carbon_tax_assumptions": carbon_tax_assumptions
 }
 
 # Turn dataframes into pickle files
