@@ -30,7 +30,7 @@ logger = get_logger('Timeseries generator')
 def get_grid_refs(df: pd.DataFrame, geography: str, metrics: list) -> pd.DataFrame:
     return df[(df['Geography (NRG_PRC)'] == geography) & (df['Metric'].isin(metrics))]['Value'].tolist()
 
-power_grid_assumptions = read_pickle_folder(PKL_FOLDER)['power_grid_assumptions']
+power_grid_assumptions = read_pickle_folder(PKL_FOLDER, 'power_grid_assumptions')
 
 grid_electricity_price_sweden = sum(get_grid_refs(
     power_grid_assumptions, 'Sweden', ['Energy and supply','Network costs']))*1000

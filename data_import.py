@@ -1,6 +1,5 @@
 """Manages data imports"""
 # For Data Manipulation
-import pickle
 import pandas as pd
 
 # For logger and units dict
