@@ -81,7 +81,7 @@ scrap_trade = replace_rows(
     extract_data(IMPORT_DATA_PATH, "WSA World Steel In Figures 2021", "xlsx", 5), 1).fillna(0)
 
 # Import Technology Business Cases
-business_cases = replace_rows(extract_data(IMPORT_DATA_PATH, "Business Cases One Table", "xlsx"), 1).fillna(0)
+business_cases = replace_rows(extract_data(IMPORT_DATA_PATH, "Business Cases One Table", "xlsx"), 0).fillna(0)
 
 # Import Technology Business Cases
 hydrogen_electrolyzer_capex = extract_data(IMPORT_DATA_PATH, "Hydrogen Electrolyzer Capex", "xlsx")
