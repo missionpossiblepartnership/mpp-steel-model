@@ -77,32 +77,45 @@ def create_data_tuples(df: pd.DataFrame, namedtuple_name: str):
         globals()[class_names[ticker]] = globals()[namedtuple_name](row.metric, row.unit, row.year, row.value)
         ticker+=1
 
-def steel_demand_getter(df: pd.DataFrame, steel_type: str, scenario: str, year: str):
+def steel_demand_getter(df: pd.DataFrame, steel_type: str, scenario: str, year: str) -> float:
+    """[summary]
+
+    Args:
+        df (pd.DataFrame): [description]
+        steel_type (str): [description]
+        scenario (str): [description]
+        year (str): [description]
+
+    Returns:
+        float: [description]
+    """
     df_c = df.copy()
+    metric_names = df_c['Steel Type'].unique()
+    scenarios = df_c['Scenario'].unique()
+    logger.info(
+        f'''Creating scope 1 emissions getter with the following metrics: {metric_names} and scenarios: {scenarios}''')
     df_c.set_index(['Steel Type', 'Scenario', 'Year'], inplace=True)
     logger.info(f'Getting Steel Demand value for: {steel_type} - {scenario} - {year}')
     value = df_c.loc[steel_type, scenario, year]['Value']
     return value
 
-
-def carbon_tax_getter(df: pd.DataFrame, year: str):
+def carbon_tax_getter(df: pd.DataFrame, year: str) -> float:
     df_c = df.copy()
     df_c.set_index(['Year'], inplace=True)
     logger.info(f'Getting Carbon Tax value for: {year}')
     value = df_c.loc[year]['Value']
     return value
 
-def scope1_emissions_getter(df: pd.DataFrame, metric: str):
+def scope1_emissions_getter(df: pd.DataFrame, metric: str) -> float:
     df_c = df.copy()
     metric_names = df_c['Metric'].to_list()
     logger.info(f'Creating scope 1 emissions getter with the following metrics: {metric_names}')
     df_c.set_index(['Metric'], inplace=True)
-
     logger.info(f'Getting Scope 1 emissions value for: {metric}')
     value = df_c.loc[metric]['Value']
     return value
 
-def ccs_co2_getter(df: pd.DataFrame, metric: str, year: str):
+def ccs_co2_getter(df: pd.DataFrame, metric: str, year: str) -> float:
     df_c = df.copy()
     metric_names = df_c['Metric'].unique()
     logger.info(f'Creating CCS CO2 getter with the following metrics: {metric_names}')
@@ -111,7 +124,7 @@ def ccs_co2_getter(df: pd.DataFrame, metric: str, year: str):
     value = df_c.loc[metric, year]['Value']
     return value
 
-def static_energy_prices_getter(df: pd.DataFrame, metric: str, year: str):
+def static_energy_prices_getter(df: pd.DataFrame, metric: str, year: str) -> float:
     df_c = df.copy()
     metric_names = df_c['Metric'].unique()
     logger.info(f'Creating Static Energy getter with the following metrics: {metric_names}')
@@ -120,7 +133,7 @@ def static_energy_prices_getter(df: pd.DataFrame, metric: str, year: str):
     value = df_c.loc[metric, year]['Value']
     return value
 
-def technology_availability_getter(df: pd.DataFrame, technology: str):
+def technology_availability_getter(df: pd.DataFrame, technology: str) -> tuple:
     df_c = df.copy()
     metric_names = df_c['Technology'].unique()
     logger.info(f'Creating Technology getter with the following metrics: {metric_names}')
@@ -129,6 +142,13 @@ def technology_availability_getter(df: pd.DataFrame, technology: str):
     year_available_from = df_c.loc[technology]['Year available from']
     year_available_until = df_c.loc[technology]['Year available until']
     return year_available_from, year_available_until
+
+def grid_emissivity_getter(df: pd.DataFrame, year: str) -> float:
+    df_c = df.copy()
+    df_c.set_index(['Year'], inplace=True)
+    logger.info(f'Getting Grid Emissivity value for: {year}')
+    value = df_c.loc[year]['Value']
+    return value
 
 greenfield_capex_df = read_pickle_folder(PKL_FOLDER, 'greenfield_capex')
 brownfield_capex_df = read_pickle_folder(PKL_FOLDER, 'brownfield_capex')
@@ -146,6 +166,7 @@ capex_dictionary = {
         other_opex_df, ['Technology'], 'Year', ['Technology', 'Year'])
 }
 
+# Example Loading Data with necessary subsets
 feedstock_prices = read_pickle_folder(
     PKL_FOLDER, 'feedstock_prices')
 
@@ -158,6 +179,9 @@ carbon_tax_assumptions = read_pickle_folder(
 s1_emissions_factors = read_pickle_folder(
     PKL_FOLDER, 's1_emissions_factors')[['Metric', 'Value']]
 
+grid_emissivity = read_pickle_folder(
+    PKL_FOLDER, 'grid_emissivity')[['Year', 'Value']]
+
 static_energy_prices = read_pickle_folder(
     PKL_FOLDER, 'static_energy_prices')[['Metric', 'Year', 'Value']]
 
@@ -169,6 +193,7 @@ tech_availability = read_pickle_folder(
 
 steel_demand_example = steel_demand_getter(steel_demand, 'Crude', 'BAU', 2030)
 
+# Example Use of Functions
 print(carbon_tax_getter(carbon_tax_assumptions, 2040))
 
 print(scope1_emissions_getter(s1_emissions_factors, 'Biomass'))
@@ -178,5 +203,7 @@ print(ccs_co2_getter(ccs_co2, 'Steel CO2 use market', 2040))
 print(static_energy_prices_getter(static_energy_prices, 'BF gas', 2026))
 
 print(technology_availability_getter(tech_availability, 'BAT BF-BOF'))
+
+print(grid_emissivity_getter(grid_emissivity, 2026))
 
 create_data_tuples(feedstock_prices, 'FeedstockPrices')

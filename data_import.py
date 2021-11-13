@@ -89,7 +89,7 @@ hydrogen_electrolyzer_capex = extract_data(IMPORT_DATA_PATH, "Hydrogen Electroly
 
 # Define a data dictionary
 df_dict = {
-    "greenfield_capex" : greenfield_capex, 
+    "greenfield_capex" : greenfield_capex,
     "brownfield_capex" : brownfield_capex,
     "other_opex" : other_opex,
     "ccs_co2" : ccs_co2,
