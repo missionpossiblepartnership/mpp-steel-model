@@ -86,6 +86,9 @@ business_cases = replace_rows(extract_data(IMPORT_DATA_PATH, "Business Cases One
 # Import Technology Business Cases
 hydrogen_electrolyzer_capex = extract_data(IMPORT_DATA_PATH, "Hydrogen Electrolyzer Capex", "xlsx")
 
+# Import Technology Business Cases
+ethanol_plastic_charcoal = extract_data(IMPORT_DATA_PATH, "Ethanol Plastic Charcoal", "csv")
+
 
 # Define a data dictionary
 df_dict = {
@@ -111,7 +114,8 @@ df_dict = {
     "business_cases": business_cases,
     "power_grid_assumptions": power_grid_assumptions,
     "hydrogen_electrolyzer_capex": hydrogen_electrolyzer_capex,
-    "carbon_tax_assumptions": carbon_tax_assumptions
+    "carbon_tax_assumptions": carbon_tax_assumptions,
+    "ethanol_plastic_charcoal": ethanol_plastic_charcoal,
 }
 
 # Turn dataframes into pickle files

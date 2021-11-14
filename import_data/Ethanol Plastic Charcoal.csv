@@ -1,0 +1,664 @@
+Classification,Year,Period,Period Desc.,Aggregate Level,Is Leaf Code,Trade Flow Code,Trade Flow,Reporter Code,Reporter,Reporter ISO,Partner Code,Partner,Partner ISO,2nd Partner Code,2nd Partner,2nd Partner ISO,Customs Proc. Code,Customs,Mode of Transport Code,Mode of Transport,Commodity Code,Commodity,Qty Unit Code,Qty Unit,Qty,Alt Qty Unit Code,Alt Qty Unit,Alt Qty,Netweight (kg),Gross weight (kg),Trade Value (US$),CIF Trade Value (US$),FOB Trade Value (US$),Flag
+H5,2020,2020,2020,4,0,1,Import,8,Albania,ALB,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,58907,,,,58907,,42839,,,0
+H5,2020,2020,2020,6,1,1,Import,31,Azerbaijan,AZE,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,1782312,,,4
+H5,2020,2020,2020,6,1,2,Export,31,Azerbaijan,AZE,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,15000,,,,12000,,56176,,,0
+H5,2020,2020,2020,6,1,1,Import,31,Azerbaijan,AZE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3273535,,,,3273535,,1808137,,,0
+H5,2020,2020,2020,4,0,1,Import,31,Azerbaijan,AZE,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,594619,,,,594619,,605101,,,0
+H5,2020,2020,2020,4,0,2,Export,31,Azerbaijan,AZE,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,44002,,,,44002,,20681,,,0
+H5,2020,2020,2020,6,1,1,Import,32,Argentina,ARG,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,2535933,,,,2050193,,1919543,,,0
+H5,2020,2020,2020,6,1,2,Export,32,Argentina,ARG,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,14558482,,,,11710660,,10595954,,,0
+H5,2020,2020,2020,4,0,1,Import,32,Argentina,ARG,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,3060,,,,3060,,7453,,,0
+H5,2020,2020,2020,4,0,2,Export,32,Argentina,ARG,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,61013949,,,,61013949,,15155801,,,0
+H5,2020,2020,2020,6,1,1,Import,36,Australia,AUS,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,31022612,,,,26594670,,27397616,,,6
+H5,2020,2020,2020,6,1,2,Export,36,Australia,AUS,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,60536204,,,,52051399,,51503599,,,6
+H5,2020,2020,2020,6,1,1,Import,36,Australia,AUS,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,905240,,,,905240,,680548,,,0
+H5,2020,2020,2020,6,1,2,Export,36,Australia,AUS,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,41014637,,,,41014637,,9665950,,,0
+H5,2020,2020,2020,4,0,1,Import,36,Australia,AUS,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,22929055,,,,22929055,,13400791,,,0
+H5,2020,2020,2020,4,0,2,Export,36,Australia,AUS,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,293800,,,,293800,,233299,,,0
+H5,2020,2020,2020,6,1,1,Import,40,Austria,AUT,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,55745639,,,,53494272,,49231754,,,2
+H5,2020,2020,2020,6,1,2,Export,40,Austria,AUT,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,125295149,,,,100063021,,106599864,,,6
+H5,2020,2020,2020,6,1,1,Import,40,Austria,AUT,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,26045190,,,,26045190,,8375193,,,0
+H5,2020,2020,2020,6,1,2,Export,40,Austria,AUT,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,64513953,,,,64513953,,33237395,,,0
+H5,2020,2020,2020,4,0,1,Import,40,Austria,AUT,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,16255829,,,,16255829,,11680207,,,6
+H5,2020,2020,2020,4,0,2,Export,40,Austria,AUT,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,1850836,,,,1850836,,1343983,,,6
+H5,2020,2020,2020,6,1,1,Import,51,Armenia,ARM,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,424693,,,,174950,,213599,,,0
+H5,2020,2020,2020,6,1,2,Export,51,Armenia,ARM,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,4897384,,,,3940129,,4747145,,,0
+H5,2020,2020,2020,6,1,3,Re-Export,51,Armenia,ARM,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,549770,,,,441581,,517779,,,0
+H5,2020,2020,2020,4,0,1,Import,51,Armenia,ARM,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,1609596,,,,1683438,,500628,,,0
+H5,2020,2020,2020,4,0,2,Export,51,Armenia,ARM,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,13989,,,,13988,,11068,,,0
+H5,2020,2020,2020,6,1,1,Import,52,Barbados,BRB,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,950338,,,,456372,,839291,,,2
+H5,2020,2020,2020,6,1,2,Export,52,Barbados,BRB,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,4033290,,,,1744323,,3431483,,,2
+H5,2020,2020,2020,4,0,1,Import,52,Barbados,BRB,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,11263,,,,11263,,21321,,,6
+H5,2020,2020,2020,4,0,2,Export,52,Barbados,BRB,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,50,,,,50,,375,,,0
+H5,2020,2020,2020,4,0,3,Re-Export,52,Barbados,BRB,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,50,,,,50,,375,,,0
+H5,2020,2020,2020,6,1,1,Import,56,Belgium,BEL,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,103720219,,,6
+H5,2020,2020,2020,6,1,2,Export,56,Belgium,BEL,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,543484065,,,,449021540,,424921047,,,0
+H5,2020,2020,2020,6,1,1,Import,56,Belgium,BEL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,135226362,,,,135226362,,44624491,,,0
+H5,2020,2020,2020,6,1,2,Export,56,Belgium,BEL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,217650258,,,,217650258,,59500272,,,0
+H5,2020,2020,2020,4,0,1,Import,56,Belgium,BEL,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,51943638,,,,51943638,,30285804,,,0
+H5,2020,2020,2020,4,0,2,Export,56,Belgium,BEL,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,,,38605928,,,6
+H5,2020,2020,2020,4,0,1,Import,60,Bermuda,BMU,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,11050,,,,11050,,43369,,,0
+H5,2020,2020,2020,6,1,1,Import,68,Bolivia (Plurinational State of),BOL,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,26281,,,,21660,,23654,,,0
+H5,2020,2020,2020,6,1,2,Export,68,Bolivia (Plurinational State of),BOL,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,78889607,,,,104886688,,67118491,,,2
+H5,2020,2020,2020,6,1,1,Import,68,Bolivia (Plurinational State of),BOL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,27275,,,,27275,,46270,,,0
+H5,2020,2020,2020,6,1,2,Export,68,Bolivia (Plurinational State of),BOL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,647550,,,,647550,,107245,,,0
+H5,2020,2020,2020,4,0,2,Export,68,Bolivia (Plurinational State of),BOL,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,2438964,,,,2438964,,484159,,,0
+H5,2020,2020,2020,4,0,3,Re-Export,68,Bolivia (Plurinational State of),BOL,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,2425,,,,2425,,873,,,0
+H5,2020,2020,2020,6,1,1,Import,70,Bosnia Herzegovina,BIH,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,766547,,,,400631,,671287,,,2
+H5,2020,2020,2020,6,1,2,Export,70,Bosnia Herzegovina,BIH,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,12099,,,,7810,,9813,,,2
+H5,2020,2020,2020,6,1,1,Import,70,Bosnia Herzegovina,BIH,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1859020,,,,1859020,,296918,,,0
+H5,2020,2020,2020,6,1,2,Export,70,Bosnia Herzegovina,BIH,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3395577,,,,3395577,,814390,,,0
+H5,2020,2020,2020,4,0,1,Import,70,Bosnia Herzegovina,BIH,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,840636,,,,840636,,570844,,,0
+H5,2020,2020,2020,4,0,2,Export,70,Bosnia Herzegovina,BIH,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,19202406,,,,19202406,,9586915,,,0
+H5,2020,2020,2020,6,1,1,Import,72,Botswana,BWA,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,504911,,,,379689,,445912,,,2
+H5,2020,2020,2020,6,1,2,Export,72,Botswana,BWA,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,40440,,,,38000,,34406,,,2
+H5,2020,2020,2020,6,1,2,Export,72,Botswana,BWA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,232074,,,,232074,,27047,,,0
+H5,2020,2020,2020,4,0,1,Import,72,Botswana,BWA,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,409618,,,,409618,,170158,,,0
+H5,2020,2020,2020,4,0,2,Export,72,Botswana,BWA,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,1200835,,,,1200835,,47175,,,0
+H5,2020,2020,2020,6,1,1,Import,76,Brazil,BRA,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,796611597,,457680663,,,6
+H5,2020,2020,2020,6,1,2,Export,76,Brazil,BRA,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,2652577975,,,,2126050376,,1181180141,,,4
+H5,2020,2020,2020,6,1,1,Import,76,Brazil,BRA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1077057,,,,1077057,,314259,,,0
+H5,2020,2020,2020,6,1,2,Export,76,Brazil,BRA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,10261,,,,10261,,13958,,,6
+H5,2020,2020,2020,4,0,1,Import,76,Brazil,BRA,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,,,7539845,,,6
+H5,2020,2020,2020,4,0,2,Export,76,Brazil,BRA,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,15773115,,,,15821798,,7070252,,,0
+H5,2020,2020,2020,6,1,1,Import,84,Belize,BLZ,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,15299,,,,4222,,11888,,,2
+H5,2020,2020,2020,6,1,2,Export,84,Belize,BLZ,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,122667,,,,122667,,12125,,,0
+H5,2020,2020,2020,4,0,1,Import,84,Belize,BLZ,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,4423,,,,4423,,3722,,,0
+H5,2020,2020,2020,4,0,1,Import,96,Brunei Darussalam,BRN,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,337973,,,,337973,,282817,,,0
+H5,2020,2020,2020,6,1,1,Import,100,Bulgaria,BGR,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,15638145,,,,12425292,,12167560,,,0
+H5,2020,2020,2020,6,1,2,Export,100,Bulgaria,BGR,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,45963440,,,,37384462,,42632274,,,0
+H5,2020,2020,2020,6,1,1,Import,100,Bulgaria,BGR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,34564198,,,,34564198,,5588128,,,0
+H5,2020,2020,2020,6,1,2,Export,100,Bulgaria,BGR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,4573921,,,,4573921,,2354694,,,0
+H5,2020,2020,2020,4,0,1,Import,100,Bulgaria,BGR,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,5294130,,,,5294130,,2200737,,,0
+H5,2020,2020,2020,4,0,2,Export,100,Bulgaria,BGR,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,2173853,,,,2173853,,1472861,,,0
+H5,2020,2020,2020,6,1,2,Export,104,Myanmar,MMR,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,180000,,,,180000,,108000,,,0
+H5,2020,2020,2020,6,1,1,Import,104,Myanmar,MMR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,334479,,,,334479,,350329,,,0
+H5,2020,2020,2020,6,1,2,Export,104,Myanmar,MMR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,2699000,,,,2699000,,1007250,,,0
+H5,2020,2020,2020,4,0,1,Import,104,Myanmar,MMR,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,57561,,,,57561,,19367,,,0
+H5,2020,2020,2020,4,0,2,Export,104,Myanmar,MMR,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,72000,,,,72000,,51072,,,0
+H5,2020,2020,2020,6,1,1,Import,108,Burundi,BDI,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,3478170,,,,2873567,,2910875,,,2
+H5,2020,2020,2020,6,1,1,Import,112,Belarus,BLR,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,28135,,,,23411,,99000,,,0
+H5,2020,2020,2020,6,1,2,Export,112,Belarus,BLR,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,19292303,,,,15786099,,17511100,,,0
+H5,2020,2020,2020,4,0,1,Import,108,Burundi,BDI,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,818,,,,818,,384,,,0
+H5,2020,2020,2020,6,1,1,Import,112,Belarus,BLR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1938484,,,,1938484,,691200,,,0
+H5,2020,2020,2020,6,1,2,Export,112,Belarus,BLR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,6757093,,,,6757093,,1850300,,,0
+H5,2020,2020,2020,4,0,1,Import,112,Belarus,BLR,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,7896146,,,,7896146,,2293700,,,0
+H5,2020,2020,2020,4,0,2,Export,112,Belarus,BLR,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,19035214,,,,19035214,,6620200,,,0
+H5,2020,2020,2020,6,1,1,Import,116,Cambodia,KHM,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,45,,,,2,,39,,,2
+H5,2020,2020,2020,6,1,2,Export,116,Cambodia,KHM,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,2942326,,,,3195330,,2386457,,,2
+H5,2020,2020,2020,6,1,1,Import,116,Cambodia,KHM,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,15,,,,15,,22,,,0
+H5,2020,2020,2020,4,0,1,Import,116,Cambodia,KHM,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,150846,,,,150846,,86745,,,6
+H5,2020,2020,2020,4,0,2,Export,116,Cambodia,KHM,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,97500,,,,97500,,42160,,,0
+H5,2020,2020,2020,6,1,1,Import,124,Canada,CAN,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,81366106,,,0
+H5,2020,2020,2020,6,1,2,Export,124,Canada,CAN,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,0,,81078935,,,6
+H5,2020,2020,2020,6,1,3,Re-Export,124,Canada,CAN,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,0,,8452,,,0
+H5,2020,2020,2020,6,1,1,Import,124,Canada,CAN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,35280632,,,,35280632,,9374351,,,0
+H5,2020,2020,2020,6,1,2,Export,124,Canada,CAN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,45717648,,,,45717648,,16775698,,,0
+H5,2020,2020,2020,6,1,3,Re-Export,124,Canada,CAN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,264,,,,264,,563,,,0
+H5,2020,2020,2020,4,0,1,Import,124,Canada,CAN,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,91917000,,,,,,19960978,,,0
+H5,2020,2020,2020,4,0,2,Export,124,Canada,CAN,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,1639997,,,,0,,1138084,,,6
+H5,2020,2020,2020,4,0,3,Re-Export,124,Canada,CAN,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,77000,,,,0,,74083,,,0
+H5,2020,2020,2020,6,1,1,Import,144,Sri Lanka,LKA,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,7728791,,,,7728791,,4979389,,,0
+H5,2020,2020,2020,6,1,2,Export,144,Sri Lanka,LKA,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,4,,,,4,,2,,,0
+H5,2020,2020,2020,6,1,1,Import,144,Sri Lanka,LKA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1,,,,1,,2,,,0
+H5,2020,2020,2020,4,0,1,Import,144,Sri Lanka,LKA,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,10407227,,,,10407227,,4900520,,,0
+H5,2020,2020,2020,4,0,2,Export,144,Sri Lanka,LKA,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,13605709,,,,13605709,,6664712,,,0
+H5,2020,2020,2020,4,0,3,Re-Export,144,Sri Lanka,LKA,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,1555284,,,,1555284,,776746,,,0
+H5,2020,2020,2020,6,1,1,Import,152,Chile,CHL,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,51306174,,,,51306174,,38025092,,,0
+H5,2020,2020,2020,6,1,2,Export,152,Chile,CHL,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,507844,,,,507844,,912321,,,0
+H5,2020,2020,2020,6,1,1,Import,152,Chile,CHL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,26499,,,6
+H5,2020,2020,2020,6,1,2,Export,152,Chile,CHL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,4258937,,,,4258937,,1256472,,,6
+H5,2020,2020,2020,4,0,1,Import,152,Chile,CHL,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,,,13498257,,,6
+H5,2020,2020,2020,4,0,2,Export,152,Chile,CHL,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,780,,,,780,,447,,,6
+H5,2020,2020,2020,6,1,1,Import,156,China,CHN,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,5214599,,,,5674522,,4605273,,,6
+H5,2020,2020,2020,6,1,2,Export,156,China,CHN,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,275503404,,,,346153530,,234395550,,,2
+H5,2020,2020,2020,6,1,2,Export,156,China,CHN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,213670,,,,213670,,440152,,,6
+H5,2020,2020,2020,4,0,1,Import,156,China,CHN,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,,,70697199,,,6
+H5,2020,2020,2020,4,0,2,Export,156,China,CHN,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,79470704,,,,79470704,,181023676,,,6
+H5,2020,2020,2020,6,1,1,Import,170,Colombia,COL,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,66526285,,,6
+H5,2020,2020,2020,6,1,2,Export,170,Colombia,COL,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,4233888,,,,3399585,,4277915,,,0
+H5,2020,2020,2020,6,1,1,Import,170,Colombia,COL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,4423984,,,,4423984,,562464,,,0
+H5,2020,2020,2020,6,1,2,Export,170,Colombia,COL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,340926,,,,340926,,141303,,,0
+H5,2020,2020,2020,4,0,1,Import,170,Colombia,COL,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,,,68091,,,6
+H5,2020,2020,2020,4,0,2,Export,170,Colombia,COL,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,10420286,,,,10420286,,5763114,,,0
+H5,2020,2020,2020,6,1,1,Import,174,Comoros,COM,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,18438,,,,7010,,16147,,,2
+H5,2020,2020,2020,6,1,1,Import,178,Congo,COG,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,3777195,,,,2771558,,3307798,,,2
+H5,2020,2020,2020,4,0,1,Import,174,Comoros,COM,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,7525,,,,7525,,5778,,,0
+H5,2020,2020,2020,6,1,1,Import,188,Costa Rica,CRI,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,1176305,,,,478412,,1030124,,,6
+H5,2020,2020,2020,6,1,2,Export,188,Costa Rica,CRI,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,22201815,,,,24593200,,18007410,,,2
+H5,2020,2020,2020,4,0,1,Import,178,Congo,COG,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,0,,4238,,,0
+H5,2020,2020,2020,6,1,1,Import,188,Costa Rica,CRI,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1115630,,,,1115630,,430043,,,0
+H5,2020,2020,2020,6,1,2,Export,188,Costa Rica,CRI,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,469197,,,,469197,,119535,,,0
+H5,2020,2020,2020,4,0,1,Import,188,Costa Rica,CRI,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,1026372,,,,1026372,,579065,,,0
+H5,2020,2020,2020,4,0,2,Export,188,Costa Rica,CRI,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,1330,,,,1330,,1251,,,6
+H5,2020,2020,2020,6,1,1,Import,191,Croatia,HRV,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,7913371,,,6
+H5,2020,2020,2020,6,1,2,Export,191,Croatia,HRV,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,883223,,,,872220,,1287230,,,0
+H5,2020,2020,2020,6,1,1,Import,191,Croatia,HRV,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,23670117,,,,23670117,,2493494,,,0
+H5,2020,2020,2020,6,1,2,Export,191,Croatia,HRV,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,19395987,,,,19395987,,4217981,,,0
+H5,2020,2020,2020,4,0,1,Import,191,Croatia,HRV,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,13618393,,,,13618393,,5135426,,,0
+H5,2020,2020,2020,4,0,2,Export,191,Croatia,HRV,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,13197392,,,,13197392,,7360576,,,0
+H5,2020,2020,2020,6,1,1,Import,196,Cyprus,CYP,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,435946,,,,374653,,632447,,,0
+H5,2020,2020,2020,6,1,2,Export,196,Cyprus,CYP,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1447491,,,,1447491,,167522,,,0
+H5,2020,2020,2020,4,0,1,Import,196,Cyprus,CYP,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,14455805,,,,14455805,,7969919,,,0
+H5,2020,2020,2020,4,0,2,Export,196,Cyprus,CYP,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,144,,,,144,,639,,,0
+H5,2020,2020,2020,4,0,3,Re-Export,196,Cyprus,CYP,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,144,,,,144,,639,,,0
+H5,2020,2020,2020,6,1,1,Import,203,Czechia,CZE,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,16204823,,,6
+H5,2020,2020,2020,6,1,2,Export,203,Czechia,CZE,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,37677722,,,,34525573,,26857184,,,0
+H5,2020,2020,2020,6,1,1,Import,203,Czechia,CZE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,1384881,,,6
+H5,2020,2020,2020,6,1,2,Export,203,Czechia,CZE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,25640654,,,,25640654,,6210422,,,0
+H5,2020,2020,2020,4,0,1,Import,203,Czechia,CZE,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,12033515,,,,12033515,,6183503,,,6
+H5,2020,2020,2020,4,0,2,Export,203,Czechia,CZE,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,236759,,,,236759,,304925,,,6
+H5,2020,2020,2020,6,1,1,Import,204,Benin,BEN,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,1477469,,,,4502631,,1293862,,,2
+H5,2020,2020,2020,6,1,1,Import,204,Benin,BEN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,6,,,6
+H5,2020,2020,2020,4,0,1,Import,204,Benin,BEN,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,29422,,,,29422,,18643,,,0
+H5,2020,2020,2020,6,1,1,Import,208,Denmark,DNK,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,193580320,,,,166892366,,155669836,,,0
+H5,2020,2020,2020,6,1,2,Export,208,Denmark,DNK,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,2464953,,,,2249457,,3465685,,,0
+H5,2020,2020,2020,6,1,1,Import,208,Denmark,DNK,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,8684216,,,,8684216,,4964111,,,0
+H5,2020,2020,2020,6,1,2,Export,208,Denmark,DNK,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,13050641,,,6
+H5,2020,2020,2020,4,0,1,Import,208,Denmark,DNK,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,9268876,,,,9268876,,5837625,,,0
+H5,2020,2020,2020,4,0,2,Export,208,Denmark,DNK,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,2476436,,,,2476436,,1734600,,,0
+H5,2020,2020,2020,6,1,1,Import,214,Dominican Rep.,DOM,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,8,Weight in kilograms,29439075,,,,29439075,,15949348,,,0
+H5,2020,2020,2020,6,1,2,Export,214,Dominican Rep.,DOM,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,10429345,,,,7564528,,8459015,,,2
+H5,2020,2020,2020,6,1,1,Import,214,Dominican Rep.,DOM,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1520445,,,,1520445,,441018,,,0
+H5,2020,2020,2020,6,1,2,Export,214,Dominican Rep.,DOM,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,6062414,,,,6062414,,2426682,,,0
+H5,2020,2020,2020,4,0,1,Import,214,Dominican Rep.,DOM,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,1053622,,,,1053622,,2373593,,,0
+H5,2020,2020,2020,4,0,2,Export,214,Dominican Rep.,DOM,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,,,135381,,,6
+H5,2020,2020,2020,6,1,1,Import,218,Ecuador,ECU,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,4997967,,,,5402206,,4376863,,,6
+H5,2020,2020,2020,6,1,2,Export,218,Ecuador,ECU,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,8638650,,,,6603117,,7006622,,,2
+H5,2020,2020,2020,6,1,1,Import,218,Ecuador,ECU,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,7110184,,,,7110184,,3653072,,,0
+H5,2020,2020,2020,6,1,2,Export,218,Ecuador,ECU,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,885018,,,,885018,,547995,,,0
+H5,2020,2020,2020,4,0,1,Import,218,Ecuador,ECU,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,23262,,,,23262,,43974,,,6
+H5,2020,2020,2020,4,0,2,Export,218,Ecuador,ECU,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,12000,,,,12000,,4500,,,0
+H5,2020,2020,2020,6,1,1,Import,222,El Salvador,SLV,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,9315975,,,,9386871,,8158267,,,2
+H5,2020,2020,2020,6,1,2,Export,222,El Salvador,SLV,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,247910,,,,220219,,201074,,,2
+H5,2020,2020,2020,6,1,1,Import,222,El Salvador,SLV,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3829819,,,,3829819,,2054488,,,0
+H5,2020,2020,2020,6,1,2,Export,222,El Salvador,SLV,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,175032,,,,175032,,73378,,,0
+H5,2020,2020,2020,4,0,1,Import,222,El Salvador,SLV,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,410370,,,,410370,,211527,,,0
+H5,2020,2020,2020,4,0,2,Export,222,El Salvador,SLV,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,1265577,,,,1265577,,672987,,,0
+H5,2020,2020,2020,6,1,1,Import,231,Ethiopia,ETH,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,866310,,,6
+H5,2020,2020,2020,6,1,1,Import,231,Ethiopia,ETH,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,151775,,,,151775,,172589,,,0
+H5,2020,2020,2020,6,1,2,Export,231,Ethiopia,ETH,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,126000,,,,126000,,52551,,,0
+H5,2020,2020,2020,4,0,1,Import,231,Ethiopia,ETH,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,10602,,,,10602,,5591,,,0
+H5,2020,2020,2020,6,1,1,Import,233,Estonia,EST,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,9750637,,,,8050001,,10558880,,,0
+H5,2020,2020,2020,6,1,2,Export,233,Estonia,EST,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,725481,,,,587631,,1194811,,,0
+H5,2020,2020,2020,6,1,1,Import,233,Estonia,EST,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3409595,,,,3409595,,565624,,,0
+H5,2020,2020,2020,6,1,2,Export,233,Estonia,EST,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,10304554,,,,10304554,,4443441,,,0
+H5,2020,2020,2020,6,1,3,Re-Export,233,Estonia,EST,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,6500,,,,6500,,1087,,,0
+H5,2020,2020,2020,4,0,1,Import,233,Estonia,EST,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,2135843,,,,2135843,,1373977,,,0
+H5,2020,2020,2020,4,0,2,Export,233,Estonia,EST,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,875615,,,,875615,,581671,,,0
+H5,2020,2020,2020,6,1,1,Import,246,Finland,FIN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,3552997,,,6
+H5,2020,2020,2020,6,1,2,Export,246,Finland,FIN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,4714152,,,6
+H5,2020,2020,2020,4,0,1,Import,246,Finland,FIN,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,,,3746393,,,6
+H5,2020,2020,2020,4,0,2,Export,246,Finland,FIN,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,237736,,,,237736,,264973,,,6
+H5,2020,2020,2020,6,1,1,Import,251,France,FRA,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,367419272,,,6
+H5,2020,2020,2020,6,1,2,Export,251,France,FRA,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,582027606,,,6
+H5,2020,2020,2020,6,1,1,Import,251,France,FRA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,47377578,,,,47377578,,28870370,,,6
+H5,2020,2020,2020,6,1,2,Export,251,France,FRA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,159328724,,,,159328724,,38771658,,,0
+H5,2020,2020,2020,4,0,1,Import,251,France,FRA,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,105987409,,,,105987409,,70937228,,,6
+H5,2020,2020,2020,4,0,2,Export,251,France,FRA,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,9202179,,,,9202179,,8947267,,,6
+H5,2020,2020,2020,6,1,1,Import,268,Georgia,GEO,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,15783061,,,,12706676,,18738254,,,0
+H5,2020,2020,2020,6,1,2,Export,268,Georgia,GEO,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,1222113,,,,979624,,1463402,,,0
+H5,2020,2020,2020,6,1,3,Re-Export,268,Georgia,GEO,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,245911,,,,196981,,328821,,,0
+H5,2020,2020,2020,6,1,4,Re-Import,268,Georgia,GEO,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,30000,,,,24000,,54000,,,0
+H5,2020,2020,2020,6,1,1,Import,268,Georgia,GEO,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,296355,,,,296355,,115723,,,0
+H5,2020,2020,2020,6,1,2,Export,268,Georgia,GEO,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,59000,,,,59000,,13691,,,0
+H5,2020,2020,2020,4,0,1,Import,268,Georgia,GEO,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,52726,,,,52726,,60359,,,0
+H5,2020,2020,2020,6,1,1,Import,276,Germany,DEU,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,1011008765,,,,882105080,,836381582,,,0
+H5,2020,2020,2020,6,1,2,Export,276,Germany,DEU,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,419062518,,,,350304319,,355893980,,,2
+H5,2020,2020,2020,6,1,1,Import,276,Germany,DEU,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,220178087,,,,220178087,,70760419,,,6
+H5,2020,2020,2020,6,1,2,Export,276,Germany,DEU,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,586953675,,,,586953675,,192984769,,,6
+H5,2020,2020,2020,4,0,1,Import,276,Germany,DEU,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,166948469,,,,166948469,,104078519,,,6
+H5,2020,2020,2020,4,0,2,Export,276,Germany,DEU,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,33978573,,,,33978573,,34986329,,,6
+H5,2020,2020,2020,6,1,1,Import,300,Greece,GRC,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,42088435,,51558043,,,6
+H5,2020,2020,2020,6,1,2,Export,300,Greece,GRC,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,792354,,,,640559,,614170,,,0
+H5,2020,2020,2020,6,1,1,Import,300,Greece,GRC,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,4006874,,,,4006874,,1321380,,,0
+H5,2020,2020,2020,6,1,2,Export,300,Greece,GRC,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,15567111,,,,15567111,,3956095,,,0
+H5,2020,2020,2020,4,0,1,Import,300,Greece,GRC,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,54001130,,,,54001130,,26573252,,,0
+H5,2020,2020,2020,4,0,2,Export,300,Greece,GRC,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,479331,,,,479331,,650755,,,0
+H5,2020,2020,2020,6,1,1,Import,320,Guatemala,GTM,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,792368,,,,51306,,699780,,,6
+H5,2020,2020,2020,6,1,2,Export,320,Guatemala,GTM,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,123538363,,,,134571218,,105105208,,,2
+H5,2020,2020,2020,6,1,1,Import,320,Guatemala,GTM,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,49194,,,,49194,,30288,,,0
+H5,2020,2020,2020,6,1,2,Export,320,Guatemala,GTM,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,2724378,,,,2724378,,537388,,,0
+H5,2020,2020,2020,4,0,1,Import,320,Guatemala,GTM,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,471038,,,,471038,,390583,,,0
+H5,2020,2020,2020,6,1,1,Import,328,Guyana,GUY,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,16360,,,,17737,,40614,,,0
+H5,2020,2020,2020,6,1,1,Import,328,Guyana,GUY,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1208,,,,1208,,12981,,,0
+H5,2020,2020,2020,4,0,1,Import,328,Guyana,GUY,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,3880,,,,3880,,7755,,,0
+H5,2020,2020,2020,4,0,2,Export,328,Guyana,GUY,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,929360,,,,929360,,262634,,,0
+H5,2020,2020,2020,6,1,1,Import,344,"China, Hong Kong SAR",HKG,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,1132165,,,,1132165,,1466150,,,0
+H5,2020,2020,2020,6,1,2,Export,344,"China, Hong Kong SAR",HKG,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,27436,,,,27436,,38701,,,0
+H5,2020,2020,2020,6,1,1,Import,344,"China, Hong Kong SAR",HKG,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,59437333,,,,59437333,,18582262,,,0
+H5,2020,2020,2020,6,1,2,Export,344,"China, Hong Kong SAR",HKG,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,22866478,,,,22866478,,12649689,,,0
+H5,2020,2020,2020,4,0,1,Import,344,"China, Hong Kong SAR",HKG,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,,,2947321,,,6
+H5,2020,2020,2020,4,0,2,Export,344,"China, Hong Kong SAR",HKG,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,307640,,,,307640,,165608,,,0
+H5,2020,2020,2020,6,1,1,Import,348,Hungary,HUN,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,5315112,,,,4411547,,4368658,,,0
+H5,2020,2020,2020,6,1,2,Export,348,Hungary,HUN,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,623852364,,,,517395195,,409261185,,,0
+H5,2020,2020,2020,6,1,1,Import,348,Hungary,HUN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,5981807,,,,5981807,,2134766,,,0
+H5,2020,2020,2020,6,1,2,Export,348,Hungary,HUN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,15513959,,,,15513959,,3664311,,,0
+H5,2020,2020,2020,4,0,1,Import,348,Hungary,HUN,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,0,,3254336,,,6
+H5,2020,2020,2020,4,0,2,Export,348,Hungary,HUN,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,0,,1044694,,,6
+H5,2020,2020,2020,6,1,1,Import,352,Iceland,ISL,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,2155474,,,,1158159,,1887611,,,2
+H5,2020,2020,2020,6,1,2,Export,352,Iceland,ISL,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,24425,,,,12960,,19811,,,2
+H5,2020,2020,2020,6,1,1,Import,352,Iceland,ISL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,34,,,,34,,2788,,,6
+H5,2020,2020,2020,6,1,2,Export,352,Iceland,ISL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,1133,,,6
+H5,2020,2020,2020,4,0,1,Import,352,Iceland,ISL,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,17013124,,,,17013124,,4011988,,,6
+H5,2020,2020,2020,6,1,1,Import,360,Indonesia,IDN,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,25998763,,,,22431986,,22960805,,,2
+H5,2020,2020,2020,6,1,2,Export,360,Indonesia,IDN,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,43859162,,,,36370894,,37314938,,,2
+H5,2020,2020,2020,6,1,1,Import,360,Indonesia,IDN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,162150990,,,,162150990,,55057593,,,0
+H5,2020,2020,2020,6,1,2,Export,360,Indonesia,IDN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3642259,,,,3642259,,2242268,,,0
+H5,2020,2020,2020,4,0,1,Import,360,Indonesia,IDN,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,832218,,,,832218,,697683,,,0
+H5,2020,2020,2020,4,0,2,Export,360,Indonesia,IDN,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,483167831,,,,483167831,,272199583,,,0
+H5,2020,2020,2020,6,1,1,Import,372,Ireland,IRL,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,43452079,,36492699,,,2
+H5,2020,2020,2020,6,1,2,Export,372,Ireland,IRL,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,262716,,,,348906,,811029,,,0
+H5,2020,2020,2020,6,1,1,Import,372,Ireland,IRL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,3323079,,,6
+H5,2020,2020,2020,6,1,2,Export,372,Ireland,IRL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,7269826,,,6
+H5,2020,2020,2020,4,0,1,Import,372,Ireland,IRL,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,5234051,,,,5234051,,4484965,,,0
+H5,2020,2020,2020,4,0,2,Export,372,Ireland,IRL,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,3948738,,,,3948738,,3190669,,,0
+H5,2020,2020,2020,6,1,1,Import,376,Israel,ISR,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,14327126,,,,12804835,,12653000,,,2
+H5,2020,2020,2020,6,1,2,Export,376,Israel,ISR,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,170429,,,,34610,,145000,,,2
+H5,2020,2020,2020,6,1,1,Import,376,Israel,ISR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1717198,,,,1717198,,582000,,,6
+H5,2020,2020,2020,6,1,2,Export,376,Israel,ISR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,2729229,,,,2729229,,853000,,,6
+H5,2020,2020,2020,4,0,1,Import,376,Israel,ISR,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,31789731,,,,31789731,,19302000,,,6
+H5,2020,2020,2020,4,0,2,Export,376,Israel,ISR,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,25918,,,,25918,,15000,,,6
+H5,2020,2020,2020,6,1,1,Import,381,Italy,ITA,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,298275114,,,,253798787,,222803729,,,0
+H5,2020,2020,2020,6,1,2,Export,381,Italy,ITA,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,47307302,,,,39426317,,51555765,,,0
+H5,2020,2020,2020,6,1,1,Import,381,Italy,ITA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,56160707,,,,56160707,,29859800,,,0
+H5,2020,2020,2020,6,1,2,Export,381,Italy,ITA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,32566736,,,,32566736,,9551022,,,0
+H5,2020,2020,2020,4,0,1,Import,381,Italy,ITA,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,78668297,,,,78668297,,30385606,,,0
+H5,2020,2020,2020,4,0,2,Export,381,Italy,ITA,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,,,737017,,,6
+H5,2020,2020,2020,6,1,1,Import,392,Japan,JPN,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,853959865,,,,853959865,,534499447,,,0
+H5,2020,2020,2020,6,1,2,Export,392,Japan,JPN,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,210890,,,,210890,,836070,,,0
+H5,2020,2020,2020,6,1,1,Import,392,Japan,JPN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,946587,,,,946587,,447235,,,0
+H5,2020,2020,2020,6,1,2,Export,392,Japan,JPN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,142311421,,,,142311421,,42546857,,,0
+H5,2020,2020,2020,4,0,1,Import,392,Japan,JPN,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,131843000,,,,131843000,,109036792,,,0
+H5,2020,2020,2020,4,0,2,Export,392,Japan,JPN,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,1202410,,,,1202410,,3166160,,,6
+H5,2020,2020,2020,6,1,1,Import,400,Jordan,JOR,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,16565272,,,,14200866,,14629618,,,6
+H5,2020,2020,2020,6,1,2,Export,400,Jordan,JOR,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,0,,1651669,,,6
+H5,2020,2020,2020,6,1,3,Re-Export,400,Jordan,JOR,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,0,,1641665,,,0
+H5,2020,2020,2020,6,1,1,Import,400,Jordan,JOR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1562,,,,1562,,529,,,6
+H5,2020,2020,2020,6,1,2,Export,400,Jordan,JOR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,20188,,,,20188,,6309,,,6
+H5,2020,2020,2020,4,0,1,Import,400,Jordan,JOR,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,44494526,,,,44494526,,27046369,,,6
+H5,2020,2020,2020,4,0,2,Export,400,Jordan,JOR,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,0,,417276,,,6
+H5,2020,2020,2020,4,0,3,Re-Export,400,Jordan,JOR,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,0,,208843,,,0
+H5,2020,2020,2020,6,1,1,Import,404,Kenya,KEN,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,10974831,,,,9080629,,9692421,,,2
+H5,2020,2020,2020,6,1,2,Export,404,Kenya,KEN,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,224564,,,,204571,,191056,,,2
+H5,2020,2020,2020,6,1,1,Import,404,Kenya,KEN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,303172,,,,303172,,283998,,,0
+H5,2020,2020,2020,4,0,1,Import,404,Kenya,KEN,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,95466,,,,95466,,46289,,,0
+H5,2020,2020,2020,4,0,2,Export,404,Kenya,KEN,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,49825,,,,49825,,39408,,,0
+H5,2020,2020,2020,6,1,1,Import,410,Rep. of Korea,KOR,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,223409850,,,,181564377,,131725252,,,4
+H5,2020,2020,2020,6,1,2,Export,410,Rep. of Korea,KOR,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,40298913,,,,32703637,,24469722,,,0
+H5,2020,2020,2020,6,1,1,Import,410,Rep. of Korea,KOR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,4798086,,,,4798086,,1929132,,,6
+H5,2020,2020,2020,6,1,2,Export,410,Rep. of Korea,KOR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,3532644,,,6
+H5,2020,2020,2020,4,0,1,Import,410,Rep. of Korea,KOR,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,109975986,,,,109975986,,94288019,,,6
+H5,2020,2020,2020,4,0,2,Export,410,Rep. of Korea,KOR,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,289540,,,,289540,,395596,,,6
+H5,2020,2020,2020,6,1,1,Import,414,Kuwait,KWT,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,3713280,,,,1321009,,3279383,,,2
+H5,2020,2020,2020,6,1,2,Export,414,Kuwait,KWT,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,8,Weight in kilograms,670,,,,670,,2009,,,0
+H5,2020,2020,2020,6,1,3,Re-Export,414,Kuwait,KWT,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,8,Weight in kilograms,670,,,,670,,2009,,,0
+H5,2020,2020,2020,6,1,1,Import,414,Kuwait,KWT,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,642,,,,642,,9720,,,0
+H5,2020,2020,2020,4,0,1,Import,414,Kuwait,KWT,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,36899028,,,,36899028,,18536224,,,0
+H5,2020,2020,2020,4,0,2,Export,414,Kuwait,KWT,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,376257,,,,376257,,227482,,,0
+H5,2020,2020,2020,4,0,3,Re-Export,414,Kuwait,KWT,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,360807,,,,360807,,222144,,,0
+H5,2020,2020,2020,6,1,1,Import,417,Kyrgyzstan,KGZ,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,3,,,,3,,189,,,0
+H5,2020,2020,2020,6,1,2,Export,417,Kyrgyzstan,KGZ,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,71364,,,,67318,,110468,,,0
+H5,2020,2020,2020,6,1,1,Import,417,Kyrgyzstan,KGZ,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,798700,,,,798700,,36551,,,0
+H5,2020,2020,2020,4,0,1,Import,417,Kyrgyzstan,KGZ,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,833711,,,,833711,,238895,,,0
+H5,2020,2020,2020,4,0,2,Export,417,Kyrgyzstan,KGZ,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,18000,,,,18000,,20174,,,0
+H5,2020,2020,2020,6,1,1,Import,422,Lebanon,LBN,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,9341641,,,,6114569,,8250070,,,2
+H5,2020,2020,2020,6,1,2,Export,422,Lebanon,LBN,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,219106,,,,61883,,186414,,,2
+H5,2020,2020,2020,6,1,1,Import,422,Lebanon,LBN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,239150,,,,239150,,58609,,,0
+H5,2020,2020,2020,6,1,2,Export,422,Lebanon,LBN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,4265895,,,,4265895,,2223799,,,0
+H5,2020,2020,2020,4,0,1,Import,422,Lebanon,LBN,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,,,20390912,,,6
+H5,2020,2020,2020,4,0,2,Export,422,Lebanon,LBN,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,138044,,,,138044,,112081,,,0
+H5,2020,2020,2020,4,0,3,Re-Export,422,Lebanon,LBN,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,18650,,,,18650,,6000,,,0
+H5,2020,2020,2020,6,1,1,Import,428,Latvia,LVA,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,14242381,,,,11490088,,11877996,,,0
+H5,2020,2020,2020,6,1,2,Export,428,Latvia,LVA,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,5205687,,,,4346829,,5274053,,,0
+H5,2020,2020,2020,6,1,1,Import,428,Latvia,LVA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,8251164,,,,8251164,,2427606,,,0
+H5,2020,2020,2020,6,1,2,Export,428,Latvia,LVA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,10115480,,,,10115480,,2829521,,,0
+H5,2020,2020,2020,4,0,1,Import,428,Latvia,LVA,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,4644891,,,,4644891,,2471215,,,0
+H5,2020,2020,2020,4,0,2,Export,428,Latvia,LVA,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,9189422,,,,9189422,,5641536,,,0
+H5,2020,2020,2020,6,1,1,Import,440,Lithuania,LTU,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,50382973,,,,40046208,,41042261,,,6
+H5,2020,2020,2020,6,1,2,Export,440,Lithuania,LTU,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,26335121,,,,22036632,,25151485,,,0
+H5,2020,2020,2020,6,1,1,Import,440,Lithuania,LTU,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,41448724,,,,41448724,,5653237,,,0
+H5,2020,2020,2020,6,1,2,Export,440,Lithuania,LTU,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3494116,,,,3494116,,557344,,,6
+H5,2020,2020,2020,4,0,1,Import,440,Lithuania,LTU,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,6434357,,,,6434357,,3345219,,,0
+H5,2020,2020,2020,4,0,2,Export,440,Lithuania,LTU,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,3741845,,,,3741845,,2772982,,,0
+H5,2020,2020,2020,6,1,1,Import,442,Luxembourg,LUX,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,465733,,,,588964,,565077,,,0
+H5,2020,2020,2020,6,1,2,Export,442,Luxembourg,LUX,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,16004,,,,34946,,33529,,,0
+H5,2020,2020,2020,6,1,1,Import,442,Luxembourg,LUX,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3051984,,,,3051984,,1915479,,,0
+H5,2020,2020,2020,6,1,2,Export,442,Luxembourg,LUX,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,9236496,,,,9236496,,2878829,,,0
+H5,2020,2020,2020,6,1,3,Re-Export,442,Luxembourg,LUX,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3244,,,,3244,,808,,,0
+H5,2020,2020,2020,6,1,4,Re-Import,442,Luxembourg,LUX,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,28538,,,,28538,,3678,,,0
+H5,2020,2020,2020,4,0,1,Import,442,Luxembourg,LUX,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,2343019,,,,2343019,,1511365,,,6
+H5,2020,2020,2020,4,0,2,Export,442,Luxembourg,LUX,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,144305,,,,144305,,125830,,,0
+H5,2020,2020,2020,4,0,3,Re-Export,442,Luxembourg,LUX,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,28,,,,28,,26,,,0
+H5,2020,2020,2020,6,1,1,Import,446,"China, Macao SAR",MAC,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,169790,,,,53671,,131937,,,2
+H5,2020,2020,2020,4,0,1,Import,446,"China, Macao SAR",MAC,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,657230,,,,657230,,416825,,,0
+H5,2020,2020,2020,6,1,1,Import,450,Madagascar,MDG,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,16872255,,,,11181327,,14775519,,,2
+H5,2020,2020,2020,4,0,1,Import,450,Madagascar,MDG,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,642,,,,642,,5189,,,0
+H5,2020,2020,2020,4,0,2,Export,450,Madagascar,MDG,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,15,,,,15,,241,,,0
+H5,2020,2020,2020,6,1,1,Import,454,Malawi,MWI,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,261179,,,,250072,,436040,,,2
+H5,2020,2020,2020,6,1,2,Export,454,Malawi,MWI,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,3022246,,,,27199524,,4508520,,,2
+H5,2020,2020,2020,6,1,1,Import,454,Malawi,MWI,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,24140,,,,24140,,20334,,,0
+H5,2020,2020,2020,6,1,2,Export,454,Malawi,MWI,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,23350,,,,23350,,25736,,,0
+H5,2020,2020,2020,4,0,1,Import,454,Malawi,MWI,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,10678,,,,10678,,8777,,,0
+H5,2020,2020,2020,4,0,2,Export,454,Malawi,MWI,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,10,,,,10,,1,,,0
+H5,2020,2020,2020,6,1,1,Import,458,Malaysia,MYS,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,1372224,,,,1372224,,1811446,,,0
+H5,2020,2020,2020,6,1,2,Export,458,Malaysia,MYS,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,159578,,,,159578,,295462,,,0
+H5,2020,2020,2020,6,1,1,Import,458,Malaysia,MYS,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,382638485,,,,382638485,,120762620,,,0
+H5,2020,2020,2020,6,1,2,Export,458,Malaysia,MYS,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3787505,,,,3787505,,1291358,,,0
+H5,2020,2020,2020,4,0,1,Import,458,Malaysia,MYS,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,28269578,,,,28269578,,10096562,,,0
+H5,2020,2020,2020,4,0,2,Export,458,Malaysia,MYS,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,44103060,,,,44103060,,25322417,,,0
+H5,2020,2020,2020,6,1,1,Import,470,Malta,MLT,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,59537,,,,52220,,125735,,,0
+H5,2020,2020,2020,6,1,2,Export,470,Malta,MLT,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,5,,,,4,,116,,,0
+H5,2020,2020,2020,6,1,1,Import,470,Malta,MLT,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,16545,,,,16545,,19392,,,0
+H5,2020,2020,2020,6,1,2,Export,470,Malta,MLT,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,305460,,,,305460,,89620,,,0
+H5,2020,2020,2020,4,0,1,Import,470,Malta,MLT,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,450498,,,,450498,,432394,,,0
+H5,2020,2020,2020,4,0,2,Export,470,Malta,MLT,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,728,,,,728,,464,,,0
+H5,2020,2020,2020,6,1,1,Import,478,Mauritania,MRT,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,40738,,,,7997,,35675,,,2
+H5,2020,2020,2020,6,1,1,Import,480,Mauritius,MUS,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,267996,,,,216051,,244758,,,0
+H5,2020,2020,2020,6,1,2,Export,480,Mauritius,MUS,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,20878296,,,,17464950,,15571491,,,0
+H5,2020,2020,2020,6,1,2,Export,480,Mauritius,MUS,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,402983,,,,408840,,189891,,,0
+H5,2020,2020,2020,4,0,1,Import,480,Mauritius,MUS,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,176667,,,,175581,,115569,,,0
+H5,2020,2020,2020,4,0,2,Export,480,Mauritius,MUS,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,553,,,,215,,2149,,,0
+H5,2020,2020,2020,6,1,1,Import,490,"Other Asia, nes",,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,63264033,,,,50919144,,50010934,,,4
+H5,2020,2020,2020,6,1,2,Export,490,"Other Asia, nes",,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,134777,,,6
+H5,2020,2020,2020,6,1,1,Import,490,"Other Asia, nes",,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,63935307,,,,63935307,,20131496,,,0
+H5,2020,2020,2020,6,1,2,Export,490,"Other Asia, nes",,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,2389024,,,,2389024,,758193,,,0
+H5,2020,2020,2020,4,0,1,Import,490,"Other Asia, nes",,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,32927836,,,,32927836,,11195282,,,6
+H5,2020,2020,2020,4,0,2,Export,490,"Other Asia, nes",,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,53672,,,,53672,,376935,,,0
+H5,2020,2020,2020,6,1,1,Import,498,Rep. of Moldova,MDA,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,499948,,,,405301,,623910,,,0
+H5,2020,2020,2020,6,1,2,Export,498,Rep. of Moldova,MDA,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,34787419,,,,28178642,,30063598,,,0
+H5,2020,2020,2020,6,1,3,Re-Export,498,Rep. of Moldova,MDA,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,9566,,,,9571,,23884,,,0
+H5,2020,2020,2020,6,1,2,Export,498,Rep. of Moldova,MDA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,158390,,,,158390,,55439,,,0
+H5,2020,2020,2020,4,0,1,Import,498,Rep. of Moldova,MDA,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,968074,,,,968074,,656298,,,0
+H5,2020,2020,2020,4,0,2,Export,498,Rep. of Moldova,MDA,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,42032,,,,42032,,38758,,,0
+H5,2020,2020,2020,6,1,1,Import,499,Montenegro,MNE,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,179331,,,,163169,,331605,,,0
+H5,2020,2020,2020,6,1,1,Import,499,Montenegro,MNE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,453039,,,,453039,,145756,,,0
+H5,2020,2020,2020,6,1,2,Export,499,Montenegro,MNE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,120892,,,,120892,,25473,,,0
+H5,2020,2020,2020,4,0,1,Import,499,Montenegro,MNE,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,,,160682,,,6
+H5,2020,2020,2020,4,0,2,Export,499,Montenegro,MNE,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,14001,,,,14001,,10925,,,0
+H5,2020,2020,2020,6,1,1,Import,504,Morocco,MAR,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,9130086,,,,6371303,,7995478,,,2
+H5,2020,2020,2020,6,1,1,Import,504,Morocco,MAR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,4256884,,,,4256884,,1639739,,,0
+H5,2020,2020,2020,6,1,2,Export,504,Morocco,MAR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,540,,,,540,,1055,,,0
+H5,2020,2020,2020,4,0,1,Import,504,Morocco,MAR,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,1279736,,,,1279736,,2748845,,,0
+H5,2020,2020,2020,6,1,1,Import,508,Mozambique,MOZ,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,7372119,,,,7372119,,5385064,,,6
+H5,2020,2020,2020,6,1,2,Export,508,Mozambique,MOZ,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,24693,,,,21601,,20754,,,6
+H5,2020,2020,2020,6,1,1,Import,508,Mozambique,MOZ,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,67681,,,6
+H5,2020,2020,2020,4,0,1,Import,508,Mozambique,MOZ,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,17317,,,,17317,,17431,,,0
+H5,2020,2020,2020,4,0,2,Export,508,Mozambique,MOZ,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,941,,,,941,,1404,,,0
+H5,2020,2020,2020,6,1,1,Import,516,Namibia,NAM,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,484055,,,,130693,,376140,,,2
+H5,2020,2020,2020,6,1,2,Export,516,Namibia,NAM,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1729556,,,,1729556,,322261,,,0
+H5,2020,2020,2020,6,1,3,Re-Export,516,Namibia,NAM,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,153984,,,,153984,,23827,,,0
+H5,2020,2020,2020,4,0,1,Import,516,Namibia,NAM,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,75345,,,,75345,,104823,,,6
+H5,2020,2020,2020,4,0,2,Export,516,Namibia,NAM,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,100050186,,,,100050186,,49149338,,,6
+H5,2020,2020,2020,4,0,3,Re-Export,516,Namibia,NAM,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,310,,,,310,,112,,,0
+H5,2020,2020,2020,6,1,1,Import,528,Netherlands,NLD,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,1001922214,,,,831594753,,861063714,,,0
+H5,2020,2020,2020,6,1,2,Export,528,Netherlands,NLD,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,1441358726,,,,1196328660,,1233108935,,,0
+H5,2020,2020,2020,6,1,1,Import,528,Netherlands,NLD,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,352358958,,,,352358958,,76168666,,,0
+H5,2020,2020,2020,6,1,2,Export,528,Netherlands,NLD,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,238626167,,,,238626167,,72374587,,,0
+H5,2020,2020,2020,4,0,1,Import,528,Netherlands,NLD,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,61459676,,,,61459676,,45153357,,,6
+H5,2020,2020,2020,4,0,2,Export,528,Netherlands,NLD,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,9624329,,,,9624329,,20879172,,,6
+H5,2020,2020,2020,6,1,1,Import,554,New Zealand,NZL,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,6672739,,,,5720321,,5893028,,,6
+H5,2020,2020,2020,6,1,2,Export,554,New Zealand,NZL,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,0,,128070,,,6
+H5,2020,2020,2020,6,1,3,Re-Export,554,New Zealand,NZL,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,0,,41983,,,0
+H5,2020,2020,2020,6,1,1,Import,554,New Zealand,NZL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,67358,,,,67358,,53672,,,0
+H5,2020,2020,2020,6,1,2,Export,554,New Zealand,NZL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,16372503,,,,16372503,,3043525,,,0
+H5,2020,2020,2020,6,1,3,Re-Export,554,New Zealand,NZL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,20070,,,,20070,,8976,,,0
+H5,2020,2020,2020,4,0,1,Import,554,New Zealand,NZL,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,3246888,,,,3246888,,2607794,,,6
+H5,2020,2020,2020,4,0,2,Export,554,New Zealand,NZL,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,17390,,,,17390,,12800,,,0
+H5,2020,2020,2020,4,0,3,Re-Export,554,New Zealand,NZL,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,17029,,,,17029,,11405,,,0
+H5,2020,2020,2020,6,1,1,Import,558,Nicaragua,NIC,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,284109,,,,255783,,248802,,,2
+H5,2020,2020,2020,6,1,2,Export,558,Nicaragua,NIC,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,3877478,,,,5413806,,3144938,,,2
+H5,2020,2020,2020,6,1,1,Import,558,Nicaragua,NIC,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,163708,,,,163708,,93322,,,0
+H5,2020,2020,2020,6,1,2,Export,558,Nicaragua,NIC,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,671733,,,,671733,,284414,,,0
+H5,2020,2020,2020,4,0,1,Import,558,Nicaragua,NIC,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,3780,,,,3780,,8680,,,0
+H5,2020,2020,2020,4,0,2,Export,558,Nicaragua,NIC,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,1715988,,,,1715988,,573741,,,0
+H5,2020,2020,2020,6,1,1,Import,579,Norway,NOR,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,51667562,,,,41750764,,38089060,,,0
+H5,2020,2020,2020,6,1,1,Import,579,Norway,NOR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,2372842,,,,2372842,,1505541,,,0
+H5,2020,2020,2020,6,1,2,Export,579,Norway,NOR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,33144110,,,,33144110,,5024102,,,0
+H5,2020,2020,2020,4,0,1,Import,579,Norway,NOR,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,,,29134811,,,6
+H5,2020,2020,2020,4,0,2,Export,579,Norway,NOR,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,,,1494431,,,6
+H5,2020,2020,2020,6,1,1,Import,586,Pakistan,PAK,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,38868,,,,38868,,624344,,,0
+H5,2020,2020,2020,6,1,2,Export,586,Pakistan,PAK,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,446623904,,,,446623904,,303611883,,,0
+H5,2020,2020,2020,6,1,1,Import,586,Pakistan,PAK,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,2203186,,,,2203186,,737801,,,0
+H5,2020,2020,2020,6,1,2,Export,586,Pakistan,PAK,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,278873,,,,278873,,269701,,,0
+H5,2020,2020,2020,6,1,4,Re-Import,586,Pakistan,PAK,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,36270,,,,36270,,6693,,,0
+H5,2020,2020,2020,4,0,1,Import,586,Pakistan,PAK,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,206625,,,,206625,,150945,,,6
+H5,2020,2020,2020,6,1,1,Import,600,Paraguay,PRY,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,413236,,,,205207,,361883,,,2
+H5,2020,2020,2020,6,1,2,Export,600,Paraguay,PRY,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,112789531,,,,166196934,,91481137,,,2
+H5,2020,2020,2020,6,1,1,Import,600,Paraguay,PRY,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,456978,,,,456978,,127944,,,0
+H5,2020,2020,2020,6,1,2,Export,600,Paraguay,PRY,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,15000,,,,15000,,13400,,,0
+H5,2020,2020,2020,4,0,1,Import,600,Paraguay,PRY,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,220613,,,,220613,,248463,,,0
+H5,2020,2020,2020,4,0,2,Export,600,Paraguay,PRY,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,98386365,,,,98386365,,34709398,,,0
+H5,2020,2020,2020,6,1,1,Import,604,Peru,PER,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,36839243,,,,29919617,,20668541,,,2
+H5,2020,2020,2020,6,1,2,Export,604,Peru,PER,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,138032300,,,,121699660,,93866692,,,0
+H5,2020,2020,2020,6,1,1,Import,604,Peru,PER,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,2108905,,,,2108905,,1056140,,,0
+H5,2020,2020,2020,6,1,2,Export,604,Peru,PER,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,52990,,,,52990,,6339,,,0
+H5,2020,2020,2020,4,0,1,Import,604,Peru,PER,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,220221,,,,220221,,67374,,,0
+H5,2020,2020,2020,6,1,1,Import,608,Philippines,PHL,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,172135739,,,,151338396,,152021658,,,2
+H5,2020,2020,2020,6,1,2,Export,608,Philippines,PHL,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,105,,,,6,,90,,,2
+H5,2020,2020,2020,6,1,1,Import,608,Philippines,PHL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,2749997,,,,2749997,,654562,,,6
+H5,2020,2020,2020,6,1,2,Export,608,Philippines,PHL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,50046524,,,,50046524,,43987713,,,0
+H5,2020,2020,2020,4,0,1,Import,608,Philippines,PHL,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,1097172,,,,1097172,,577369,,,0
+H5,2020,2020,2020,4,0,2,Export,608,Philippines,PHL,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,92349038,,,,92349038,,47949232,,,0
+H5,2020,2020,2020,6,1,1,Import,616,Poland,POL,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,257732032,,,,209914260,,181398444,,,6
+H5,2020,2020,2020,6,1,2,Export,616,Poland,POL,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,158947411,,,,126422329,,135010697,,,0
+H5,2020,2020,2020,6,1,1,Import,616,Poland,POL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,54184755,,,,54184755,,21762064,,,0
+H5,2020,2020,2020,6,1,2,Export,616,Poland,POL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,90971299,,,,90971299,,29645604,,,6
+H5,2020,2020,2020,4,0,1,Import,616,Poland,POL,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,132881940,,,,132881940,,46433303,,,6
+H5,2020,2020,2020,4,0,2,Export,616,Poland,POL,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,168920244,,,,168920244,,113166139,,,6
+H5,2020,2020,2020,6,1,1,Import,620,Portugal,PRT,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,24999631,,,6
+H5,2020,2020,2020,6,1,2,Export,620,Portugal,PRT,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,1163453,,,,1153694,,2630148,,,4
+H5,2020,2020,2020,6,1,1,Import,620,Portugal,PRT,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,11895621,,,,11895621,,3530331,,,0
+H5,2020,2020,2020,6,1,2,Export,620,Portugal,PRT,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,17533036,,,,17533036,,10385199,,,0
+H5,2020,2020,2020,4,0,1,Import,620,Portugal,PRT,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,,,14054937,,,6
+H5,2020,2020,2020,4,0,2,Export,620,Portugal,PRT,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,,,7532923,,,6
+H5,2020,2020,2020,6,1,1,Import,634,Qatar,QAT,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,1220051,,,,773112,,1077488,,,2
+H5,2020,2020,2020,4,0,1,Import,634,Qatar,QAT,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,11906427,,,,11906427,,5555809,,,0
+H5,2020,2020,2020,6,1,1,Import,642,Romania,ROU,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,184069128,,,,146393787,,127557106,,,6
+H5,2020,2020,2020,6,1,2,Export,642,Romania,ROU,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,11499,,,,11371,,18478,,,4
+H5,2020,2020,2020,6,1,1,Import,642,Romania,ROU,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3745963,,,,3745963,,1276703,,,0
+H5,2020,2020,2020,6,1,2,Export,642,Romania,ROU,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3800692,,,,3800692,,1760739,,,0
+H5,2020,2020,2020,4,0,1,Import,642,Romania,ROU,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,,,13286596,,,6
+H5,2020,2020,2020,4,0,2,Export,642,Romania,ROU,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,2924975,,,,2924975,,2303276,,,6
+H5,2020,2020,2020,6,1,1,Import,643,Russian Federation,RUS,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,221636,,,,197297,,612500,,,0
+H5,2020,2020,2020,6,1,2,Export,643,Russian Federation,RUS,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,62017789,,,,49964052,,44003890,,,0
+H5,2020,2020,2020,6,1,1,Import,643,Russian Federation,RUS,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,9250625,,,,9250625,,2572357,,,0
+H5,2020,2020,2020,6,1,2,Export,643,Russian Federation,RUS,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,15978101,,,,15978101,,1683852,,,0
+H5,2020,2020,2020,4,0,1,Import,643,Russian Federation,RUS,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,12982631,,,,12982631,,9106060,,,6
+H5,2020,2020,2020,4,0,2,Export,643,Russian Federation,RUS,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,49197701,,,,49197701,,13245381,,,6
+H5,2020,2020,2020,6,1,1,Import,686,Senegal,SEN,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,1176132,,,,825035,,1038701,,,2
+H5,2020,2020,2020,6,1,2,Export,686,Senegal,SEN,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,96289,,,,74500,,81921,,,2
+H5,2020,2020,2020,6,1,1,Import,686,Senegal,SEN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,770219,,,,770219,,101531,,,0
+H5,2020,2020,2020,6,1,2,Export,686,Senegal,SEN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3461259,,,,3461259,,526814,,,0
+H5,2020,2020,2020,4,0,1,Import,686,Senegal,SEN,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,4511,,,,4511,,5718,,,0
+H5,2020,2020,2020,4,0,2,Export,686,Senegal,SEN,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,23449,,,,23449,,6375,,,0
+H5,2020,2020,2020,6,1,1,Import,688,Serbia,SRB,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,8196583,,,,6803156,,7437531,,,0
+H5,2020,2020,2020,6,1,2,Export,688,Serbia,SRB,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,604387,,,,501640,,748189,,,0
+H5,2020,2020,2020,6,1,1,Import,688,Serbia,SRB,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,17474330,,,,17474330,,3404906,,,0
+H5,2020,2020,2020,6,1,2,Export,688,Serbia,SRB,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,2547715,,,,2547715,,579195,,,0
+H5,2020,2020,2020,4,0,1,Import,688,Serbia,SRB,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,1364297,,,,1364297,,481751,,,6
+H5,2020,2020,2020,4,0,2,Export,688,Serbia,SRB,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,11041533,,,,11041533,,5447412,,,0
+H5,2020,2020,2020,6,1,1,Import,690,Seychelles,SYC,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,539629,,,,238346,,472568,,,2
+H5,2020,2020,2020,4,0,1,Import,690,Seychelles,SYC,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,35714,,,,35714,,53586,,,0
+H5,2020,2020,2020,6,1,1,Import,699,India,IND,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,627862,,,,627862,,1971399,,,0
+H5,2020,2020,2020,6,1,2,Export,699,India,IND,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,107579659,,,6
+H5,2020,2020,2020,6,1,1,Import,699,India,IND,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,338800,,,,338800,,119278,,,0
+H5,2020,2020,2020,6,1,2,Export,699,India,IND,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,27883,,,,27883,,14714,,,0
+H5,2020,2020,2020,4,0,1,Import,699,India,IND,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,128347940,,,,128347940,,5730728,,,6
+H5,2020,2020,2020,4,0,2,Export,699,India,IND,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,108480496,,,,108480496,,32550123,,,6
+H5,2020,2020,2020,6,1,1,Import,702,Singapore,SGP,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,42775418,,,,36669967,,37777105,,,6
+H5,2020,2020,2020,6,1,2,Export,702,Singapore,SGP,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,9284900,,,,7983521,,7899501,,,6
+H5,2020,2020,2020,6,1,1,Import,702,Singapore,SGP,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3371513,,,,3371513,,1142687,,,6
+H5,2020,2020,2020,6,1,2,Export,702,Singapore,SGP,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,24538162,,,,24538162,,7669216,,,6
+H5,2020,2020,2020,4,0,1,Import,702,Singapore,SGP,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,8698344,,,,8698344,,5357126,,,6
+H5,2020,2020,2020,4,0,2,Export,702,Singapore,SGP,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,5900643,,,,5900643,,3411640,,,6
+H5,2020,2020,2020,6,1,1,Import,703,Slovakia,SVK,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,10768059,,,,8898477,,8054833,,,0
+H5,2020,2020,2020,6,1,2,Export,703,Slovakia,SVK,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,61389071,,,,54861466,,40785113,,,0
+H5,2020,2020,2020,6,1,1,Import,703,Slovakia,SVK,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,6071957,,,,6071957,,513505,,,0
+H5,2020,2020,2020,6,1,2,Export,703,Slovakia,SVK,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,8832414,,,,8832414,,1749213,,,6
+H5,2020,2020,2020,4,0,1,Import,703,Slovakia,SVK,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,,,4657620,,,6
+H5,2020,2020,2020,4,0,2,Export,703,Slovakia,SVK,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,624727,,,,624727,,1341460,,,0
+H5,2020,2020,2020,6,1,1,Import,704,Viet Nam,VNM,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,12854229,,,,11019510,,11352211,,,6
+H5,2020,2020,2020,6,1,2,Export,704,Viet Nam,VNM,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,15623614,,,,13433795,,13292415,,,6
+H5,2020,2020,2020,6,1,1,Import,704,Viet Nam,VNM,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,117998545,,,,117998545,,39992564,,,6
+H5,2020,2020,2020,6,1,2,Export,704,Viet Nam,VNM,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,6231264,,,,6231264,,1947534,,,6
+H5,2020,2020,2020,4,0,1,Import,704,Viet Nam,VNM,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,8565032,,,,8565032,,5277658,,,6
+H5,2020,2020,2020,4,0,2,Export,704,Viet Nam,VNM,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,110188036,,,,110188036,,63765502,,,6
+H5,2020,2020,2020,6,1,1,Import,705,Slovenia,SVN,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,6206479,,,,5305762,,5504454,,,0
+H5,2020,2020,2020,6,1,2,Export,705,Slovenia,SVN,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,160879,,,,147479,,543003,,,0
+H5,2020,2020,2020,6,1,1,Import,705,Slovenia,SVN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,56884300,,,,56884300,,9449526,,,0
+H5,2020,2020,2020,6,1,2,Export,705,Slovenia,SVN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,56637369,,,,56637369,,12290759,,,0
+H5,2020,2020,2020,4,0,1,Import,705,Slovenia,SVN,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,3671125,,,,3671125,,2260082,,,0
+H5,2020,2020,2020,4,0,2,Export,705,Slovenia,SVN,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,896949,,,,896949,,659919,,,0
+H5,2020,2020,2020,6,1,1,Import,710,South Africa,ZAF,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,13203161,,,,13203161,,11434672,,,0
+H5,2020,2020,2020,6,1,2,Export,710,South Africa,ZAF,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,85153905,,,6
+H5,2020,2020,2020,6,1,3,Re-Export,710,South Africa,ZAF,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,244016,,,,244016,,194271,,,0
+H5,2020,2020,2020,6,1,1,Import,710,South Africa,ZAF,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3422718,,,,3422718,,574787,,,0
+H5,2020,2020,2020,6,1,2,Export,710,South Africa,ZAF,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,518086,,,,518086,,353673,,,0
+H5,2020,2020,2020,4,0,1,Import,710,South Africa,ZAF,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,101490808,,,,101490808,,13576896,,,0
+H5,2020,2020,2020,4,0,2,Export,710,South Africa,ZAF,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,47300970,,,,47300970,,25052595,,,0
+H5,2020,2020,2020,4,0,3,Re-Export,710,South Africa,ZAF,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,111123,,,,111123,,64445,,,0
+H5,2020,2020,2020,6,1,1,Import,716,Zimbabwe,ZWE,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,2064967,,,,2870345,,1823675,,,2
+H5,2020,2020,2020,6,1,2,Export,716,Zimbabwe,ZWE,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,257756,,,,187948,,219296,,,2
+H5,2020,2020,2020,6,1,1,Import,716,Zimbabwe,ZWE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,406100,,,,406100,,308781,,,0
+H5,2020,2020,2020,4,0,1,Import,716,Zimbabwe,ZWE,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,121056,,,,121056,,50334,,,0
+H5,2020,2020,2020,4,0,2,Export,716,Zimbabwe,ZWE,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,100050,,,,100050,,10107,,,0
+H5,2020,2020,2020,6,1,1,Import,724,Spain,ESP,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,108395712,,,4
+H5,2020,2020,2020,6,1,2,Export,724,Spain,ESP,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,321525707,,,,260839187,,248236564,,,0
+H5,2020,2020,2020,6,1,3,Re-Export,724,Spain,ESP,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,268288,,,,216512,,441711,,,0
+H5,2020,2020,2020,6,1,1,Import,724,Spain,ESP,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,46519512,,,,46519512,,12627985,,,0
+H5,2020,2020,2020,6,1,2,Export,724,Spain,ESP,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,44603362,,,,44603362,,17559879,,,0
+H5,2020,2020,2020,4,0,1,Import,724,Spain,ESP,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,,,20524303,,,6
+H5,2020,2020,2020,4,0,2,Export,724,Spain,ESP,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,,,23045997,,,6
+H5,2020,2020,2020,6,1,1,Import,748,Eswatini,SWZ,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,10132,,,,11775,,20258,,,0
+H5,2020,2020,2020,6,1,2,Export,748,Eswatini,SWZ,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,49698180,,,,40340665,,30031249,,,0
+H5,2020,2020,2020,6,1,2,Export,748,Eswatini,SWZ,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,36983,,,,36983,,4231,,,0
+H5,2020,2020,2020,4,0,1,Import,748,Eswatini,SWZ,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,92343,,,,92343,,53222,,,0
+H5,2020,2020,2020,4,0,2,Export,748,Eswatini,SWZ,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,943787,,,,943787,,127717,,,0
+H5,2020,2020,2020,6,1,1,Import,752,Sweden,SWE,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,268340206,,,6
+H5,2020,2020,2020,6,1,2,Export,752,Sweden,SWE,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,239297722,,,,193182733,,185921574,,,4
+H5,2020,2020,2020,6,1,1,Import,752,Sweden,SWE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,3748734,,,6
+H5,2020,2020,2020,6,1,2,Export,752,Sweden,SWE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,48469834,,,,48469834,,5738244,,,6
+H5,2020,2020,2020,4,0,1,Import,752,Sweden,SWE,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,29009842,,,,29009842,,18548673,,,6
+H5,2020,2020,2020,4,0,2,Export,752,Sweden,SWE,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,1349861,,,,,,1200611,,,6
+H5,2020,2020,2020,6,1,1,Import,757,Switzerland,CHE,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,114703627,,,6
+H5,2020,2020,2020,6,1,2,Export,757,Switzerland,CHE,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,4479959,,,6
+H5,2020,2020,2020,6,1,4,Re-Import,757,Switzerland,CHE,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,8945,,,0
+H5,2020,2020,2020,6,1,1,Import,757,Switzerland,CHE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,12312430,,,,12312430,,3816593,,,0
+H5,2020,2020,2020,6,1,2,Export,757,Switzerland,CHE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,19431536,,,,19431536,,3109116,,,0
+H5,2020,2020,2020,6,1,4,Re-Import,757,Switzerland,CHE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,42082,,,,42082,,28787,,,0
+H5,2020,2020,2020,4,0,1,Import,757,Switzerland,CHE,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,14005784,,,,14005784,,12445114,,,6
+H5,2020,2020,2020,4,0,2,Export,757,Switzerland,CHE,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,,,65020,,,6
+H5,2020,2020,2020,6,1,1,Import,764,Thailand,THA,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,10996762,,,,8652261,,12361021,,,6
+H5,2020,2020,2020,6,1,2,Export,764,Thailand,THA,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,13364243,,,,10895243,,13001623,,,4
+H5,2020,2020,2020,6,1,1,Import,764,Thailand,THA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,9610344,,,,9610344,,1188619,,,0
+H5,2020,2020,2020,6,1,2,Export,764,Thailand,THA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,4101709,,,,4101709,,1083089,,,6
+H5,2020,2020,2020,4,0,1,Import,764,Thailand,THA,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,64080774,,,,64080774,,8232378,,,6
+H5,2020,2020,2020,4,0,2,Export,764,Thailand,THA,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,16930225,,,,16930225,,7706746,,,6
+H5,2020,2020,2020,6,1,1,Import,768,Togo,TGO,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,10103670,,4594897,,,2
+H5,2020,2020,2020,6,1,1,Import,768,Togo,TGO,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,11609,,,,167180,,98305,,,0
+H5,2020,2020,2020,6,1,2,Export,768,Togo,TGO,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1835,,,,27100,,22765,,,0
+H5,2020,2020,2020,6,1,1,Import,784,United Arab Emirates,ARE,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,14268117,,,6
+H5,2020,2020,2020,6,1,2,Export,784,United Arab Emirates,ARE,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,6671983,,,2
+H5,2020,2020,2020,6,1,3,Re-Export,784,United Arab Emirates,ARE,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,6601693,,,0
+H5,2020,2020,2020,6,1,1,Import,784,United Arab Emirates,ARE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,56297,,,6
+H5,2020,2020,2020,6,1,2,Export,784,United Arab Emirates,ARE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,377664,,,,377664,,242704,,,0
+H5,2020,2020,2020,6,1,3,Re-Export,784,United Arab Emirates,ARE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,398,,,,398,,41445,,,0
+H5,2020,2020,2020,4,0,1,Import,784,United Arab Emirates,ARE,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,,,28503561,,,6
+H5,2020,2020,2020,4,0,2,Export,784,United Arab Emirates,ARE,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,14695528,,,,14695528,,7989059,,,0
+H5,2020,2020,2020,4,0,3,Re-Export,784,United Arab Emirates,ARE,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,13794265,,,,13794265,,7367060,,,0
+H5,2020,2020,2020,6,1,1,Import,792,Turkey,TUR,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,70028564,,,6
+H5,2020,2020,2020,6,1,2,Export,792,Turkey,TUR,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,4413888,,,,4061057,,3924142,,,0
+H5,2020,2020,2020,6,1,1,Import,792,Turkey,TUR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,438134962,,,,438134962,,72258760,,,0
+H5,2020,2020,2020,6,1,2,Export,792,Turkey,TUR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,577037,,,,577037,,291799,,,0
+H5,2020,2020,2020,4,0,1,Import,792,Turkey,TUR,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,62389850,,,,62389850,,26900148,,,0
+H5,2020,2020,2020,4,0,2,Export,792,Turkey,TUR,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,11739628,,,,11739628,,7447442,,,0
+H5,2020,2020,2020,6,1,1,Import,800,Uganda,UGA,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,657080,,,,627392,,580301,,,2
+H5,2020,2020,2020,6,1,2,Export,800,Uganda,UGA,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,13120676,,,,12506801,,11162941,,,2
+H5,2020,2020,2020,6,1,1,Import,800,Uganda,UGA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,20119,,,,20119,,1560,,,0
+H5,2020,2020,2020,4,0,1,Import,800,Uganda,UGA,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,22473,,,,22473,,4793,,,0
+H5,2020,2020,2020,4,0,2,Export,800,Uganda,UGA,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,792,,,,792,,1741,,,0
+H5,2020,2020,2020,6,1,1,Import,804,Ukraine,UKR,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,82,,,,82,,3507,,,0
+H5,2020,2020,2020,6,1,2,Export,804,Ukraine,UKR,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,17046816,,,,13890453,,11076586,,,0
+H5,2020,2020,2020,6,1,1,Import,804,Ukraine,UKR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,21210550,,,,21210550,,4017043,,,0
+H5,2020,2020,2020,6,1,2,Export,804,Ukraine,UKR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,13225,,,,13225,,7866,,,0
+H5,2020,2020,2020,4,0,1,Import,804,Ukraine,UKR,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,1973378,,,,1973378,,2374408,,,0
+H5,2020,2020,2020,4,0,2,Export,804,Ukraine,UKR,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,,,69199316,,,6
+H5,2020,2020,2020,6,1,1,Import,807,North Macedonia,MKD,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,1427058,,,,1153612,,1560586,,,0
+H5,2020,2020,2020,6,1,2,Export,807,North Macedonia,MKD,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,28598,,,,26219,,86256,,,0
+H5,2020,2020,2020,6,1,1,Import,807,North Macedonia,MKD,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1572946,,,,1572946,,449981,,,0
+H5,2020,2020,2020,6,1,2,Export,807,North Macedonia,MKD,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1275580,,,,1275580,,465779,,,0
+H5,2020,2020,2020,4,0,1,Import,807,North Macedonia,MKD,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,722928,,,,722928,,406652,,,0
+H5,2020,2020,2020,6,1,1,Import,826,United Kingdom,GBR,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,329208654,,,6
+H5,2020,2020,2020,6,1,2,Export,826,United Kingdom,GBR,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,146312975,,,6
+H5,2020,2020,2020,6,1,1,Import,826,United Kingdom,GBR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,32017446,,,6
+H5,2020,2020,2020,6,1,2,Export,826,United Kingdom,GBR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,56069763,,,6
+H5,2020,2020,2020,4,0,1,Import,826,United Kingdom,GBR,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,,,62776186,,,6
+H5,2020,2020,2020,4,0,2,Export,826,United Kingdom,GBR,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,3032846,,,,3032846,,2188627,,,0
+H5,2020,2020,2020,6,1,1,Import,842,USA,USA,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,1231477813,,,,1231477813,,656497807,,,0
+H5,2020,2020,2020,6,1,2,Export,842,USA,USA,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,2555218108,,,,2555218108,,1185809919,,,0
+H5,2020,2020,2020,6,1,3,Re-Export,842,USA,USA,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,11868393,,,,11868393,,11009802,,,0
+H5,2020,2020,2020,6,1,1,Import,842,USA,USA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,29275586,,,6
+H5,2020,2020,2020,6,1,2,Export,842,USA,USA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,83497836,,,6
+H5,2020,2020,2020,6,1,3,Re-Export,842,USA,USA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,644030,,,,644030,,413314,,,0
+H5,2020,2020,2020,4,0,1,Import,842,USA,USA,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,158851000,,,,158851000,,101161574,,,0
+H5,2020,2020,2020,4,0,2,Export,842,USA,USA,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,22869000,,,,22869000,,20639082,,,0
+H5,2020,2020,2020,4,0,3,Re-Export,842,USA,USA,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,4122000,,,,4122000,,3685525,,,0
+H5,2020,2020,2020,6,1,1,Import,854,Burkina Faso,BFA,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,634660,,,,1621753,,555790,,,2
+H5,2020,2020,2020,6,1,2,Export,854,Burkina Faso,BFA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,30000,,,,30000,,3494,,,0
+H5,2020,2020,2020,4,0,1,Import,854,Burkina Faso,BFA,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,103564,,,,103564,,15951,,,0
+H5,2020,2020,2020,6,1,1,Import,858,Uruguay,URY,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,7687622,,,,,,5294610,,,4
+H5,2020,2020,2020,6,1,2,Export,858,Uruguay,URY,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,5402,,,,3772,,16652,,,0
+H5,2020,2020,2020,6,1,1,Import,858,Uruguay,URY,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,74910,,,,74910,,38103,,,0
+H5,2020,2020,2020,4,0,1,Import,858,Uruguay,URY,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,3431692,,,,3431692,,1105352,,,0
+H5,2020,2020,2020,6,1,1,Import,860,Uzbekistan,UZB,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,1,,,,1,,5,,,0
+H5,2020,2020,2020,6,1,2,Export,860,Uzbekistan,UZB,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,726952,,,,726952,,949163,,,0
+H5,2020,2020,2020,6,1,1,Import,860,Uzbekistan,UZB,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,23084340,,,,23084340,,3308330,,,0
+H5,2020,2020,2020,6,1,2,Export,860,Uzbekistan,UZB,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,19240,,,,19240,,12176,,,0
+H5,2020,2020,2020,4,0,1,Import,860,Uzbekistan,UZB,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,1143470,,,,1143470,,565292,,,0
+H5,2020,2020,2020,4,0,2,Export,860,Uzbekistan,UZB,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,3500,,,,3500,,1289,,,0
+H5,2020,2020,2020,6,1,1,Import,894,Zambia,ZMB,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,6531516,,,,5101803,,5768308,,,2
+H5,2020,2020,2020,6,1,2,Export,894,Zambia,ZMB,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,11,,,,200,,10,,,2
+H5,2020,2020,2020,6,1,1,Import,894,Zambia,ZMB,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,7190,,,,7190,,4922,,,0
+H5,2020,2020,2020,4,0,1,Import,894,Zambia,ZMB,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,43941,,,,43941,,23282,,,0
+H4,2020,2020,2020,6,1,1,Import,180,Dem. Rep. of the Congo,COD,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,13687556,,10726262,,,2
+H4,2020,2020,2020,6,1,1,Import,270,Gambia,GMB,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,60160,,,,84272,,33194,,,0
+H4,2020,2020,2020,6,1,1,Import,308,Grenada,GRD,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,16084,,,,4648,,14204,,,2
+H4,2020,2020,2020,6,1,1,Import,426,Lesotho,LSO,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,4010,,,,159,,3512,,,2
+H4,2020,2020,2020,6,1,1,Import,484,Mexico,MEX,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,175248024,,,0
+H4,2020,2020,2020,6,1,2,Export,484,Mexico,MEX,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,1237040,,,,1081398,,1003337,,,6
+H4,2020,2020,2020,6,1,1,Import,533,Aruba,ABW,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,94831,,,,49836,,83750,,,2
+H4,2020,2020,2020,6,1,1,Import,566,Nigeria,NGA,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,30574725,,,,33757133,,26775166,,,2
+H4,2020,2020,2020,6,1,2,Export,566,Nigeria,NGA,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,1764226,,,,1328900,,1430925,,,2
+H4,2020,2020,2020,6,1,1,Import,682,Saudi Arabia,SAU,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,,,59063313,,,6
+H4,2020,2020,2020,6,1,2,Export,682,Saudi Arabia,SAU,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,8,Weight in kilograms,537775,,,,537775,,764868,,,0
+H4,2020,2020,2020,6,1,3,Re-Export,682,Saudi Arabia,SAU,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,8,Weight in kilograms,537775,,,,537775,,764868,,,0
+H4,2020,2020,2020,6,1,1,Import,762,Tajikistan,TJK,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,58750,,,,58750,,60657,,,0
+H4,2020,2020,2020,6,1,2,Export,762,Tajikistan,TJK,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,7,Volume in litres,148580,,,,148580,,189025,,,0
+H4,2020,2020,2020,6,1,1,Import,818,Egypt,EGY,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,1225870,,1262882,,,4
+H4,2020,2020,2020,6,1,2,Export,818,Egypt,EGY,0,World,WLD,,,,,,,,220710,Undenatured ethyl alcohol; of an alcoholic strength by volume of 80% vol. or higher,1,No Quantity,0,,,,220692,,218369,,,4
+H4,2020,2020,2020,6,1,1,Import,270,Gambia,GMB,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,11223,,,,11223,,20293,,,0
+H4,2020,2020,2020,6,1,1,Import,484,Mexico,MEX,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,4844058,,,0
+H4,2020,2020,2020,6,1,2,Export,484,Mexico,MEX,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,70249241,,,,70249241,,22640202,,,6
+H4,2020,2020,2020,6,1,1,Import,566,Nigeria,NGA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,6039005,,,,6039005,,5171486,,,0
+H4,2020,2020,2020,6,1,2,Export,566,Nigeria,NGA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,74369350,,,,74369350,,348047,,,0
+H4,2020,2020,2020,6,1,1,Import,682,Saudi Arabia,SAU,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,122320,,,,122320,,102799,,,0
+H4,2020,2020,2020,6,1,2,Export,682,Saudi Arabia,SAU,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,20843415,,,,20843415,,11309538,,,0
+H4,2020,2020,2020,6,1,1,Import,762,Tajikistan,TJK,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,61003,,,,61003,,45355,,,0
+H4,2020,2020,2020,6,1,1,Import,818,Egypt,EGY,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,2423115,,,,2423115,,821252,,,6
+H4,2020,2020,2020,6,1,2,Export,818,Egypt,EGY,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,6090,,,,6090,,1903,,,6
+H4,2020,2020,2020,4,0,1,Import,180,Dem. Rep. of the Congo,COD,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,13517,,,,13517,,6301,,,0
+H4,2020,2020,2020,4,0,2,Export,180,Dem. Rep. of the Congo,COD,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,51,,,,51,,136,,,0
+H4,2020,2020,2020,4,0,1,Import,270,Gambia,GMB,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,234884,,,,1179732,,349242,,,0
+H4,2020,2020,2020,4,0,1,Import,308,Grenada,GRD,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,1271,,,,1271,,3591,,,0
+H4,2020,2020,2020,4,0,1,Import,426,Lesotho,LSO,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,618407,,,,618407,,173770,,,0
+H4,2020,2020,2020,4,0,2,Export,426,Lesotho,LSO,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,893,,,,893,,1083,,,6
+H4,2020,2020,2020,4,0,1,Import,484,Mexico,MEX,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,,,1812915,,,0
+H4,2020,2020,2020,4,0,2,Export,484,Mexico,MEX,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,0,,51275466,,,0
+H4,2020,2020,2020,4,0,1,Import,533,Aruba,ABW,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,372791,,,,372791,,227852,,,0
+H4,2020,2020,2020,4,0,1,Import,566,Nigeria,NGA,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,63386,,,,63386,,68864,,,0
+H4,2020,2020,2020,4,0,2,Export,566,Nigeria,NGA,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",1,No Quantity,0,,,,0,,905909,,,0
+H4,2020,2020,2020,4,0,1,Import,682,Saudi Arabia,SAU,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,139766156,,,,139766156,,81977799,,,0
+H4,2020,2020,2020,4,0,1,Import,762,Tajikistan,TJK,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,73278,,,,73278,,50289,,,0
+H4,2020,2020,2020,4,0,1,Import,818,Egypt,EGY,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,1857090,,,,1857090,,1132111,,,6
+H4,2020,2020,2020,4,0,2,Export,818,Egypt,EGY,0,World,WLD,,,,,,,,4402,"Wood charcoal (including shell or nut charcoal), whether or not agglomerated",8,Weight in kilograms,8793334,,,,8793334,,5084286,,,6
