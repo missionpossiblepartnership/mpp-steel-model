@@ -54,10 +54,35 @@ def capex_generator(
     }
 
     if output_type == 'all':
-        logger.info(f'Creating capex values dictionary')
+        logger.info(f'Creating capex values dictionary for {technology}')
         return capex_dict
-    logger.info(f'Creating capex value')
+    logger.info(f'Creating capex value: {output_type} for: {technology}')
     return capex_dict[output_type]
+
+def capex_dictionary_generator(
+    greenfield_df: pd.DataFrame, brownfield_df: pd.DataFrame, other_df: pd.DataFrame) -> dict:
+    """[summary]
+
+    Args:
+        greenfield_df (pd.DataFrame): A dataframe of greenfield capex
+        brownfield_df (pd.DataFrame): A dataframe of brownfield capex
+        other_df (pd.DataFrame): A dataframe of other opex
+
+    Returns:
+        dict: A dictionary of the formatted capex and opex dataframes
+    """
+
+    brownfield_df.drop(
+        ['Available from', 'Available until', 'Technology type'], axis=1, inplace=True)
+    return {
+        'greenfield': melt_and_index(
+            greenfield_df, ['Technology'], 'Year', ['Technology', 'Year']),
+        'brownfield': melt_and_index(
+            brownfield_df, ['Technology'], 'Year', ['Technology', 'Year']),
+        'other_opex': melt_and_index(
+            other_df, ['Technology'], 'Year', ['Technology', 'Year'])
+    }
+
 
 def create_data_tuples(df: pd.DataFrame, namedtuple_name: str):
     """Generic function that dynamically create namedtuples from a dataframe.
@@ -78,17 +103,6 @@ def create_data_tuples(df: pd.DataFrame, namedtuple_name: str):
         ticker+=1
 
 def steel_demand_getter(df: pd.DataFrame, steel_type: str, scenario: str, year: str) -> float:
-    """[summary]
-
-    Args:
-        df (pd.DataFrame): [description]
-        steel_type (str): [description]
-        scenario (str): [description]
-        year (str): [description]
-
-    Returns:
-        float: [description]
-    """
     df_c = df.copy()
     metric_names = df_c['Steel Type'].unique()
     scenarios = df_c['Scenario'].unique()
@@ -150,21 +164,42 @@ def grid_emissivity_getter(df: pd.DataFrame, year: str) -> float:
     value = df_c.loc[year]['Value']
     return value
 
+def format_commodities_data(df: pd.DataFrame, material_mapper: dict) -> pd.DataFrame:
+    df_c = df.copy()
+    logger.info(f'Formatting the ethanol_plastics_charcoal data')
+    columns_of_interest = ['Year', 'Reporter', 'Commodity Code', 'Netweight (kg)', 'Trade Value (US$)']
+    df_c = df_c[columns_of_interest]
+    df_c.columns = ['year', 'reporter', 'commodity_code', 'netweight', 'trade_value']
+    df_c['commodity_code'] = df_c['commodity_code'].apply(lambda x: material_mapper[str(x)])
+    df_c['implied_price'] = ''
+    df_c['netweight'].fillna(0, inplace=True)
+    for row in df_c.itertuples():
+        if row.netweight == 0:
+            df_c.loc[row.Index, 'implied_price'] = 0
+        else:
+            df_c.loc[row.Index, 'implied_price'] = row.trade_value / row.netweight
+    return df_c
+
+def commodity_data_getter(df: pd.DataFrame, material_mapper: dict, commodity: str = ''):
+    df_c = df.copy()
+    if commodity:
+        logger.info(f'Getting the weighted average price for {commodity}')
+        df_c = df_c[df_c['commodity_code'] == commodity]
+        value_productsum = sum(df_c['netweight'] * df_c['implied_price']) / df_c['netweight'].sum()
+        return value_productsum
+    else:
+        logger.info(f'Getting the weighted average price for all commodities: Ethanol, Plastic, Charcoal')
+        values_dict = {}
+        for commodity_ref in list(material_mapper.values()):
+            new_df = df_c[df_c['commodity_code'] == commodity_ref]
+            value_productsum = sum(new_df['netweight'] * new_df['implied_price']) / new_df['netweight'].sum()
+            values_dict[commodity_ref] = value_productsum
+    return values_dict
+
 greenfield_capex_df = read_pickle_folder(PKL_FOLDER, 'greenfield_capex')
 brownfield_capex_df = read_pickle_folder(PKL_FOLDER, 'brownfield_capex')
 other_opex_df = read_pickle_folder(PKL_FOLDER, 'other_opex')
-
-brownfield_capex_df.drop(
-    ['Available from', 'Available until', 'Technology type'], axis=1, inplace=True)
-
-capex_dictionary = {
-    'greenfield': melt_and_index(
-        greenfield_capex_df, ['Technology'], 'Year', ['Technology', 'Year']),
-    'brownfield': melt_and_index(
-        brownfield_capex_df, ['Technology'], 'Year', ['Technology', 'Year']),
-    'other_opex': melt_and_index(
-        other_opex_df, ['Technology'], 'Year', ['Technology', 'Year'])
-}
+capex_dict = capex_dictionary_generator(greenfield_capex_df, brownfield_capex_df, other_opex_df)
 
 # Example Loading Data with necessary subsets
 feedstock_prices = read_pickle_folder(
@@ -191,9 +226,22 @@ ccs_co2 = read_pickle_folder(
 tech_availability = read_pickle_folder(
     PKL_FOLDER, 'tech_availability')[['Technology', 'Year available from', 'Year available until']]
 
-steel_demand_example = steel_demand_getter(steel_demand, 'Crude', 'BAU', 2030)
+ethanol_plastic_charcoal = read_pickle_folder(
+    PKL_FOLDER, 'ethanol_plastic_charcoal')
+
+COMMODITY_MATERIAL_MAPPER = {
+    '4402': 'charcoal',
+    '220710': 'ethanol',
+    '391510': 'plastic'
+}
+
+commodities_df = format_commodities_data(ethanol_plastic_charcoal, COMMODITY_MATERIAL_MAPPER)
 
 # Example Use of Functions
+print(capex_generator(capex_dict, 'DRI-EAF', 2020))
+
+print(steel_demand_getter(steel_demand, 'Crude', 'BAU', 2030))
+
 print(carbon_tax_getter(carbon_tax_assumptions, 2040))
 
 print(scope1_emissions_getter(s1_emissions_factors, 'Biomass'))
@@ -205,5 +253,7 @@ print(static_energy_prices_getter(static_energy_prices, 'BF gas', 2026))
 print(technology_availability_getter(tech_availability, 'BAT BF-BOF'))
 
 print(grid_emissivity_getter(grid_emissivity, 2026))
+
+print(commodity_data_getter(commodities_df, COMMODITY_MATERIAL_MAPPER))
 
 create_data_tuples(feedstock_prices, 'FeedstockPrices')
