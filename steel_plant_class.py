@@ -3,8 +3,8 @@ import pandas as pd
 
 # For logger and units dict
 from utils import (
-    get_logger, read_pickle_folder, country_mapper,
-    country_mapping_fixer, generate_country_matching_dict)
+    get_logger, read_pickle_folder,
+    country_mapping_fixer, country_matcher)
 
 from model_config import PKL_FOLDER
 
@@ -42,14 +42,12 @@ def steel_plant_formatter(df: pd.DataFrame) -> pd.DataFrame:
 
 steel_plants = read_pickle_folder(PKL_FOLDER, 'steel_plants')
 steel_plants = steel_plant_formatter(steel_plants)
-countries_code_mapping, country_reference = country_mapper()
 steel_plant_countries = steel_plants['country'].unique().tolist()
-matching_dict = generate_country_matching_dict(steel_plant_countries, country_reference)
-
+matching_dict, unmatched_dict = country_matcher(steel_plant_countries)
 logger.info('- Applying the codes of the matched countries to the steel plant column')
 steel_plants['country_code'] = steel_plants['country'].apply(
-    lambda x: countries_code_mapping[matching_dict[x]])
+    lambda x: matching_dict[x])
 
-country_fixer_dict = {'Taiwan': 'TWN', 'Slovakia': 'SVK'}
+country_fixer_dict = {'Korea, North': 'PRK'}
 
-country_mapping_fixer(steel_plants, 'country', 'country_code', country_fixer_dict)
+steel_plants = country_mapping_fixer(steel_plants, 'country', 'country_code', country_fixer_dict)

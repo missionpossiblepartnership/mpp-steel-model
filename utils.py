@@ -6,9 +6,9 @@ import os
 
 import pandas as pd
 import wbgapi as wb
+import pycountry
 
 from thefuzz import process
-
 from logging.handlers import TimedRotatingFileHandler
 
 FORMATTER = logging.Formatter("%(asctime)s — %(name)s — %(levelname)s — %(message)s")
@@ -154,55 +154,6 @@ def countries_extractor(extract_type: str = ['countries', 'regions']) -> pd.Data
 
     return countries
 
-def country_mapper(data_type: str = 'all'):
-    """Creates a reference of the world bank country data.
-
-    Args:
-        data_type (str, optional): Defines the data you want to return. 
-        'all': return both a dictionary mapper of countries to codes and a country reference list.
-        'dict': return just the dictoinary mapper
-        'list': return just the country list.
-        Defaults to 'all'.
-
-    Returns:
-        dict, list: A dictionary or list or both.
-    """
-    temp_df = countries_extractor('countries')[['country', 'country_code']]
-    mapping = dict(zip(temp_df['country'], temp_df['country_code']))
-    list_ref = list(mapping.keys())
-
-    if data_type == 'all':
-        logger.info('Generating the country-to-code mapping and country reference')
-        return mapping, list_ref
-    if data_type == 'dict':
-        logger.info('Generating the country-to-code mapping')
-        return mapping
-    if data_type == 'list':
-        logger.info('Generating the country reference')
-        return list_ref
-
-def generate_country_matching_dict(
-    countries_to_match: list, countries_to_reference: list, print_output: bool = False) -> dict:
-    """Generates a country string matching dictionary based on thefuzz library.
-
-    Args:
-        countries_to_match (list): A list of the countries you want to match to the reference countries
-        countries_to_reference (list): A list of the reference countries you want to match against.
-        print_output (bool): Boolean that determines whether matches are printed to the console. Defaults to False.
-
-    Returns:
-        dict: A dictionary with the highest ranking matches. 
-        Warning: does not always give a perfect result
-    """
-    country_matching_dict = {}
-    logger.info('Generating a country match for each country')
-    for country in countries_to_match:
-        match = process.extract(country, countries_to_reference, limit=3)
-        if print_output:
-            print(f'Country: {country} | Matches: {match}')
-        country_matching_dict[country] = match[0][0]
-    return country_matching_dict
-
 def country_mapping_fixer(
     df: pd.DataFrame, country_colname: str, country_code_colname: str, country_to_code_dict: dict) -> pd.DataFrame:
     """Fixes country code mapping problems in a DataFrame by overriding the existing mapping with a dictionary.
@@ -222,3 +173,43 @@ def country_mapping_fixer(
     for item in list(country_to_code_dict.items()):
         df_c.loc[df_c[country_colname] == item[0], country_code_colname] = item[1]
     return df_c
+
+def country_matcher(country_list: list, output_type: str = 'all') -> dict:
+    """Fuzzy matches a list of countries and creates a mapping of the country to alpha-3 name.
+    The function produces a dictionary of mappings and also a dictionary of all unmapped countries.
+
+    Args:
+        country_list (list): The list of countries you would like to map.
+        output_type (str, optional): The output you want - mapped dictionary, unmapped dictionary or both.
+        Defaults to 'all'.
+
+    Returns:
+        dict: A dictionary(ies) based on the output_type parameters
+    """
+    def match_country(country: str):
+        # try to match the country to using pycountry.
+        # If not match, return an empty string
+        try:
+            match = pycountry.countries.search_fuzzy(country)
+            match = match[0].alpha_3
+            return match
+        except: # Currently no exception specification.
+            return ''
+    
+    # Generate matched entries
+    countries_dict = {}
+    for country in country_list:
+        countries_dict[country] = match_country(country)
+        
+    # Get reference of unmatched entries
+    unmatched_dict = {}
+    for item in countries_dict.items():
+        if not item[1]:
+            unmatched_dict[item[0]] = item[1]
+            
+    if output_type == 'all':
+        return countries_dict, unmatched_dict
+    if output_type == 'matches':
+        return countries_dict
+    if output_type == 'nonmatches':
+        return unmatched_dict
