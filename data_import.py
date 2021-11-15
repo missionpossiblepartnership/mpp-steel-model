@@ -83,11 +83,17 @@ scrap_trade = replace_rows(
 # Import Technology Business Cases
 business_cases = replace_rows(extract_data(IMPORT_DATA_PATH, "Business Cases One Table", "xlsx"), 0).fillna(0)
 
-# Import Technology Business Cases
+# Import Hydrogen Electrolyzer Capex Data
 hydrogen_electrolyzer_capex = extract_data(IMPORT_DATA_PATH, "Hydrogen Electrolyzer Capex", "xlsx")
 
-# Import Technology Business Cases
+# Import Commodities Data
 ethanol_plastic_charcoal = extract_data(IMPORT_DATA_PATH, "Ethanol Plastic Charcoal", "csv")
+
+# Import Solar Data
+solar = extract_data(IMPORT_DATA_PATH, "Solar - Global Photovoltaic Potential Country Rankings", "xlsx")
+wind = extract_data(IMPORT_DATA_PATH, "Wind -Technical Potential at the country level", "xlsx")
+natural_gas = extract_data(IMPORT_DATA_PATH, "EIA Natural Gas Reserves", "csv")
+
 
 
 # Define a data dictionary
@@ -116,6 +122,9 @@ df_dict = {
     "hydrogen_electrolyzer_capex": hydrogen_electrolyzer_capex,
     "carbon_tax_assumptions": carbon_tax_assumptions,
     "ethanol_plastic_charcoal": ethanol_plastic_charcoal,
+    "solar": solar,
+    "wind": wind,
+    "natural_gas": natural_gas
 }
 
 # Turn dataframes into pickle files
