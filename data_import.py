@@ -90,11 +90,27 @@ hydrogen_electrolyzer_capex = extract_data(IMPORT_DATA_PATH, "Hydrogen Electroly
 ethanol_plastic_charcoal = extract_data(IMPORT_DATA_PATH, "Ethanol Plastic Charcoal", "csv")
 
 # Import Solar Data
-solar = extract_data(IMPORT_DATA_PATH, "Solar - Global Photovoltaic Potential Country Rankings", "xlsx")
-wind = extract_data(IMPORT_DATA_PATH, "Wind -Technical Potential at the country level", "xlsx")
-natural_gas = extract_data(IMPORT_DATA_PATH, "EIA Natural Gas Reserves", "csv")
+solar_filename = "Solar - Global Photovoltaic Potential Country Rankings.xlsx"
+solar = pd.read_excel(
+    io=f'{IMPORT_DATA_PATH}/{solar_filename}',
+    sheet_name = 0, skiprows=1, usecols=range(21))
 
+def create_wind_df():
+    df_sheets = []
+    wind_filename = "Wind -Technical Potential at the country level.xlsx"
+    for sheet in range(7):
+        df_sheet = pd.read_excel(
+            io=f'{IMPORT_DATA_PATH}/{wind_filename}',
+            sheet_name=sheet)
+        df_sheets.append(df_sheet)
+    wind_df = pd.concat(df_sheets)
+    wind_df.reset_index(drop=True, inplace=True)
+    return wind_df
 
+wind = create_wind_df()
+
+natural_gas_filename = "EIA Natural Gas Reserves.csv"
+natural_gas = pd.read_csv(f'{IMPORT_DATA_PATH}/{natural_gas_filename}', skiprows=1)
 
 # Define a data dictionary
 df_dict = {
