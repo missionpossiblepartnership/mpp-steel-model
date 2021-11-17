@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 
 # For logger and units dict
-from utils import get_logger, read_pickle_folder
+from utils import get_logger, read_pickle_folder, official_country_name_getter
 
 # Get model parameters
 from model_config import PKL_FOLDER, EMISSIONS_FACTOR_SLAG, ENERGY_DENSITY_MET_COAL
@@ -24,7 +24,8 @@ def format_scope3_ef_2(df: pd.DataFrame, emissions_factor_slag: float) -> pd.Dat
     df_c['value'] = df_c['value'].apply(lambda x: x*emissions_factor_slag)
     return df_c
 
-def modify_scope3_ef_1(df: pd.DataFrame, slag_values: np.array, met_coal_density: float) -> pd.DataFrame:
+def modify_scope3_ef_1(
+    df: pd.DataFrame, slag_values: np.array, met_coal_density: float) -> pd.DataFrame:
     df_c = df.copy()
     scope3df_index = df_c.set_index(['Category', 'Fuel', 'Unit'])
     scope3df_index.loc['Scope 3 Emissions Factor', 'Slag', 'ton CO2eq / ton slag'] = slag_values
@@ -33,6 +34,26 @@ def modify_scope3_ef_1(df: pd.DataFrame, slag_values: np.array, met_coal_density
     scope3df_index.reset_index(inplace=True)
     scope3df_index.head()
     return scope3df_index.melt(id_vars=['Category', 'Fuel', 'Unit'], var_name='Year')
+
+def create_country_ref_dict(df: pd.DataFrame) -> dict:
+    CountryMetadata = namedtuple('CountryMetadata', df.columns)
+    country_ref_dict = {}
+    for row in df.itertuples():
+        country_ref_dict[row.country_code] = CountryMetadata(
+            row.country, row.country_code, row.m49_code, 
+            row.region, row.continent,  row.wsa_region, 
+            row.rmi_region, row.official_name)
+    return country_ref_dict
+
+def country_df_formatter(df: pd.DataFrame) -> pd.DataFrame:
+    df_c = df.copy()
+    df_c.rename(columns={'ISO-alpha3 code': 'country_code'}, inplace=True)
+    df_c['Official Country Name'] = df_c['country_code'].apply(lambda x: official_country_name_getter(x))
+    current_columns = ['country_code', 'Country', 'Official Country Name', 'M49 Code', 'Region 1', 'Continent', 'WSA Group Region', 'RMI Model Region', 'country_code']
+    new_columns = ['country_code', 'country', 'official_name', 'm49_code', 'region', 'continent', 'wsa_region', 'rmi_region']
+    col_mapper = dict(zip(current_columns, new_columns))
+    df_c.rename(mapper=col_mapper, axis=1, inplace=True)
+    return df_c
 
 
 def melt_and_index(df: pd.DataFrame, id_vars: list, var_name: str, index: list) -> pd.DataFrame:
@@ -226,6 +247,15 @@ def scope3_ef_getter(df: pd.DataFrame, fuel: str, year: str) -> float:
     value = df_c.loc[fuel, year]['value']
     return value
 
+def country_ref_getter(
+    country_ref_dict: dict, country_code:str, ref: str = ''):
+
+    if country_code in country_ref_dict.keys():
+        country_class = country_ref_dict[country_code]
+    if ref in dir(country_class):
+        return getattr(country_class, ref)
+    return country_class
+
 greenfield_capex_df = read_pickle_folder(PKL_FOLDER, 'greenfield_capex')
 brownfield_capex_df = read_pickle_folder(PKL_FOLDER, 'brownfield_capex')
 other_opex_df = read_pickle_folder(PKL_FOLDER, 'other_opex')
@@ -262,6 +292,9 @@ ccs_co2 = read_pickle_folder(
 tech_availability = read_pickle_folder(
     PKL_FOLDER, 'tech_availability')[['Technology', 'Year available from', 'Year available until']]
 
+country_ref = read_pickle_folder(
+    PKL_FOLDER, 'country_ref')
+
 ethanol_plastic_charcoal = read_pickle_folder(
     PKL_FOLDER, 'ethanol_plastic_charcoal')
 
@@ -296,6 +329,11 @@ create_data_tuples(feedstock_prices, 'FeedstockPrices')
 
 scope3df_2_formatted = format_scope3_ef_2(s3_emissions_factors_2, EMISSIONS_FACTOR_SLAG)
 slag_new_values = scope3df_2_formatted['value'].values
-final_scope3_ef_df = modify_scope3_ef_1(s3_emissions_factors_1, slag_new_values, ENERGY_DENSITY_MET_COAL)
+final_scope3_ef_df = modify_scope3_ef_1(
+    s3_emissions_factors_1, slag_new_values, ENERGY_DENSITY_MET_COAL)
 
 print(scope3_ef_getter(final_scope3_ef_df, 'Slag', 2030))
+
+country_ref = country_df_formatter(country_ref)
+country_ref_dict = create_country_ref_dict(country_ref)
+print(country_ref_getter(country_ref_dict, 'ZWE', 'country_code'))
