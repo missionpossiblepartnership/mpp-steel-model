@@ -4,15 +4,36 @@ from collections import namedtuple
 
 # For Data Manipulation
 import pandas as pd
+import numpy as np
 
 # For logger and units dict
 from utils import get_logger, read_pickle_folder
 
 # Get model parameters
-from model_config import PKL_FOLDER
+from model_config import PKL_FOLDER, EMISSIONS_FACTOR_SLAG, ENERGY_DENSITY_MET_COAL
 
 # Create logger
 logger = get_logger('Data Interface')
+
+def format_scope3_ef_2(df: pd.DataFrame, emissions_factor_slag: float) -> pd.DataFrame:
+    df_c = df.copy()
+    df_c = df_c.drop(['Unnamed: 1'], axis=1).loc[0:0]
+    df_c = df_c.melt(id_vars=['Year']) 
+    df_c.rename(columns={'Year': 'metric', 'variable': 'year'}, inplace=True)
+    df_c['value'] = df_c['value'].astype(float)
+    df_c['value'] = df_c['value'].apply(lambda x: x*emissions_factor_slag)
+    return df_c
+
+def modify_scope3_ef_1(df: pd.DataFrame, slag_values: np.array, met_coal_density: float) -> pd.DataFrame:
+    df_c = df.copy()
+    scope3df_index = df_c.set_index(['Category', 'Fuel', 'Unit'])
+    scope3df_index.loc['Scope 3 Emissions Factor', 'Slag', 'ton CO2eq / ton slag'] = slag_values
+    met_coal_values = scope3df_index.loc['Scope 3 Emissions Factor', 'Met coal', 'MtCO2eq / PJ'].apply(lambda x: x*met_coal_density)
+    scope3df_index.loc['Scope 3 Emissions Factor', 'Met coal', 'MtCO2eq / PJ'] = met_coal_values
+    scope3df_index.reset_index(inplace=True)
+    scope3df_index.head()
+    return scope3df_index.melt(id_vars=['Category', 'Fuel', 'Unit'], var_name='Year')
+
 
 def melt_and_index(df: pd.DataFrame, id_vars: list, var_name: str, index: list) -> pd.DataFrame:
     """Make the dataframes tabular and create a multiindex
@@ -196,6 +217,15 @@ def commodity_data_getter(df: pd.DataFrame, material_mapper: dict, commodity: st
             values_dict[commodity_ref] = value_productsum
     return values_dict
 
+def scope3_ef_getter(df: pd.DataFrame, fuel: str, year: str) -> float:
+    df_c = df.copy()
+    fuel_names = df_c['Fuel'].unique()
+    logger.info(f'Creating Scope 3 Emission Factor getter with the following metrics: {fuel_names}')
+    df_c.set_index(['Fuel', 'Year'], inplace=True)
+    logger.info(f'Getting {fuel} value for: {year}')
+    value = df_c.loc[fuel, year]['value']
+    return value
+
 greenfield_capex_df = read_pickle_folder(PKL_FOLDER, 'greenfield_capex')
 brownfield_capex_df = read_pickle_folder(PKL_FOLDER, 'brownfield_capex')
 other_opex_df = read_pickle_folder(PKL_FOLDER, 'other_opex')
@@ -213,6 +243,12 @@ carbon_tax_assumptions = read_pickle_folder(
 
 s1_emissions_factors = read_pickle_folder(
     PKL_FOLDER, 's1_emissions_factors')[['Metric', 'Value']]
+
+s3_emissions_factors_1 = read_pickle_folder(
+    PKL_FOLDER, 's3_emissions_factors_1')
+
+s3_emissions_factors_2 = read_pickle_folder(
+    PKL_FOLDER, 's3_emissions_factors_2')
 
 grid_emissivity = read_pickle_folder(
     PKL_FOLDER, 'grid_emissivity')[['Year', 'Value']]
@@ -257,3 +293,9 @@ print(grid_emissivity_getter(grid_emissivity, 2026))
 print(commodity_data_getter(commodities_df, COMMODITY_MATERIAL_MAPPER))
 
 create_data_tuples(feedstock_prices, 'FeedstockPrices')
+
+scope3df_2_formatted = format_scope3_ef_2(s3_emissions_factors_2, EMISSIONS_FACTOR_SLAG)
+slag_new_values = scope3df_2_formatted['value'].values
+final_scope3_ef_df = modify_scope3_ef_1(s3_emissions_factors_1, slag_new_values, ENERGY_DENSITY_MET_COAL)
+
+print(scope3_ef_getter(final_scope3_ef_df, 'Slag', 2030))
