@@ -42,7 +42,8 @@ country_ref = extract_data(IMPORT_DATA_PATH, "Country Reference", "xlsx").fillna
 s1_emissions_factors = extract_data(IMPORT_DATA_PATH, "Scope 1 Emissions Factors", "xlsx")
 
 # Import scope 3 EF data
-s3_emissions_factors = extract_data(IMPORT_DATA_PATH, "Scope 3 Emissions Factors", "xlsx", 1)
+s3_emissions_factors_1 = extract_data(IMPORT_DATA_PATH, "Scope 3 Emissions Factors", "xlsx", 0)
+s3_emissions_factors_2 = pd.read_excel(f'{IMPORT_DATA_PATH}/Scope 3 Emissions Factors.xlsx', sheet_name=1, skiprows=1)
 
 # Import grid emissivity
 grid_emissivity = extract_data(IMPORT_DATA_PATH, "Grid Emissivity", "xlsx")
@@ -132,7 +133,8 @@ df_dict = {
     "crude_trade" : crude_trade,
     "iron_ore_trade" : iron_ore_trade,
     "scrap_trade" : scrap_trade,
-    "s3_emissions_factors" : s3_emissions_factors,
+    "s3_emissions_factors_1" : s3_emissions_factors_1,
+    "s3_emissions_factors_2" : s3_emissions_factors_2,
     "business_cases": business_cases,
     "power_grid_assumptions": power_grid_assumptions,
     "hydrogen_electrolyzer_capex": hydrogen_electrolyzer_capex,
