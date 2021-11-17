@@ -213,3 +213,10 @@ def country_matcher(country_list: list, output_type: str = 'all') -> dict:
         return countries_dict
     if output_type == 'nonmatches':
         return unmatched_dict
+
+def official_country_name_getter(country_code: str):
+    match = pycountry.countries.get(alpha_3=country_code)
+    match_attributes = dir(match)
+    if 'official_name' in match_attributes:
+        return match.official_name
+    return ''
