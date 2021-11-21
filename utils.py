@@ -124,6 +124,19 @@ def serialize_df_dict(data_path: str, data_dict: dict):
             logger.info(f'* Saving df {df_name} to pickle')
             pickle.dump(data_dict[df_name], f, pickle.HIGHEST_PROTOCOL)
 
+def serialise_file(object, pkl_folder: str, filename: str):
+    """Serializes a file using the pickle protocol.
+
+    Args:
+        object: The object that you want to serialize.
+        pkl_folder (str): The folder where you want to store the pickle file.
+        filename (str): The name of the file you want to use (do not include a file extension in the string)
+    """
+    with open(f'{pkl_folder}/{filename}.pickle', 'wb') as f:
+        # Pickle the 'data' using the highest protocol available.
+        logger.info(f'* Saving Pickle file {filename} to path')
+        pickle.dump(object, f, pickle.HIGHEST_PROTOCOL)
+
 def countries_extractor(extract_type: str = ['countries', 'regions']) -> pd.DataFrame:
     """Connects to the world bank api to get country-level metadata
 
