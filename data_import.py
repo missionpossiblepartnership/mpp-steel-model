@@ -149,4 +149,4 @@ df_dict = {
 serialize_df_dict(PKL_FOLDER, df_dict)
 
 # Unload dataframes from pickle files
-pkl_dict = read_pickle_folder(PKL_FOLDER)
+# pkl_dict = read_pickle_folder(PKL_FOLDER)

@@ -794,9 +794,6 @@ TECH_REFERENCE_LIST = [
     'DRI-Melt-BOF_100% zero-C H2', 'Electrowinning-EAF',
     'BAT BF-BOF+BECCUS'
     ]
-
-data_path = r"C:\Users\AndrewIsabirye\OneDrive - SYSTEMIQ Ltd\6_ Working documents\03 Steel python model\Data Sources"
-
 # Import business co2 capacity numbers
 business_cases = read_pickle_folder(PKL_FOLDER, 'business_cases')
 s1_emissions_factors = read_pickle_folder(PKL_FOLDER, 's1_emissions_factors')
@@ -804,9 +801,7 @@ EF_DICT = dict(zip(s1_emissions_factors['Metric'], s1_emissions_factors['Value']
 
 # Data References
 bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
-technologies = bc_processes['technology'].unique()
 processes = bc_processes['process'].unique()
-material_categories = bc_processes['material_category'].unique()
 
 # full_model_flow('EAF')
 
