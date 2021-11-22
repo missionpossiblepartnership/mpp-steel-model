@@ -2,7 +2,6 @@
 
 # For Data Manipulation
 import pandas as pd
-import pickle
 
 # For logger
 from utils import get_logger, read_pickle_folder, serialise_file
@@ -565,7 +564,6 @@ def full_model_flow(tech_name: str):
     reformated_dict_c = ccs_df_editor(reformated_dict_c, tech_name, FURNACE_GROUP_DICT, process_prod_factor_mapper, EF_DICT)
     reformated_dict_c = ccu_df_editor(reformated_dict_c, tech_name, FURNACE_GROUP_DICT, EF_DICT)
     reformated_dict_c = self_gen_df_editor(reformated_dict_c, tech_name, FURNACE_GROUP_DICT, process_prod_factor_mapper, TECHNOLOGY_PROCESSES)
-    reformated_dict_c = reformated_dict_c
     combined_df = pd.concat(reformated_dict_c.values()).reset_index(drop=True)
     combined_df = format_combined_df(combined_df, PER_T_STEEL_DICT_UNITS)
     return combined_df
