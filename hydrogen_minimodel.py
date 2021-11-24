@@ -173,7 +173,6 @@ def timeseries_generator(
     if metric_name[-1:] == '_':
         metric_name = metric_name[:-1]
     df['metric'] = metric_name
-    df['scenario'] = hydrogen_scenario
 
     return df
 
@@ -232,19 +231,20 @@ def create_green_h2_prices(df: pd.DataFrame, scenario: str, as_gj: bool = False)
         replacements = row.required_stack_replacements*row.stack_capex*row.energy_consumption/ELECTROLYZER_LIFETIME.value
         utilization = 365 * 24 * CAPACITY_UTILIZATION_FACTOR.value
         storage_costs = storage_price*EUR_USD_CONVERSION
-        metric = energy_cons + ((capex + opex + replacements) / utilization) + storage_costs
-        df_c.loc[row.Index, new_colname] = metric
+        value = energy_cons + ((capex + opex + replacements) / utilization) + storage_costs
+        df_c.loc[row.Index, new_colname] = value
 
     df_c.reset_index(inplace=True)
     df_c.rename(columns={new_colname: 'value'}, inplace=True)
     df_c['metric'] = new_colname
+    df_c['scenario'] = scenario
     df_c['unit'] = 'EUR / kg'
 
     if as_gj:
         df_c['unit'] = 'EUR / GJ'
         df_c['value'] = df_c['value'].apply(lambda x: x*1000/HYDROGEN_LHV.value)
 
-    return df_c[['metric', 'year', 'unit', 'value']]
+    return df_c[['metric', 'scenario', 'year', 'unit', 'value']]
 
 def create_required_stack_replacements_df(stack_df: pd.DataFrame) -> pd.DataFrame:
     """Creates the hydrogen assumptions timeseries based on the stack lifetime dataframe.
@@ -288,7 +288,7 @@ df_grid_reference = create_df_grid([
 # Calculating green hydrogen prices
 green_h2_prices_average_gj = create_green_h2_prices(df_grid_reference, 'average', as_gj=True)
 green_h2_prices_favorable_gj = create_green_h2_prices(df_grid_reference, 'favorable', as_gj=True)
-hyrdogen_minimodel_timeseries = pd.concat([green_h2_prices_favorable_gj, green_h2_prices_average_gj])
+hydrogen_minimodel_timeseries = pd.concat([green_h2_prices_favorable_gj, green_h2_prices_average_gj])
 
 # Serialize timeseries
-serialize_df(hyrdogen_minimodel_timeseries, PKL_FOLDER, 'hyrdogen_minimodel_timeseries')
+serialize_df(hydrogen_minimodel_timeseries, PKL_FOLDER, 'hydrogen_minimodel_timeseries')
