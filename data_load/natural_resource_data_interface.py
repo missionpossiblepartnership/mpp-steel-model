@@ -2,6 +2,7 @@
 
 # For Data Manipulation
 import pandas as pd
+import numpy as np
 
 # For logger and units dict
 from utils import (
@@ -13,12 +14,15 @@ from model_config import PKL_FOLDER
 # Create logger
 logger = get_logger('Energy Data Interface')
 
+def normalise_data(data):
+    return (data - np.min(data)) / (np.max(data) - np.min(data))
 
-def natural_gas_formatter(df: pd.DataFrame) -> pd.DataFrame:
+def natural_gas_formatter(df: pd.DataFrame, scaled: bool = False) -> pd.DataFrame:
     """Preprocesses the Natural Gas DataFrame.
 
     Args:
         df (pd.DataFrame): The original DataFrame for natural gas.
+        scaled (bool: Optional): Flag that turns value columns into scaled values between 0 and 1. Defaults to False.
 
     Returns:
         pd.DataFrame: The formatted dataframe for natural gas.
@@ -29,13 +33,25 @@ def natural_gas_formatter(df: pd.DataFrame) -> pd.DataFrame:
     df_c.drop('API', axis='columns', inplace=True)
     df_c.rename(columns={'Unnamed: 1': 'Country'}, inplace=True)
     df_c['Country'] = df_c['Country'].apply(lambda x: x.lstrip())
+
+    value_columns = df_c.columns[1:]
+
+    for column in value_columns:
+        df_c[column] = df_c[column].replace('--', 0)
+        df_c[column] = df_c[column].fillna(0)
+        df_c[column] = df_c[column].astype(float)
+
+    if scaled:
+        for column in value_columns:
+            df_c.loc[df_c['Country'] == 'World', column] = 0
+            df_c[column] = normalise_data(df_c[column].values)
+
     df_c = df_c.melt(id_vars=['Country'], var_name='Year')
     df_c['Year'] = df_c['Year'].astype(int)
-    df_c['value'].replace('--', 0, inplace=True)
     df_c['value'] = df_c['value'].astype(float)
     return df_c
 
-def wind_formatter(df: pd.DataFrame) -> pd.DataFrame:
+def wind_formatter(df: pd.DataFrame, scaled: bool = False) -> pd.DataFrame:
     """Preprocesses the Wind DataFrame.
 
     Args:
@@ -51,18 +67,26 @@ def wind_formatter(df: pd.DataFrame) -> pd.DataFrame:
         'Potential Fixed Foundations [GW]': 'Fixed',
         'Potential Floating Foundations [GW]': 'Floating',
     }, inplace=True)
+    
+    for column in ['Fixed', 'Floating']:
+        df_c[column] = df_c[column].fillna(0)
+    
+    if scaled:
+        for column in ['Fixed', 'Floating']:
+            df_c[column] = normalise_data(df_c[column].values)
+            
     df_c = df_c.melt(id_vars=['country_code'], var_name='wind_potential')
-    df_c['value'] = df_c['value'].fillna(0)
     df_c['value'] = df_c['value'].astype(float)
     df_c.set_index(['country_code', 'wind_potential'], inplace=True)
     df_c.sort_index(inplace=True)
     return df_c
 
-def solar_formatter(df: pd.DataFrame) -> pd.DataFrame:
+def solar_formatter(df: pd.DataFrame, scaled: bool = False) -> pd.DataFrame:
     """Preprocesses the Solar DataFrame.
 
     Args:
         df (pd.DataFrame): The original DataFrame for solar.
+        scaled (bool: Optional): Flag that turns value columns into scaled values between 0 and 1. Defaults to False.
 
     Returns:
         pd.DataFrame: The formatted dataframe for solar.
@@ -86,10 +110,11 @@ def solar_formatter(df: pd.DataFrame) -> pd.DataFrame:
         'pv_equivalent_area_(%_of_total_area)_long-term'
     ]
 
-    new_solar_column_names = [
-        'country_code', 'country', 'theoretical_potential', 'practical_potential',
+    value_columns = ['theoretical_potential', 'practical_potential',
         'economic_potential', 'seasonality_index', 'equivalent_area'
     ]
+
+    new_solar_column_names = ['country_code', 'country'] + value_columns
 
     column_units = {
         'theoretical_potential': 'ghi kwh / m2 / day',
@@ -98,13 +123,18 @@ def solar_formatter(df: pd.DataFrame) -> pd.DataFrame:
         'seasonality_index': 'unintless',
         'equivalent_area': 'percentage'
     }
-    logger.info('Formatting the Solar DataFrame')
+    
     df_c = df.copy()
     df_c.columns = [col.lower().replace(' ', '_').replace('\n', '').replace(',', '') for col in df_c.columns]
     col_map = column_mapper_generator(solar_columns_of_interest, new_solar_column_names)
     economic_factors = df_c[economic_columns_of_interest].fillna(0)
     df_c = df_c[solar_columns_of_interest].fillna(0)
     df_c.rename(columns=col_map, inplace=True)
+
+    if scaled:
+        for column in value_columns:
+            df_c[column] = normalise_data(df_c[column].values)
+
     df_c = df_c.melt(id_vars=['country_code', 'country'], var_name='metric')
     df_c['unit'] = ''
     df_c['unit'] = df_c['metric'].apply(lambda x: column_units[x])
@@ -222,7 +252,7 @@ def natural_resource_preprocessor(serialize_only: bool = False) -> dict:
 
     # SOLAR
     solar_df = read_pickle_folder(PKL_FOLDER, 'solar')
-    solar_df = solar_formatter(solar_df)
+    solar_df = solar_formatter(solar_df, scaled=True)
 
     # WIND
     wind_df = read_pickle_folder(PKL_FOLDER, 'wind')
@@ -237,11 +267,11 @@ def natural_resource_preprocessor(serialize_only: bool = False) -> dict:
         lambda x: wind_matching_dict[x])
     wind_country_fixer_dict = {'South Korea': 'KOR', 'North Korea': 'RPK', 'Cape Verde': 'CPV'}
     country_mapping_fixer(wind_df, 'Sovereign', 'country_code', wind_country_fixer_dict)
-    wind_df = wind_formatter(wind_df)
+    wind_df = wind_formatter(wind_df, scaled=True)
 
     # NATURAL GAS
     natural_gas_df = read_pickle_folder(PKL_FOLDER, 'natural_gas')
-    natural_gas_df = natural_gas_formatter(natural_gas_df)
+    natural_gas_df = natural_gas_formatter(natural_gas_df, scaled=True)
     natural_gas_countries = natural_gas_df['Country'].unique().tolist()
     ng_matching_dict, unmatched_dict = country_matcher(natural_gas_countries)
     natural_gas_df['country_code'] = ''
