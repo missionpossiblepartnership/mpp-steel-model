@@ -23,5 +23,5 @@ DISCOUNT_RATE = 0.07
 EUR_USD_CONVERSION = 0.877
 
 # Define Data Path
-IMPORT_DATA_PATH = "./import_data"
-PKL_FOLDER = "./pkl_data"
+IMPORT_DATA_PATH = "../data/import_data"
+PKL_FOLDER = "../data/pkl_data"
