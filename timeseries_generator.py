@@ -13,12 +13,12 @@ from model_config import (
     BIOMASS_AV_TS_START_YEAR, CARBON_TAX_END_VALUE,
     CARBON_TAX_END_YEAR, CARBON_TAX_START_VALUE,
     CARBON_TAX_START_YEAR, ELECTRICITY_PRICE_START_YEAR,
-    ELECTRICITY_PRICE_MID_YEAR, ELECTRICITY_PRICE_END_YEAR, 
+    ELECTRICITY_PRICE_MID_YEAR, ELECTRICITY_PRICE_END_YEAR,
     EUR_USD_CONVERSION
     )
 
 from electricity_assumptions import (
-    GRID_ELECTRICITY_PRICE_FAVORABLE_MID, 
+    GRID_ELECTRICITY_PRICE_FAVORABLE_MID,
     GRID_ELECTRICITY_PRICE_AVG_MID,
     DEEPLY_DECARBONISED_POWER_SYSTEM_PRICE_AVG,
     DEEPLY_DECARBONISED_POWER_SYSTEM_PRICE_INCREASE
@@ -124,7 +124,7 @@ def timeseries_generator(
             else:
                 df_c.loc[row.Index, 'value'] = end_value # logic for last year
         return df_c
-        
+
     def carbon_tax_logic(df: pd.DataFrame) -> pd.DataFrame:
         """Applies logic to generate carbon tax timeseries
 
@@ -168,7 +168,7 @@ def timeseries_generator(
             # middle year
             elif row.Index == mid_price_year-start_year:
                 df_c.loc[row.Index, 'value'] = grid_price_mid(scenario)
-            # second half years    
+            # second half years
             elif row.Index > mid_price_year-start_year < len(year_range)-1:
                 df_c.loc[row.Index, 'value'] = ((grid_price_last_year(scenario)/grid_price_mid(scenario))**(1/(end_year-mid_price_year)))*df_c.loc[row.Index-1, 'value']
             # final years
@@ -178,15 +178,18 @@ def timeseries_generator(
         df_c['category'] = 'grid electricity price'
         df_c['scenario'] = f'{scenario}'
         return df_c
-    
+
     # Setting values: BUSINESS LOGIC
     logger.info(f'Running {timeseries_type} timeseries generator')
     if timeseries_type == 'biomass':
         df = biomass_logic(df)
+        df['units'] = 'PJ / y'
     if timeseries_type == 'carbon_tax':
         df = carbon_tax_logic(df)
+        df['units'] = 'EUR / t CO2 eq'
     if timeseries_type == 'power':
         df = power_grid_logic(df)
+        df['units'] = 'USD / MWh'
     # change the column types
     for key in df_schema.keys():
         df[key].astype(df_schema[key])
@@ -205,10 +208,12 @@ carbon_tax = timeseries_generator(
 
 # Create Electricity timeseries
 favorable_ts = timeseries_generator(
-    'power', ELECTRICITY_PRICE_START_YEAR, ELECTRICITY_PRICE_END_YEAR, 0, units='USD', scenario='favorable')
+    'power', ELECTRICITY_PRICE_START_YEAR, ELECTRICITY_PRICE_END_YEAR, 
+    0, units='USD / MWh', scenario='favorable')
 
 average_ts = timeseries_generator(
-    'power', ELECTRICITY_PRICE_START_YEAR, ELECTRICITY_PRICE_END_YEAR, 0, units='USD', scenario='average')
+    'power', ELECTRICITY_PRICE_START_YEAR, ELECTRICITY_PRICE_END_YEAR, 
+    0, units='USD / MWh', scenario='average')
 
 electricity_minimodel_timeseries = pd.concat([favorable_ts, average_ts])
 

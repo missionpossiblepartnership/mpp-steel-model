@@ -46,33 +46,33 @@ def timeseries_generator(
     Returns:
         pd.DataFrame: [description]
     """
-    
+
     # Define schema for the DataFrame
     df_schema = {
         'year': int,
         'value': float,
         'units': str
     }
-    
+
     # Define the year range for the df
     year_range = range(start_year, end_year+1)
     year_range_length = len(year_range)-1
-    
+
     # Create the DataFrame
     df = pd.DataFrame(
         index=pd.RangeIndex(0, len(year_range)),
         columns= [key.lower() for key in df_schema.keys()]
     )
-    
+
     # Define and format year and units columns
     df['year'] = year_range
     df['units'] = units
     df['units'] = df['units'].apply(lambda x: x.lower())
-    
+
     hydrogen_scenario = ''
     if kwargs:
         hydrogen_scenario = kwargs['scenario']
-        
+
     def vre_price_selector(scenario: str, year: int) -> float:
         if (scenario == 'favorable') & (year == HYDROGEN_PRICE_START_YEAR):
             return VRE_PRICE_FAVORABLE_START.value
@@ -82,7 +82,7 @@ def timeseries_generator(
             return VRE_PRICE_AVERAGE_START.value
         if (scenario == 'average') & (year == HYDROGEN_PRICE_END_YEAR):
             return VRE_PRICE_AVERAGE_END.value
-        
+
     # Define the one generic timeseries function to rule them all
     def generic_value_logic(
         df: pd.DataFrame,
@@ -127,17 +127,19 @@ def timeseries_generator(
 
     def stack_capex_logic_mid_values(start_price, end_price, previous_value):
         return ((end_price/start_price)**(1/year_range_length))*previous_value
-    
+
     def energy_consumption_logic_mid_values(start_price, end_price, previous_value):
         return ((end_price/start_price)**(1/year_range_length))*previous_value
-    
+
     # Apply business logic to each type of timeseries
     logger.info(f'creating {timeseries_type} timeseries')
     if timeseries_type == 'vre_price':
         df = generic_value_logic(
             df=df,
-            value_start_price=vre_price_selector(hydrogen_scenario, HYDROGEN_PRICE_START_YEAR)*EUR_USD_CONVERSION/1000,
-            value_end_price=vre_price_selector(hydrogen_scenario, HYDROGEN_PRICE_END_YEAR)*EUR_USD_CONVERSION/1000,
+            value_start_price=vre_price_selector(
+                hydrogen_scenario, HYDROGEN_PRICE_START_YEAR)*EUR_USD_CONVERSION/1000,
+            value_end_price=vre_price_selector(
+                hydrogen_scenario, HYDROGEN_PRICE_END_YEAR)*EUR_USD_CONVERSION/1000,
             mid_values_function=vre_price_logic_mid_values
         )
     if timeseries_type == 'stack_lifetime':
@@ -229,19 +231,20 @@ def create_green_h2_prices(df: pd.DataFrame, scenario: str, as_gj: bool = False)
         replacements = row.required_stack_replacements*row.stack_capex*row.energy_consumption/ELECTROLYZER_LIFETIME.value
         utilization = 365 * 24 * CAPACITY_UTILIZATION_FACTOR.value
         storage_costs = storage_price*EUR_USD_CONVERSION
-        metric = energy_cons + ((capex + opex + replacements) / utilization) + storage_costs
-        df_c.loc[row.Index, new_colname] = metric
+        value = energy_cons + ((capex + opex + replacements) / utilization) + storage_costs
+        df_c.loc[row.Index, new_colname] = value
 
     df_c.reset_index(inplace=True)
     df_c.rename(columns={new_colname: 'value'}, inplace=True)
     df_c['metric'] = new_colname
+    df_c['scenario'] = scenario
     df_c['unit'] = 'EUR / kg'
 
     if as_gj:
         df_c['unit'] = 'EUR / GJ'
         df_c['value'] = df_c['value'].apply(lambda x: x*1000/HYDROGEN_LHV.value)
 
-    return df_c[['metric', 'year', 'unit', 'value']]
+    return df_c[['metric', 'scenario', 'year', 'unit', 'value']]
 
 def create_required_stack_replacements_df(stack_df: pd.DataFrame) -> pd.DataFrame:
     """Creates the hydrogen assumptions timeseries based on the stack lifetime dataframe.
@@ -253,7 +256,8 @@ def create_required_stack_replacements_df(stack_df: pd.DataFrame) -> pd.DataFram
         pd.DataFrame: The required stack replacements dataframe
     """
     stack_df_c = stack_df.copy()
-    stack_df_c['value'] = stack_df_c['value'].apply(lambda x: np.floor(ELECTROLYZER_LIFETIME.value/x))
+    stack_df_c['value'] = stack_df_c['value'].apply(
+        lambda x: np.floor(ELECTROLYZER_LIFETIME.value/x))
     stack_df_c['metric'] = 'required_stack_replacements'
     stack_df_c['units'] = ''
     return stack_df_c
@@ -272,7 +276,7 @@ energy_consumption = timeseries_generator(
     'energy_consumption', HYDROGEN_PRICE_START_YEAR, HYDROGEN_PRICE_END_YEAR, units='kWh / kg H2')
 
 logger.info('Reading electrolyzer capex timeseries')
-electrolyzer_capex_timeseries = read_pickle_folder(PKL_FOLDER)['hydrogen_electrolyzer_capex'][['metric', 'year', 'units', 'value']]
+electrolyzer_capex_timeseries = read_pickle_folder(PKL_FOLDER, 'hydrogen_electrolyzer_capex')[['metric', 'year', 'units', 'value']]
 electrolyzer_capex_timeseries['metric'] = 'electrolyzer_capex'
 
 # Combining all dataframes into one
@@ -281,10 +285,10 @@ df_grid_reference = create_df_grid([
     stack_lifetime, required_stack_replacements, stack_capex, energy_consumption
     ])
 
-# Calculating green hydrogen prices 
+# Calculating green hydrogen prices
 green_h2_prices_average_gj = create_green_h2_prices(df_grid_reference, 'average', as_gj=True)
 green_h2_prices_favorable_gj = create_green_h2_prices(df_grid_reference, 'favorable', as_gj=True)
+hydrogen_minimodel_timeseries = pd.concat([green_h2_prices_favorable_gj, green_h2_prices_average_gj])
 
 # Serialize timeseries
-serialize_df(green_h2_prices_average_gj, PKL_FOLDER, 'green_h2_prices_average_gj')
-serialize_df(green_h2_prices_favorable_gj, PKL_FOLDER, 'green_h2_prices_favorable_gj')
+serialize_df(hydrogen_minimodel_timeseries, PKL_FOLDER, 'hydrogen_minimodel_timeseries')

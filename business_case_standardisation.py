@@ -2,7 +2,6 @@
 
 # For Data Manipulation
 import pandas as pd
-import pickle
 
 # For logger
 from utils import get_logger, read_pickle_folder, serialise_file
@@ -565,7 +564,6 @@ def full_model_flow(tech_name: str):
     reformated_dict_c = ccs_df_editor(reformated_dict_c, tech_name, FURNACE_GROUP_DICT, process_prod_factor_mapper, EF_DICT)
     reformated_dict_c = ccu_df_editor(reformated_dict_c, tech_name, FURNACE_GROUP_DICT, EF_DICT)
     reformated_dict_c = self_gen_df_editor(reformated_dict_c, tech_name, FURNACE_GROUP_DICT, process_prod_factor_mapper, TECHNOLOGY_PROCESSES)
-    reformated_dict_c = reformated_dict_c
     combined_df = pd.concat(reformated_dict_c.values()).reset_index(drop=True)
     combined_df = format_combined_df(combined_df, PER_T_STEEL_DICT_UNITS)
     return combined_df
@@ -747,13 +745,13 @@ PER_T_STEEL_DICT_UNITS = {
 
 FURNACE_GROUP_DICT = {
     'blast_furnace': ['Avg BF-BOF', 'BAT BF-BOF', 'BAT BF-BOF_bio PCI', 'BAT BF-BOF_H2 PCI', 'BAT BF-BOF+CCUS', 'BAT BF-BOF+BECCUS', 'BAT BF-BOF+CCU'],
-    'dri-bof': ['DRI-Melt-BOF', 'DRI-Melt BOF 100% zero CH2', 'DRI-Melt BOF + CCUS'],
-    'dri-eaf': ['DRI-EAF', 'DRI-EAF 50% bio-CH4', 'DRI-EAF 50% green H2', 'DRI-EAF+CCUS', 'DRI-EAF 100% green H2'],
+    'dri-bof': ['DRI-Melt-BOF', 'DRI-Melt-BOF_100% zero-C H2', 'DRI-Melt-BOF+CCUS'],
+    'dri-eaf': ['DRI-EAF', 'DRI-EAF_50% bio-CH4', 'DRI-EAF_50% green H2', 'DRI-EAF+CCUS', 'DRI-EAF_100% green H2'],
     'smelting_reduction': ['Smelting Reduction', 'Smelting Reduction+CCUS'],
     'eaf-basic': ['EAF'],
     'eaf-advanced': ['Electrolyzer-EAF', 'Electrowinning-EAF'],
     'ccs': ['BAT BF-BOF+BECCUS', 'BAT BF-BOF+CCUS', 'DRI-Melt-BOF+CCUS', 'DRI-EAF+CCUS', 'Smelting Reduction+CCUS'],
-    'ccu': ['BAT BF-BOF+CCU'],
+    'ccu': ['BAT BF-BOF+CCU']
 }
 FURNACE_GROUP_DICT['dri'] = FURNACE_GROUP_DICT['dri-bof'] + FURNACE_GROUP_DICT['dri-eaf']
 FURNACE_GROUP_DICT['eaf-all'] = FURNACE_GROUP_DICT['eaf-basic'] + FURNACE_GROUP_DICT['eaf-advanced']
@@ -796,9 +794,6 @@ TECH_REFERENCE_LIST = [
     'DRI-Melt-BOF_100% zero-C H2', 'Electrowinning-EAF',
     'BAT BF-BOF+BECCUS'
     ]
-
-data_path = r"C:\Users\AndrewIsabirye\OneDrive - SYSTEMIQ Ltd\6_ Working documents\03 Steel python model\Data Sources"
-
 # Import business co2 capacity numbers
 business_cases = read_pickle_folder(PKL_FOLDER, 'business_cases')
 s1_emissions_factors = read_pickle_folder(PKL_FOLDER, 's1_emissions_factors')
@@ -806,9 +801,7 @@ EF_DICT = dict(zip(s1_emissions_factors['Metric'], s1_emissions_factors['Value']
 
 # Data References
 bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
-technologies = bc_processes['technology'].unique()
 processes = bc_processes['process'].unique()
-material_categories = bc_processes['material_category'].unique()
 
 # full_model_flow('EAF')
 

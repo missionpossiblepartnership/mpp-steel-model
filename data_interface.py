@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 
 # For logger and units dict
-from utils import get_logger, read_pickle_folder, official_country_name_getter
+from utils import get_logger, read_pickle_folder, official_country_name_getter, serialise_file
 
 # Get model parameters
 from model_config import PKL_FOLDER, EMISSIONS_FACTOR_SLAG, ENERGY_DENSITY_MET_COAL
@@ -306,6 +306,20 @@ COMMODITY_MATERIAL_MAPPER = {
 
 commodities_df = format_commodities_data(ethanol_plastic_charcoal, COMMODITY_MATERIAL_MAPPER)
 
+scope3df_2_formatted = format_scope3_ef_2(s3_emissions_factors_2, EMISSIONS_FACTOR_SLAG)
+slag_new_values = scope3df_2_formatted['value'].values
+final_scope3_ef_df = modify_scope3_ef_1(
+    s3_emissions_factors_1, slag_new_values, ENERGY_DENSITY_MET_COAL)
+
+country_ref = country_df_formatter(country_ref)
+country_ref_dict = create_country_ref_dict(country_ref)
+
+create_data_tuples(feedstock_prices, 'FeedstockPrices')
+
+serialise_file(commodities_df, PKL_FOLDER, 'commodities_df')
+serialise_file(final_scope3_ef_df, PKL_FOLDER, 'final_scope3_ef_df')
+# serialise_file(country_ref_dict, PKL_FOLDER, 'country_ref_dict') # can't pickle custom classes
+
 # Example Use of Functions
 print(capex_generator(capex_dict, 'DRI-EAF', 2020))
 
@@ -325,15 +339,6 @@ print(grid_emissivity_getter(grid_emissivity, 2026))
 
 print(commodity_data_getter(commodities_df, COMMODITY_MATERIAL_MAPPER))
 
-create_data_tuples(feedstock_prices, 'FeedstockPrices')
-
-scope3df_2_formatted = format_scope3_ef_2(s3_emissions_factors_2, EMISSIONS_FACTOR_SLAG)
-slag_new_values = scope3df_2_formatted['value'].values
-final_scope3_ef_df = modify_scope3_ef_1(
-    s3_emissions_factors_1, slag_new_values, ENERGY_DENSITY_MET_COAL)
-
 print(scope3_ef_getter(final_scope3_ef_df, 'Slag', 2030))
 
-country_ref = country_df_formatter(country_ref)
-country_ref_dict = create_country_ref_dict(country_ref)
 print(country_ref_getter(country_ref_dict, 'ZWE', 'country_code'))
