@@ -12,7 +12,7 @@ from utils import (
 from model_config import PKL_FOLDER
 
 # Create logger
-logger = get_logger('Energy Data Interface')
+logger = get_logger('Natural Resource')
 
 def normalise_data(data):
     return (data - np.min(data)) / (np.max(data) - np.min(data))
@@ -22,7 +22,7 @@ def natural_gas_formatter(df: pd.DataFrame, scaled: bool = False) -> pd.DataFram
 
     Args:
         df (pd.DataFrame): The original DataFrame for natural gas.
-        scaled (bool: Optional): Flag that turns value columns into scaled values between 0 and 1. Defaults to False.
+        scaled (bool, optional): Flag that turns value columns into scaled values between 0 and 1. Defaults to False.
 
     Returns:
         pd.DataFrame: The formatted dataframe for natural gas.
@@ -42,6 +42,7 @@ def natural_gas_formatter(df: pd.DataFrame, scaled: bool = False) -> pd.DataFram
         df_c[column] = df_c[column].astype(float)
 
     if scaled:
+        logger.info('--- Scaling Natural Gas values')
         for column in value_columns:
             df_c.loc[df_c['Country'] == 'World', column] = 0
             df_c[column] = normalise_data(df_c[column].values)
@@ -67,11 +68,12 @@ def wind_formatter(df: pd.DataFrame, scaled: bool = False) -> pd.DataFrame:
         'Potential Fixed Foundations [GW]': 'Fixed',
         'Potential Floating Foundations [GW]': 'Floating',
     }, inplace=True)
-    
+
     for column in ['Fixed', 'Floating']:
         df_c[column] = df_c[column].fillna(0)
-    
+
     if scaled:
+        logger.info('--- Scaling Wind values')
         for column in ['Fixed', 'Floating']:
             df_c[column] = normalise_data(df_c[column].values)
             
@@ -86,7 +88,7 @@ def solar_formatter(df: pd.DataFrame, scaled: bool = False) -> pd.DataFrame:
 
     Args:
         df (pd.DataFrame): The original DataFrame for solar.
-        scaled (bool: Optional): Flag that turns value columns into scaled values between 0 and 1. Defaults to False.
+        scaled (bool, optional): Flag that turns value columns into scaled values between 0 and 1. Defaults to False.
 
     Returns:
         pd.DataFrame: The formatted dataframe for solar.
@@ -123,7 +125,7 @@ def solar_formatter(df: pd.DataFrame, scaled: bool = False) -> pd.DataFrame:
         'seasonality_index': 'unintless',
         'equivalent_area': 'percentage'
     }
-    
+
     df_c = df.copy()
     df_c.columns = [col.lower().replace(' ', '_').replace('\n', '').replace(',', '') for col in df_c.columns]
     col_map = column_mapper_generator(solar_columns_of_interest, new_solar_column_names)
@@ -132,6 +134,7 @@ def solar_formatter(df: pd.DataFrame, scaled: bool = False) -> pd.DataFrame:
     df_c.rename(columns=col_map, inplace=True)
 
     if scaled:
+        logger.info('--- Scaling Solar values')
         for column in value_columns:
             df_c[column] = normalise_data(df_c[column].values)
 
