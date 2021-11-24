@@ -521,7 +521,7 @@ def self_gen_df_editor(df_dict: dict, technology: str, furnace_group_dict: dict,
     logger.info(f'-- Creating the Self Generation of Electricity calculations for {technology}')
     
     df_dict_c = df_dict.copy()
-    
+
     if technology in electricity_self_gen_group:
         self_gen_name = 'Self-Generation Of Electricity'
         self_gen_df = df_dict_c[self_gen_name].copy()
@@ -555,7 +555,6 @@ def self_gen_df_editor(df_dict: dict, technology: str, furnace_group_dict: dict,
 def full_model_flow(tech_name: str):
 
     logger.info(f'- Running the model flow for {tech_name}')
-
     process_prod_factor_mapper = create_production_factors(tech_name, FURNACE_GROUP_DICT, HARD_CODED_FACTORS)
     reformated_dict = create_mini_process_dfs(bc_processes, tech_name, TECHNOLOGY_PROCESSES, process_prod_factor_mapper)
     reformated_dict_c = reformated_dict.copy()
@@ -794,19 +793,25 @@ TECH_REFERENCE_LIST = [
     'DRI-Melt-BOF_100% zero-C H2', 'Electrowinning-EAF',
     'BAT BF-BOF+BECCUS'
     ]
-# Import business co2 capacity numbers
-business_cases = read_pickle_folder(PKL_FOLDER, 'business_cases')
+
+def standardise_business_cases(serialize_only: bool = False) -> pd.DataFrame:
+    """Standardises the business cases for each technology into per t steel.
+
+    Args:
+        serialize_only (bool, optional): Flag to only serialize the DataFrame to a pickle file and not return a DataFrame. Defaults to False.
+
+    Returns:
+        pd.DataFrame: A tabular dataframe containing the standardised business cases
+    """
+    full_summary_df = generate_full_consumption_table(TECH_REFERENCE_LIST)
+    if serialize_only:
+        serialise_file(full_summary_df, PKL_FOLDER, 'standardised_business_cases')
+        return
+    return full_summary_df
+
 s1_emissions_factors = read_pickle_folder(PKL_FOLDER, 's1_emissions_factors')
 EF_DICT = dict(zip(s1_emissions_factors['Metric'], s1_emissions_factors['Value']))
-
-# Data References
+business_cases = read_pickle_folder(PKL_FOLDER, 'business_cases')
 bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
 processes = bc_processes['process'].unique()
-
-# full_model_flow('EAF')
-
-full_summary_df = generate_full_consumption_table(TECH_REFERENCE_LIST)
-
-# print(full_summary_df)
-
-serialise_file(full_summary_df, PKL_FOLDER, 'standardised_business_cases')
+standardise_business_cases(serialize_only=True)

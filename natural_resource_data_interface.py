@@ -6,7 +6,7 @@ import pandas as pd
 # For logger and units dict
 from utils import (
     get_logger, read_pickle_folder,
-    country_mapping_fixer, country_matcher)
+    country_mapping_fixer, country_matcher, serialize_df)
 
 from model_config import PKL_FOLDER
 
@@ -184,38 +184,7 @@ def natural_gas_getter(df: pd.DataFrame, country_code: str, year: int = 0):
     logger.info(f'Getting the value for Natural Gas | Country: {country_code} - Year: {year}')
     return df.loc[country_code, year]['value'].values[0]
 
-# SOLAR
-solar_df = read_pickle_folder(PKL_FOLDER, 'solar')
-solar_df = solar_formatter(solar_df)
-solar_getter(solar_df, 'ZWE', 'economic_potential')
-solar_getter(solar_df, 'ZWE')
-
-# WIND
-wind_df = read_pickle_folder(PKL_FOLDER, 'wind')
-territory_fixer = {'Overlapping claim Western Saharan Exclusive Economic Zone' : 'Western Sahara'}
-sovereign_fixer = {'Overlapping claim Western Saharan Exclusive Economic Zone' : 'Morocco'}
-wind_df.loc[wind_df['GeoName'] == list(territory_fixer.keys())[0], 'Territory'] = list(territory_fixer.values())[0]
-wind_df.loc[wind_df['GeoName'] == list(sovereign_fixer.keys())[0], 'Sovereign'] = list(sovereign_fixer.values())[0]
-wind_countries = wind_df['Sovereign'].unique().tolist()
-wind_matching_dict, wind_unmatched_dict = country_matcher(wind_countries)
-wind_df['country_code'] = ''
-wind_df['country_code'] = wind_df['Sovereign'].apply(
-    lambda x: wind_matching_dict[x])
-wind_country_fixer_dict = {'South Korea': 'KOR', 'North Korea': 'RPK', 'Cape Verde': 'CPV'}
-country_mapping_fixer(wind_df, 'Sovereign', 'country_code', wind_country_fixer_dict)
-wind_df = wind_formatter(wind_df)
-wind_getter(wind_df, 'YEM')
-
-# NATURAL GAS
-natural_gas_df = read_pickle_folder(PKL_FOLDER, 'natural_gas')
-natural_gas_df = natural_gas_formatter(natural_gas_df)
-natural_gas_countries = natural_gas_df['Country'].unique().tolist()
-ng_matching_dict, unmatched_dict = country_matcher(natural_gas_countries)
-natural_gas_df['country_code'] = ''
-natural_gas_df['country_code'] = natural_gas_df['Country'].apply(
-    lambda x: ng_matching_dict[x])
-
-ng_fixed_countries = {
+NG_FIXED_COUNTRIES = {
     'World': 'World',
     'Burma': 'MMR',
     'Congo-Brazzaville': 'COG',
@@ -241,7 +210,53 @@ ng_fixed_countries = {
     'U.S. Virgin Islands': 'VIR'
 }
 
-natural_gas_df = country_mapping_fixer(natural_gas_df, 'Country', 'country_code', ng_fixed_countries)
-natural_gas_df = natural_gas_df.drop(
-    'Country', axis=1).set_index(['country_code', 'Year']).sort_index()
-natural_gas_getter(natural_gas_df, 'ZWE')
+def natural_resource_preprocessor(serialize_only: bool = False) -> dict:
+    """Preprocesses dataframe for wind, solar and natural gas.
+
+    Args:
+        serialize_only (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to True.
+
+    Returns:
+        dict: A dictionary with keys for 'solar', 'wind' and 'natrual gas' and dataframes for the respective values.
+    """
+
+    # SOLAR
+    solar_df = read_pickle_folder(PKL_FOLDER, 'solar')
+    solar_df = solar_formatter(solar_df)
+
+    # WIND
+    wind_df = read_pickle_folder(PKL_FOLDER, 'wind')
+    territory_fixer = {'Overlapping claim Western Saharan Exclusive Economic Zone' : 'Western Sahara'}
+    sovereign_fixer = {'Overlapping claim Western Saharan Exclusive Economic Zone' : 'Morocco'}
+    wind_df.loc[wind_df['GeoName'] == list(territory_fixer.keys())[0], 'Territory'] = list(territory_fixer.values())[0]
+    wind_df.loc[wind_df['GeoName'] == list(sovereign_fixer.keys())[0], 'Sovereign'] = list(sovereign_fixer.values())[0]
+    wind_countries = wind_df['Sovereign'].unique().tolist()
+    wind_matching_dict, wind_unmatched_dict = country_matcher(wind_countries)
+    wind_df['country_code'] = ''
+    wind_df['country_code'] = wind_df['Sovereign'].apply(
+        lambda x: wind_matching_dict[x])
+    wind_country_fixer_dict = {'South Korea': 'KOR', 'North Korea': 'RPK', 'Cape Verde': 'CPV'}
+    country_mapping_fixer(wind_df, 'Sovereign', 'country_code', wind_country_fixer_dict)
+    wind_df = wind_formatter(wind_df)
+
+    # NATURAL GAS
+    natural_gas_df = read_pickle_folder(PKL_FOLDER, 'natural_gas')
+    natural_gas_df = natural_gas_formatter(natural_gas_df)
+    natural_gas_countries = natural_gas_df['Country'].unique().tolist()
+    ng_matching_dict, unmatched_dict = country_matcher(natural_gas_countries)
+    natural_gas_df['country_code'] = ''
+    natural_gas_df['country_code'] = natural_gas_df['Country'].apply(
+        lambda x: ng_matching_dict[x])
+    natural_gas_df = country_mapping_fixer(natural_gas_df, 'Country', 'country_code', NG_FIXED_COUNTRIES)
+    natural_gas_df = natural_gas_df.drop(
+        'Country', axis=1).set_index(['country_code', 'Year']).sort_index()
+
+    if serialize_only:
+        # Serialize timeseries
+        serialize_df(wind_df, PKL_FOLDER, 'wind_processed')
+        serialize_df(solar_df, PKL_FOLDER, 'solar_processed')
+        serialize_df(natural_gas_df, PKL_FOLDER, 'natural_gas_processed')
+        return
+    return {'solar': solar_df, 'wind': wind_df, 'natural_gas': natural_gas_df}
+
+natural_resource_preprocessor(serialize_only=True)

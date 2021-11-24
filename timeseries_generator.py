@@ -196,28 +196,43 @@ def timeseries_generator(
     logger.info(f'{timeseries_type} timeseries complete')
     return df
 
-# Create Biomass timeseries
-biomass_availability = timeseries_generator(
-    'biomass', BIOMASS_AV_TS_START_YEAR, BIOMASS_AV_TS_END_YEAR, BIOMASS_AV_TS_END_VALUE)
+def generate_timeseries(serialize_only: bool = False) -> dict:
+    """Generates timeseries for biomass, carbon taxes and electricity.
 
-# Create Carbon Tax timeseries
-carbon_tax = timeseries_generator(
-    'carbon_tax', CARBON_TAX_START_YEAR, CARBON_TAX_END_YEAR,
-    CARBON_TAX_END_VALUE, CARBON_TAX_START_VALUE
-)
+    Args:
+        serialize_only (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
 
-# Create Electricity timeseries
-favorable_ts = timeseries_generator(
-    'power', ELECTRICITY_PRICE_START_YEAR, ELECTRICITY_PRICE_END_YEAR, 
-    0, units='USD / MWh', scenario='favorable')
+    Returns:
+        dict: A dict containing dataframes with the following keys: 'biomass', 'carbon_tax', 'electricity'
+    """
+    # Create Biomass timeseries
+    biomass_availability = timeseries_generator(
+        'biomass', BIOMASS_AV_TS_START_YEAR, BIOMASS_AV_TS_END_YEAR, BIOMASS_AV_TS_END_VALUE)
 
-average_ts = timeseries_generator(
-    'power', ELECTRICITY_PRICE_START_YEAR, ELECTRICITY_PRICE_END_YEAR, 
-    0, units='USD / MWh', scenario='average')
+    # Create Carbon Tax timeseries
+    carbon_tax = timeseries_generator(
+        'carbon_tax', CARBON_TAX_START_YEAR, CARBON_TAX_END_YEAR,
+        CARBON_TAX_END_VALUE, CARBON_TAX_START_VALUE
+    )
 
-electricity_minimodel_timeseries = pd.concat([favorable_ts, average_ts])
+    # Create Electricity timeseries
+    favorable_ts = timeseries_generator(
+        'power', ELECTRICITY_PRICE_START_YEAR, ELECTRICITY_PRICE_END_YEAR, 
+        0, units='USD / MWh', scenario='favorable')
 
-# Serialize timeseries
-serialize_df(biomass_availability, PKL_FOLDER, 'biomass_availability')
-serialize_df(carbon_tax, PKL_FOLDER, 'carbon_tax')
-serialize_df(electricity_minimodel_timeseries, PKL_FOLDER, 'electricity_minimodel_timeseries')
+    average_ts = timeseries_generator(
+        'power', ELECTRICITY_PRICE_START_YEAR, ELECTRICITY_PRICE_END_YEAR, 
+        0, units='USD / MWh', scenario='average')
+
+    electricity_minimodel_timeseries = pd.concat([favorable_ts, average_ts])
+
+    if serialize_only:
+        # Serialize timeseries
+        serialize_df(biomass_availability, PKL_FOLDER, 'biomass_availability')
+        serialize_df(carbon_tax, PKL_FOLDER, 'carbon_tax')
+        serialize_df(electricity_minimodel_timeseries, PKL_FOLDER, 'electricity_minimodel_timeseries')
+        return
+
+    return {'biomass': biomass_availability, 'carbon_tax': carbon_tax, 'electricity': electricity_minimodel_timeseries}
+
+generate_timeseries(serialize_only=True)

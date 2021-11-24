@@ -262,33 +262,48 @@ def create_required_stack_replacements_df(stack_df: pd.DataFrame) -> pd.DataFram
     stack_df_c['units'] = ''
     return stack_df_c
 
-# Creating hydrogen assumptions timeseries
-vre_price_average = timeseries_generator(
-    'vre_price', HYDROGEN_PRICE_START_YEAR, HYDROGEN_PRICE_END_YEAR, units='EUR / MWh', scenario='average')
-vre_price_favorable = timeseries_generator(
-    'vre_price', HYDROGEN_PRICE_START_YEAR, HYDROGEN_PRICE_END_YEAR, units='EUR / MWh', scenario='favorable')
-stack_lifetime = timeseries_generator(
-    'stack_lifetime', HYDROGEN_PRICE_START_YEAR, HYDROGEN_PRICE_END_YEAR, units='years')
-required_stack_replacements = create_required_stack_replacements_df(stack_lifetime)
-stack_capex = timeseries_generator(
-    'stack_capex', HYDROGEN_PRICE_START_YEAR, HYDROGEN_PRICE_END_YEAR, units='EUR / kW')
-energy_consumption = timeseries_generator(
-    'energy_consumption', HYDROGEN_PRICE_START_YEAR, HYDROGEN_PRICE_END_YEAR, units='kWh / kg H2')
+def generate_hydrogen_timeseries(serialize_only: bool= False) -> pd.DataFrame:
+    """Generates a timeseries of hydrogen prices taking into account all of the necessary assumptions.
 
-logger.info('Reading electrolyzer capex timeseries')
-electrolyzer_capex_timeseries = read_pickle_folder(PKL_FOLDER, 'hydrogen_electrolyzer_capex')[['metric', 'year', 'units', 'value']]
-electrolyzer_capex_timeseries['metric'] = 'electrolyzer_capex'
+    Args:
+        serialize_only (bool, optional): Flag to only serialize the DataFrame to a pickle file and not return a DataFrame. Defaults to False.
 
-# Combining all dataframes into one
-df_grid_reference = create_df_grid([
-    vre_price_average, vre_price_favorable, electrolyzer_capex_timeseries,
-    stack_lifetime, required_stack_replacements, stack_capex, energy_consumption
-    ])
+    Returns:
+        pd.DataFrame: A timeseries of the hydrogen prices with combined scenarios.
+    """
+    # Creating hydrogen assumptions timeseries
+    vre_price_average = timeseries_generator(
+        'vre_price', HYDROGEN_PRICE_START_YEAR, HYDROGEN_PRICE_END_YEAR, units='EUR / MWh', scenario='average')
+    vre_price_favorable = timeseries_generator(
+        'vre_price', HYDROGEN_PRICE_START_YEAR, HYDROGEN_PRICE_END_YEAR, units='EUR / MWh', scenario='favorable')
+    stack_lifetime = timeseries_generator(
+        'stack_lifetime', HYDROGEN_PRICE_START_YEAR, HYDROGEN_PRICE_END_YEAR, units='years')
+    required_stack_replacements = create_required_stack_replacements_df(stack_lifetime)
+    stack_capex = timeseries_generator(
+        'stack_capex', HYDROGEN_PRICE_START_YEAR, HYDROGEN_PRICE_END_YEAR, units='EUR / kW')
+    energy_consumption = timeseries_generator(
+        'energy_consumption', HYDROGEN_PRICE_START_YEAR, HYDROGEN_PRICE_END_YEAR, units='kWh / kg H2')
 
-# Calculating green hydrogen prices
-green_h2_prices_average_gj = create_green_h2_prices(df_grid_reference, 'average', as_gj=True)
-green_h2_prices_favorable_gj = create_green_h2_prices(df_grid_reference, 'favorable', as_gj=True)
-hydrogen_minimodel_timeseries = pd.concat([green_h2_prices_favorable_gj, green_h2_prices_average_gj])
+    logger.info('Reading electrolyzer capex timeseries')
+    electrolyzer_capex_timeseries = read_pickle_folder(PKL_FOLDER, 'hydrogen_electrolyzer_capex')[['metric', 'year', 'units', 'value']]
+    electrolyzer_capex_timeseries['metric'] = 'electrolyzer_capex'
 
-# Serialize timeseries
-serialize_df(hydrogen_minimodel_timeseries, PKL_FOLDER, 'hydrogen_minimodel_timeseries')
+    # Combining all dataframes into one
+    df_grid_reference = create_df_grid([
+        vre_price_average, vre_price_favorable, electrolyzer_capex_timeseries,
+        stack_lifetime, required_stack_replacements, stack_capex, energy_consumption
+        ])
+
+    # Calculating green hydrogen prices
+    green_h2_prices_average_gj = create_green_h2_prices(df_grid_reference, 'average', as_gj=True)
+    green_h2_prices_favorable_gj = create_green_h2_prices(df_grid_reference, 'favorable', as_gj=True)
+    hydrogen_minimodel_timeseries = pd.concat([green_h2_prices_favorable_gj, green_h2_prices_average_gj])
+
+    if serialize_only:
+        # Serialize timeseries
+        serialize_df(hydrogen_minimodel_timeseries, PKL_FOLDER, 'hydrogen_minimodel_timeseries')
+        return
+
+    return hydrogen_minimodel_timeseries
+
+generate_hydrogen_timeseries(serialize_only=True)
