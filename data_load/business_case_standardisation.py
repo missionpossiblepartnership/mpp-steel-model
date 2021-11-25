@@ -6,7 +6,7 @@ import pandas as pd
 # For logger
 from utils import get_logger, read_pickle_folder, serialise_file
 
-from model_config import PKL_FOLDER
+from model_config import PKL_FOLDER, TECH_REFERENCE_LIST, FURNACE_GROUP_DICT
 
 # Create logger
 logger = get_logger('Business Case Standarisation')
@@ -742,18 +742,7 @@ PER_T_STEEL_DICT_UNITS = {
     'Emissivity': 't CO2 / t steel',
 }
 
-FURNACE_GROUP_DICT = {
-    'blast_furnace': ['Avg BF-BOF', 'BAT BF-BOF', 'BAT BF-BOF_bio PCI', 'BAT BF-BOF_H2 PCI', 'BAT BF-BOF+CCUS', 'BAT BF-BOF+BECCUS', 'BAT BF-BOF+CCU'],
-    'dri-bof': ['DRI-Melt-BOF', 'DRI-Melt-BOF_100% zero-C H2', 'DRI-Melt-BOF+CCUS'],
-    'dri-eaf': ['DRI-EAF', 'DRI-EAF_50% bio-CH4', 'DRI-EAF_50% green H2', 'DRI-EAF+CCUS', 'DRI-EAF_100% green H2'],
-    'smelting_reduction': ['Smelting Reduction', 'Smelting Reduction+CCUS'],
-    'eaf-basic': ['EAF'],
-    'eaf-advanced': ['Electrolyzer-EAF', 'Electrowinning-EAF'],
-    'ccs': ['BAT BF-BOF+BECCUS', 'BAT BF-BOF+CCUS', 'DRI-Melt-BOF+CCUS', 'DRI-EAF+CCUS', 'Smelting Reduction+CCUS'],
-    'ccu': ['BAT BF-BOF+CCU']
-}
-FURNACE_GROUP_DICT['dri'] = FURNACE_GROUP_DICT['dri-bof'] + FURNACE_GROUP_DICT['dri-eaf']
-FURNACE_GROUP_DICT['eaf-all'] = FURNACE_GROUP_DICT['eaf-basic'] + FURNACE_GROUP_DICT['eaf-advanced']
+
 
 # Define Groups
 bosc_factor_group = FURNACE_GROUP_DICT['blast_furnace'] + FURNACE_GROUP_DICT['smelting_reduction'] + FURNACE_GROUP_DICT['dri-bof']
@@ -783,16 +772,6 @@ HARD_CODED_FACTORS = {
 
 hard_coded_factor_exceptions = create_hardcoded_exceptions(HARD_CODED_FACTORS, FURNACE_GROUP_DICT)
 TECHNOLOGY_PROCESSES = create_tech_processes_list()
-TECH_REFERENCE_LIST = [
-    'Avg BF-BOF', 'BAT BF-BOF', 'BAT BF-BOF_bio PCI',
-    'BAT BF-BOF_H2 PCI', 'BAT BF-BOF+CCUS', 'DRI-EAF',
-    'DRI-EAF_50% green H2', 'DRI-EAF_50% bio-CH4', 'DRI-EAF+CCUS',
-    'DRI-EAF_100% green H2', 'Smelting Reduction',
-    'Smelting Reduction+CCUS', 'EAF', 'Electrolyzer-EAF',
-    'BAT BF-BOF+CCU', 'DRI-Melt-BOF', 'DRI-Melt-BOF+CCUS',
-    'DRI-Melt-BOF_100% zero-C H2', 'Electrowinning-EAF',
-    'BAT BF-BOF+BECCUS'
-    ]
 
 def standardise_business_cases(serialize_only: bool = False) -> pd.DataFrame:
     """Standardises the business cases for each technology into per t steel.
