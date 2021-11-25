@@ -4,6 +4,7 @@ import pickle
 import sys
 import os
 
+from collections import namedtuple
 from logging.handlers import TimedRotatingFileHandler
 
 import pandas as pd
@@ -234,3 +235,11 @@ def official_country_name_getter(country_code: str):
     if 'official_name' in match_attributes:
         return match.official_name
     return ''
+
+NEW_COUNTRY_COL_LIST = [
+    'country_code', 'country', 'official_name',
+    'm49_code', 'region', 'continent',
+    'wsa_region', 'rmi_region'
+    ]
+
+CountryMetadata = namedtuple('CountryMetadata', NEW_COUNTRY_COL_LIST)
