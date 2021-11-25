@@ -115,53 +115,53 @@ def steel_demand_getter(df: pd.DataFrame, steel_type: str, scenario: str, year: 
     df_c = df.copy()
     metric_names = df_c['Steel Type'].unique()
     scenarios = df_c['Scenario'].unique()
-    logger.info(
-        f'''Creating scope 1 emissions getter with the following metrics: {metric_names} and scenarios: {scenarios}''')
+    #logger.info(f'''Creating scope 1 emissions getter with the following metrics: {metric_names} and scenarios: {scenarios}''')
     df_c.set_index(['Steel Type', 'Scenario', 'Year'], inplace=True)
-    logger.info(f'Getting Steel Demand value for: {steel_type} - {scenario} - {year}')
+    #logger.info(f'Getting Steel Demand value for: {steel_type} - {scenario} - {year}')
     value = df_c.loc[steel_type, scenario, year]['Value']
     return value
 
 def carbon_tax_getter(df: pd.DataFrame, year: str) -> float:
     df_c = df.copy()
-    df_c.set_index(['Year'], inplace=True)
-    logger.info(f'Getting Carbon Tax value for: {year}')
-    value = df_c.loc[year]['Value']
+    df_c.columns = [col.lower() for col in df_c.columns]
+    df_c.set_index(['year'], inplace=True)
+    #logger.info(f'Getting Carbon Tax value for: {year}')
+    value = df_c.loc[year]['value']
     return value
 
 def scope1_emissions_getter(df: pd.DataFrame, metric: str) -> float:
     df_c = df.copy()
     metric_names = df_c['Metric'].to_list()
-    logger.info(f'Creating scope 1 emissions getter with the following metrics: {metric_names}')
+    #logger.info(f'Creating scope 1 emissions getter with the following metrics: {metric_names}')
     df_c.set_index(['Metric'], inplace=True)
-    logger.info(f'Getting Scope 1 emissions value for: {metric}')
+    #logger.info(f'Getting Scope 1 emissions value for: {metric}')
     value = df_c.loc[metric]['Value']
     return value
 
 def ccs_co2_getter(df: pd.DataFrame, metric: str, year: str) -> float:
     df_c = df.copy()
     metric_names = df_c['Metric'].unique()
-    logger.info(f'Creating CCS CO2 getter with the following metrics: {metric_names}')
+    #logger.info(f'Creating CCS CO2 getter with the following metrics: {metric_names}')
     df_c.set_index(['Metric', 'Year'], inplace=True)
-    logger.info(f'Getting {metric} value for: {year}')
+    #logger.info(f'Getting {metric} value for: {year}')
     value = df_c.loc[metric, year]['Value']
     return value
 
 def static_energy_prices_getter(df: pd.DataFrame, metric: str, year: str) -> float:
     df_c = df.copy()
     metric_names = df_c['Metric'].unique()
-    logger.info(f'Creating Static Energy getter with the following metrics: {metric_names}')
+    #logger.info(f'Creating Static Energy getter with the following metrics: {metric_names}')
     df_c.set_index(['Metric', 'Year'], inplace=True)
-    logger.info(f'Getting {metric} value for: {year}')
+    #logger.info(f'Getting {metric} value for: {year}')
     value = df_c.loc[metric, year]['Value']
     return value
 
 def technology_availability_getter(df: pd.DataFrame, technology: str) -> tuple:
     df_c = df.copy()
     metric_names = df_c['Technology'].unique()
-    logger.info(f'Creating Technology getter with the following metrics: {metric_names}')
+    #logger.info(f'Creating Technology getter with the following metrics: {metric_names}')
     df_c.set_index(['Technology'], inplace=True)
-    logger.info(f'Getting {technology} availability')
+    #logger.info(f'Getting {technology} availability')
     year_available_from = df_c.loc[technology]['Year available from']
     year_available_until = df_c.loc[technology]['Year available until']
     return year_available_from, year_available_until
@@ -169,7 +169,7 @@ def technology_availability_getter(df: pd.DataFrame, technology: str) -> tuple:
 def grid_emissivity_getter(df: pd.DataFrame, year: str) -> float:
     df_c = df.copy()
     df_c.set_index(['Year'], inplace=True)
-    logger.info(f'Getting Grid Emissivity value for: {year}')
+    #logger.info(f'Getting Grid Emissivity value for: {year}')
     value = df_c.loc[year]['Value']
     return value
 
@@ -192,12 +192,12 @@ def format_commodities_data(df: pd.DataFrame, material_mapper: dict) -> pd.DataF
 def commodity_data_getter(df: pd.DataFrame, commodity: str = ''):
     df_c = df.copy()
     if commodity:
-        logger.info(f'Getting the weighted average price for {commodity}')
+        #logger.info(f'Getting the weighted average price for {commodity}')
         df_c = df_c[df_c['commodity_code'] == commodity]
         value_productsum = sum(df_c['netweight'] * df_c['implied_price']) / df_c['netweight'].sum()
         return value_productsum
     else:
-        logger.info(f'Getting the weighted average price for all commodities: Ethanol, Plastic, Charcoal')
+        #logger.info(f'Getting the weighted average price for all commodities: Ethanol, Plastic, Charcoal')
         values_dict = {}
         for commodity_ref in list(COMMODITY_MATERIAL_MAPPER.values()):
             new_df = df_c[df_c['commodity_code'] == commodity_ref]
@@ -208,9 +208,9 @@ def commodity_data_getter(df: pd.DataFrame, commodity: str = ''):
 def scope3_ef_getter(df: pd.DataFrame, fuel: str, year: str) -> float:
     df_c = df.copy()
     fuel_names = df_c['Fuel'].unique()
-    logger.info(f'Creating Scope 3 Emission Factor getter with the following metrics: {fuel_names}')
+    #logger.info(f'Creating Scope 3 Emission Factor getter with the following metrics: {fuel_names}')
     df_c.set_index(['Fuel', 'Year'], inplace=True)
-    logger.info(f'Getting {fuel} value for: {year}')
+    #logger.info(f'Getting {fuel} value for: {year}')
     value = df_c.loc[fuel, year]['value']
     return value
 
@@ -273,18 +273,3 @@ country_ref = read_pickle_folder(
 
 ethanol_plastic_charcoal = read_pickle_folder(
     PKL_FOLDER, 'ethanol_plastic_charcoal')
-
-# Example Use of Functions
-print(steel_demand_getter(steel_demand, 'Crude', 'BAU', 2030))
-
-print(carbon_tax_getter(carbon_tax_assumptions, 2040))
-
-print(scope1_emissions_getter(s1_emissions_factors, 'Biomass'))
-
-print(ccs_co2_getter(ccs_co2, 'Steel CO2 use market', 2040))
-
-print(static_energy_prices_getter(static_energy_prices, 'BF gas', 2026))
-
-print(technology_availability_getter(tech_availability, 'BAT BF-BOF'))
-
-print(grid_emissivity_getter(grid_emissivity, 2026))

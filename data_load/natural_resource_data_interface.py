@@ -291,5 +291,3 @@ def natural_resource_preprocessor(serialize_only: bool = False) -> dict:
         serialize_df(natural_gas_df, PKL_FOLDER, 'natural_gas_processed')
         return
     return {'solar': solar_df, 'wind': wind_df, 'natural_gas': natural_gas_df}
-
-natural_resource_preprocessor(serialize_only=True)
