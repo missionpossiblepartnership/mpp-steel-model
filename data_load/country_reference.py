@@ -9,7 +9,7 @@ import pycountry
 
 # For logger and units dict
 from utils import (
-    get_logger, read_pickle_folder, serialize_df)
+    get_logger, read_pickle_folder, serialize_df, CountryMetadata)
 
 from model_config import PKL_FOLDER
 
@@ -45,9 +45,9 @@ def create_country_ref_dict(df: pd.DataFrame, country_metadata_nt: namedtuple) -
     country_ref_dict = {}
     for row in df.itertuples():
         country_ref_dict[row.country_code] = country_metadata_nt(
-            row.country, row.country_code, row.m49_code,
-            row.region, row.continent,  row.wsa_region,
-            row.rmi_region, row.official_name)
+            row.country_code, row.country, row.official_name,
+            row.m49_code, row.region, row.continent,  
+            row.wsa_region, row.rmi_region )
     return country_ref_dict
 
 def country_df_formatter(df: pd.DataFrame) -> pd.DataFrame:
@@ -106,13 +106,5 @@ def create_country_ref(serialize_only: bool = False) -> dict:
         serialize_df(cr_dict, PKL_FOLDER, 'country_reference_dict')
         return
     return cr_dict
-
-NEW_COL_LIST = [
-    'country_code', 'country', 'official_name',
-    'm49_code', 'region', 'continent',
-    'wsa_region', 'rmi_region'
-    ]
-
-CountryMetadata = namedtuple('CountryMetadata', NEW_COL_LIST)
 
 create_country_ref(serialize_only=True)
