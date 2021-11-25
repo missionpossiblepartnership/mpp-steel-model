@@ -6,7 +6,8 @@ from timeseries_generator import generate_timeseries
 from business_case_standardisation import standardise_business_cases
 from natural_resource_data_interface import natural_resource_preprocessor
 from steel_plant_formatter import steel_plant_preprocessor
-
+from country_reference import create_country_ref
+from data_interface import create_capex_opex_dict, generate_preprocessed_emissions_data
 
 if __name__ == '__main__':
     # Load all data
@@ -26,3 +27,11 @@ if __name__ == '__main__':
 
     # Process Steel plants
     steel_plant_preprocessor(serialize_only=True)
+
+    # Run Country Reference
+    create_country_ref(serialize_only=True)
+    # Create Capex Opex dict
+    create_capex_opex_dict(serialize_only=True)
+
+    # Create preprocessed emissions dataframes
+    generate_preprocessed_emissions_data(serialize_only=True)

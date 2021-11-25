@@ -106,5 +106,3 @@ def create_country_ref(serialize_only: bool = False) -> dict:
         serialize_df(cr_dict, PKL_FOLDER, 'country_reference_dict')
         return
     return cr_dict
-
-create_country_ref(serialize_only=True)

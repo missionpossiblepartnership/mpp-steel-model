@@ -7,13 +7,19 @@ import pandas as pd
 import numpy as np
 
 # For logger and units dict
-from utils import get_logger, read_pickle_folder, official_country_name_getter, serialise_file
+from utils import get_logger, read_pickle_folder, official_country_name_getter, serialise_file, serialize_df
 
 # Get model parameters
 from model_config import PKL_FOLDER, EMISSIONS_FACTOR_SLAG, ENERGY_DENSITY_MET_COAL
 
 # Create logger
 logger = get_logger('Data Interface')
+
+COMMODITY_MATERIAL_MAPPER = {
+    '4402': 'charcoal',
+    '220710': 'ethanol',
+    '391510': 'plastic'
+}
 
 def format_scope3_ef_2(df: pd.DataFrame, emissions_factor_slag: float) -> pd.DataFrame:
     df_c = df.copy()
@@ -34,26 +40,6 @@ def modify_scope3_ef_1(
     scope3df_index.reset_index(inplace=True)
     scope3df_index.head()
     return scope3df_index.melt(id_vars=['Category', 'Fuel', 'Unit'], var_name='Year')
-
-def create_country_ref_dict(df: pd.DataFrame) -> dict:
-    CountryMetadata = namedtuple('CountryMetadata', df.columns)
-    country_ref_dict = {}
-    for row in df.itertuples():
-        country_ref_dict[row.country_code] = CountryMetadata(
-            row.country, row.country_code, row.m49_code, 
-            row.region, row.continent,  row.wsa_region, 
-            row.rmi_region, row.official_name)
-    return country_ref_dict
-
-def country_df_formatter(df: pd.DataFrame) -> pd.DataFrame:
-    df_c = df.copy()
-    df_c.rename(columns={'ISO-alpha3 code': 'country_code'}, inplace=True)
-    df_c['Official Country Name'] = df_c['country_code'].apply(lambda x: official_country_name_getter(x))
-    current_columns = ['country_code', 'Country', 'Official Country Name', 'M49 Code', 'Region 1', 'Continent', 'WSA Group Region', 'RMI Model Region', 'country_code']
-    new_columns = ['country_code', 'country', 'official_name', 'm49_code', 'region', 'continent', 'wsa_region', 'rmi_region']
-    col_mapper = dict(zip(current_columns, new_columns))
-    df_c.rename(mapper=col_mapper, axis=1, inplace=True)
-    return df_c
 
 
 def melt_and_index(df: pd.DataFrame, id_vars: list, var_name: str, index: list) -> pd.DataFrame:
@@ -124,25 +110,6 @@ def capex_dictionary_generator(
         'other_opex': melt_and_index(
             other_df, ['Technology'], 'Year', ['Technology', 'Year'])
     }
-
-
-def create_data_tuples(df: pd.DataFrame, namedtuple_name: str):
-    """Generic function that dynamically create namedtuples from a dataframe.
-    *** WARNING *** You won't see these namedtuples defined prior to creation so you have to be careful.
-
-    Args:
-        df (pd.DataFrame): DataFrame containing the data to translate into the namedtuples
-        namedtuple_name (str): The name of the namedtuple that you want to create
-    """
-    df_c = df.copy()
-    df_c.columns = [colname.lower() for colname in df_c.columns]
-    class_names = [metric.upper().replace(' ', '_') for metric in df_c['metric'].to_list()]
-    globals()[namedtuple_name] = namedtuple('namedtuple_name', ['metric', 'unit', 'year', 'value'])
-    ticker = 0
-    logger.info(f'Creating new namtedtuples with the following names: {class_names}')
-    for row in df_c.itertuples():
-        globals()[class_names[ticker]] = globals()[namedtuple_name](row.metric, row.unit, row.year, row.value)
-        ticker+=1
 
 def steel_demand_getter(df: pd.DataFrame, steel_type: str, scenario: str, year: str) -> float:
     df_c = df.copy()
@@ -222,7 +189,7 @@ def format_commodities_data(df: pd.DataFrame, material_mapper: dict) -> pd.DataF
             df_c.loc[row.Index, 'implied_price'] = row.trade_value / row.netweight
     return df_c
 
-def commodity_data_getter(df: pd.DataFrame, material_mapper: dict, commodity: str = ''):
+def commodity_data_getter(df: pd.DataFrame, commodity: str = ''):
     df_c = df.copy()
     if commodity:
         logger.info(f'Getting the weighted average price for {commodity}')
@@ -232,7 +199,7 @@ def commodity_data_getter(df: pd.DataFrame, material_mapper: dict, commodity: st
     else:
         logger.info(f'Getting the weighted average price for all commodities: Ethanol, Plastic, Charcoal')
         values_dict = {}
-        for commodity_ref in list(material_mapper.values()):
+        for commodity_ref in list(COMMODITY_MATERIAL_MAPPER.values()):
             new_df = df_c[df_c['commodity_code'] == commodity_ref]
             value_productsum = sum(new_df['netweight'] * new_df['implied_price']) / new_df['netweight'].sum()
             values_dict[commodity_ref] = value_productsum
@@ -247,19 +214,28 @@ def scope3_ef_getter(df: pd.DataFrame, fuel: str, year: str) -> float:
     value = df_c.loc[fuel, year]['value']
     return value
 
-def country_ref_getter(
-    country_ref_dict: dict, country_code:str, ref: str = ''):
+def create_capex_opex_dict(serialize_only: bool = False):
+    greenfield_capex_df = read_pickle_folder(PKL_FOLDER, 'greenfield_capex')
+    brownfield_capex_df = read_pickle_folder(PKL_FOLDER, 'brownfield_capex')
+    other_opex_df = read_pickle_folder(PKL_FOLDER, 'other_opex')
+    capex_dict = capex_dictionary_generator(greenfield_capex_df, brownfield_capex_df, other_opex_df)
+    if serialize_only:
+        serialize_df(capex_dict, PKL_FOLDER, 'capex_dict')
+        return capex_dict
+    return
 
-    if country_code in country_ref_dict.keys():
-        country_class = country_ref_dict[country_code]
-    if ref in dir(country_class):
-        return getattr(country_class, ref)
-    return country_class
+def generate_preprocessed_emissions_data(serialize_only: bool = False):
+    commodities_df = format_commodities_data(ethanol_plastic_charcoal, COMMODITY_MATERIAL_MAPPER)
+    scope3df_2_formatted = format_scope3_ef_2(s3_emissions_factors_2, EMISSIONS_FACTOR_SLAG)
+    slag_new_values = scope3df_2_formatted['value'].values
+    final_scope3_ef_df = modify_scope3_ef_1(
+        s3_emissions_factors_1, slag_new_values, ENERGY_DENSITY_MET_COAL)
 
-greenfield_capex_df = read_pickle_folder(PKL_FOLDER, 'greenfield_capex')
-brownfield_capex_df = read_pickle_folder(PKL_FOLDER, 'brownfield_capex')
-other_opex_df = read_pickle_folder(PKL_FOLDER, 'other_opex')
-capex_dict = capex_dictionary_generator(greenfield_capex_df, brownfield_capex_df, other_opex_df)
+    if serialize_only:
+        serialise_file(commodities_df, PKL_FOLDER, 'commodities_df')
+        serialise_file(final_scope3_ef_df, PKL_FOLDER, 'final_scope3_ef_df')
+        return
+    return commodities_df, final_scope3_ef_df
 
 # Example Loading Data with necessary subsets
 feedstock_prices = read_pickle_folder(
@@ -298,31 +274,7 @@ country_ref = read_pickle_folder(
 ethanol_plastic_charcoal = read_pickle_folder(
     PKL_FOLDER, 'ethanol_plastic_charcoal')
 
-COMMODITY_MATERIAL_MAPPER = {
-    '4402': 'charcoal',
-    '220710': 'ethanol',
-    '391510': 'plastic'
-}
-
-commodities_df = format_commodities_data(ethanol_plastic_charcoal, COMMODITY_MATERIAL_MAPPER)
-
-scope3df_2_formatted = format_scope3_ef_2(s3_emissions_factors_2, EMISSIONS_FACTOR_SLAG)
-slag_new_values = scope3df_2_formatted['value'].values
-final_scope3_ef_df = modify_scope3_ef_1(
-    s3_emissions_factors_1, slag_new_values, ENERGY_DENSITY_MET_COAL)
-
-country_ref = country_df_formatter(country_ref)
-country_ref_dict = create_country_ref_dict(country_ref)
-
-create_data_tuples(feedstock_prices, 'FeedstockPrices')
-
-serialise_file(commodities_df, PKL_FOLDER, 'commodities_df')
-serialise_file(final_scope3_ef_df, PKL_FOLDER, 'final_scope3_ef_df')
-# serialise_file(country_ref_dict, PKL_FOLDER, 'country_ref_dict') # can't pickle custom classes
-
 # Example Use of Functions
-print(capex_generator(capex_dict, 'DRI-EAF', 2020))
-
 print(steel_demand_getter(steel_demand, 'Crude', 'BAU', 2030))
 
 print(carbon_tax_getter(carbon_tax_assumptions, 2040))
@@ -336,9 +288,3 @@ print(static_energy_prices_getter(static_energy_prices, 'BF gas', 2026))
 print(technology_availability_getter(tech_availability, 'BAT BF-BOF'))
 
 print(grid_emissivity_getter(grid_emissivity, 2026))
-
-print(commodity_data_getter(commodities_df, COMMODITY_MATERIAL_MAPPER))
-
-print(scope3_ef_getter(final_scope3_ef_df, 'Slag', 2030))
-
-print(country_ref_getter(country_ref_dict, 'ZWE', 'country_code'))
