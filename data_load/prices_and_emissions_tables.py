@@ -8,7 +8,7 @@ import numpy as np
 from utils import (
     get_logger, read_pickle_folder, CountryMetadata, serialize_df)
 
-from model_config import PKL_FOLDER, TECH_REFERENCE_LIST, FURNACE_GROUP_DICT
+from model_config import PKL_FOLDER, TECH_REFERENCE_LIST
 from data_interface import (
     commodity_data_getter, static_energy_prices_getter, scope1_emissions_getter,
     grid_emissivity_getter, scope3_ef_getter, carbon_tax_getter
@@ -199,7 +199,7 @@ def generate_variable_costs(
                 if scalar_calc == 1:
                     price_unit_value = natural_gas_low
                 else:
-                    price_unit_value = natural_gas_low + ((natural_gas_high - natural_gas_low) * 1 - scalar)
+                    price_unit_value = natural_gas_low + ((natural_gas_high - natural_gas_low) * (1 - scalar))
                 df_c.loc[row.Index, 'Natural gas'] = resource_consumed * price_unit_value
 
             if resource == 'Electricity':
