@@ -32,7 +32,7 @@ if __name__ == '__main__':
 
     # Run Country Reference
     create_country_ref(serialize_only=True)
-    
+
     # Create Capex Opex dict
     create_capex_opex_dict(serialize_only=True)
 
@@ -43,4 +43,4 @@ if __name__ == '__main__':
     price_and_emissions_flow(serialize_only=True)
 
 # Create capex tables
-    create_capex_timeseries()
+    create_capex_timeseries(serialize_only=True)
