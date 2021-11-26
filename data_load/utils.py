@@ -8,6 +8,7 @@ from collections import namedtuple
 from logging.handlers import TimedRotatingFileHandler
 
 import pandas as pd
+import numpy as np
 import wbgapi as wb
 import pycountry
 
@@ -243,3 +244,45 @@ NEW_COUNTRY_COL_LIST = [
     ]
 
 CountryMetadata = namedtuple('CountryMetadata', NEW_COUNTRY_COL_LIST)
+
+def create_line_through_points(year_value_dict: dict, line_shape: str = 'straight') -> pd.DataFrame:
+    """A function that returns a dataframe based on a few data points.
+
+    Args:
+        year_value_dict (dict): A dictionary with year, value pairings, put as many as you want, minimum two.
+        line_shape (str, optional): The shape of the fitting betwene points. Defaults to 'straight'.
+
+    Returns:
+        pd.DataFrame: A dataframe with an index as year and one value column.
+    """
+
+    # Creates a pairing for all elements based on location
+    def create_value_pairings(iterable: list) -> list:
+        value_pairings = []
+        it = iter(iterable)
+        for x in it:
+            try:
+                value_pairings.append((x, next(it)))
+            except StopIteration:
+                value_pairings.append((iterable[-2], iterable[-1]))
+        return value_pairings
+
+    # Create pairings for years and values
+    years = [int(year) for year in year_value_dict.keys()]
+    values = list(year_value_dict.values())
+    year_pairs = create_value_pairings(years)
+    value_pairs = create_value_pairings(values)
+
+    # Create dataframes for every pairing
+    df_list = []
+    for year_pair, value_pair in zip(year_pairs, value_pairs):
+        year_range = range(year_pair[0], year_pair[1]+1)
+        start_value = value_pair[0]
+        end_value = value_pair[1]+1
+        if line_shape == 'straight':
+            values = np.linspace(start=start_value, stop=end_value, num=len(year_range))
+        df = pd.DataFrame(data={'year': year_range, 'values': values})
+        df_list.append(df)
+    # Combine pair DataFrames into one DataFrame
+    combined_df = pd.concat(df_list)
+    return combined_df.set_index('year')

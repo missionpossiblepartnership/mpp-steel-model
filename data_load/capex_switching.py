@@ -4,7 +4,7 @@
 import pandas as pd
 
 # For logger
-from utils import get_logger, read_pickle_folder, serialise_file, serialize_df
+from utils import get_logger, read_pickle_folder, serialise_file, serialize_df, create_line_through_points
 
 from model_config import PKL_FOLDER, FURNACE_GROUP_DICT, TECH_REFERENCE_LIST, SWITCH_DICT
 from data_interface import capex_generator
@@ -13,6 +13,8 @@ from data_interface import capex_generator
 logger = get_logger('Capex Switching')
 
 capex_dict = read_pickle_folder(PKL_FOLDER, 'capex_dict')
+
+CAPEX_DATA_POINTS = {'2020': 319.249187119815, '2030': 319.249187119815, '2050': 286.218839300307}
 
 def create_switching_dfs(technology_list: list) -> dict:
     """Creates a dictionary that hold a DataFrame with three columns fo each tehnology passed to it in a list.
@@ -23,7 +25,7 @@ def create_switching_dfs(technology_list: list) -> dict:
     Returns:
         dict: A dictionary with each key as the technologies.
     """
-    logger.info(f'Creating the base switching dict')
+    logger.info('Creating the base switching dict')
     df_dict = {}
     for technology in technology_list:
         df_temp = pd.DataFrame(data={'Start Technology': technology, 'New Technology': technology_list, 'value': ''})
@@ -44,13 +46,10 @@ def get_capex_values(
     Returns:
         dict: A dictionary with vales
     """
-    logger.info(f'Gnerating the capex values for each technology')
+    logger.info('Gnerating the capex values for each technology')
     df_dict_c = df_switching_dict.copy()
 
-    def get_hard_code_capex(year : int):
-        if year == 2020 or year == 2030:
-            return 319.249187119815
-        return 286.218839300307
+    hard_coded_capex_values = create_line_through_points(CAPEX_DATA_POINTS)
 
     for technology in SWITCH_DICT.keys():
         logger.info(f'-- Generating Capex values for {technology}')
@@ -77,7 +76,7 @@ def get_capex_values(
                             df_temp.loc[(df_temp['Start Technology'] == technology) & (df_temp['New Technology'] == new_technology), 'value'] = switch_capex_value
                             df_dict_c[technology] = df_temp
                         elif technology =='BAT BF-BOF_bio PCI' or technology== 'BAT BF-BOF_H2 PCI':
-                            switch_capex_value = get_hard_code_capex(year)
+                            switch_capex_value = hard_coded_capex_values.loc[year].values[0]
                             df_temp.loc[(df_temp['Start Technology'] == technology) & (df_temp['New Technology'] == new_technology), 'value'] = switch_capex_value
                             df_dict_c[technology] = df_temp
 
