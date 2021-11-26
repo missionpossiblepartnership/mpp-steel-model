@@ -247,7 +247,7 @@ def natural_resource_preprocessor(serialize_only: bool = False) -> dict:
     """Preprocesses dataframe for wind, solar and natural gas.
 
     Args:
-        serialize_only (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to True.
+        serialize_only (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
 
     Returns:
         dict: A dictionary with keys for 'solar', 'wind' and 'natrual gas' and dataframes for the respective values.
