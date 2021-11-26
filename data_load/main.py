@@ -9,6 +9,7 @@ from steel_plant_formatter import steel_plant_preprocessor
 from country_reference import create_country_ref
 from data_interface import create_capex_opex_dict, generate_preprocessed_emissions_data
 from prices_and_emissions_tables import price_and_emissions_flow
+from capex_switching import create_capex_timeseries
 
 if __name__ == '__main__':
     # Load all data
@@ -31,7 +32,7 @@ if __name__ == '__main__':
 
     # Run Country Reference
     create_country_ref(serialize_only=True)
-    
+
     # Create Capex Opex dict
     create_capex_opex_dict(serialize_only=True)
 
@@ -40,3 +41,6 @@ if __name__ == '__main__':
 
     # Create emissions, price and opex tables
     price_and_emissions_flow(serialize_only=True)
+
+# Create capex tables
+    create_capex_timeseries(serialize_only=True)
