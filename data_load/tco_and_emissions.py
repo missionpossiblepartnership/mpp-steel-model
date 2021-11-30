@@ -13,7 +13,17 @@ from model_config import PKL_FOLDER, DISCOUNT_RATE, SWITCH_DICT
 # Create logger
 logger = get_logger('TCO & Emissions')
 
-def calculate_present_values(values: list, int_rate: float, rounding: int = 2):
+def calculate_present_values(values: list, int_rate: float, rounding: int = 2) -> list:
+    """Converts a list of values into a present values discounted to today using a discouont rate.
+
+    Args:
+        values (list): A list of values to convert to present values.
+        int_rate (float): A discount rate to convert the list of values using a present_value function.
+        rounding (int, optional): The number of decimal places to round the final list of values to. Defaults to 2.
+
+    Returns:
+        list: A list of future opex converted to present values.
+    """
     # logger.info('--- Calculating present values')
     def present_value(value: float, factor: float):
         discount_factor = 1 / ((1 + int_rate)**factor)
@@ -28,7 +38,19 @@ def discounted_opex(
     interest_rate: float,
     start_year: int = 2020,
     date_span: int = 20,
-):
+) -> list:
+    """Produces a list of Present values based on predicted opex numbers.
+
+    Args:
+        opex_value_dict (dict): The opex value dict containing values in a timeseries.
+        technology (str): The technology that subsets the opex_value_dict
+        interest_rate (float): The interest rate to be applied to produce the discounted opex values.
+        start_year (int, optional): The start date of the opex. Defaults to 2020.
+        date_span (int, optional): The investment length. Defaults to 20.
+
+    Returns:
+        list: A list of future opex converted to present values.
+    """
     # logger.info('-- Calculating 20-year discouted opex')
     tech_values = opex_value_dict.loc[technology].copy()
     max_value = tech_values.loc[2050].value
@@ -48,7 +70,19 @@ def get_capital_schedules(
     capex_df: pd.DataFrame, start_tech: str,
     end_tech: str, switch_year: int,
     interest_rate: float,
-    ):
+    ) -> dict:
+    """Gets the capex schedule of capital charges for a given capex amount.
+
+    Args:
+        capex_df (pd.DataFrame): A DataFrame containing all the capex amounts.
+        start_tech (str): The technology that starts the process.
+        end_tech (str): The technology that will be switched to.
+        switch_year (int): The year the switch is planned to take place.
+        interest_rate (float): The interest rate used to calculate interest payments on the capex loan.
+
+    Returns:
+        dict: A dictionary containing the capex schedule for the switching technology.
+    """
     # logger.info(f'-- Calculating capital schedule for {start_tech} to {end_tech}')
     df_c = None
     if switch_year > 2050:
@@ -76,7 +110,21 @@ def generate_capex_financial_summary(
     downpayment: float = None,
     compounding_type: str = 'annual',
     rounding: int = 2,
-):
+) -> dict:
+    """Generates a number of capex schedules based on inputs.
+
+    Args:
+        principal (float): The capex (loan) amount.
+        interest_rate (float): The rate of interest to be applied to the loan.
+        years (int, optional): The number of years the loan will be active for. Defaults to 20.
+        downpayment (float, optional): Any amouunt paid down on the loan in the inital period. Defaults to None.
+        compounding_type (str, optional): Whether the loan amount is to be compounded annually, semi-annually or monthly. Defaults to 'annual'.
+        rounding (int, optional): The number of decimal places to round the final list of values to. Defaults to 2.
+
+    Returns:
+        dict: A dictionary containing the capex schedule for the switching technology
+        (future_value, interest_payments, total_interest, principal_schedule, interest_schedule).
+    """
 
     rate = interest_rate
     nper = years
@@ -135,7 +183,19 @@ def generate_capex_financial_summary(
 
 def compare_capex(
     base_tech: str, switch_tech: str, interest_rate: float, 
-    start_year: int = 2020, date_span: int = 20):
+    start_year: int = 2020, date_span: int = 20) -> pd.DataFrame:
+    """[summary]
+
+    Args:
+        base_tech (str): The technology to start from.
+        switch_tech (str): The technology to be switched to.
+        interest_rate (float): The rate of interest to be applied to the capex.
+        start_year (int, optional): The start date of the opex and capex calculations. Defaults to 2020.
+        date_span (int, optional): The years that comprise the investment. Defaults to 20.
+
+    Returns:
+        pd.DataFrame: A DataFrame that stacks the opex and capex and tco values togather.
+    """
 
     # logger.info(f'- Comparing capex values for {base_tech} and {switch_tech}')
 
@@ -157,11 +217,22 @@ def compare_capex(
     return df
 
 def calculate_tco(
-    interest_rate: float, 
-    year_end: int = 2050, 
-    output_type: str = 'full', 
+    interest_rate: float,
+    year_end: int = 2050,
+    output_type: str = 'full',
     serialize_only: bool = False
-    ):
+    ) -> pd.DataFrame:
+    """Calculates the complete array of technology switch matches to years.
+
+    Args:
+        interest_rate (float): The rate of interest to be applied to the capex.
+        year_end (int, optional): The year that the table should stop calculating. Defaults to 2050.
+        output_type (str, optional): Determines whether to return the full DataFrame or a summary. Defaults to 'full'.
+        serialize_only (bool, optional): Flag to only serialize the DataFrame to a pickle file and not return a DataFrame. Defaults to False.
+
+    Returns:
+        pd.DataFrame: A DataFrame with the complete TCO iterations of years and technology switches available.
+    """
 
     logger.info(f'- Calculating TCO tables for all technologies from 2020 up to {year_end}')
 
@@ -192,8 +263,18 @@ def calculate_tco(
     return full_df
 
 def get_emissions_by_year(
-    df: pd.DataFrame, tech: str, start_year: int = 2020, date_span: int = 20):
+    df: pd.DataFrame, tech: str, start_year: int = 2020, date_span: int = 20) -> dict:
+    """Generates a dictionary of years as keys, and emissions as values.
 
+    Args:
+        df (pd.DataFrame): A DataFrame containing emissions.
+        tech (str): The technology to subset the DataFrame.
+        start_year (int, optional): The start year for the technology. Defaults to 2020.
+        date_span (int, optional): The years that comprise the investment. Defaults to 20.
+
+    Returns:
+        dict: A dictionary with the with the years and emissions value for the technology.
+    """
     # logger.info(f'--- Getting emissions for {tech} for each year across the relevant range, starting at {start_year}')
 
     df_c = df.copy()
@@ -233,7 +314,17 @@ def compare_emissions(
     return df
 
 def calculate_emissions(
-    year_end: int = 2050, output_type: str = 'full', serialize_only: bool = False):
+    year_end: int = 2050, output_type: str = 'full', serialize_only: bool = False) -> pd.DataFrame:
+    """Calculates the complete array of technology switch matches to years.
+
+    Args:
+        year_end (int, optional): The year that the table should stop calculating. Defaults to 2050.
+        output_type (str, optional): Determines whether to return the full DataFrame or a summary. Defaults to 'full'.
+        serialize_only (bool, optional): Flag to only serialize the DataFrame to a pickle file and not return a DataFrame. Defaults to False.
+
+    Returns:
+        pd.DataFrame: A DataFrame with the complete iterations of years and technology switches available.
+    """
 
     logger.info(f'Calculating emissions for all technologies from 2020 up to {year_end}')
 
