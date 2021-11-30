@@ -279,7 +279,7 @@ def create_production_factors(technology: str, furnace_group_dict: dict, hard_co
             PELLETISATION_FACTOR = blast_furnace_pellets.copy()
             coke_lcv = tech_parameter_getter(bc_parameters, technology, 'Coke LCV')
             blast_furnace_coke = tech_process_getter(bc_processes, technology, 'Blast Furnace', step='Coke') * coke_lcv * BLAST_FURNACE_FACTOR
-            COKE_PRODCTION_FACTOR = blast_furnace_coke / coke_lcv
+            COKE_PRODUCTION_FACTOR = blast_furnace_coke / coke_lcv
 
         # DRI-BOF
         if technology in furnace_group_dict['dri-bof']:
@@ -292,14 +292,14 @@ def create_production_factors(technology: str, furnace_group_dict: dict, hard_co
     # Factor Calculation: EAF
     # EAF Basic
     if technology in furnace_group_dict['eaf-basic']:
-        COKE_PRODCTION_FACTOR = 1
+        COKE_PRODUCTION_FACTOR = 1
         SINTERING_FACTOR = 1
         PELLETISATION_FACTOR = 1
         BLAST_FURNACE_FACTOR = 1
 
     # EAF Advanced
     if technology in furnace_group_dict['eaf-advanced']:
-        COKE_PRODCTION_FACTOR = 0
+        COKE_PRODUCTION_FACTOR = 0
         SINTERING_FACTOR = 0
         ELECTROLYZER_FACTOR = tech_process_getter(bc_processes, technology, 'EAF (Steel-making) + Casting', step='Iron in steel')
         electrolyzer_pellets = 0 * ELECTROLYZER_FACTOR  # * Mystery cell?? - No Pellets in Business Cases One Table
@@ -309,7 +309,7 @@ def create_production_factors(technology: str, furnace_group_dict: dict, hard_co
 
     # DRI-EAF
     if technology in furnace_group_dict['dri-eaf']:
-        COKE_PRODCTION_FACTOR = 0
+        COKE_PRODUCTION_FACTOR = 0
         SINTERING_FACTOR = 0
         dri_captive_eaf_casting = tech_process_getter(bc_processes, technology, 'EAF (Steel-making) + Casting', step='DRI - captive') * EAF_STEELMAKING_CASTING_FACTOR
         SHAFT_FURNACE_FACTOR = dri_captive_eaf_casting.copy()
@@ -474,17 +474,17 @@ def ccs_df_editor(
         # Remove last value for smelting reduction
         if technology in ['Smelting Reduction+CCUS']:
             ccs_df = ccs_df[1:]
-        
+
         df_dict_c['CCS'] = ccs_df
 
     return df_dict_c
 
 def ccu_df_editor(df_dict: dict, technology: str, furnace_group_dict: dict, ef_dict: dict):
-    
+
     logger.info(f'-- Creating the ccu calculations for {technology}')
-    
+
     df_dict_c = df_dict.copy()
-    
+
     if technology in furnace_group_dict['ccu']:
         ccu_co = df_dict_c['CCU -CO-based'].copy()
         ccu_co2 = df_dict_c['CCU -CO2-based'].copy()
@@ -511,7 +511,7 @@ def ccu_df_editor(df_dict: dict, technology: str, furnace_group_dict: dict, ef_d
         captured_co2 = tech_process_getter(df_dict_c['CCU -CO2-based'], technology, process='CCU -CO2-based', step='Captured CO2')
         ccu_co2.loc[(ccu_co2['material_category'] == 'Captured CO2'), 'value'] = captured_co2 * CCU_CO2_FACTOR
         df_dict_c['CCU -CO2-based'] = ccu_co2
-    
+
     return df_dict_c
 
 
@@ -519,14 +519,14 @@ def ccu_df_editor(df_dict: dict, technology: str, furnace_group_dict: dict, ef_d
 def self_gen_df_editor(df_dict: dict, technology: str, furnace_group_dict: dict, factor_dict: dict, tech_processes_dict: dict):
 
     logger.info(f'-- Creating the Self Generation of Electricity calculations for {technology}')
-    
+
     df_dict_c = df_dict.copy()
 
     if technology in electricity_self_gen_group:
         self_gen_name = 'Self-Generation Of Electricity'
         self_gen_df = df_dict_c[self_gen_name].copy()
         electricity_share_factor = tech_parameter_getter(bc_parameters, technology, 'Share of electricity purchased in total demand')
-        
+
         if technology in furnace_group_dict['smelting_reduction']:
             bof_gas = tech_process_getter(bc_processes, technology, process=self_gen_name, material='BOF gas')
             all_electricity_values = get_all_electricity_values(self_gen_df, technology, tech_processes_dict[technology], factor_dict)
