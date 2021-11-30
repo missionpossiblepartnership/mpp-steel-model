@@ -42,5 +42,5 @@ if __name__ == '__main__':
     # Create emissions, price and opex tables
     price_and_emissions_flow(serialize_only=True)
 
-# Create capex tables
+    # Create capex tables
     create_capex_timeseries(serialize_only=True)

@@ -98,7 +98,7 @@ def apply_emissions(
     combined_df.drop(labels=['value'], axis=1, inplace=True)
     combined_df = combined_df.melt(id_vars=['technology', 'year', 'material_category', 'unit'],var_name=['scope'], value_name='emissions')
 
-    if carbon_tax_df.empty:
+    if carbon_tax_df:
         combined_df = combined_df.loc[combined_df['scope'] != 'carbon_cost'].copy()
 
     carbon_df = combined_df.loc[combined_df['scope'] == 'carbon_cost'].reset_index(drop=True).copy()
@@ -199,17 +199,23 @@ def generate_variable_costs(
                 if scalar_calc == 1:
                     price_unit_value = natural_gas_low
                 else:
-                    price_unit_value = natural_gas_low + ((natural_gas_high - natural_gas_low) * (1 - scalar))
+                    price_unit_value = natural_gas_low + ((natural_gas_high - natural_gas_low) * (1 - scalar_calc))
                 df_c.loc[row.Index, 'Natural gas'] = resource_consumed * price_unit_value
 
             if resource == 'Electricity':
-                scalar = 0.5 # take region/country into account
-                price_unit_value = low_elec_price + ((high_elec_price - low_elec_price) * scalar)
+                scalar_calc = solar_ref.loc[selected_region, 'practical_potential'].value
+                if scalar_calc == 1:
+                    price_unit_value = low_elec_price
+                else:
+                    price_unit_value = low_elec_price + ((high_elec_price - low_elec_price) * (1 - scalar_calc))
                 df_c.loc[row.Index, 'Electricity'] = resource_consumed * price_unit_value
 
             if resource == 'Hydrogen':
-                scalar = 0.5 # take region/country into account
-                price_unit_value = low_hyd_price + ((high_hyd_price - low_hyd_price) * scalar)
+                scalar_calc = solar_ref.loc[selected_region, 'practical_potential'].value
+                if scalar_calc == 1:
+                    price_unit_value = low_hyd_price
+                else:
+                    price_unit_value = low_hyd_price + ((high_hyd_price - low_hyd_price) * (1 - scalar_calc))
                 df_c.loc[row.Index, 'Hydrogen'] = resource_consumed * price_unit_value
 
         df_c['year'] = year
@@ -249,11 +255,11 @@ def generate_emissions_dataframe(df: pd.DataFrame):
 
     emissions, carbon = apply_emissions(
         df=df.copy(),
-        year_end=2030,
+        year_end=2050,
         s1_emissions_df=s1_emissions,
         s2_emissions_df=grid_emissivity,
         s3_emissions_df=final_scope3_ef_df,
-        carbon_tax_df=carbon_tax,
+        #carbon_tax_df=carbon_tax,
         non_standard_dict=non_standard_dict_ref,
         scope='1'
     )
@@ -290,7 +296,7 @@ def generate_prices_dataframe(df: pd.DataFrame):
 
     variable_cost_df = generate_variable_costs(
         df=df.copy(),
-        year_end=2030,
+        year_end=2050,
         static_energy_df=static_energy_prices,
         feedstock_dict=feedstock_dict,
         electricity_df=electricity_minimodel_timeseries,
@@ -315,10 +321,8 @@ def price_and_emissions_flow(serialize_only: bool = False):
     s1_summary_df = emissions_s1_summary[['technology', 'year', 'emissions']].groupby(by=['year', 'technology']).sum()
     em_exc_ref_dict = create_emissions_ref_dict(emissions_df, TECH_REFERENCE_LIST)
     s1_summary_df = full_emissions(s1_summary_df, em_exc_ref_dict, TECH_REFERENCE_LIST)
-    s1_summary_df.loc[2020].sort_values(by=['emissions'])
     emissions_s23_summary = emissions[(emissions['scope'] == 'S2') | (emissions['scope'] == 'S3')]
-    emissions_s23_summary = emissions_s23_summary[emissions_s23_summary['year']==2025][['technology', 'emissions']].groupby(by=['technology']).sum().sort_values(by='emissions')
-
+    emissions_s23_summary = emissions_s23_summary[['technology', 'year', 'emissions']].groupby(by=['year', 'technology']).sum()
     variable_costs = generate_prices_dataframe(business_cases_summary_c)
     cost_tech_summary = variable_costs.groupby(by=['year', 'technology']).sum().sort_values(by=['year'])
 
@@ -336,3 +340,5 @@ def price_and_emissions_flow(serialize_only: bool = False):
         'variable_costs': cost_tech_summary,
         'opex_calculations': opex_sheet
     }
+
+price_and_emissions_flow(serialize_only=True)
