@@ -316,9 +316,10 @@ def price_and_emissions_flow(serialize_only: bool = False):
     em_exc_ref_dict = create_emissions_ref_dict(emissions_df, TECH_REFERENCE_LIST)
     s1_summary_df = full_emissions(s1_summary_df, em_exc_ref_dict, TECH_REFERENCE_LIST)
     s1_summary_df.loc[2020].sort_values(by=['emissions'])
-    emissions_s23_summary = emissions[(emissions['scope'] == 'S2') | (emissions['scope'] == 'S3')]
-    emissions_s23_summary = emissions_s23_summary[emissions_s23_summary['year']==2025][['technology', 'emissions']].groupby(by=['technology']).sum().sort_values(by='emissions')
-
+    # emissions_s23_summary = emissions[(emissions['scope'] == 'S2') | (emissions['scope'] == 'S3')]
+    # emissions_s23_summary = emissions_s23_summary[emissions_s23_summary['year']==2025][['technology', 'emissions']].groupby(by=['technology']).sum().sort_values(by='emissions')
+    emissions_s2_summary = emissions[emissions['scope'] == 'S2']
+    emissions_s3_summary = emissions[emissions['scope'] == 'S3']
     variable_costs = generate_prices_dataframe(business_cases_summary_c)
     cost_tech_summary = variable_costs.groupby(by=['year', 'technology']).sum().sort_values(by=['year'])
 
@@ -326,13 +327,15 @@ def price_and_emissions_flow(serialize_only: bool = False):
 
     if serialize_only:
         serialize_df(s1_summary_df, PKL_FOLDER, 'calculated_s1_emissions')
-        serialize_df(emissions_s23_summary, PKL_FOLDER, 'calculated_s23_emissions')
+        serialize_df(emissions_s2_summary, PKL_FOLDER, 'calculated_s2_emissions')
+        serialize_df(emissions_s3_summary, PKL_FOLDER, 'calculated_s3_emissions')
         serialize_df(cost_tech_summary, PKL_FOLDER, 'calculated_variable_costs')
         serialize_df(opex_sheet, PKL_FOLDER, 'calculated_total_opex')
         return
     return {
         's1_calculations': s1_summary_df,
-        's23_calculations': emissions_s23_summary,
+        's23_calculations': emissions_s2_summary,
+        's23_calculations': emissions_s3_summary,
         'variable_costs': cost_tech_summary,
         'opex_calculations': opex_sheet
     }
