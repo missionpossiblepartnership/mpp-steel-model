@@ -44,7 +44,7 @@ def discounted_opex(
     return calculate_present_values(value_list, interest_rate)
 
 def get_capex_year(
-    capex_df: pd.DataFrame, start_tech: str, 
+    capex_df: pd.DataFrame, start_tech: str,
     end_tech: str, switch_year: int,
     interest_rate: float,
     ):

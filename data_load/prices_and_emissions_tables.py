@@ -235,7 +235,7 @@ def create_total_opex(df: pd.DataFrame) -> pd.DataFrame:
     df_c.rename({'cost': 'total_opex'}, axis=1, inplace=True)
     return df_c
 
-def generate_emissions_dataframe(df: pd.DataFrame):
+def generate_emissions_dataframe(df: pd.DataFrame, year_end: int):
 
     # S1 emissions covers the Green House Gas (GHG) emissions that a company makes directly
     s1_emissions = read_pickle_folder(PKL_FOLDER, 's1_emissions_factors', 'df')
@@ -255,18 +255,18 @@ def generate_emissions_dataframe(df: pd.DataFrame):
 
     emissions, carbon = apply_emissions(
         df=df.copy(),
-        year_end=2050,
+        year_end=year_end,
         s1_emissions_df=s1_emissions,
         s2_emissions_df=grid_emissivity,
         s3_emissions_df=final_scope3_ef_df,
-        #carbon_tax_df=carbon_tax,
+        # carbon_tax_df=carbon_tax,
         non_standard_dict=non_standard_dict_ref,
         scope='1'
     )
 
     return emissions, carbon
 
-def generate_prices_dataframe(df: pd.DataFrame):
+def generate_prices_dataframe(df: pd.DataFrame, year_end: int):
 
     solar_ref = read_pickle_folder(PKL_FOLDER, 'solar_processed', 'df')
     wind_ref = read_pickle_folder(PKL_FOLDER, 'wind_processed', 'df')
@@ -296,7 +296,7 @@ def generate_prices_dataframe(df: pd.DataFrame):
 
     variable_cost_df = generate_variable_costs(
         df=df.copy(),
-        year_end=2050,
+        year_end=year_end,
         static_energy_df=static_energy_prices,
         feedstock_dict=feedstock_dict,
         electricity_df=electricity_minimodel_timeseries,
@@ -313,32 +313,33 @@ def generate_prices_dataframe(df: pd.DataFrame):
     return variable_cost_df
 
 def price_and_emissions_flow(serialize_only: bool = False):
+    year_end = 2050
     business_cases_summary = read_pickle_folder(PKL_FOLDER, 'standardised_business_cases', 'df')
     business_cases_summary_c = business_cases_summary.loc[business_cases_summary['material_category'] != 0].copy().reset_index(drop=True)
     emissions_df = business_cases_summary_c.copy()
-    emissions, carbon = generate_emissions_dataframe(business_cases_summary_c)
+    emissions, carbon = generate_emissions_dataframe(business_cases_summary_c, year_end)
     emissions_s1_summary = emissions[emissions['scope'] == 'S1']
     s1_summary_df = emissions_s1_summary[['technology', 'year', 'emissions']].groupby(by=['year', 'technology']).sum()
     em_exc_ref_dict = create_emissions_ref_dict(emissions_df, TECH_REFERENCE_LIST)
     s1_summary_df = full_emissions(s1_summary_df, em_exc_ref_dict, TECH_REFERENCE_LIST)
-    emissions_s23_summary = emissions[(emissions['scope'] == 'S2') | (emissions['scope'] == 'S3')]
-    emissions_s23_summary = emissions_s23_summary[['technology', 'year', 'emissions']].groupby(by=['year', 'technology']).sum()
-    variable_costs = generate_prices_dataframe(business_cases_summary_c)
+    emissions_s2_summary = emissions[emissions['scope'] == 'S2'][['technology', 'year', 'emissions']].groupby(by=['year', 'technology']).sum()
+    emissions_s3_summary = emissions[emissions['scope'] == 'S3'][['technology', 'year', 'emissions']].groupby(by=['year', 'technology']).sum()
+    variable_costs = generate_prices_dataframe(business_cases_summary_c, year_end)
     cost_tech_summary = variable_costs.groupby(by=['year', 'technology']).sum().sort_values(by=['year'])
-
     opex_sheet = create_total_opex(cost_tech_summary)
 
     if serialize_only:
         serialize_df(s1_summary_df, PKL_FOLDER, 'calculated_s1_emissions')
-        serialize_df(emissions_s23_summary, PKL_FOLDER, 'calculated_s23_emissions')
+        serialize_df(emissions_s2_summary, PKL_FOLDER, 'calculated_s2_emissions')
+        serialize_df(emissions_s3_summary, PKL_FOLDER, 'calculated_s3_emissions')
         serialize_df(cost_tech_summary, PKL_FOLDER, 'calculated_variable_costs')
         serialize_df(opex_sheet, PKL_FOLDER, 'calculated_total_opex')
         return
     return {
         's1_calculations': s1_summary_df,
-        's23_calculations': emissions_s23_summary,
+        's2_calculations': emissions_s2_summary,
+        's3_calculations': emissions_s3_summary,
         'variable_costs': cost_tech_summary,
         'opex_calculations': opex_sheet
     }
-
-price_and_emissions_flow(serialize_only=True)
+# price_and_emissions_flow(serialize_only=True)
