@@ -10,6 +10,9 @@ from country_reference import create_country_ref
 from data_interface import create_capex_opex_dict, generate_preprocessed_emissions_data
 from prices_and_emissions_tables import price_and_emissions_flow
 from capex_switching import create_capex_timeseries
+from tco_and_emissions import calculate_emissions, calculate_tco
+
+from model_config import DISCOUNT_RATE
 
 if __name__ == '__main__':
     # Load all data
@@ -44,3 +47,10 @@ if __name__ == '__main__':
 
     # Create capex tables
     create_capex_timeseries(serialize_only=True)
+
+    # Create TCO table
+    calculate_tco(
+    interest_rate=DISCOUNT_RATE, year_end=2070, output_type='summary', serialize_only=True)
+
+    # Create Emissions table
+    calculate_emissions(year_end=2070, output_type='summary', serialize_only=True)
