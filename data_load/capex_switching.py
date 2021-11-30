@@ -60,7 +60,7 @@ def get_capex_values(
         tech_list = []
         for technology in SWITCH_DICT.keys():
             logger.info(f'-- Generating Capex values for {technology}')
-            
+
             df_temp = df_dict_c[technology].copy()
             for new_technology in SWITCH_DICT[technology]:
                 capex_difference = capex_generator(capex_dict_ref, new_technology, year)['greenfield'] - capex_generator(capex_dict_ref, technology, year)['greenfield']

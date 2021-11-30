@@ -342,4 +342,4 @@ def price_and_emissions_flow(serialize_only: bool = False):
         'variable_costs': cost_tech_summary,
         'opex_calculations': opex_sheet
     }
-price_and_emissions_flow(serialize_only=True)
+# price_and_emissions_flow(serialize_only=True)
