@@ -2,7 +2,6 @@
 
 # For Data Manipulation
 import pandas as pd
-import numpy as np
 
 # For logger and units dict
 from utils import (
