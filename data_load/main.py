@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
     # Create TCO table
     calculate_tco(
-    interest_rate=DISCOUNT_RATE, year_end=2070, output_type='summary', serialize_only=True)
+        year_end=2070, output_type='summary', serialize_only=True)
 
     # Create Emissions table
     calculate_emissions(year_end=2070, output_type='summary', serialize_only=True)

@@ -8,7 +8,7 @@ import numpy_financial as npf
 from utils import (
     get_logger, read_pickle_folder, serialize_df)
 
-from model_config import PKL_FOLDER, DISCOUNT_RATE, SWITCH_DICT
+from model_config import PKL_FOLDER, DISCOUNT_RATE, SWITCH_DICT, INVESTMENT_CYCLE_LENGTH
 
 # Create logger
 logger = get_logger('TCO & Emissions')
@@ -217,7 +217,6 @@ def compare_capex(
     return df
 
 def calculate_tco(
-    interest_rate: float,
     year_end: int = 2050,
     output_type: str = 'full',
     serialize_only: bool = False
@@ -245,14 +244,14 @@ def calculate_tco(
                 if switch_tech == 'Close plant':
                     pass
                 else:
-                    df = compare_capex(base_tech, switch_tech, interest_rate, year)
+                    df = compare_capex(base_tech, switch_tech, DISCOUNT_RATE, year, INVESTMENT_CYCLE_LENGTH)
                     df_list.append(df)
     full_df = pd.concat(df_list)
     full_summary_df = full_df[
         ['start_technology', 'end_technology', 'start_year',
         'other_opex', 'variable_opex', 'annual_capex', 'tco']
         ].groupby(by=['start_year', 'start_technology', 'end_technology']).sum()
-    
+
     if serialize_only:
         serialize_df(full_summary_df, PKL_FOLDER, 'tco_switching_df_summary')
         serialize_df(full_df, PKL_FOLDER, 'tco_switching_df_full')
@@ -345,7 +344,7 @@ def calculate_emissions(
                         emission_type = item[0]
                         emission_df = item[1]
                         emission_type_col = f'abated_{emission_type}_emissions'
-                        df = compare_emissions(emission_df, base_tech, switch_tech, emission_type, year)
+                        df = compare_emissions(emission_df, base_tech, switch_tech, emission_type, year, INVESTMENT_CYCLE_LENGTH)
                         df_cols[emission_type] = df[emission_type_col]
                     df_base = df[df_base_cols]
                     for key in df_cols.keys():
