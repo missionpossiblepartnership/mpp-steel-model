@@ -362,7 +362,7 @@ def limestone_df_editor(
                 'material_category': 'Process emissions',
                 'unit': 't CO2 / t LS',
                 'technology': technology,
-                'value': bof_lime * 0.75 / 1000
+                'value': (bof_lime * 0.75) / 1000
             }
             limestone_df.append(new_row, ignore_index=True)
             df_dict_c['Limestone'] = limestone_df
@@ -381,7 +381,7 @@ def limestone_df_editor(
                 'material_category': 'Process emissions',
                 'unit': 't CO2 / t LS',
                 'technology': technology,
-                'value': bof_lime + blast_furnace_lime * 0.75 / 1000
+                'value': (bof_lime + blast_furnace_lime) * 0.75 / 1000
             }
             limestone_df = limestone_df.append(new_row, ignore_index=True)
             df_dict_c['Limestone'] = limestone_df
@@ -529,14 +529,14 @@ def self_gen_df_editor(df_dict: dict, technology: str, furnace_group_dict: dict,
 
         if technology in furnace_group_dict['smelting_reduction']:
             bof_gas = tech_process_getter(bc_processes, technology, process=self_gen_name, material='BOF gas')
-            all_electricity_values = get_all_electricity_values(self_gen_df, technology, tech_processes_dict[technology], factor_dict)
+            all_electricity_values = get_all_electricity_values(bc_processes, technology, tech_processes_dict[technology], factor_dict)
             self_gen_df.loc[(self_gen_df['material_category'] == 'BOF gas'), 'value'] = sum(all_electricity_values) * (1 - electricity_share_factor) * bof_gas
             thermal_coal = tech_process_getter(bc_processes, technology, process=self_gen_name, material='Thermal coal')
             all_steam_values = get_all_steam_values(self_gen_df, technology, tech_processes_dict[technology], factor_dict)
             self_gen_df.loc[(self_gen_df['material_category'] == 'Thermal coal'), 'value'] = sum(all_steam_values) * thermal_coal
 
         if technology in furnace_group_dict['blast_furnace']:
-            all_electricity_values = get_all_electricity_values(self_gen_df, technology, tech_processes_dict[technology], factor_dict)
+            all_electricity_values = get_all_electricity_values(bc_processes, technology, tech_processes_dict[technology], factor_dict)
             cog = tech_process_getter(bc_processes, technology, process=self_gen_name, material='COG')
             self_gen_df.loc[(self_gen_df['material_category'] == 'COG'), 'value'] = sum(all_electricity_values) * (1 - electricity_share_factor) * cog
             bf_gas = tech_process_getter(bc_processes, technology, process=self_gen_name, material='BF gas')
