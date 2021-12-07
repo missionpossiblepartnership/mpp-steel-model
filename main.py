@@ -1,20 +1,23 @@
 """Runs the data loading scripts"""
 
-from data_import import load_data
-from hydrogen_minimodel import generate_hydrogen_timeseries
-from timeseries_generator import generate_timeseries
-from business_case_standardisation import standardise_business_cases
-from natural_resource_data_interface import natural_resource_preprocessor
-from steel_plant_formatter import steel_plant_preprocessor
-from country_reference import create_country_ref
-from data_interface import create_capex_opex_dict, generate_preprocessed_emissions_data
-from prices_and_emissions_tables import price_and_emissions_flow
-from capex_switching import create_capex_timeseries
-from tco_and_emissions import calculate_emissions, calculate_tco
+from mppSteel.data_import import load_data
+from mppSteel.hydrogen_minimodel import generate_hydrogen_timeseries
+from mppSteel.timeseries_generator import generate_timeseries
+from mppSteel.business_case_standardisation import standardise_business_cases
+from mppSteel.natural_resource_data_interface import natural_resource_preprocessor
+from mppSteel.steel_plant_formatter import steel_plant_preprocessor
+from mppSteel.country_reference import create_country_ref
+from mppSteel.data_interface import (
+    create_capex_opex_dict,
+    generate_preprocessed_emissions_data,
+)
+from mppSteel.prices_and_emissions_tables import price_and_emissions_flow
+from mppSteel.capex_switching import create_capex_timeseries
+from mppSteel.tco_and_emissions import calculate_emissions, calculate_tco
 
-from model_config import DISCOUNT_RATE
+from mppSteel.model_config import DISCOUNT_RATE
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Load all data
     load_data(serialize_only=True)
 
@@ -49,8 +52,7 @@ if __name__ == '__main__':
     create_capex_timeseries(serialize_only=True)
 
     # Create TCO table
-    calculate_tco(
-        year_end=2070, output_type='summary', serialize_only=True)
+    calculate_tco(year_end=2070, output_type="summary", serialize_only=True)
 
     # Create Emissions table
-    calculate_emissions(year_end=2070, output_type='summary', serialize_only=True)
+    calculate_emissions(year_end=2070, output_type="summary", serialize_only=True)
