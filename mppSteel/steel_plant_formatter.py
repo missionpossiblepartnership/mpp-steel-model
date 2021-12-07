@@ -2,15 +2,20 @@
 import pandas as pd
 
 # For logger and units dict
-from utils import (
-    get_logger, read_pickle_folder, serialize_df,
-    country_mapping_fixer, country_matcher)
+from .utils import (
+    get_logger,
+    read_pickle_folder,
+    serialize_df,
+    country_mapping_fixer,
+    country_matcher,
+)
 
-from model_config import PKL_FOLDER
+from .model_config import PKL_FOLDER
 
 
 # Create logger
-logger = get_logger('Steel Plant Class')
+logger = get_logger("Steel Plant Class")
+
 
 def steel_plant_formatter(df: pd.DataFrame) -> pd.DataFrame:
     """Formats the steel plants data input.
@@ -21,26 +26,38 @@ def steel_plant_formatter(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: A formatted dataframe.
     """
-    logger.info('Preprocessing the steel plant data')
+    logger.info("Preprocessing the steel plant data")
     df_c = df.copy()
     columns_of_interest = [
-        'Plant name (English)', 'Parent', 'Country',
-        'Coordinates', 'Status', 'Start of operation',
-        'Plant Technology in 2020']
+        "Plant name (English)",
+        "Parent",
+        "Country",
+        "Coordinates",
+        "Status",
+        "Start of operation",
+        "Plant Technology in 2020",
+    ]
 
-    new_column_names = ['plant_name', 'parent', 'country',
-        'coordinates', 'status', 'start_of_operation',
-        'plant_technology_2020']
+    new_column_names = [
+        "plant_name",
+        "parent",
+        "country",
+        "coordinates",
+        "status",
+        "start_of_operation",
+        "plant_technology_2020",
+    ]
 
     df_c = df_c[columns_of_interest]
 
-    df_c.rename(columns= dict(zip(columns_of_interest,new_column_names)),inplace=True)
+    df_c.rename(columns=dict(zip(columns_of_interest, new_column_names)), inplace=True)
 
-    df_c['country_code'] = ''
+    df_c["country_code"] = ""
 
     return df_c
 
-def steel_plant_preprocessor(serialize_only: bool= False) -> pd.DataFrame:
+
+def steel_plant_preprocessor(serialize_only: bool = False) -> pd.DataFrame:
     """Generates the preprocessed Steel plant DataFrame.
 
     Args:
@@ -49,21 +66,27 @@ def steel_plant_preprocessor(serialize_only: bool= False) -> pd.DataFrame:
     Returns:
         pd.DataFrame: A dataframe containing the preprocessed steel plants.
     """
-    steel_plants = read_pickle_folder(PKL_FOLDER, 'steel_plants')
+    steel_plants = read_pickle_folder(PKL_FOLDER, "steel_plants")
     steel_plants = steel_plant_formatter(steel_plants)
-    steel_plant_countries = steel_plants['country'].unique().tolist()
+    steel_plant_countries = steel_plants["country"].unique().tolist()
     matching_dict, unmatched_dict = country_matcher(steel_plant_countries)
-    logger.info('- Applying the codes of the matched countries to the steel plant column')
-    steel_plants['country_code'] = steel_plants['country'].apply(
-        lambda x: matching_dict[x])
+    logger.info(
+        "- Applying the codes of the matched countries to the steel plant column"
+    )
+    steel_plants["country_code"] = steel_plants["country"].apply(
+        lambda x: matching_dict[x]
+    )
 
-    country_fixer_dict = {'Korea, North': 'PRK'}
+    country_fixer_dict = {"Korea, North": "PRK"}
 
-    steel_plants = country_mapping_fixer(steel_plants, 'country', 'country_code', country_fixer_dict)
+    steel_plants = country_mapping_fixer(
+        steel_plants, "country", "country_code", country_fixer_dict
+    )
 
     if serialize_only:
-        serialize_df(steel_plants, PKL_FOLDER, 'steel_plants_processed')
+        serialize_df(steel_plants, PKL_FOLDER, "steel_plants_processed")
         return
     return steel_plants
+
 
 steel_plant_preprocessor(serialize_only=True)
