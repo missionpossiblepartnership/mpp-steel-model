@@ -198,6 +198,3 @@ def load_data(serialize_only: bool = False) -> dict:
         serialize_df_dict(PKL_FOLDER, df_dict)
         return
     return df_dict
-
-
-load_data(serialize_only=True)
