@@ -24,8 +24,8 @@ EUR_USD_CONVERSION = 0.877
 INVESTMENT_CYCLE_LENGTH = 20  # Years
 
 # Define Data Path
-IMPORT_DATA_PATH = "/data/import_data"
-PKL_FOLDER = "/data/pkl_data"
+IMPORT_DATA_PATH = "mppSteel/data/import_data"
+PKL_FOLDER = "mppSteel/data/pkl_data"
 
 TECH_REFERENCE_LIST = [
     "Avg BF-BOF",
