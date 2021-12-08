@@ -4,7 +4,7 @@ from collections import namedtuple
 
 import numpy as np
 
-from .model_config import (
+from mppSteel.model_config import (
     HYDROGEN_PRICE_START_YEAR,
     HYDROGEN_PRICE_END_YEAR,
     DISCOUNT_RATE,
