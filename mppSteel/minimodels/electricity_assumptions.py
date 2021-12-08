@@ -2,7 +2,7 @@
 # For system level operations
 from collections import namedtuple
 
-from .model_config import (
+from mppSteel.model_config import (
     ELECTRICITY_PRICE_START_YEAR,
     ELECTRICITY_PRICE_MID_YEAR,
     ELECTRICITY_PRICE_END_YEAR,
