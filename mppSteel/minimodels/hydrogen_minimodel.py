@@ -7,16 +7,16 @@ import pandas as pd
 import numpy as np
 
 # For logger and units dict
-from .utils import get_logger, read_pickle_folder, serialize_df
+from mppSteel.utility.utils import get_logger, read_pickle_folder, serialize_df
 
-from .model_config import (
+from mppSteel.model_config import (
     PKL_FOLDER,
     EUR_USD_CONVERSION,
     HYDROGEN_PRICE_START_YEAR,
     HYDROGEN_PRICE_END_YEAR,
 )
 
-from .hydrogen_assumptions import (
+from mppSteel.hydrogen_assumptions import (
     VRE_PRICE_FAVORABLE_START,
     VRE_PRICE_FAVORABLE_END,
     VRE_PRICE_AVERAGE_START,
