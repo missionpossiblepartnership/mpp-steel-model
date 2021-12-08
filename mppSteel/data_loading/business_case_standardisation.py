@@ -4,9 +4,9 @@
 import pandas as pd
 
 # For logger
-from .utils import get_logger, read_pickle_folder, serialise_file
+from mppSteel.utility.utils import get_logger, read_pickle_folder, serialise_file
 
-from .model_config import PKL_FOLDER, TECH_REFERENCE_LIST, FURNACE_GROUP_DICT
+from mppSteel.model_config import PKL_FOLDER, TECH_REFERENCE_LIST, FURNACE_GROUP_DICT
 
 # Create logger
 logger = get_logger("Business Case Standarisation")
