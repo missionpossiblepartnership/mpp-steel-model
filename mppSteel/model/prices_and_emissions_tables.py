@@ -4,10 +4,15 @@
 import pandas as pd
 
 # For logger and units dict
-from .utils import get_logger, read_pickle_folder, CountryMetadata, serialize_df
+from mppSteel.utility.utils import (
+    get_logger,
+    read_pickle_folder,
+    CountryMetadata,
+    serialize_df,
+)
 
-from .model_config import PKL_FOLDER, TECH_REFERENCE_LIST
-from .data_interface import (
+from mppSteel.model_config import PKL_FOLDER, TECH_REFERENCE_LIST
+from mppSteel.data_loading.data_interface import (
     commodity_data_getter,
     static_energy_prices_getter,
     scope1_emissions_getter,
