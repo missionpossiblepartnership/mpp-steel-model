@@ -16,7 +16,7 @@ from mppSteel.model_config import (
     HYDROGEN_PRICE_END_YEAR,
 )
 
-from mppSteel.hydrogen_assumptions import (
+from .hydrogen_assumptions import (
     VRE_PRICE_FAVORABLE_START,
     VRE_PRICE_FAVORABLE_END,
     VRE_PRICE_AVERAGE_START,

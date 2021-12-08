@@ -1,7 +1,7 @@
 """Runs the data loading scripts"""
 
-from mppSteel.data_import import load_data
-from mppSteel.hydrogen_minimodel import generate_hydrogen_timeseries
+from mppSteel.data_loading.data_import import load_data
+from mppSteel.minimodels.hydrogen_minimodel import generate_hydrogen_timeseries
 from mppSteel.timeseries_generator import generate_timeseries
 from mppSteel.business_case_standardisation import standardise_business_cases
 from mppSteel.natural_resource_data_interface import natural_resource_preprocessor
