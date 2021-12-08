@@ -278,8 +278,8 @@ def create_capex_opex_dict(serialize_only: bool = False):
     )
     if serialize_only:
         serialize_df(capex_dict, PKL_FOLDER, "capex_dict")
-        return capex_dict
-    return
+        return
+    return capex_dict
 
 
 def generate_preprocessed_emissions_data(serialize_only: bool = False):
