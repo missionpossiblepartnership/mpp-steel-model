@@ -5,9 +5,9 @@ import numpy as np
 import numpy_financial as npf
 
 # For logger and units dict
-from .utils import get_logger, read_pickle_folder, serialize_df
+from mppSteel.utility.utils import get_logger, read_pickle_folder, serialize_df
 
-from .model_config import (
+from mppSteel.model_config import (
     PKL_FOLDER,
     DISCOUNT_RATE,
     SWITCH_DICT,
