@@ -4,7 +4,7 @@
 import pandas as pd
 
 # For logger
-from .utils import (
+from mppSteel.utility.utils import (
     get_logger,
     read_pickle_folder,
     serialise_file,
@@ -12,13 +12,13 @@ from .utils import (
     create_line_through_points,
 )
 
-from .model_config import (
+from mppSteel.model_config import (
     PKL_FOLDER,
     FURNACE_GROUP_DICT,
     TECH_REFERENCE_LIST,
     SWITCH_DICT,
 )
-from .data_interface import capex_generator
+from mppSteel.data_loading.data_interface import capex_generator
 
 # Create logger
 logger = get_logger("Capex Switching")
