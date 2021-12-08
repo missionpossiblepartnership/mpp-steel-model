@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 # For logger and units dict
-from .utils import (
+from mppSteel.utility.utils import (
     get_logger,
     read_pickle_folder,
     country_mapping_fixer,
@@ -13,7 +13,7 @@ from .utils import (
     serialize_df,
 )
 
-from .model_config import PKL_FOLDER
+from mppSteel.model_config import PKL_FOLDER
 
 # Create logger
 logger = get_logger("Natural Resource")
