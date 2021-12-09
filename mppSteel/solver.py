@@ -1,1 +1,0 @@
-"""Main solving script for deciding investment decisions."""
