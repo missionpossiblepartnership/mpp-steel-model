@@ -361,6 +361,8 @@ def create_tech_processes_list():
 def create_production_factors(
     technology: str, furnace_group_dict: dict, hard_coded_factors: dict
 ):
+    business_cases = read_pickle_folder(PKL_FOLDER, "business_cases")
+    bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     logger.info(f"-- Creating the production factors for {technology}")
     # Instantiate factors
     COKE_PRODUCTION_FACTOR = None
@@ -1404,9 +1406,9 @@ def standardise_business_cases(serialize_only: bool = False) -> pd.DataFrame:
     return full_summary_df
 
 
-s1_emissions_factors = read_pickle_folder(PKL_FOLDER, "s1_emissions_factors")
-EF_DICT = dict(zip(s1_emissions_factors["Metric"], s1_emissions_factors["Value"]))
-business_cases = read_pickle_folder(PKL_FOLDER, "business_cases")
-bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
-processes = bc_processes["process"].unique()
-standardise_business_cases(serialize_only=True)
+# s1_emissions_factors = read_pickle_folder(PKL_FOLDER, "s1_emissions_factors")
+# EF_DICT = dict(zip(s1_emissions_factors["Metric"], s1_emissions_factors["Value"]))
+# business_cases = read_pickle_folder(PKL_FOLDER, "business_cases")
+# bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
+# processes = bc_processes["process"].unique()
+# standardise_business_cases(serialize_only=True)
