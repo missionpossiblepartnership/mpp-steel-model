@@ -378,6 +378,3 @@ def generate_hydrogen_timeseries(serialize_only: bool = False) -> pd.DataFrame:
         return
 
     return hydrogen_minimodel_timeseries
-
-
-generate_hydrogen_timeseries(serialize_only=True)
