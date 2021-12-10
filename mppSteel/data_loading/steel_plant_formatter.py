@@ -87,6 +87,3 @@ def steel_plant_preprocessor(serialize_only: bool = False) -> pd.DataFrame:
         serialize_df(steel_plants, PKL_FOLDER, "steel_plants_processed")
         return
     return steel_plants
-
-
-steel_plant_preprocessor(serialize_only=True)
