@@ -214,6 +214,9 @@ def get_all_electricity_values(
     electricity_value_list = []
     electricity_value_dict = {}
     df_c = df.loc[df["technology"] == technology].copy()
+    # Modified by Luis
+    business_cases = read_pickle_folder(PKL_FOLDER, "business_cases")
+    bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     for process in process_list:
         if (
             "Electricity"
@@ -564,7 +567,10 @@ def create_production_factors(
         CCU_CO2_FACTOR,
         REMELT_FACTOR,
     ]
-
+    # Modified by Luis. Read data.
+    business_cases = read_pickle_folder(PKL_FOLDER, "business_cases")
+    bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
+    processes = bc_processes["process"].unique()
     # Overwrite dictionary values
     process_factor_mapper = dict(zip(processes, factor_list))
     # Overwrite processes
@@ -592,7 +598,6 @@ def limestone_df_editor(
     df_dict_c = df_dict.copy()
 
     if technology in electricity_self_gen_group:
-
         if technology in furnace_group_dict["smelting_reduction"]:
             limestone_df = df_dict_c["Limestone"].copy()
             bof_lime = (
@@ -1010,6 +1015,9 @@ def self_gen_df_editor(
 
 def full_model_flow(tech_name: str):
 
+    business_cases = read_pickle_folder(PKL_FOLDER, "business_cases")
+    bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
+    processes = bc_processes["process"].unique()
     logger.info(f"- Running the model flow for {tech_name}")
     process_prod_factor_mapper = create_production_factors(
         tech_name, FURNACE_GROUP_DICT, HARD_CODED_FACTORS
@@ -1079,6 +1087,9 @@ def fix_exceptions(
     logger.info(f"- Fixing specific values for {technology}")
 
     df_dict_c = df_dict.copy()
+    # Modified by Luis
+    business_cases = read_pickle_folder(PKL_FOLDER, "business_cases")
+    bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
 
     if technology in ["Smelting Reduction"]:
         smelting_furnace_df = df_dict_c["Smelting Furnace"].copy()
