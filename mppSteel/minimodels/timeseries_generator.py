@@ -327,6 +327,3 @@ def generate_timeseries(serialize_only: bool = False) -> dict:
         "carbon_tax": carbon_tax,
         "electricity": electricity_minimodel_timeseries,
     }
-
-
-generate_timeseries(serialize_only=True)
