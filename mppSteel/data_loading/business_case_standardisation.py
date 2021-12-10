@@ -1418,11 +1418,3 @@ def standardise_business_cases(serialize_only: bool = False) -> pd.DataFrame:
         serialise_file(full_summary_df, PKL_FOLDER, "standardised_business_cases")
         return
     return full_summary_df
-
-
-# s1_emissions_factors = read_pickle_folder(PKL_FOLDER, "s1_emissions_factors")
-# EF_DICT = dict(zip(s1_emissions_factors["Metric"], s1_emissions_factors["Value"]))
-# business_cases = read_pickle_folder(PKL_FOLDER, "business_cases")
-# bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
-# processes = bc_processes["process"].unique()
-# standardise_business_cases(serialize_only=True)
