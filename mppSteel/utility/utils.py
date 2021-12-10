@@ -260,6 +260,20 @@ def official_country_name_getter(country_code: str):
     return ""
 
 
+NEW_COUNTRY_COL_LIST = [
+    "country_code",
+    "country",
+    "official_name",
+    "m49_code",
+    "region",
+    "continent",
+    "wsa_region",
+    "rmi_region",
+]
+
+CountryMetadata = namedtuple("CountryMetadata", NEW_COUNTRY_COL_LIST)
+
+
 def create_line_through_points(
     year_value_dict: dict, line_shape: str = "straight"
 ) -> pd.DataFrame:

@@ -1025,6 +1025,7 @@ def full_model_flow(tech_name: str):
     process_prod_factor_mapper = create_production_factors(
         tech_name, FURNACE_GROUP_DICT, HARD_CODED_FACTORS
     )
+    TECHNOLOGY_PROCESSES = create_tech_processes_list()
     reformated_dict = create_mini_process_dfs(
         bc_processes, tech_name, TECHNOLOGY_PROCESSES, process_prod_factor_mapper
     )
@@ -1397,11 +1398,6 @@ HARD_CODED_FACTORS = {
         "Coke Production": 0,
     },
 }
-
-hard_coded_factor_exceptions = create_hardcoded_exceptions(
-    HARD_CODED_FACTORS, FURNACE_GROUP_DICT
-)
-TECHNOLOGY_PROCESSES = create_tech_processes_list()
 
 
 def standardise_business_cases(serialize_only: bool = False) -> pd.DataFrame:
