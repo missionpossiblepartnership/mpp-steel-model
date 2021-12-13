@@ -228,3 +228,9 @@ SWITCH_DICT = {
     "Electrolyzer-EAF": ["Electrolyzer-EAF"],
     "Electrowinning-EAF": ["Electrowinning-EAF"],
 }
+
+CAPEX_DATA_POINTS = {
+    "2020": 319.249187119815,
+    "2030": 319.249187119815,
+    "2050": 286.218839300307,
+}
