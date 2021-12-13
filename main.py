@@ -1,25 +1,25 @@
 """Runs the data loading scripts"""
 
-from mppSteel.data_loading.data_import import load_data
-from mppSteel.minimodels.hydrogen_minimodel import generate_hydrogen_timeseries
-from mppSteel.minimodels.timeseries_generator import generate_timeseries
-from mppSteel.data_loading.business_case_standardisation import (
+from mppsteel.data_loading.data_import import load_data
+from mppsteel.minimodels.hydrogen_minimodel import generate_hydrogen_timeseries
+from mppsteel.minimodels.timeseries_generator import generate_timeseries
+from mppsteel.data_loading.business_case_standardisation import (
     standardise_business_cases,
 )
-from mppSteel.data_loading.natural_resource_data_interface import (
+from mppsteel.data_loading.natural_resource_data_interface import (
     natural_resource_preprocessor,
 )
-from mppSteel.data_loading.steel_plant_formatter import steel_plant_preprocessor
-from mppSteel.data_loading.country_reference import create_country_ref
-from mppSteel.data_loading.data_interface import (
+from mppsteel.data_loading.steel_plant_formatter import steel_plant_preprocessor
+from mppsteel.data_loading.country_reference import create_country_ref
+from mppsteel.data_loading.data_interface import (
     create_capex_opex_dict,
     generate_preprocessed_emissions_data,
 )
-from mppSteel.model.prices_and_emissions_tables import price_and_emissions_flow
-from mppSteel.model.capex_switching import create_capex_timeseries
-from mppSteel.model.tco_and_emissions import calculate_emissions, calculate_tco
+from mppsteel.model.prices_and_emissions_tables import price_and_emissions_flow
+from mppsteel.model.capex_switching import create_capex_timeseries
+from mppsteel.model.tco_and_emissions import calculate_emissions, calculate_tco
 
-from mppSteel.model_config import DISCOUNT_RATE
+from mppsteel.model_config import DISCOUNT_RATE
 
 if __name__ == "__main__":
     # Load all data
