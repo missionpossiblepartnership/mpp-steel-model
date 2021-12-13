@@ -214,6 +214,9 @@ def get_all_electricity_values(
     electricity_value_list = []
     electricity_value_dict = {}
     df_c = df.loc[df["technology"] == technology].copy()
+    # Modified by Luis
+    business_cases = read_pickle_folder(PKL_FOLDER, "business_cases")
+    bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     for process in process_list:
         if (
             "Electricity"
@@ -361,6 +364,8 @@ def create_tech_processes_list():
 def create_production_factors(
     technology: str, furnace_group_dict: dict, hard_coded_factors: dict
 ):
+    business_cases = read_pickle_folder(PKL_FOLDER, "business_cases")
+    bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     logger.info(f"-- Creating the production factors for {technology}")
     # Instantiate factors
     COKE_PRODUCTION_FACTOR = None
@@ -562,7 +567,10 @@ def create_production_factors(
         CCU_CO2_FACTOR,
         REMELT_FACTOR,
     ]
-
+    # Modified by Luis. Read data.
+    business_cases = read_pickle_folder(PKL_FOLDER, "business_cases")
+    bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
+    processes = bc_processes["process"].unique()
     # Overwrite dictionary values
     process_factor_mapper = dict(zip(processes, factor_list))
     # Overwrite processes
@@ -584,13 +592,12 @@ def create_production_factors(
 def limestone_df_editor(
     df_dict: dict, technology: str, furnace_group_dict: dict, factor_dict: dict
 ):
-
     logger.info(f"-- Creating the limestone calculations for {technology}")
-
+    # Added by Luis
+    business_cases = read_pickle_folder(PKL_FOLDER, "business_cases")
+    bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     df_dict_c = df_dict.copy()
-
     if technology in electricity_self_gen_group:
-
         if technology in furnace_group_dict["smelting_reduction"]:
             limestone_df = df_dict_c["Limestone"].copy()
             bof_lime = (
@@ -600,7 +607,6 @@ def limestone_df_editor(
                 * factor_dict["Basic Oxygen Steelmaking + Casting"]
             )
             limestone_df.loc[limestone_df["step"] == "BOF lime", "value"] = bof_lime
-
             new_row = {
                 "process": "Limestone",
                 "process_detail": "",
@@ -653,9 +659,12 @@ def ccs_df_editor(
 ):
 
     logger.info(f"-- Creating the ccs calculations for {technology}")
-
+    # Added by Luis
+    s1_emissions_factors = read_pickle_folder(PKL_FOLDER, "s1_emissions_factors")
+    EF_DICT = dict(zip(s1_emissions_factors["Metric"], s1_emissions_factors["Value"]))
+    business_cases = read_pickle_folder(PKL_FOLDER, "business_cases")
+    bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     df_dict_c = df_dict.copy()
-
     if technology in furnace_group_dict["ccs"]:
 
         ccs_df = df_dict_c["CCS"].copy()
@@ -849,7 +858,9 @@ def ccu_df_editor(
 ):
 
     logger.info(f"-- Creating the ccu calculations for {technology}")
-
+    # Added by Luis
+    business_cases = read_pickle_folder(PKL_FOLDER, "business_cases")
+    bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     df_dict_c = df_dict.copy()
 
     if technology in furnace_group_dict["ccu"]:
@@ -927,20 +938,18 @@ def self_gen_df_editor(
     factor_dict: dict,
     tech_processes_dict: dict,
 ):
-
     logger.info(
         f"-- Creating the Self Generation of Electricity calculations for {technology}"
     )
-
+    business_cases = read_pickle_folder(PKL_FOLDER, "business_cases")
+    bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     df_dict_c = df_dict.copy()
-
     if technology in electricity_self_gen_group:
         self_gen_name = "Self-Generation Of Electricity"
         self_gen_df = df_dict_c[self_gen_name].copy()
         electricity_share_factor = tech_parameter_getter(
             bc_parameters, technology, "Share of electricity purchased in total demand"
         )
-
         if technology in furnace_group_dict["smelting_reduction"]:
             bof_gas = tech_process_getter(
                 bc_processes, technology, process=self_gen_name, material="BOF gas"
@@ -1007,11 +1016,16 @@ def self_gen_df_editor(
 
 
 def full_model_flow(tech_name: str):
-
+    s1_emissions_factors = read_pickle_folder(PKL_FOLDER, "s1_emissions_factors")
+    EF_DICT = dict(zip(s1_emissions_factors["Metric"], s1_emissions_factors["Value"]))
+    business_cases = read_pickle_folder(PKL_FOLDER, "business_cases")
+    bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
+    processes = bc_processes["process"].unique()
     logger.info(f"- Running the model flow for {tech_name}")
     process_prod_factor_mapper = create_production_factors(
         tech_name, FURNACE_GROUP_DICT, HARD_CODED_FACTORS
     )
+    TECHNOLOGY_PROCESSES = create_tech_processes_list()
     reformated_dict = create_mini_process_dfs(
         bc_processes, tech_name, TECHNOLOGY_PROCESSES, process_prod_factor_mapper
     )
@@ -1077,6 +1091,9 @@ def fix_exceptions(
     logger.info(f"- Fixing specific values for {technology}")
 
     df_dict_c = df_dict.copy()
+    # Modified by Luis
+    business_cases = read_pickle_folder(PKL_FOLDER, "business_cases")
+    bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
 
     if technology in ["Smelting Reduction"]:
         smelting_furnace_df = df_dict_c["Smelting Furnace"].copy()
@@ -1382,11 +1399,6 @@ HARD_CODED_FACTORS = {
     },
 }
 
-hard_coded_factor_exceptions = create_hardcoded_exceptions(
-    HARD_CODED_FACTORS, FURNACE_GROUP_DICT
-)
-TECHNOLOGY_PROCESSES = create_tech_processes_list()
-
 
 def standardise_business_cases(serialize_only: bool = False) -> pd.DataFrame:
     """Standardises the business cases for each technology into per t steel.
@@ -1402,11 +1414,3 @@ def standardise_business_cases(serialize_only: bool = False) -> pd.DataFrame:
         serialise_file(full_summary_df, PKL_FOLDER, "standardised_business_cases")
         return
     return full_summary_df
-
-
-s1_emissions_factors = read_pickle_folder(PKL_FOLDER, "s1_emissions_factors")
-EF_DICT = dict(zip(s1_emissions_factors["Metric"], s1_emissions_factors["Value"]))
-business_cases = read_pickle_folder(PKL_FOLDER, "business_cases")
-bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
-processes = bc_processes["process"].unique()
-standardise_business_cases(serialize_only=True)

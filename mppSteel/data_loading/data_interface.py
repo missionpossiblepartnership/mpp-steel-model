@@ -283,13 +283,18 @@ def create_capex_opex_dict(serialize_only: bool = False):
 
 
 def generate_preprocessed_emissions_data(serialize_only: bool = False):
+    ethanol_plastic_charcoal = read_pickle_folder(
+        PKL_FOLDER, "ethanol_plastic_charcoal"
+    )
     commodities_df = format_commodities_data(
         ethanol_plastic_charcoal, COMMODITY_MATERIAL_MAPPER
     )
+    s3_emissions_factors_2 = read_pickle_folder(PKL_FOLDER, "s3_emissions_factors_2")
     scope3df_2_formatted = format_scope3_ef_2(
         s3_emissions_factors_2, EMISSIONS_FACTOR_SLAG
     )
     slag_new_values = scope3df_2_formatted["value"].values
+    s3_emissions_factors_1 = read_pickle_folder(PKL_FOLDER, "s3_emissions_factors_1")
     final_scope3_ef_df = modify_scope3_ef_1(
         s3_emissions_factors_1, slag_new_values, ENERGY_DENSITY_MET_COAL
     )
@@ -299,39 +304,3 @@ def generate_preprocessed_emissions_data(serialize_only: bool = False):
         serialise_file(final_scope3_ef_df, PKL_FOLDER, "final_scope3_ef_df")
         return
     return commodities_df, final_scope3_ef_df
-
-
-# Example Loading Data with necessary subsets
-feedstock_prices = read_pickle_folder(PKL_FOLDER, "feedstock_prices")
-
-steel_demand = read_pickle_folder(PKL_FOLDER, "steel_demand")[
-    ["Steel Type", "Scenario", "Year", "Value"]
-]
-
-carbon_tax_assumptions = read_pickle_folder(PKL_FOLDER, "carbon_tax_assumptions")[
-    ["Year", "Value"]
-]
-
-s1_emissions_factors = read_pickle_folder(PKL_FOLDER, "s1_emissions_factors")[
-    ["Metric", "Value"]
-]
-
-s3_emissions_factors_1 = read_pickle_folder(PKL_FOLDER, "s3_emissions_factors_1")
-
-s3_emissions_factors_2 = read_pickle_folder(PKL_FOLDER, "s3_emissions_factors_2")
-
-grid_emissivity = read_pickle_folder(PKL_FOLDER, "grid_emissivity")[["Year", "Value"]]
-
-static_energy_prices = read_pickle_folder(PKL_FOLDER, "static_energy_prices")[
-    ["Metric", "Year", "Value"]
-]
-
-ccs_co2 = read_pickle_folder(PKL_FOLDER, "ccs_co2")[["Metric", "Year", "Value"]]
-
-tech_availability = read_pickle_folder(PKL_FOLDER, "tech_availability")[
-    ["Technology", "Year available from", "Year available until"]
-]
-
-country_ref = read_pickle_folder(PKL_FOLDER, "country_ref")
-
-ethanol_plastic_charcoal = read_pickle_folder(PKL_FOLDER, "ethanol_plastic_charcoal")

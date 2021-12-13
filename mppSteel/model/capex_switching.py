@@ -64,7 +64,12 @@ def get_capex_values(
     """
     logger.info("Gnerating the capex values for each technology")
     df_dict_c = df_switching_dict.copy()
-
+    # Hard coded values.
+    CAPEX_DATA_POINTS = {
+        "2020": 319.249187119815,
+        "2030": 319.249187119815,
+        "2050": 286.218839300307,
+    }
     hard_coded_capex_values = create_line_through_points(CAPEX_DATA_POINTS)
 
     # Create a year range
@@ -336,6 +341,12 @@ def create_capex_timeseries(serialize_only: bool = False) -> pd.DataFrame:
     """
     logger.info("Creating the base switching dict")
     switching_dict = create_switching_dfs(TECH_REFERENCE_LIST)
+    CAPEX_DATA_POINTS = {
+        "2020": 319.249187119815,
+        "2030": 319.249187119815,
+        "2050": 286.218839300307,
+    }
+    capex_dict = read_pickle_folder(PKL_FOLDER, "capex_dict")
     max_model_year = max([int(year) for year in CAPEX_DATA_POINTS.keys()])
     switching_df_with_capex = get_capex_values(
         df_switching_dict=switching_dict,
@@ -345,12 +356,3 @@ def create_capex_timeseries(serialize_only: bool = False) -> pd.DataFrame:
     if serialize_only:
         serialize_df(switching_df_with_capex, PKL_FOLDER, "capex_switching_df")
     return switching_df_with_capex
-
-
-capex_dict = read_pickle_folder(PKL_FOLDER, "capex_dict")
-
-CAPEX_DATA_POINTS = {
-    "2020": 319.249187119815,
-    "2030": 319.249187119815,
-    "2050": 286.218839300307,
-}

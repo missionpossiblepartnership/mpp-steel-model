@@ -256,23 +256,3 @@ def full_model_flow(
         )
 
     return combined_df
-
-
-# MODEL TEST
-hydrogen_data_raw = read_pickle_folder(PKL_FOLDER, "hydrogen_electrolyzer_capex")
-
-func_dict_cols = {"year": "year", "value": "value"}
-
-new_dict_override = {"source": "Model", "excel_tab": "Extended from excel"}
-
-full_model_flow(
-    df=hydrogen_data_raw,
-    year_value_col_dict=func_dict_cols,
-    static_value_override_dict=new_dict_override,
-    new_end_year=2070,
-    series_type="geometric",
-    growth_type="fixed",
-    value_change=50,
-)
-
-# %%

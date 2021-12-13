@@ -203,7 +203,16 @@ def compare_capex(
     """
 
     # logger.info(f'- Comparing capex values for {base_tech} and {switch_tech}')
-
+    # Added by Luis:
+    opex_values_dict = read_pickle_folder(PKL_FOLDER, "capex_dict", "df")["other_opex"]
+    variable_costs = read_pickle_folder(PKL_FOLDER, "calculated_variable_costs", "df")
+    variable_costs = variable_costs.reorder_levels(["technology", "year"])
+    variable_costs.rename(columns={"cost": "value"}, inplace=True)
+    capex = read_pickle_folder(PKL_FOLDER, "capex_switching_df", "df")
+    capex_c = capex.copy()
+    capex_c.reset_index(inplace=True)
+    capex_c.columns = [col.lower().replace(" ", "_") for col in capex_c.columns]
+    capex_c = capex_c.set_index(["year", "start_technology"]).sort_index()
     other_opex_values = discounted_opex(
         opex_values_dict, switch_tech, interest_rate, start_year
     )
@@ -386,6 +395,9 @@ def calculate_emissions(
         "start_tech_values",
         "comp_tech_values",
     ]
+    s1_emissions = read_pickle_folder(PKL_FOLDER, "calculated_s1_emissions", "df")
+    s2_emissions = read_pickle_folder(PKL_FOLDER, "calculated_s2_emissions", "df")
+    s3_emissions = read_pickle_folder(PKL_FOLDER, "calculated_s3_emissions", "df")
     year_range = range(2020, year_end + 1)
     for year in year_range:
         logger.info(f"Calculating technology emissions for {year}")
@@ -440,20 +452,3 @@ def calculate_emissions(
     if output_type == "summary":
         return full_summary_df
     return full_df
-
-
-variable_costs = read_pickle_folder(PKL_FOLDER, "calculated_variable_costs", "df")
-variable_costs = variable_costs.reorder_levels(["technology", "year"])
-variable_costs.rename(columns={"cost": "value"}, inplace=True)
-
-opex_values_dict = read_pickle_folder(PKL_FOLDER, "capex_dict", "df")["other_opex"]
-
-capex = read_pickle_folder(PKL_FOLDER, "capex_switching_df", "df")
-capex_c = capex.copy()
-capex_c.reset_index(inplace=True)
-capex_c.columns = [col.lower().replace(" ", "_") for col in capex_c.columns]
-capex_c = capex_c.set_index(["year", "start_technology"]).sort_index()
-
-s1_emissions = read_pickle_folder(PKL_FOLDER, "calculated_s1_emissions", "df")
-s2_emissions = read_pickle_folder(PKL_FOLDER, "calculated_s2_emissions", "df")
-s3_emissions = read_pickle_folder(PKL_FOLDER, "calculated_s3_emissions", "df")
