@@ -5,6 +5,15 @@ This repository contains the Steel Decarbonization Roadmap, as created by SYSTEM
 
 ## Project Goals
 
+## Installation
+
+It is possible to install the library using `pip` with the following command:
+
+```bash
+pip install git+https://${YOUR_GITHUB_TOKEN}@github.com/systemiqofficial/mpp-steel-model.git
+```
+Change the `Your_GITHUB_TOKEN` to your personal access token. You can create one in [https://github.com/settings/tokens](https://github.com/settings/tokens).
+
 ## Useful resources
 [Official MPP Website](https://missionpossiblepartnership.org/)
 [Energy Transistions Commission](https://www.energy-transitions.org/)
