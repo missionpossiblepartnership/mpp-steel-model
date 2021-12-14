@@ -39,49 +39,62 @@ def get_grid_refs(df: pd.DataFrame, geography: str, metrics: list) -> pd.DataFra
     ].tolist()
 
 
-power_grid_assumptions = read_pickle_folder(PKL_FOLDER, "power_grid_assumptions")
-
-grid_electricity_price_sweden = (
-    sum(
-        get_grid_refs(
-            power_grid_assumptions, "Sweden", ["Energy and supply", "Network costs"]
+def get_grid_data():
+    power_grid_assumptions = read_pickle_folder(PKL_FOLDER, "power_grid_assumptions")
+    grid_electricity_price_sweden = (
+        sum(
+            get_grid_refs(
+                power_grid_assumptions, "Sweden", ["Energy and supply", "Network costs"]
+            )
         )
+        * 1000
     )
-    * 1000
-)
-
-grid_electricity_price_eu = (
-    sum(
+    grid_electricity_price_eu = (
+        sum(
+            get_grid_refs(
+                power_grid_assumptions,
+                "European Union A",
+                ["Energy and supply", "Network costs"],
+            )
+        )
+        * 1000
+    )
+    t_and_d_premium = sum(
+        get_grid_refs(power_grid_assumptions, "European Union A", ["Network costs"])
+    ) / sum(
         get_grid_refs(
             power_grid_assumptions,
             "European Union A",
             ["Energy and supply", "Network costs"],
         )
     )
-    * 1000
-)
-
-t_and_d_premium = sum(
-    get_grid_refs(power_grid_assumptions, "European Union A", ["Network costs"])
-) / sum(
-    get_grid_refs(
-        power_grid_assumptions,
-        "European Union A",
-        ["Energy and supply", "Network costs"],
+    diff_in_price_between_mid_and_large_business = 1 - (
+        sum(
+            get_grid_refs(
+                power_grid_assumptions, "European Union A", ["Energy and supply"]
+            )
+        )
+        / sum(
+            get_grid_refs(
+                power_grid_assumptions, "European Union B", ["Energy and supply"]
+            )
+        )
     )
-)
-
-diff_in_price_between_mid_and_large_business = 1 - (
-    sum(
-        get_grid_refs(power_grid_assumptions, "European Union A", ["Energy and supply"])
+    return (
+        grid_electricity_price_sweden,
+        grid_electricity_price_eu,
+        t_and_d_premium,
+        diff_in_price_between_mid_and_large_business,
     )
-    / sum(
-        get_grid_refs(power_grid_assumptions, "European Union B", ["Energy and supply"])
-    )
-)
 
 
 def grid_price_selector(year: int, scenario: str):
+    (
+        grid_electricity_price_sweden,
+        grid_electricity_price_eu,
+        t_and_d_premium,
+        diff_in_price_between_mid_and_large_business,
+    ) = get_grid_data()
     if (scenario == "favorable") & (year == ELECTRICITY_PRICE_START_YEAR):
         return grid_electricity_price_sweden
     elif (scenario == "average") & (year == ELECTRICITY_PRICE_START_YEAR):
@@ -93,6 +106,12 @@ def grid_price_selector(year: int, scenario: str):
 
 
 def grid_price_mid(scenario: str):
+    (
+        grid_electricity_price_sweden,
+        grid_electricity_price_eu,
+        t_and_d_premium,
+        diff_in_price_between_mid_and_large_business,
+    ) = get_grid_data()
     return (
         grid_price_selector(ELECTRICITY_PRICE_MID_YEAR, scenario)
         * EUR_USD_CONVERSION
