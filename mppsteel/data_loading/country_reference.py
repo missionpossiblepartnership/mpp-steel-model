@@ -8,14 +8,14 @@ import pycountry
 
 
 # For logger and units dict
-from mppSteel.utility.utils import (
+from mppsteel.utility.utils import (
     get_logger,
     read_pickle_folder,
     serialize_df,
     CountryMetadata,
 )
 
-from mppSteel.model_config import PKL_FOLDER
+from mppsteel.model_config import PKL_FOLDER
 
 # Create logger
 logger = get_logger("Country Reference")

@@ -4,7 +4,7 @@
 import pandas as pd
 
 # For logger
-from mppSteel.utility.utils import (
+from mppsteel.utility.utils import (
     get_logger,
     read_pickle_folder,
     serialise_file,
@@ -12,13 +12,14 @@ from mppSteel.utility.utils import (
     create_line_through_points,
 )
 
-from mppSteel.model_config import (
+from mppsteel.model_config import (
     PKL_FOLDER,
     FURNACE_GROUP_DICT,
     TECH_REFERENCE_LIST,
     SWITCH_DICT,
+    SWITCH_CAPEX_DATA_POINTS,
 )
-from mppSteel.data_loading.data_interface import capex_generator
+from mppsteel.data_loading.data_interface import capex_generator
 
 # Create logger
 logger = get_logger("Capex Switching")
@@ -65,12 +66,7 @@ def get_capex_values(
     logger.info("Gnerating the capex values for each technology")
     df_dict_c = df_switching_dict.copy()
     # Hard coded values.
-    CAPEX_DATA_POINTS = {
-        "2020": 319.249187119815,
-        "2030": 319.249187119815,
-        "2050": 286.218839300307,
-    }
-    hard_coded_capex_values = create_line_through_points(CAPEX_DATA_POINTS)
+    hard_coded_capex_values = create_line_through_points(SWITCH_CAPEX_DATA_POINTS)
 
     # Create a year range
     year_range = range(2020, tuple({year_end + 1 or 2021})[0])
@@ -341,13 +337,8 @@ def create_capex_timeseries(serialize_only: bool = False) -> pd.DataFrame:
     """
     logger.info("Creating the base switching dict")
     switching_dict = create_switching_dfs(TECH_REFERENCE_LIST)
-    CAPEX_DATA_POINTS = {
-        "2020": 319.249187119815,
-        "2030": 319.249187119815,
-        "2050": 286.218839300307,
-    }
     capex_dict = read_pickle_folder(PKL_FOLDER, "capex_dict")
-    max_model_year = max([int(year) for year in CAPEX_DATA_POINTS.keys()])
+    max_model_year = max([int(year) for year in SWITCH_CAPEX_DATA_POINTS.keys()])
     switching_df_with_capex = get_capex_values(
         df_switching_dict=switching_dict,
         capex_dict_ref=capex_dict,

@@ -4,10 +4,10 @@ import pandas as pd
 import numpy as np
 
 # For logger and units dict
-from mppSteel.utility.utils import get_logger, read_pickle_folder, serialize_df
+from mppsteel.utility.utils import get_logger, read_pickle_folder, serialize_df
 
 # Get model parameters
-from mppSteel.model_config import (
+from mppsteel.model_config import (
     PKL_FOLDER,
     BIOMASS_AV_TS_END_VALUE,
     BIOMASS_AV_TS_END_YEAR,

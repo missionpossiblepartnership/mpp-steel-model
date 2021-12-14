@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 
 # For logger and units dict
-from mppSteel.utility.utils import (
+from mppsteel.utility.utils import (
     get_logger,
     read_pickle_folder,
     official_country_name_getter,
@@ -16,7 +16,7 @@ from mppSteel.utility.utils import (
 )
 
 # Get model parameters
-from mppSteel.model_config import (
+from mppsteel.model_config import (
     PKL_FOLDER,
     EMISSIONS_FACTOR_SLAG,
     ENERGY_DENSITY_MET_COAL,

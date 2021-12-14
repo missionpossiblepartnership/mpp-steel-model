@@ -24,9 +24,9 @@ EUR_USD_CONVERSION = 0.877
 INVESTMENT_CYCLE_LENGTH = 20  # Years
 
 # Define Data Path
-IMPORT_DATA_PATH = "mppSteel/data/import_data"
-PKL_FOLDER = "mppSteel/data/pkl_data"
-CSV_OUTPUT_FOLDER = "mppSteel/data/csv_output_data"
+IMPORT_DATA_PATH = "mppsteel/data/import_data"
+PKL_FOLDER = "mppsteel/data/pkl_data"
+CSV_OUTPUT_FOLDER = "mppsteel/data/csv_output_data"
 
 TECH_REFERENCE_LIST = [
     "Avg BF-BOF",
@@ -227,4 +227,66 @@ SWITCH_DICT = {
     "EAF": ["EAF"],
     "Electrolyzer-EAF": ["Electrolyzer-EAF"],
     "Electrowinning-EAF": ["Electrowinning-EAF"],
+}
+
+SWITCH_CAPEX_DATA_POINTS = {
+    "2020": 319.249187119815,
+    "2030": 319.249187119815,
+    "2050": 286.218839300307,
+}
+
+PER_T_STEEL_DICT_UNITS = {
+    "Iron ore": "t / t steel",
+    "Scrap": "t / t steel",
+    "DRI": "t / t steel",
+    "Met coal": "t / t steel",
+    "Coke": "GJ / t steel",
+    "Thermal coal": "GJ / t steel",
+    "BF gas": "GJ / t steel",
+    "COG": "GJ / t steel",
+    "BOF gas": "GJ / t steel",
+    "Natural gas": "GJ / t steel",
+    "Plastic waste": "GJ / t steel",
+    "Biomass": "GJ / t steel",
+    "Biomethane": "GJ / t steel",
+    "Hydrogen": "GJ / t steel",
+    "Electricity": "GJ / t steel",
+    "Steam": "GJ / t steel",
+    "BF slag": "kg / t steel",
+    "Other slag": "kg / t steel",
+    "Process emissions": "t CO2 / t steel",
+    "Emissivity wout CCS": "t CO2 / t steel",
+    "Captured CO2": "t CO2 / t steel",
+    "Used CO2": "t CO2 / t steel",
+    "Emissivity": "t CO2 / t steel",
+}
+
+
+# Define Groups
+bosc_factor_group = (
+    FURNACE_GROUP_DICT["blast_furnace"]
+    + FURNACE_GROUP_DICT["smelting_reduction"]
+    + FURNACE_GROUP_DICT["dri-bof"]
+)
+eaf_factor_group = FURNACE_GROUP_DICT["dri-eaf"] + FURNACE_GROUP_DICT["eaf-all"]
+electricity_and_steam_self_gen_group = FURNACE_GROUP_DICT["smelting_reduction"]
+electricity_self_gen_group = (
+    FURNACE_GROUP_DICT["blast_furnace"] + FURNACE_GROUP_DICT["smelting_reduction"]
+)
+
+HARD_CODED_FACTORS = {
+    "dri": {"Coke Production": 0, "Sintering": 0},
+    "eaf-basic": {
+        "Coke Production": 1,
+        "Sintering": 1,
+        "Pelletisation": 1,
+        "Blast Furnace": 1,
+    },
+    "eaf-advanced": {
+        "Coke Production": 0,
+        "Sintering": 0,
+    },
+    "smelting_reduction": {
+        "Coke Production": 0,
+    },
 }

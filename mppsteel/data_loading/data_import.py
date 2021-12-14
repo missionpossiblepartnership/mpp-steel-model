@@ -3,10 +3,10 @@
 import pandas as pd
 
 # For logger and units dict
-from mppSteel.utility.utils import get_logger, extract_data, serialize_df_dict
+from mppsteel.utility.utils import get_logger, extract_data, serialize_df_dict
 
 # Get model parameters
-from mppSteel.model_config import IMPORT_DATA_PATH, PKL_FOLDER
+from mppsteel.model_config import IMPORT_DATA_PATH, PKL_FOLDER
 
 # Create logger
 logger = get_logger("Data Import")
