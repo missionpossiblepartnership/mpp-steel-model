@@ -21,11 +21,6 @@ from mppsteel.minimodels.timeseries_generator import (
     timeseries_generator,
 )
 
-from mppsteel.model.tco_and_emissions import (
-    calculate_present_values, compare_capex,
-    generate_capex_financial_summary,
-)
-
 from mppsteel.utility.timeseries_extender import (
     full_model_flow
 )
@@ -33,8 +28,7 @@ from mppsteel.utility.timeseries_extender import (
 from mppsteel.data_loading.data_interface import (
     ccs_co2_getter, biomass_getter, steel_demand_value_selector,
     generate_formatted_steel_plants, load_materials,
-    load_business_cases, 
-
+    load_business_cases,
 )
 
 from mppsteel.model.tco import (
@@ -369,7 +363,6 @@ def choose_technology(
             if current_tech == 'Not operating' or 'Close plant':
                 # plant_name_check(plant_name, error_plant, 'Closed')
                 current_plant_choices[str(year)][plant_name] = 'Close plant'
-                pass
 
             else:
 

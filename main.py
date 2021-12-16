@@ -17,9 +17,13 @@ from mppsteel.data_loading.data_interface import (
 )
 from mppsteel.model.prices_and_emissions_tables import price_and_emissions_flow
 from mppsteel.model.capex_switching import create_capex_timeseries
-from mppsteel.model.tco_and_emissions import calculate_emissions, calculate_tco
+from mppsteel.model.emissions import calculate_emissions
+from mppsteel.model.investment_cycles import investment_cycle_flow
+from mppsteel.model.variable_plant_cost_archetypes import generate_variable_plant_summary
+from mppsteel.model.solver import solver_flow
+from mppsteel.model.production_results import solver_flow
 
-from mppsteel.model_config import DISCOUNT_RATE
+from mppsteel.model_config import MODEL_YEAR_END
 
 if __name__ == "__main__":
     # Load all data
@@ -55,8 +59,14 @@ if __name__ == "__main__":
     # Create capex tables
     create_capex_timeseries(serialize_only=True)
 
-    # Create TCO table
-    calculate_tco(year_end=2070, output_type="summary", serialize_only=True)
-
     # Create Emissions table
-    calculate_emissions(year_end=2070, output_type="summary", serialize_only=True)
+    calculate_emissions(year_end=MODEL_YEAR_END, output_type="summary", serialize_only=True)
+
+    # Create Investments table
+    investment_cycle_flow(serialize_only=True)
+
+    # Create variable costs reference table
+    generate_variable_plant_summary(serialize_only=True)
+
+    # Create Solver dictionary
+    solver_flow(year_end=MODEL_YEAR_END, serialize_only=True)
