@@ -283,17 +283,20 @@ def overall_scores(
 
 
 def choose_technology(
-    plant_df: pd.DataFrame, investment_year_ref: pd.DataFrame, year_end: int, rank_only: bool = False, off_cycle_investment: bool = False, tech_moratorium: bool = False, error_plant: str = ''):
-    
+    year_end: int, rank_only: bool = False, 
+    tech_moratorium: bool = False,
+    error_plant: str = ''
+    ):
 
     logger.info('Creating Steel plant df')
-    def plant_name_check(plant_name: str, name_to_check: str, extra: str = ''):
+
+    def plant_name_check(df: pd.DataFrame, plant_name: str, name_to_check: str, extra: str = ''):
         if plant_name == name_to_check:
             print(f'{plant_name} : {extra}')
-            print(plant_df[plant_df['plant_name'] == plant_name]['technology_in_2020'].values[0])
+            print(df[df['plant_name'] == plant_name]['technology_in_2020'].values[0])
 
-    plant_df_c = plant_df.copy()
-
+    plant_df = generate_formatted_steel_plants()
+    investment_year_ref = read_pickle_folder(PKL_FOLDER, 'plant_investment_cycles', 'df')
     steel_demand_df = extend_steel_demand(MODEL_YEAR_END)
     carbon_tax_df = read_pickle_folder(PKL_FOLDER, 'carbon_tax', 'df')
     all_plant_variable_costs_summary = read_pickle_folder(PKL_FOLDER, 'all_plant_variable_costs_summary', 'df')
@@ -306,20 +309,20 @@ def choose_technology(
     business_cases = load_business_cases()
     plant_capacities_dict = create_plant_capacities_dict()
 
-    all_plant_names = plant_df_c['plant_name'].copy()
+    all_plant_names = plant_df['plant_name'].copy()
 
     year_range = range(2020, year_end+1)
     current_plant_choices = {}
-    for year in tqdm(year_range, total=len(year_range), desc='Tech Choice: Non-Switchers'):
+    for year in tqdm(year_range, total=len(year_range), desc='Years'):
         logger.info(f'Running investment decisions for {year}')
         current_plant_choices[str(year)] = {}
 
         switchers = extract_tech_plant_switchers(investment_year_ref, year)
         non_switchers = list(set(all_plant_names).difference(switchers))
 
-        switchers_df = plant_df_c.set_index(['plant_name']).drop(non_switchers).reset_index()
+        switchers_df = plant_df.set_index(['plant_name']).drop(non_switchers).reset_index()
         switchers_df.rename({'index': 'plant_name'},axis=1,inplace=True)
-        non_switchers_df = plant_df_c.set_index(['plant_name']).drop(switchers).reset_index()
+        non_switchers_df = plant_df.set_index(['plant_name']).drop(switchers).reset_index()
         non_switchers_df.rename({'index': 'plant_name'},axis=1,inplace=True)
 
         if year == 2020:
@@ -331,7 +334,7 @@ def choose_technology(
         yearly_usage = material_usage_per_plant(non_switchers, technologies, business_cases, plant_capacities_dict, steel_demand_df, materials, year)
         material_usage_dict = load_resource_usage_dict(yearly_usage)
         logger.info(f'-- Running investment decisions for Non Switching Plants')
-        for plant_name in non_switchers:
+        for plant_name in tqdm(non_switchers, total=len(non_switchers), desc=f'Non Switchers {year}'):
             # plant_name_check(plant_name, error_plant, 'Non Switch Year')
             if year == 2020:
                 # plant_name_check(plant_name, error_plant, 'Non Switch Year: 2020')
@@ -342,7 +345,7 @@ def choose_technology(
                 current_plant_choices[str(year)][plant_name] = current_plant_choices[str(year-1)][plant_name]
 
         logger.info(f'-- Running investment decisions for Switching Plants')
-        for plant in tqdm(switchers_df.itertuples(), total=switchers_df.shape[0], desc='Tech Choice: Switchers'):
+        for plant in tqdm(switchers_df.itertuples(), total=switchers_df.shape[0], desc=f'Switchers {year}'):
             plant_name = plant.plant_name
 
             # plant_name_check(plant_name, error_plant, 'Switch Year')
@@ -365,7 +368,7 @@ def choose_technology(
                 switch_type = investment_year_ref.reset_index().set_index(['year', 'plant_name']).loc[year, plant_name].values[0]
 
                 tco = tco_calc(
-                    plant, year, current_tech, carbon_tax_df, plant_df_c,
+                    plant, year, current_tech, carbon_tax_df, plant_df,
                     all_plant_variable_costs_summary, green_premium_timeseries,
                     opex_values_dict['other_opex'])
 
@@ -488,13 +491,12 @@ def load_resource_usage_dict(yearly_usage_df: pd.DataFrame):
 
 def solver_flow(year_end: int, serialize_only: bool = False):
 
-    steel_plants_aug = generate_formatted_steel_plants()
-
-    plant_investment_cycles = read_pickle_folder(PKL_FOLDER, 'plant_investment_cycles', 'df')
-
     tech_choice_dict = choose_technology(
-        plant_df=steel_plants_aug, investment_year_ref=plant_investment_cycles, year_end=year_end,
-        rank_only=True, off_cycle_investment=True, tech_moratorium=True, error_plant='SSAB Americas Alabama steel plant')
+        year_end=year_end,
+        rank_only=True,
+        tech_moratorium=True,
+        error_plant='SSAB Americas Alabama steel plant'
+        )
 
     if serialize_only:
         logger.info(f'-- Serializing dataframes')
