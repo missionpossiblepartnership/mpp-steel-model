@@ -2,9 +2,7 @@
 
 import pandas as pd
 import numpy as np
-import random
 from tqdm import tqdm
-
 
 from mppsteel.utility.utils import (
     read_pickle_folder, create_list_permutations,
@@ -19,7 +17,7 @@ from mppsteel.model_config import (
     TCO_RANK_1_SCALER, TCO_RANK_2_SCALER,
     ABATEMENT_RANK_2, ABATEMENT_RANK_3,
     GREEN_PREMIUM_MIN_PCT, GREEN_PREMIUM_MAX_PCT,
-    MODEL_YEAR_END
+    MODEL_YEAR_END, SWITCH_RANK_PROPORTIONS
 )
 
 from mppsteel.data_loading.data_interface import (
@@ -29,7 +27,6 @@ from mppsteel.data_loading.data_interface import (
 from mppsteel.model.prices_and_emissions_tables import (
     dynamic_energy_price_getter
 )
-
 
 from mppsteel.minimodels.timeseries_generator import (
     timeseries_generator,
@@ -726,7 +723,7 @@ def overall_scores(
 
     # Drop excluded techs
     combined_unavailable_list = list(set(unavailable_techs + constraints_check + excluded_switches))
-    new_df.drop(unavailable_techs, inplace=True)
+    new_df.drop(combined_unavailable_list, inplace=True)
 
     # Transitional switches
     if transitional_switch_only:
@@ -743,54 +740,11 @@ def overall_scores(
         return new_df.sort_values('combined_score', ascending=False), material_usage_dict_container
     return new_df.sort_values('combined_score', ascending=False)
 
-def calculate_investment_years(
-    op_start_year: int, cutoff_start_year: int = 2020,
-    cutoff_end_year: int = MODEL_YEAR_END, inv_intervals: int = 20
-):
-    x = op_start_year
-    decision_years = []
-    unique_investment_interval = inv_intervals + random.randrange(-3, 3, 1)
-    while x < cutoff_end_year:
-        if x < cutoff_start_year:
-            x+=unique_investment_interval
-        elif x >= cutoff_start_year:
-            decision_years.append(x)
-            x+=unique_investment_interval
-    return decision_years
-
-def add_off_cycle_investment_years(
-    main_investment_cycle: list,
-    start_buff: int = 3, end_buff: int = 8,
-):
-    inv_cycle_length = len(main_investment_cycle)
-    range_list = []
-
-    # For inv_cycle_length = 2
-    first_year = main_investment_cycle[0]
-    second_year = main_investment_cycle[1]
-    first_range = range(first_year+start_buff, second_year-end_buff)
-    range_list.append(first_year)
-    range_list.append(first_range)
-    range_list.append(second_year)
-
-    if inv_cycle_length == 3:
-        third_year = main_investment_cycle[2]
-        second_range = range(second_year+start_buff, third_year-end_buff)
-        range_list.append(second_range)
-        range_list.append(third_year)
-
-    if inv_cycle_length == 4:
-        fourth_year = main_investment_cycle[3]
-        third_range = range(third_year+start_buff, third_year-fourth_year)
-        range_list.append(third_range)
-        range_list.append(fourth_year)
-
-    return range_list
 
 
 def choose_technology(
     plant_df: pd.DataFrame, investment_year_ref: pd.DataFrame, year_end: int, rank_only: bool = False, off_cycle_investment: bool = False, tech_moratorium: bool = False, error_plant: str = ''):
-    SWITCH_RANK_PROPORTIONS = {'tco': 0.6, 'emissions': 0.4}
+    
 
     logger.info('Creating Steel plant df')
     def plant_name_check(plant_name: str, name_to_check: str, extra: str = ''):
@@ -901,6 +855,7 @@ def choose_technology(
                         return_container=True
                     )
                     try:
+                        # Improve this!!!
                         best_score_tech = scores.index[0]
                         if best_score_tech == current_tech:
                             print(f'No change in main investment cycle in {year} for {plant_name} | {year} -> {current_tech} to {best_score_tech}')
@@ -929,11 +884,12 @@ def choose_technology(
                         plant_name,
                         current_tech,
                         tech_moratorium=tech_moratorium,
-                        transitional_switch_only=True, 
+                        transitional_switch_only=True,
                         material_usage_dict_container=material_usage_dict,
                         return_container=True
                     )
                     try:
+                        # Change this!!
                         best_score_tech = scores.index[0]
                         if best_score_tech != current_tech:
                             print(f'Transistional switch flipped for {plant_name} in {year} -> {current_tech} to {best_score_tech}')
@@ -967,38 +923,8 @@ def material_usage_per_plant(
         df_list.append(df)
     return pd.concat(df_list).reset_index().groupby(['index']).sum()
 
-def apply_investment_years(year_value):
-    if pd.isna(year_value):
-        return calculate_investment_years(2020)
-    elif '(anticipated)' in str(year_value):
-        year_value = year_value[:4]
-        return calculate_investment_years(int(year_value))
-    else:
-        try:
-            return calculate_investment_years(int(float(year_value)))
-        except:
-            return calculate_investment_years(int(year_value[:4]))
-
-def create_investment_cycle_reference(plant_names: list, investment_years: list, year_end: int):
-
-    zipped_plant_investments = zip(plant_names, investment_years)
-    year_range = range(2020, year_end+1)
-    df = pd.DataFrame(columns=['plant_name', 'year', 'switch_type'])
-
-    for plant_name, investments in tqdm(zipped_plant_investments, total=len(plant_names), desc='Investment Cycles'):
-        for year in year_range:
-            row_dict = {'plant_name': plant_name, 'year': year, 'switch_type': 'no switch'}
-            if year in [inv_year for inv_year in investments if isinstance(inv_year, int)]:
-                row_dict['switch_type'] = 'main cycle'
-            for range_object in [inv_range for inv_range in investments if isinstance(inv_range, range)]:
-                if year in range_object:
-                    row_dict['switch_type'] = 'trans switch'
-            df=df.append(row_dict, ignore_index=True)
-    return df.set_index(['year', 'switch_type'])
 
 def extract_tech_plant_switchers(inv_cycle_ref: pd.DataFrame, year: int, combined_output: bool = True):
-    main_switchers = []
-    trans_switchers = []
     try:
         main_switchers = inv_cycle_ref.loc[year, 'main cycle']['plant_name'].to_list()
     except KeyError:
@@ -1019,11 +945,6 @@ def load_resource_usage_dict(yearly_usage_df: pd.DataFrame):
     resource_usage_dict['captured_co2'] = list({yearly_usage_df.loc['Captured CO2']['value'] or 0})
     return resource_usage_dict
 
-def create_investment_cycle_ref(steel_plant_df: pd.DataFrame):
-    logger.info('Creating investment cycles')
-    investment_years = steel_plant_df['start_of_operation'].apply(lambda year: apply_investment_years(year))
-    investment_years_inc_off_cycle = [add_off_cycle_investment_years(inv_year) for inv_year in investment_years]
-    return create_investment_cycle_reference(steel_plant_df['plant_name'].values, investment_years_inc_off_cycle, MODEL_YEAR_END)
 
 def steel_demand_value_selector(df: pd.DataFrame, steel_type: str, year: int, output_type: str = ''):
     df_c = df.copy()
@@ -1112,18 +1033,17 @@ def load_business_cases():
     standardised_business_cases = read_pickle_folder(PKL_FOLDER, 'standardised_business_cases', 'df')
     return format_bc(standardised_business_cases)
 
-def solver_flow(serialize_only: bool = False):
+def solver_flow(year_end: int, serialize_only: bool = False):
 
     steel_plants_aug = generate_formatted_steel_plants()
 
-    plant_investment_cycles = create_investment_cycle_ref(steel_plants_aug)
+    plant_investment_cycles = read_pickle_folder(PKL_FOLDER, 'plant_investment_cycles', 'df')
 
     tech_choice_dict = choose_technology(
-        plant_df=steel_plants_aug, investment_year_ref=plant_investment_cycles, year_end=MODEL_YEAR_END,
+        plant_df=steel_plants_aug, investment_year_ref=plant_investment_cycles, year_end=year_end,
         rank_only=True, off_cycle_investment=True, tech_moratorium=True, error_plant='SSAB Americas Alabama steel plant')
 
     if serialize_only:
         logger.info(f'-- Serializing dataframes')
-        serialise_file(plant_investment_cycles, IMPORT_DATA_PATH, "plant_investment_cycles")
         serialise_file(tech_choice_dict, IMPORT_DATA_PATH, "tech_choice_dict")
     return tech_choice_dict
