@@ -41,13 +41,14 @@ def generate_production_stats(
     return pd.concat(df_list).reset_index(drop=True)
 
 
-def tech_capacity_splits(year_end: int):
+def tech_capacity_splits():
 
     logger.info(f'- Generating Capacity split DataFrame')
     tech_capacities_dict = create_plant_capacities_dict()
     tech_choices_dict = read_pickle_folder(PKL_FOLDER, 'tech_choice_dict', 'df')
+    max_year = max([int(year) for year in tech_choices_dict.keys()])
     steel_plants = tech_capacities_dict.keys()
-    year_range = range(2020, year_end+1)
+    year_range = range(2020, max_year+1)
     df_list = []
 
     for year in tqdm(year_range, total=len(year_range), desc='Tech Capacity Splits'):
@@ -58,7 +59,7 @@ def tech_capacity_splits(year_end: int):
         df = df[df['technology'] != 'Not operating']
         df_list.append(df)
 
-    return pd.concat(df_list)
+    return pd.concat(df_list), max_year
 
 def production_stats_generator(production_df: pd.DataFrame, as_summary: bool = False):
     logger.info(f'- Generating Material Usage stats')
@@ -72,7 +73,7 @@ def production_stats_generator(production_df: pd.DataFrame, as_summary: bool = F
     df_c['power'] = 0
 
     # Create values
-    for row in tqdm(df_c.itertuples(), total=df_c.shape[0]):     
+    for row in tqdm(df_c.itertuples(), total=df_c.shape[0], desc='Production Stats Generator'):     
         for item in material_dict_mapper.items():
             material_category = item[0]
             new_colname = item[1]
@@ -110,8 +111,12 @@ def generate_production_emission_stats(production_df: pd.DataFrame, as_summary: 
 
         # Create values
     for row in tqdm(df_c.itertuples(), total=df_c.shape[0], desc='Production Emissions'):
-        for colname in emissions_dict.keys():
-            df_c.loc[row.Index, f'{colname}_emissions'] = row.production * emissions_getter(emissions_dict, colname, row.technology, row.year)
+        if row.technology == 'Close plant':
+            for colname in emissions_dict.keys():
+                df_c.loc[row.Index, f'{colname}_emissions'] = 0
+        else:
+            for colname in emissions_dict.keys():
+                df_c.loc[row.Index, f'{colname}_emissions'] = row.production * emissions_getter(emissions_dict, colname, row.technology, row.year)
 
     if as_summary:
         return df_c.groupby(['year', 'technology']).sum()
@@ -121,7 +126,7 @@ def global_metaresults_calculator(
     steel_market_df: pd.DataFrame,
     tech_capacity_df: pd.DataFrame,
     production_results_df: pd.DataFrame,
-    year_end: int = MODEL_YEAR_END
+    year_end,
     ):
     # Initial Steel capacity values
     logger.info(f'- Generating Global Metaresults')
@@ -169,7 +174,7 @@ def global_metaresults_calculator(
 
     df['capacity_utilization_factor'] = (df['steel_demand'] / df['steel_capacity']).round(3)
     df['scrap_availability'] = df['year'].apply(lambda year: steel_demand_value_selector(steel_market_df, 'Scrap', year, 'bau'))
-    df['scrap_consumption'] = [production_results_df.loc[year]['scrap_use'].sum() for year in year_range]
+    df['scrap_consumption'] = [production_results_df.loc[year]['scrap'].sum() for year in year_range]
     df['scrap_avail_above_cons'] = df['scrap_availability'] - df['scrap_consumption']
     return df
 
@@ -189,12 +194,13 @@ def load_materials_mapper():
 def production_results_flow(serialize_only: bool = False):
     logger.info(f'- Starting Production Results Model Flow')
     new_steel_demand = extend_steel_demand(MODEL_YEAR_END)
-    tech_capacity_df = tech_capacity_splits(MODEL_YEAR_END)
-    production_results = generate_production_stats(tech_capacity_df, new_steel_demand, MODEL_YEAR_END)
+    tech_capacity_df, max_solver_year = tech_capacity_splits()
+    production_results = generate_production_stats(tech_capacity_df, new_steel_demand, max_solver_year)
 
     production_results_all = production_stats_generator(production_results)
     production_emissions = generate_production_emission_stats(production_results)
-    global_metaresults = global_metaresults_calculator(new_steel_demand, tech_capacity_df, production_results_all)
+    global_metaresults = global_metaresults_calculator(
+        new_steel_demand, tech_capacity_df, production_results_all, max_solver_year)
 
     results_dict = {
         'production_results_all': production_results_all,
