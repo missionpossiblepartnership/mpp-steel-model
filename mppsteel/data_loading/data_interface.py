@@ -10,6 +10,7 @@ from mppsteel.utility.utils import (
     read_pickle_folder,
     serialise_file,
     serialize_df,
+    create_list_permutations
 )
 
 # Get model parameters
@@ -17,6 +18,10 @@ from mppsteel.model_config import (
     PKL_FOLDER,
     EMISSIONS_FACTOR_SLAG,
     ENERGY_DENSITY_MET_COAL,
+)
+
+from mppsteel.utility.timeseries_extender import (
+    full_model_flow
 )
 
 # Create logger
@@ -384,3 +389,41 @@ def generate_formatted_steel_plants():
     steel_plants_raw_c = format_steel_plant_df(steel_plants_raw)
     steel_plants_aug = extract_steel_plant_capacity(steel_plants_raw_c)
     return steel_plants_aug[steel_plants_aug['technology_in_2020'] != 'Not operating'].reset_index(drop=True)
+
+def extend_steel_demand(year_end: int):
+    logger.info(f'-- Extedning the Steel Demand DataFrame to {year_end}')
+    scenarios = ['Circular', 'BAU']
+    steel_types = ['Crude', 'Scrap']
+    steel_demand_perms = create_list_permutations(steel_types, scenarios)
+    global_demand = read_pickle_folder(PKL_FOLDER, 'steel_demand', 'df')
+    df_list = []
+    for permutation in steel_demand_perms:
+        steel_type = permutation[0]
+        scenario = permutation[1]
+        if steel_type == 'Crude' and scenario == 'BAU':
+            series_type = 'geometric'
+            growth_type = 'fixed'
+            value_change = 2850
+        if steel_type == 'Crude' and scenario == 'Circular':
+            series_type = 'linear'
+            growth_type = 'fixed'
+            value_change = 1500
+        if steel_type == 'Scrap' and scenario == 'BAU':
+            series_type = 'geometric'
+            growth_type = 'pct'
+            value_change = 15
+        if steel_type == 'Scrap' and scenario == 'Circular':
+            series_type = 'geometric'
+            growth_type = 'pct'
+            value_change = 20
+        df = full_model_flow(
+            df=global_demand[(global_demand['Steel Type'] == steel_type) & (global_demand['Scenario'] == scenario)],
+            year_value_col_dict={'year': 'Year', 'value': 'Value'},
+            static_value_override_dict={'Source': 'RMI + Model Extension beyond 2050', 'Excel Tab': 'Extended from Excel'},
+            new_end_year = year_end,
+            series_type = series_type,
+            growth_type = growth_type,
+            value_change = value_change,
+        )
+        df_list.append(df)
+    return pd.concat(df_list).reset_index(drop=True)
