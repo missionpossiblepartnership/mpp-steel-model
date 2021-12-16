@@ -15,13 +15,17 @@ from mppsteel.utility.utils import (
 
 # Get model parameters
 from mppsteel.model_config import (
-    PKL_FOLDER,
+    PKL_FOLDER, IMPORT_DATA_PATH,
     EMISSIONS_FACTOR_SLAG,
     ENERGY_DENSITY_MET_COAL,
 )
 
 from mppsteel.utility.timeseries_extender import (
     full_model_flow
+)
+
+from mppsteel.data_loading.country_reference import (
+    match_country
 )
 
 # Create logger
@@ -427,3 +431,9 @@ def extend_steel_demand(year_end: int):
         )
         df_list.append(df)
     return pd.concat(df_list).reset_index(drop=True)
+
+def add_regions_to_steel_plants():
+    steel_plants_clean = read_pickle_folder(PKL_FOLDER, 'steel_plants_processed', 'df')
+    country_reference_dict = read_pickle_folder(PKL_FOLDER, 'country_reference_dict', 'df')
+    steel_plants_clean['region'] = steel_plants_clean['country_code'].apply(lambda x: match_country(x, country_reference_dict))
+    return steel_plants_clean

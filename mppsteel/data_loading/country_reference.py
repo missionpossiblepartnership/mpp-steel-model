@@ -136,8 +136,6 @@ def create_country_ref(serialize_only: bool = False) -> dict:
     country_ref = country_df_formatter(country_ref)
     cr_dict = create_country_ref_dict(country_ref, CountryMetadata)
 
-    country_ref_getter(cr_dict, "GBR", "rmi_region")
-
     if serialize_only:
         serialize_df(cr_dict, PKL_FOLDER, "country_reference_dict")
         return

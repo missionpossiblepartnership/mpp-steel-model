@@ -21,7 +21,8 @@ from mppsteel.model.emissions import calculate_emissions
 from mppsteel.model.investment_cycles import investment_cycle_flow
 from mppsteel.model.variable_plant_cost_archetypes import generate_variable_plant_summary
 from mppsteel.model.solver import solver_flow
-from mppsteel.model.production_results import solver_flow
+from mppsteel.results.production import production_results_flow
+from mppsteel.results.investments import investment_results
 
 from mppsteel.model_config import MODEL_YEAR_END
 
@@ -70,3 +71,9 @@ if __name__ == "__main__":
 
     # Create Solver dictionary
     solver_flow(year_end=MODEL_YEAR_END, serialize_only=True)
+
+    # Create Investments Table
+    investment_results(serialize_only=True)
+
+    # Create Production Table
+    production_results_flow(serialize_only=True)
