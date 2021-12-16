@@ -1,12 +1,11 @@
 """Script to determine when investments will take place."""
 
-import pandas as pd
 import random
+import pandas as pd
 from tqdm import tqdm
 
 from mppsteel.model_config import (
-    MODEL_YEAR_END, NET_ZERO_TARGET,
-    IMPORT_DATA_PATH, PKL_FOLDER
+    PKL_FOLDER, MODEL_YEAR_END, NET_ZERO_TARGET,
 )
 
 from mppsteel.model.solver import (

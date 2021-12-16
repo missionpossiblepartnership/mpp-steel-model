@@ -10,7 +10,7 @@ from mppsteel.utility.utils import (
 )
 
 from mppsteel.model_config import (
-    PKL_FOLDER, IMPORT_DATA_PATH, SWITCH_DICT, DISCOUNT_RATE,
+    PKL_FOLDER, SWITCH_DICT, DISCOUNT_RATE,
     TECHNOLOGY_STATES, FURNACE_GROUP_DICT,
     TECH_MATERIAL_CHECK_DICT,
     RESOURCE_CONTAINER_REF,
@@ -18,14 +18,6 @@ from mppsteel.model_config import (
     ABATEMENT_RANK_2, ABATEMENT_RANK_3,
     GREEN_PREMIUM_MIN_PCT, GREEN_PREMIUM_MAX_PCT,
     MODEL_YEAR_END, SWITCH_RANK_PROPORTIONS
-)
-
-from mppsteel.data_loading.data_interface import (
-    commodity_data_getter, static_energy_prices_getter,
-)
-
-from mppsteel.model.prices_and_emissions_tables import (
-    dynamic_energy_price_getter
 )
 
 from mppsteel.minimodels.timeseries_generator import (
@@ -252,34 +244,33 @@ def plant_tech_resource_checker(
                 materials_to_check = ['Scrap']
 
             # Checking for zero
-            if material_capacity == 0:
+            if material_capacity <= 0:
                 logger.info(f'{year} -> Material {material_check} is not available, capacity = 0')
                 material_check_container.append(False)
-                pass
+            else:
+                # Core logic
+                material_container = material_usage_dict[resource_container_ref[material_ref]]
+                if material_check in ['Bioenergy', 'Used CO2', 'Captured CO2', 'Scrap']:
+                    current_usage = sum(material_container)
+                    if current_usage == 0:
+                        logger.info('First usage for {material_check}')
+                    resource_remaining = material_capacity - current_usage
+                    plant_usage = material_usage(plant_capacities, steel_demand_df, business_cases, materials_list, plant_name, year, tech, materials_to_check)
+                    if plant_usage > resource_remaining:
+                        print(f'{year} -> {plant_name} cannot adopt {tech} because usage of {material_check} exceeds capacity | uses {plant_usage} of remaining {resource_remaining}')
+                        material_check_container.append(False)
+                    else:
+                        print(f'{year} -> {plant_name} can adopt {tech} because usage of {material_check} does not exceed capacity | uses {plant_usage} of remaining {resource_remaining}')
+                        material_check_container.append(True)
+                        material_container.append(plant_usage)
 
-            # Core logic
-            material_container = material_usage_dict[resource_container_ref[material_ref]]
-            if material_check in ['Bioenergy', 'Used CO2', 'Captured CO2', 'Scrap']:
-                current_usage = sum(material_container)
-                if current_usage == 0:
-                    logger.info('First usage for {material_check}')
-                resource_remaining = material_capacity - current_usage
-                plant_usage = material_usage(plant_capacities, steel_demand_df, business_cases, materials_list, plant_name, year, tech, materials_to_check)
-                if plant_usage > resource_remaining:
-                    print(f'{year} -> {plant_name} cannot adopt {tech} because usage of {material_check} exceeds capacity | uses {plant_usage} of remaining {resource_remaining}')
-                    material_check_container.append(False)
-                else:
-                    print(f'{year} -> {plant_name} can adopt {tech} because usage of {material_check} does not exceed capacity | uses {plant_usage} of remaining {resource_remaining}')
-                    material_check_container.append(True)
-                    material_container.append(plant_usage)
-
-            if material_check in ['Scrap EAF']:
-                if material_capacity > 1.5:
-                    print(f'Sufficient enough scrap for {tech} -> {material_capacity}')
-                    material_check_container.append(True)
-                else:
-                    print(f'Not enough scrap for {tech}')
-                    material_check_container.append(False)
+                if material_check in ['Scrap EAF']:
+                    if material_capacity > 1.5:
+                        print(f'Sufficient enough scrap for {tech} -> {material_capacity}')
+                        material_check_container.append(True)
+                    else:
+                        print(f'Not enough scrap for {tech}')
+                        material_check_container.append(False)
 
         if all(material_check_container):
             logger.info(f'PASSED: {tech} has passed availability checks for {plant_name}')
@@ -300,132 +291,8 @@ def plant_tech_resource_checker(
     if output_type == 'included':
         return tech_approved_list
 
-
-def generate_variable_costs(
-    business_cases_df: pd.DataFrame,
-    plant_iteration: list = None,
-    year_end: int = None,
-    feedstock_dict: dict = None,
-    static_energy_df: pd.DataFrame = None,
-    electricity_df: pd.DataFrame = None,
-    hydrogen_df: pd.DataFrame = None
-) -> pd.DataFrame:
-
-    df_list = []
-
-    plant_iteration_dict = {
-        'abundant_res': plant_iteration[0],
-        'ccs_available': plant_iteration[1],
-        'cheap_natural_gas': plant_iteration[2],
-    }
-
-    # Create resources reference list
-    static_energy_list = static_energy_df['Metric'].unique().tolist()
-    feedstock_list = list(feedstock_dict.keys())
-
-    # Create a year range
-    year_range = range(2020, tuple({year_end+1 or 2021})[0])
-
-    for year in year_range:
-        df_c = business_cases_df.copy()
-
-        df_c['Static'] = ''
-        df_c['Feedstock'] = ''
-        df_c['Electricity'] = ''
-        df_c['Hydrogen'] = ''
-        df_c['Natural gas'] = ''
-
-        static_year = year
-        if year > 2026:
-            static_year = 2026
-        dynamic_year = year
-        if year > 2050:
-            dynamic_year = 2050
-
-        low_elec_price = dynamic_energy_price_getter(electricity_df, 'favorable', dynamic_year)
-        high_elec_price = dynamic_energy_price_getter(electricity_df, 'average', dynamic_year)
-        low_hyd_price = dynamic_energy_price_getter(hydrogen_df, 'favorable', dynamic_year)
-        high_hyd_price = dynamic_energy_price_getter(hydrogen_df, 'average', dynamic_year)
-        natural_gas_high = static_energy_prices_getter(static_energy_df, 'Natural gas - high', static_year)
-        natural_gas_low = static_energy_prices_getter(static_energy_df, 'Natural gas - low', static_year)
-
-        for row in df_c.itertuples():
-            resource = row.material_category
-            resource_consumed = row.value
-
-            if resource in static_energy_list:
-                price_unit_value = static_energy_prices_getter(static_energy_df, resource, static_year)
-                df_c.loc[row.Index, 'Static'] = resource_consumed * price_unit_value
-
-            if resource in feedstock_list:
-                price_unit_value = feedstock_dict[resource]
-                df_c.loc[row.Index, 'Feedstock'] = resource_consumed * price_unit_value
-
-            if resource == 'Natural gas':
-                if plant_iteration_dict['cheap_natural_gas'] == 1:
-                    df_c.loc[row.Index, 'Natural gas'] = resource_consumed * natural_gas_low
-                elif plant_iteration_dict['cheap_natural_gas'] == 0:
-                    df_c.loc[row.Index, 'Natural gas'] = resource_consumed * natural_gas_high
-
-            if resource == 'Electricity':
-                if plant_iteration_dict['abundant_res'] == 1 or plant_iteration_dict['ccs_available'] == 1:
-                    df_c.loc[row.Index, 'Natural gas'] = resource_consumed * low_elec_price
-                elif plant_iteration_dict['abundant_res'] == 0 and plant_iteration_dict['ccs_available'] == 0:
-                    df_c.loc[row.Index, 'Natural gas'] = resource_consumed * high_elec_price
-
-            if resource == 'Hydrogen':
-                if plant_iteration_dict['abundant_res'] == 1 or plant_iteration_dict['ccs_available'] == 1:
-                    df_c.loc[row.Index, 'Natural gas'] = resource_consumed * low_hyd_price
-                elif plant_iteration_dict['abundant_res'] == 0 and plant_iteration_dict['ccs_available'] == 0:
-                    df_c.loc[row.Index, 'Natural gas'] = resource_consumed * high_hyd_price
-
-        df_c['year'] = year
-        df_list.append(df_c)
-        
-    combined_df = pd.concat(df_list)
-    return combined_df
-
-def plant_variable_costs():
-    df_list = []
-
-    options = [[0,0,0],[1,0,0],[1,1,0],[1,1,1],[0,1,1],[0,0,1],[0,1,0],[1,0,1]]
-    plant_iterations = {''.join([str(num) for num in option]): option for option in options}
-
-    electricity_minimodel_timeseries = read_pickle_folder(PKL_FOLDER, 'electricity_minimodel_timeseries', 'df')
-    hydrogen_minimodel_timeseries = read_pickle_folder(PKL_FOLDER, 'hydrogen_minimodel_timeseries', 'df')
-
-    static_energy_prices = read_pickle_folder(PKL_FOLDER, 'static_energy_prices', 'df')[['Metric', 'Year', 'Value']]
-    feedstock_dict = generate_feedstock_dict()
-
-    business_cases = load_business_cases()
-
-    for plant_iteration in tqdm(plant_iterations, total=len(plant_iterations), desc='Plant variables'):
-        df = generate_variable_costs(
-            business_cases_df=business_cases,
-            plant_iteration=plant_iteration,
-            year_end=2050,
-            feedstock_dict=feedstock_dict,
-            static_energy_df=static_energy_prices,
-            electricity_df=electricity_minimodel_timeseries,
-            hydrogen_df=hydrogen_minimodel_timeseries
-        )
-        df['plant_iteration'] = plant_iteration
-        df_list.append(df)
-
-    return pd.concat(df_list).reset_index(drop=True)
-
 def create_new_material_usage_dict(resource_container_ref: dict):
     return {material_key: [] for material_key in resource_container_ref.values()}
-
-
-def format_variable_costs(variable_cost_df: pd.DataFrame):
-
-    df_c = variable_cost_df.copy()
-    df_c.drop(labels=['value'], axis=1, inplace=True)
-    df_c = df_c.melt(id_vars=['plant_iteration', 'technology', 'year', 'material_category', 'unit'],var_name=['cost_type'], value_name='cost')
-    df_c['cost'] = df_c['cost'].replace('', 0)
-    return df_c.groupby(by=['plant_iteration', 'year', 'technology']).sum().sort_values(by=['plant_iteration', 'year', 'technology'])
-
 
 def carbon_tax_estimate(emission_dict_ref: dict, carbon_tax_df: pd.DataFrame, year: int):
     year_ref = year
@@ -613,8 +480,7 @@ def capex_values_for_levilised_steelmaking(capex_df: pd.DataFrame, int_rate: flo
 def levelised_steelmaking_cost(year: pd.DataFrame, include_greenfield: bool = False):
     # Levelised of cost of steelmaking = OtherOpex + VariableOpex + RenovationCapex w/ 7% over 20 years (+ GreenfieldCapex w/ 7% over 40 years)
     df_list = []
-    all_plant_variable_costs = plant_variable_costs()
-    all_plant_variable_costs_summary = format_variable_costs(all_plant_variable_costs)
+    all_plant_variable_costs_summary = read_pickle_folder(PKL_FOLDER, 'all_plant_variable_costs_summary', 'df')
     opex_values_dict = read_pickle_folder(PKL_FOLDER, 'capex_dict', 'df')
     for iteration in all_plant_variable_costs_summary.index.get_level_values(0).unique():
         variable_costs = all_plant_variable_costs_summary.loc[iteration, year]
@@ -717,7 +583,7 @@ def overall_scores(
         RESOURCE_CONTAINER_REF, material_usage_dict_container,
         plant_capacities, 'excluded'
         )
-    
+
     # Non_switches
     excluded_switches = [key for key in SWITCH_DICT.keys() if key not in SWITCH_DICT[base_tech]]
 
@@ -756,8 +622,7 @@ def choose_technology(
 
     steel_demand_df = extend_steel_demand(MODEL_YEAR_END)
     carbon_tax_df = read_pickle_folder(PKL_FOLDER, 'carbon_tax', 'df')
-    all_plant_variable_costs = plant_variable_costs()
-    all_plant_variable_costs_summary = format_variable_costs(all_plant_variable_costs)
+    all_plant_variable_costs_summary = read_pickle_folder(PKL_FOLDER, 'all_plant_variable_costs_summary', 'df')
     biomass_availability = read_pickle_folder(PKL_FOLDER, 'biomass_availability', 'df')
     ccs_co2 = read_pickle_folder(PKL_FOLDER, 'ccs_co2', 'df')
     green_premium_timeseries = timeseries_generator(2020,year_end,GREEN_PREMIUM_MIN_PCT,GREEN_PREMIUM_MAX_PCT,'pct')
@@ -827,8 +692,8 @@ def choose_technology(
                 switch_type = investment_year_ref.reset_index().set_index(['year', 'plant_name']).loc[year, plant_name].values[0]
 
                 tco = tco_calc(
-                    plant, year, current_tech, carbon_tax_df, plant_df_c, 
-                    all_plant_variable_costs_summary, green_premium_timeseries, 
+                    plant, year, current_tech, carbon_tax_df, plant_df_c,
+                    all_plant_variable_costs_summary, green_premium_timeseries,
                     opex_values_dict['other_opex'])
 
                 tco_switching_df_summary_final_rank = tco_min_ranker(tco, ['value'], rank_only)
@@ -1020,14 +885,6 @@ def generate_formatted_steel_plants():
     steel_plants_aug = extract_steel_plant_capacity(steel_plants_raw_c)
     return steel_plants_aug[steel_plants_aug['technology_in_2020'] != 'Not operating'].reset_index(drop=True)
 
-def generate_feedstock_dict():
-    commodities_df = read_pickle_folder(PKL_FOLDER, 'commodities_df', 'df')
-    feedstock_prices = read_pickle_folder(PKL_FOLDER, 'feedstock_prices', 'df')
-    commodities_dict = commodity_data_getter(commodities_df)
-    commodity_dictname_mapper = {'plastic': 'Plastic waste', 'ethanol': 'Ethanol', 'charcoal': 'Charcoal'}
-    for key in commodity_dictname_mapper.keys():
-        commodities_dict[commodity_dictname_mapper[key]] = commodities_dict.pop(key)
-    return {**commodities_dict, **dict(zip(feedstock_prices['Metric'], feedstock_prices['Value']))}
 
 def load_business_cases():
     standardised_business_cases = read_pickle_folder(PKL_FOLDER, 'standardised_business_cases', 'df')
@@ -1045,5 +902,5 @@ def solver_flow(year_end: int, serialize_only: bool = False):
 
     if serialize_only:
         logger.info(f'-- Serializing dataframes')
-        serialise_file(tech_choice_dict, IMPORT_DATA_PATH, "tech_choice_dict")
+        serialise_file(tech_choice_dict, PKL_FOLDER, "tech_choice_dict")
     return tech_choice_dict
