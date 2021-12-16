@@ -322,3 +322,9 @@ def create_line_through_points(
 def create_list_permutations(list1: list, list2: list):
     comb =  [list(zip(each_permutation, list2)) for each_permutation in itertools.permutations(list1, len(list2))]
     return list(itertools.chain(*comb))
+
+
+def return_furnace_group(furnace_dict: dict, tech:str):
+    for key in furnace_dict.keys():
+        if tech in furnace_dict[key]:
+            return furnace_dict[key]

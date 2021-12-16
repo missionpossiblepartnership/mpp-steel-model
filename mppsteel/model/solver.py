@@ -1,23 +1,20 @@
 """Main solving script for deciding investment decisions."""
 
 import pandas as pd
-import numpy as np
 from tqdm import tqdm
 
 from mppsteel.utility.utils import (
     read_pickle_folder, create_list_permutations,
-    serialise_file, get_logger
+    serialise_file, get_logger, return_furnace_group
 )
 
 from mppsteel.model_config import (
-    PKL_FOLDER, SWITCH_DICT, DISCOUNT_RATE,
+    PKL_FOLDER, SWITCH_DICT,
     TECHNOLOGY_STATES, FURNACE_GROUP_DICT,
     TECH_MATERIAL_CHECK_DICT,
     RESOURCE_CONTAINER_REF,
-    TCO_RANK_1_SCALER, TCO_RANK_2_SCALER,
-    ABATEMENT_RANK_2, ABATEMENT_RANK_3,
     GREEN_PREMIUM_MIN_PCT, GREEN_PREMIUM_MAX_PCT,
-    MODEL_YEAR_END, SWITCH_RANK_PROPORTIONS
+    MODEL_YEAR_END, SWITCH_RANK_PROPORTIONS,
 )
 
 from mppsteel.minimodels.timeseries_generator import (
@@ -33,13 +30,20 @@ from mppsteel.utility.timeseries_extender import (
     full_model_flow
 )
 
+from mppsteel.data_loading.data_interface import (
+    ccs_co2_getter, biomass_getter, steel_demand_value_selector,
+    generate_formatted_steel_plants, load_materials,
+    load_business_cases, 
+
+)
+
+from mppsteel.model.tco import (
+    tco_calc, tco_min_ranker,
+    abatement_min_ranker
+)
+
 # Create logger
 logger = get_logger("Solver")
-
-def return_furnace_group(furnace_dict: dict, tech:str):
-    for key in furnace_dict.keys():
-        if tech in furnace_dict[key]:
-            return furnace_dict[key]
 
 
 def read_and_format_tech_availability():
@@ -64,81 +68,12 @@ def tech_availability_check(tech_df: pd.DataFrame, technology: str, year: int, t
         # print(f'{technology} will become unavailable in {year}')
         return False
 
-def ccs_co2_getter(df: pd.DataFrame, metric: str, year: str) -> float:
-    if year > 2050:
-        year = 2050
-    df_c = df.copy()
-    metric_names = df_c["Metric"].unique()
-    # logger.info(f'Creating CCS CO2 getter with the following metrics: {metric_names}')
-    df_c.set_index(["Metric", "Year"], inplace=True)
-    # logger.info(f'Getting {metric} value for: {year}')
-    value = df_c.loc[metric, year]["Value"]
-    return value
-
-def biomass_getter(biomass_df: pd.DataFrame, year: int):
-    if year > 2050:
-        year = 2050
-    return biomass_df.set_index('year').loc[year]['value']
 
 def plant_closure_check(utilization_rate: float, cutoff: float, current_tech: str):
     if utilization_rate < cutoff:
         return 'Close Plant'
     return current_tech
 
-def format_steel_plant_df(df: pd.DataFrame):
-    df_c = df.copy() 
-    steel_plant_cols_to_remove = [
-        'Fill in data BF-BOF',
-        'Fill in data EAF', 'Fill in data DRI',
-        'Estimated BF-BOF capacity (kt steel/y)',
-        'Estimated EAF capacity (kt steel/y)',
-        'Estimated DRI capacity (kt sponge iron/y)',
-        'Estimated DRI-EAF capacity (kt steel/y)',
-        'Source', 'Excel Tab'
-    ]
-    df_c.drop(steel_plant_cols_to_remove, axis=1, inplace = True)
-    new_steel_plant_cols = [
-        'plant_name', 'parent', 'country', 'region', 'coordinates', 'status', 'start_of_operation',
-        'BFBOF_capacity', 'EAF_capacity', 'DRI_capacity', 'DRIEAF_capacity', 'abundant_res',
-        'ccs_available', 'cheap_natural_gas', 'industrial_cluster', 'technology_in_2020']
-    df_c = df_c.rename(mapper=dict(zip(df_c.columns, new_steel_plant_cols)), axis=1)
-    return df_c
-
-def extract_steel_plant_capacity(df: pd.DataFrame):
-
-    def convert_to_float(val):
-        try:
-            return float(val)
-        except:
-            if isinstance(val, float):
-                return val
-        return 0
-
-    df_c = df.copy()
-    capacity_cols = ['BFBOF_capacity', 'EAF_capacity', 'DRI_capacity', 'DRIEAF_capacity']
-    for row in df_c.itertuples():
-        tech = row.technology_in_2020
-        for col in capacity_cols:
-            if col == 'EAF_capacity':
-                if tech == 'EAF':
-                    value = convert_to_float(row.EAF_capacity)
-                    df_c.loc[row.Index, 'primary_capacity_2020'] = 0
-            elif col == 'BFBOF_capacity':
-                if tech in ['Avg BF-BOF', 'BAT BF-BOF']:
-                    value = convert_to_float(row.BFBOF_capacity)
-                    df_c.loc[row.Index, 'primary_capacity_2020'] = value
-            elif col == 'DRIEAF_capacity':
-                if tech in ['DRI-EAF', 'DRI-EAF+CCUS']:
-                    value = convert_to_float(row.DRIEAF_capacity)
-                    df_c.loc[row.Index, 'primary_capacity_2020'] = value
-            elif col == 'DRI_capacity':
-                if tech == 'DRI':
-                    value = convert_to_float(row.DRI_capacity)
-                    df_c.loc[row.Index, 'primary_capacity_2020'] = value
-            else:
-                df_c.loc[row.Index, 'primary_capacity_2020'] = 0
-    df_c['secondary_capacity_2020'] = df_c['EAF_capacity'].apply(lambda x: convert_to_float(x)) - df_c['DRIEAF_capacity'].apply(lambda x: convert_to_float(x)) 
-    return df_c
 
 def create_plant_capacities_dict():
     # Edit this one!
@@ -294,256 +229,6 @@ def plant_tech_resource_checker(
 def create_new_material_usage_dict(resource_container_ref: dict):
     return {material_key: [] for material_key in resource_container_ref.values()}
 
-def carbon_tax_estimate(emission_dict_ref: dict, carbon_tax_df: pd.DataFrame, year: int):
-    year_ref = year
-    if year > 2050:
-        year_ref = 2050
-    carbon_tax = carbon_tax_df.set_index('year').loc[year_ref]['value']
-    return (emission_dict_ref['s2'].loc[year_ref] + emission_dict_ref['s3'].loc[year_ref]) * carbon_tax
-
-def get_steel_making_costs(steel_plant_df: pd.DataFrame, variable_cost_df, plant_name: str, technology: str):
-    conversion = 0.877
-    if technology == 'Not operating':
-        return 0
-    else:
-        primary = steel_plant_df[steel_plant_df['plant_name'] == plant_name]['primary_capacity_2020'].values[0]
-        secondary = steel_plant_df[steel_plant_df['plant_name'] == plant_name]['secondary_capacity_2020'].values[0]
-        variable_tech_cost = variable_cost_df.loc[technology].values[0]
-        if technology == 'EAF':
-            variable_cost_value = (variable_tech_cost * primary) + (variable_tech_cost * secondary)
-        else:
-            variable_cost_value = variable_tech_cost * primary
-
-        return (primary + secondary) * (variable_cost_value / (primary+secondary)) / (primary + secondary) / conversion
-
-def get_opex_costs(
-    plant: tuple,
-    year: int,
-    variable_costs_df: pd.DataFrame,
-    opex_df: pd.DataFrame,
-    emissions_dict_ref: dict,
-    carbon_tax_timeseries: pd.DataFrame,
-    green_premium_timeseries: pd.DataFrame,
-    steel_plant_capacity: pd.DataFrame,
-    include_carbon_tax: bool = False,
-    include_green_premium: bool = False,
-):
-    combined_row = str(plant.abundant_res) + str(plant.ccs_available) + str(plant.cheap_natural_gas)
-    variable_costs = variable_costs_df.loc[combined_row, year]
-    opex_costs = opex_df.swaplevel().loc[year]
-
-    # single results
-    carbon_tax_result = 0
-    if include_carbon_tax:
-        carbon_tax_result = carbon_tax_estimate(emissions_dict_ref, carbon_tax_timeseries, year)
-    green_premium_value = 0
-    if include_green_premium:
-        steel_making_cost = get_steel_making_costs(steel_plant_capacity, variable_costs, plant.plant_name, plant.technology_in_2020)
-        green_premium = green_premium_timeseries[green_premium_timeseries['year'] == year]['value'].values[0]
-        green_premium_value = (steel_making_cost * green_premium)
-
-    variable_costs.rename(mapper={'cost': 'value'},axis=1, inplace=True)
-    carbon_tax_result.rename(mapper={'emissions': 'value'},axis=1, inplace=True)
-    total_opex = variable_costs + opex_costs + carbon_tax_result - green_premium_value
-    total_opex.rename(mapper={'value': 'opex'},axis=1, inplace=True)
-    total_opex.loc['Close plant', 'opex'] = 0
-    total_opex.drop(['Charcoal mini furnace', 'Close plant'],inplace=True)
-    return total_opex
-
-def get_opex_costs(
-    plant: tuple,
-    year: int,
-    variable_costs_df: pd.DataFrame,
-    opex_df: pd.DataFrame,
-    emissions_dict_ref: dict,
-    carbon_tax_timeseries: pd.DataFrame,
-    green_premium_timeseries: pd.DataFrame,
-    steel_plant_capacity: pd.DataFrame,
-    include_carbon_tax: bool = False,
-    include_green_premium: bool = False,
-):
-    combined_row = str(plant.abundant_res) + str(plant.ccs_available) + str(plant.cheap_natural_gas)
-    variable_costs = variable_costs_df.loc[combined_row, year]
-    opex_costs = opex_df.swaplevel().loc[year]
-
-    # single results
-    carbon_tax_result = 0
-    if include_carbon_tax:
-        carbon_tax_result = carbon_tax_estimate(emissions_dict_ref, carbon_tax_timeseries, year)
-    green_premium_value = 0
-    if include_green_premium:
-        steel_making_cost = get_steel_making_costs(steel_plant_capacity, variable_costs, plant.plant_name, plant.technology_in_2020)
-        green_premium = green_premium_timeseries[green_premium_timeseries['year'] == year]['value'].values[0]
-        green_premium_value = (steel_making_cost * green_premium)
-
-    variable_costs.rename(mapper={'cost': 'value'},axis=1, inplace=True)
-    carbon_tax_result.rename(mapper={'emissions': 'value'},axis=1, inplace=True)
-    total_opex = variable_costs + opex_costs + carbon_tax_result - green_premium_value
-    total_opex.rename(mapper={'value': 'opex'},axis=1, inplace=True)
-    total_opex.loc['Close plant', 'opex'] = 0
-    total_opex.drop(['Charcoal mini furnace', 'Close plant'],inplace=True)
-    return total_opex
-
-def calculate_capex(start_year):
-    df_list = []
-    for base_tech in SWITCH_DICT.keys():
-        for switch_tech in SWITCH_DICT[base_tech]:
-            if switch_tech == 'Close plant':
-                pass
-            else:
-                df = compare_capex(base_tech, switch_tech, start_year)
-                df_list.append(df)
-    full_df = pd.concat(df_list)
-    return full_df.set_index(['year', 'start_technology'])
-
-def get_capex_year(capex_df: pd.DataFrame, start_tech: str, end_tech: str, switch_year: int):
-    df_c = None
-    if switch_year > 2050:
-        df_c = capex_df.loc[2050, start_tech].copy()
-    elif 2020 <= switch_year <= 2050:
-        df_c = capex_df.loc[switch_year, start_tech].copy()
-
-    raw_switch_value = df_c.loc[df_c['new_technology'] == end_tech]['value'].values[0]
-
-    financial_summary = generate_capex_financial_summary(
-        principal=raw_switch_value,
-        interest_rate=DISCOUNT_RATE,
-        years=20,
-        downpayment=0,
-        compounding_type='annual',
-        rounding=2
-    )
-
-    return financial_summary
-
-def get_discounted_opex_values(
-    plant: tuple, year_start: int, carbon_tax_df: pd.DataFrame,
-    steel_plant_df: pd.DataFrame,
-    variable_cost_summary: pd.DataFrame,
-    green_premium_timeseries: pd.DataFrame,
-    other_opex_df: pd.DataFrame,
-    year_interval: int = 20, int_rate: float = 0.07):
-    year_range = range(year_start, year_start+year_interval+1)
-    df_list = []
-    emissions_dict = create_emissions_dict()
-    for year in year_range:
-        year_ref = year
-        if year > 2050:
-            year_ref = 2050
-        df = get_opex_costs(
-            plant,
-            year_ref,
-            variable_cost_summary,
-            other_opex_df,
-            emissions_dict,
-            carbon_tax_df,
-            green_premium_timeseries,
-            steel_plant_df,
-            include_carbon_tax=True,
-            include_green_premium=True
-        )
-        df['year'] = year_ref
-        df_list.append(df)
-    df_combined = pd.concat(df_list)
-    technologies = df.index
-    new_df = pd.DataFrame(index=technologies, columns=['value'])
-    for technology in technologies:
-        values = df_combined.loc[technology]['opex'].values
-        discounted_values = calculate_present_values(values, int_rate)
-        new_df.loc[technology, 'value'] = sum(discounted_values)
-    return new_df
-
-def tco_calc(
-    plant, start_year: int, plant_tech: str, carbon_tax_df: pd.DataFrame,
-    steel_plant_df: pd.DataFrame, variable_cost_summary: pd.DataFrame, 
-    green_premium_timeseries: pd.DataFrame, other_opex_df: pd.DataFrame, 
-    investment_cycle: int = 20
-    ):
-    opex_values = get_discounted_opex_values(
-        plant, start_year, carbon_tax_df, steel_plant_df, variable_cost_summary,
-        green_premium_timeseries, other_opex_df, int_rate=DISCOUNT_RATE
-        )
-    capex_values = calculate_capex(start_year).swaplevel().loc[plant_tech].groupby('end_technology').sum()
-    return capex_values + opex_values / investment_cycle
-
-def capex_values_for_levilised_steelmaking(capex_df: pd.DataFrame, int_rate: float, year: int, payments: int):
-    df_temp = capex_df.swaplevel().loc[year]
-    value_list = []
-    for tech_row in df_temp.itertuples():
-        capex_value = - generate_capex_financial_summary(tech_row.value, int_rate, payments)['total_interest']
-        value_list.append(capex_value)
-    df_temp.drop(['value'], axis=1, inplace=True)
-    df_temp['value'] = value_list
-    return df_temp
-
-
-def levelised_steelmaking_cost(year: pd.DataFrame, include_greenfield: bool = False):
-    # Levelised of cost of steelmaking = OtherOpex + VariableOpex + RenovationCapex w/ 7% over 20 years (+ GreenfieldCapex w/ 7% over 40 years)
-    df_list = []
-    all_plant_variable_costs_summary = read_pickle_folder(PKL_FOLDER, 'all_plant_variable_costs_summary', 'df')
-    opex_values_dict = read_pickle_folder(PKL_FOLDER, 'capex_dict', 'df')
-    for iteration in all_plant_variable_costs_summary.index.get_level_values(0).unique():
-        variable_costs = all_plant_variable_costs_summary.loc[iteration, year]
-        other_opex = opex_values_dict['other_opex'].swaplevel().loc[year]
-        brownfield_capex = capex_values_for_levilised_steelmaking(opex_values_dict['brownfield'], DISCOUNT_RATE, year, 20)
-        variable_costs.rename(mapper={'cost': 'value'}, axis=1, inplace=True)
-        variable_costs.rename(mapper={'technology': 'Technology'}, axis=0, inplace=True)
-        combined_df = variable_costs + other_opex + brownfield_capex
-        if include_greenfield:
-            greenfield_capex = capex_values_for_levilised_steelmaking(opex_values_dict['greenfield'], DISCOUNT_RATE, year, 40)
-            combined_df = variable_costs + other_opex + greenfield_capex + brownfield_capex
-        combined_df['iteration'] = iteration
-        df_list.append(combined_df)
-    df = pd.concat(df_list)
-    return df.reset_index().rename(mapper={'index': 'technology'},axis=1).set_index(['iteration', 'technology'])
-
-def normalise_data(data):
-    return (data - np.min(data)) / (np.max(data) - np.min(data))
-
-
-def scale_data(df: pd.DataFrame, cols = list):
-    df_c = df.copy()[cols]
-    df_c[cols] = 1 - normalise_data(df_c[cols].values)
-    return df_c
-
-def tco_ranker_logic(x: float, min_value: float):
-    if min_value is None: # check for this
-        # print('NoneType value')
-        return 1
-    if x > min_value * TCO_RANK_2_SCALER:
-        return 3
-    elif x > min_value * TCO_RANK_1_SCALER:
-        return 2
-    else:
-        return 1
-
-def abatement_ranker_logic(x: float):
-    if x < ABATEMENT_RANK_3:
-        return 3
-    elif x < ABATEMENT_RANK_2:
-        return 2
-    else:
-        return 1
-
-def tco_min_ranker(df: pd.DataFrame, value_col: list, rank_only: bool = False):
-    df_c = df.copy().sort_values(value_col, ascending=False).copy()
-    min_value = df_c.min().values[0]
-    if rank_only:
-        df_c['rank_score'] = df_c[value_col[0]].apply(lambda x: tco_ranker_logic(x, min_value))
-        df_c.drop(value_col, axis=1, inplace=True)
-        return df_c
-    return df_c
-
-def abatement_min_ranker(df: pd.DataFrame, start_tech: str, year: int, cols: list, rank_only: bool = False):
-    df_c = df.copy()
-    df_subset = df_c.loc[year, start_tech][cols].sort_values(cols, ascending=False).copy()
-    if rank_only:
-        df_subset['rank_score'] = df_subset[cols[0]].apply(lambda x: abatement_ranker_logic(x)) # get fix for list subset
-        df_subset.drop(cols, axis=1, inplace=True)
-        return df_subset
-    return df_subset
-
-
 def overall_scores(
     tco_df: pd.DataFrame,
     emissions_df: pd.DataFrame,
@@ -605,7 +290,6 @@ def overall_scores(
     if return_container:
         return new_df.sort_values('combined_score', ascending=False), material_usage_dict_container
     return new_df.sort_values('combined_score', ascending=False)
-
 
 
 def choose_technology(
@@ -790,12 +474,14 @@ def material_usage_per_plant(
 
 
 def extract_tech_plant_switchers(inv_cycle_ref: pd.DataFrame, year: int, combined_output: bool = True):
+    main_switchers = []
+    trans_switchers = []
     try:
-        main_switchers = inv_cycle_ref.loc[year, 'main cycle']['plant_name'].to_list()
+        main_switchers = inv_cycle_ref.sort_index().loc[year, 'main cycle']['plant_name'].to_list()
     except KeyError:
         pass
     try:
-        trans_switchers = inv_cycle_ref.loc[year, 'trans switch']['plant_name'].to_list()
+        trans_switchers = inv_cycle_ref.sort_index().loc[year, 'trans switch']['plant_name'].to_list()
     except KeyError:
         pass
     if combined_output:
@@ -809,21 +495,6 @@ def load_resource_usage_dict(yearly_usage_df: pd.DataFrame):
     resource_usage_dict['used_co2'] = list({yearly_usage_df.loc['Used CO2']['value'] or 0})
     resource_usage_dict['captured_co2'] = list({yearly_usage_df.loc['Captured CO2']['value'] or 0})
     return resource_usage_dict
-
-
-def steel_demand_value_selector(df: pd.DataFrame, steel_type: str, year: int, output_type: str = ''):
-    df_c = df.copy()
-    def steel_demand_getter(df, steel_type, scenario, year):
-        val = df[ (df['Year'] == year) & (df['Steel Type'] == steel_type) & (df['Scenario'] == scenario) ]['Value'].values[0]
-        return val
-    bau = steel_demand_getter(df_c, steel_type, 'BAU', year)
-    circ = steel_demand_getter(df_c, steel_type, 'Circular', year)
-    if output_type == 'bau':
-        return bau
-    if output_type == 'circular':
-        return circ
-    if output_type == 'combined':
-        return bau + circ / 2
 
 def extend_steel_demand(year_end: int):
     logger.info(f'-- Extedning the Steel Demand DataFrame to {year_end}')
@@ -862,33 +533,6 @@ def extend_steel_demand(year_end: int):
         )
         df_list.append(df)
     return pd.concat(df_list).reset_index(drop=True)
-
-def format_bc(df: pd.DataFrame):
-    df_c = df.copy()
-    df_c = df_c[df_c['material_category'] != 0]
-    df_c['material_category'] = df_c['material_category'].apply(lambda x: x.strip())
-    return df_c
-
-def create_emissions_dict():
-    calculated_s1_emissions = read_pickle_folder(PKL_FOLDER, 'calculated_s1_emissions', 'df')
-    calculated_s2_emissions = read_pickle_folder(PKL_FOLDER, 'calculated_s2_emissions', 'df')
-    calculated_s3_emissions = read_pickle_folder(PKL_FOLDER, 'calculated_s3_emissions', 'df')
-    return {'s1': calculated_s1_emissions, 's2': calculated_s2_emissions, 's3': calculated_s3_emissions}
-
-def load_materials():
-    return load_business_cases()['material_category'].unique()
-
-def generate_formatted_steel_plants():
-    # Notice this comes from the raw steel plant file - fix in script
-    steel_plants_raw = read_pickle_folder(PKL_FOLDER, 'steel_plants', 'df')
-    steel_plants_raw_c = format_steel_plant_df(steel_plants_raw)
-    steel_plants_aug = extract_steel_plant_capacity(steel_plants_raw_c)
-    return steel_plants_aug[steel_plants_aug['technology_in_2020'] != 'Not operating'].reset_index(drop=True)
-
-
-def load_business_cases():
-    standardised_business_cases = read_pickle_folder(PKL_FOLDER, 'standardised_business_cases', 'df')
-    return format_bc(standardised_business_cases)
 
 def solver_flow(year_end: int, serialize_only: bool = False):
 

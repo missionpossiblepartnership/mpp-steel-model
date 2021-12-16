@@ -1,7 +1,5 @@
 """Functions to access data sources"""
 
-from collections import namedtuple
-
 # For Data Manipulation
 import pandas as pd
 import numpy as np
@@ -10,7 +8,6 @@ import numpy as np
 from mppsteel.utility.utils import (
     get_logger,
     read_pickle_folder,
-    official_country_name_getter,
     serialise_file,
     serialize_df,
 )
@@ -153,6 +150,19 @@ def steel_demand_getter(
     value = df_c.loc[steel_type, scenario, year]["Value"]
     return value
 
+def steel_demand_value_selector(df: pd.DataFrame, steel_type: str, year: int, output_type: str = ''):
+    df_c = df.copy()
+    def steel_demand_getter(df, steel_type, scenario, year):
+        val = df[ (df['Year'] == year) & (df['Steel Type'] == steel_type) & (df['Scenario'] == scenario) ]['Value'].values[0]
+        return val
+    bau = steel_demand_getter(df_c, steel_type, 'BAU', year)
+    circ = steel_demand_getter(df_c, steel_type, 'Circular', year)
+    if output_type == 'bau':
+        return bau
+    if output_type == 'circular':
+        return circ
+    if output_type == 'combined':
+        return bau + circ / 2
 
 def carbon_tax_getter(df: pd.DataFrame, year: str) -> float:
     df_c = df.copy()
@@ -161,7 +171,6 @@ def carbon_tax_getter(df: pd.DataFrame, year: str) -> float:
     # logger.info(f'Getting Carbon Tax value for: {year}')
     value = df_c.loc[year]["value"]
     return value
-
 
 def scope1_emissions_getter(df: pd.DataFrame, metric: str) -> float:
     df_c = df.copy()
@@ -172,8 +181,9 @@ def scope1_emissions_getter(df: pd.DataFrame, metric: str) -> float:
     value = df_c.loc[metric]["Value"]
     return value
 
-
 def ccs_co2_getter(df: pd.DataFrame, metric: str, year: str) -> float:
+    if year > 2050:
+        year = 2050
     df_c = df.copy()
     metric_names = df_c["Metric"].unique()
     # logger.info(f'Creating CCS CO2 getter with the following metrics: {metric_names}')
@@ -182,6 +192,10 @@ def ccs_co2_getter(df: pd.DataFrame, metric: str, year: str) -> float:
     value = df_c.loc[metric, year]["Value"]
     return value
 
+def biomass_getter(biomass_df: pd.DataFrame, year: int):
+    if year > 2050:
+        year = 2050
+    return biomass_df.set_index('year').loc[year]['value']
 
 def static_energy_prices_getter(df: pd.DataFrame, metric: str, year: str) -> float:
     df_c = df.copy()
@@ -191,7 +205,6 @@ def static_energy_prices_getter(df: pd.DataFrame, metric: str, year: str) -> flo
     # logger.info(f'Getting {metric} value for: {year}')
     value = df_c.loc[metric, year]["Value"]
     return value
-
 
 def technology_availability_getter(df: pd.DataFrame, technology: str) -> tuple:
     df_c = df.copy()
@@ -203,14 +216,12 @@ def technology_availability_getter(df: pd.DataFrame, technology: str) -> tuple:
     year_available_until = df_c.loc[technology]["Year available until"]
     return year_available_from, year_available_until
 
-
 def grid_emissivity_getter(df: pd.DataFrame, year: str) -> float:
     df_c = df.copy()
     df_c.set_index(["Year"], inplace=True)
     # logger.info(f'Getting Grid Emissivity value for: {year}')
     value = df_c.loc[year]["Value"]
     return value
-
 
 def format_commodities_data(df: pd.DataFrame, material_mapper: dict) -> pd.DataFrame:
     df_c = df.copy()
@@ -236,7 +247,6 @@ def format_commodities_data(df: pd.DataFrame, material_mapper: dict) -> pd.DataF
             df_c.loc[row.Index, "implied_price"] = row.trade_value / row.netweight
     return df_c
 
-
 def commodity_data_getter(df: pd.DataFrame, commodity: str = ""):
     df_c = df.copy()
     if commodity:
@@ -257,7 +267,6 @@ def commodity_data_getter(df: pd.DataFrame, commodity: str = ""):
             )
             values_dict[commodity_ref] = value_productsum
     return values_dict
-
 
 def scope3_ef_getter(df: pd.DataFrame, fuel: str, year: str) -> float:
     df_c = df.copy()
@@ -281,7 +290,6 @@ def create_capex_opex_dict(serialize_only: bool = False):
         return
     return capex_dict
 
-
 def generate_preprocessed_emissions_data(serialize_only: bool = False):
     ethanol_plastic_charcoal = read_pickle_folder(
         PKL_FOLDER, "ethanol_plastic_charcoal"
@@ -298,9 +306,81 @@ def generate_preprocessed_emissions_data(serialize_only: bool = False):
     final_scope3_ef_df = modify_scope3_ef_1(
         s3_emissions_factors_1, slag_new_values, ENERGY_DENSITY_MET_COAL
     )
-
     if serialize_only:
         serialise_file(commodities_df, PKL_FOLDER, "commodities_df")
         serialise_file(final_scope3_ef_df, PKL_FOLDER, "final_scope3_ef_df")
         return
     return commodities_df, final_scope3_ef_df
+
+def format_bc(df: pd.DataFrame):
+    df_c = df.copy()
+    df_c = df_c[df_c['material_category'] != 0]
+    df_c['material_category'] = df_c['material_category'].apply(lambda x: x.strip())
+    return df_c
+
+def load_business_cases():
+    standardised_business_cases = read_pickle_folder(PKL_FOLDER, 'standardised_business_cases', 'df')
+    return format_bc(standardised_business_cases)
+
+def load_materials():
+    return load_business_cases()['material_category'].unique()
+
+def format_steel_plant_df(df: pd.DataFrame):
+    df_c = df.copy() 
+    steel_plant_cols_to_remove = [
+        'Fill in data BF-BOF',
+        'Fill in data EAF', 'Fill in data DRI',
+        'Estimated BF-BOF capacity (kt steel/y)',
+        'Estimated EAF capacity (kt steel/y)',
+        'Estimated DRI capacity (kt sponge iron/y)',
+        'Estimated DRI-EAF capacity (kt steel/y)',
+        'Source', 'Excel Tab'
+    ]
+    df_c.drop(steel_plant_cols_to_remove, axis=1, inplace = True)
+    new_steel_plant_cols = [
+        'plant_name', 'parent', 'country', 'region', 'coordinates', 'status', 'start_of_operation',
+        'BFBOF_capacity', 'EAF_capacity', 'DRI_capacity', 'DRIEAF_capacity', 'abundant_res',
+        'ccs_available', 'cheap_natural_gas', 'industrial_cluster', 'technology_in_2020']
+    df_c = df_c.rename(mapper=dict(zip(df_c.columns, new_steel_plant_cols)), axis=1)
+    return df_c
+
+def extract_steel_plant_capacity(df: pd.DataFrame):
+    def convert_to_float(val):
+        try:
+            return float(val)
+        except:
+            if isinstance(val, float):
+                return val
+        return 0
+    df_c = df.copy()
+    capacity_cols = ['BFBOF_capacity', 'EAF_capacity', 'DRI_capacity', 'DRIEAF_capacity']
+    for row in df_c.itertuples():
+        tech = row.technology_in_2020
+        for col in capacity_cols:
+            if col == 'EAF_capacity':
+                if tech == 'EAF':
+                    value = convert_to_float(row.EAF_capacity)
+                    df_c.loc[row.Index, 'primary_capacity_2020'] = 0
+            elif col == 'BFBOF_capacity':
+                if tech in ['Avg BF-BOF', 'BAT BF-BOF']:
+                    value = convert_to_float(row.BFBOF_capacity)
+                    df_c.loc[row.Index, 'primary_capacity_2020'] = value
+            elif col == 'DRIEAF_capacity':
+                if tech in ['DRI-EAF', 'DRI-EAF+CCUS']:
+                    value = convert_to_float(row.DRIEAF_capacity)
+                    df_c.loc[row.Index, 'primary_capacity_2020'] = value
+            elif col == 'DRI_capacity':
+                if tech == 'DRI':
+                    value = convert_to_float(row.DRI_capacity)
+                    df_c.loc[row.Index, 'primary_capacity_2020'] = value
+            else:
+                df_c.loc[row.Index, 'primary_capacity_2020'] = 0
+    df_c['secondary_capacity_2020'] = df_c['EAF_capacity'].apply(lambda x: convert_to_float(x)) - df_c['DRIEAF_capacity'].apply(lambda x: convert_to_float(x)) 
+    return df_c
+
+def generate_formatted_steel_plants():
+    # Notice this comes from the raw steel plant file - fix in script
+    steel_plants_raw = read_pickle_folder(PKL_FOLDER, 'steel_plants', 'df')
+    steel_plants_raw_c = format_steel_plant_df(steel_plants_raw)
+    steel_plants_aug = extract_steel_plant_capacity(steel_plants_raw_c)
+    return steel_plants_aug[steel_plants_aug['technology_in_2020'] != 'Not operating'].reset_index(drop=True)
