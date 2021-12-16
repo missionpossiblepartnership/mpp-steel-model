@@ -8,8 +8,8 @@ import numpy as np
 from mppsteel.utility.utils import (
     get_logger,
     read_pickle_folder,
-    serialise_file,
-    serialize_df,
+    serialize_file,
+    serialize_file,
     create_list_permutations
 )
 
@@ -111,9 +111,9 @@ def capex_generator(
     }
 
     if output_type == "all":
-        logger.info(f"Creating capex values dictionary for {technology}")
+        # logger.info(f"Creating capex values dictionary for {technology}")
         return capex_dict
-    logger.info(f"Creating capex value: {output_type} for: {technology}")
+    # logger.info(f"Creating capex value: {output_type} for: {technology}")
     return capex_dict[output_type]
 
 
@@ -162,8 +162,7 @@ def steel_demand_getter(
 def steel_demand_value_selector(df: pd.DataFrame, steel_type: str, year: int, output_type: str = ''):
     df_c = df.copy()
     def steel_demand_getter(df, steel_type, scenario, year):
-        val = df[ (df['Year'] == year) & (df['Steel Type'] == steel_type) & (df['Scenario'] == scenario) ]['Value'].values[0]
-        return val
+        return df[ (df['Year'] == year) & (df['Steel Type'] == steel_type) & (df['Scenario'] == scenario) ]['Value'].values[0]
     bau = steel_demand_getter(df_c, steel_type, 'BAU', year)
     circ = steel_demand_getter(df_c, steel_type, 'Circular', year)
     if output_type == 'bau':
@@ -295,7 +294,7 @@ def create_capex_opex_dict(serialize_only: bool = False):
         greenfield_capex_df, brownfield_capex_df, other_opex_df
     )
     if serialize_only:
-        serialize_df(capex_dict, PKL_FOLDER, "capex_dict")
+        serialize_file(capex_dict, PKL_FOLDER, "capex_dict")
         return
     return capex_dict
 
@@ -316,8 +315,8 @@ def generate_preprocessed_emissions_data(serialize_only: bool = False):
         s3_emissions_factors_1, slag_new_values, ENERGY_DENSITY_MET_COAL
     )
     if serialize_only:
-        serialise_file(commodities_df, PKL_FOLDER, "commodities_df")
-        serialise_file(final_scope3_ef_df, PKL_FOLDER, "final_scope3_ef_df")
+        serialize_file(commodities_df, PKL_FOLDER, "commodities_df")
+        serialize_file(final_scope3_ef_df, PKL_FOLDER, "final_scope3_ef_df")
         return
     return commodities_df, final_scope3_ef_df
 
@@ -428,6 +427,7 @@ def extend_steel_demand(year_end: int):
             series_type = series_type,
             growth_type = growth_type,
             value_change = value_change,
+            year_only=True
         )
         df_list.append(df)
     return pd.concat(df_list).reset_index(drop=True)

@@ -2,13 +2,13 @@
 
 # For Data Manipulation
 import pandas as pd
+from tqdm import tqdm
 
 # For logger
 from mppsteel.utility.utils import (
     get_logger,
     read_pickle_folder,
-    serialise_file,
-    serialize_df,
+    serialize_file,
     create_line_through_points,
 )
 
@@ -74,11 +74,11 @@ def get_capex_values(
         year_range = [single_year]
 
     year_list = []
-    for year in year_range:
+    for year in tqdm(year_range, total=len(year_range), desc='Get Capex Values'):
         logger.info(f"Calculating year {year}")
 
         tech_list = []
-        for technology in SWITCH_DICT.keys():
+        for technology in tqdm(SWITCH_DICT.keys(), total=len(SWITCH_DICT), desc=f'Technology'):
             logger.info(f"-- Generating Capex values for {technology}")
 
             df_temp = df_dict_c[technology].copy()
@@ -345,5 +345,5 @@ def create_capex_timeseries(serialize_only: bool = False) -> pd.DataFrame:
         year_end=max_model_year,
     )
     if serialize_only:
-        serialize_df(switching_df_with_capex, PKL_FOLDER, "capex_switching_df")
+        serialize_file(switching_df_with_capex, PKL_FOLDER, "capex_switching_df")
     return switching_df_with_capex

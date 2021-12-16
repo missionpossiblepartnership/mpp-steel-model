@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 # For logger and units dict
-from .utils import get_logger, read_pickle_folder, CountryMetadata, serialize_df
+from .utils import get_logger, read_pickle_folder, CountryMetadata, serialize_file
 
 from .model_config import PKL_FOLDER
 

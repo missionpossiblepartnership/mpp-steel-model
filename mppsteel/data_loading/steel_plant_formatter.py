@@ -5,7 +5,7 @@ import pandas as pd
 from mppsteel.utility.utils import (
     get_logger,
     read_pickle_folder,
-    serialize_df,
+    serialize_file,
     country_mapping_fixer,
     country_matcher,
 )
@@ -84,6 +84,6 @@ def steel_plant_preprocessor(serialize_only: bool = False) -> pd.DataFrame:
     )
 
     if serialize_only:
-        serialize_df(steel_plants, PKL_FOLDER, "steel_plants_processed")
+        serialize_file(steel_plants, PKL_FOLDER, "steel_plants_processed")
         return
     return steel_plants

@@ -13,7 +13,7 @@ from mppsteel.model.solver import (
 )
 
 from mppsteel.utility.utils import (
-    serialise_file, get_logger
+    serialize_file, get_logger
 )
 # Create logger
 logger = get_logger("Investment Cycles")
@@ -104,5 +104,5 @@ def investment_cycle_flow(serialize_only: bool = False):
 
     if serialize_only:
         logger.info(f'-- Serializing Investment Cycle Reference')
-        serialise_file(plant_investment_cycles, PKL_FOLDER, "plant_investment_cycles")
+        serialize_file(plant_investment_cycles, PKL_FOLDER, "plant_investment_cycles")
     return plant_investment_cycles

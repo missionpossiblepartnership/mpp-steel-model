@@ -117,13 +117,6 @@ def extract_data(
         return pd.read_csv(full_filename)
 
 
-def serialize_df(df: pd.DataFrame, data_path: str, filename: str):
-    with open(f"{data_path}/{filename}.pickle", "wb") as f:
-        # Pickle the 'data' dictionary using the highest protocol available.
-        logger.info(f"* Saving df {filename} to pickle")
-        pickle.dump(df, f, pickle.HIGHEST_PROTOCOL)
-
-
 def serialize_df_dict(data_path: str, data_dict: dict):
     """Iterate through each df and store the file as pickle or feather. Does not return any object.
 
@@ -139,7 +132,7 @@ def serialize_df_dict(data_path: str, data_dict: dict):
             pickle.dump(data_dict[df_name], f, pickle.HIGHEST_PROTOCOL)
 
 
-def serialise_file(object, pkl_folder: str, filename: str):
+def serialize_file(object, pkl_folder: str, filename: str):
     """Serializes a file using the pickle protocol.
 
     Args:

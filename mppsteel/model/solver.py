@@ -4,7 +4,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from mppsteel.utility.utils import (
-    read_pickle_folder, serialise_file,
+    read_pickle_folder, serialize_file,
     get_logger, return_furnace_group
 )
 
@@ -446,9 +446,11 @@ def choose_technology(
     return current_plant_choices
 
 def material_usage_per_plant(
-    plant_list: list, technology_list: list,
+    plant_list: list,
+    technology_list: list,
     business_cases: pd.DataFrame,
-    plant_capacities: dict, steel_demand_df: pd.DataFrame,
+    plant_capacities: dict,
+    steel_demand_df: pd.DataFrame,
     materials_list: list, year: float):
     df_list = []
     zipped_data = zip(plant_list, technology_list)
@@ -500,5 +502,5 @@ def solver_flow(year_end: int, serialize_only: bool = False):
 
     if serialize_only:
         logger.info(f'-- Serializing dataframes')
-        serialise_file(tech_choice_dict, PKL_FOLDER, "tech_choice_dict")
+        serialize_file(tech_choice_dict, PKL_FOLDER, "tech_choice_dict")
     return tech_choice_dict

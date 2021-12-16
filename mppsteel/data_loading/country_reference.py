@@ -11,7 +11,7 @@ import pycountry
 from mppsteel.utility.utils import (
     get_logger,
     read_pickle_folder,
-    serialize_df,
+    serialize_file,
     CountryMetadata,
 )
 
@@ -137,7 +137,7 @@ def create_country_ref(serialize_only: bool = False) -> dict:
     cr_dict = create_country_ref_dict(country_ref, CountryMetadata)
 
     if serialize_only:
-        serialize_df(cr_dict, PKL_FOLDER, "country_reference_dict")
+        serialize_file(cr_dict, PKL_FOLDER, "country_reference_dict")
         return
     return cr_dict
 

@@ -3,7 +3,7 @@
 import pandas as pd
 
 # For logger and units dict
-from mppsteel.utility.utils import get_logger, read_pickle_folder, serialize_df
+from mppsteel.utility.utils import get_logger, read_pickle_folder, serialize_file
 
 from mppsteel.model_config import (
     PKL_FOLDER,
@@ -154,8 +154,8 @@ def calculate_emissions(
     )
 
     if serialize_only:
-        serialize_df(full_summary_df, PKL_FOLDER, "emissions_switching_df_summary")
-        serialize_df(full_df, PKL_FOLDER, "emissions_switching_df_full")
+        serialize_file(full_summary_df, PKL_FOLDER, "emissions_switching_df_summary")
+        serialize_file(full_df, PKL_FOLDER, "emissions_switching_df_full")
         return
 
     if output_type == "summary":

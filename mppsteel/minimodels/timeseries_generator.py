@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 
 # For logger and units dict
-from mppsteel.utility.utils import get_logger, read_pickle_folder, serialize_df
+from mppsteel.utility.utils import get_logger, read_pickle_folder, serialize_file
 
 # Get model parameters
 from mppsteel.model_config import (
@@ -332,9 +332,9 @@ def generate_timeseries(serialize_only: bool = False) -> dict:
 
     if serialize_only:
         # Serialize timeseries
-        serialize_df(biomass_availability, PKL_FOLDER, "biomass_availability")
-        serialize_df(carbon_tax, PKL_FOLDER, "carbon_tax")
-        serialize_df(
+        serialize_file(biomass_availability, PKL_FOLDER, "biomass_availability")
+        serialize_file(carbon_tax, PKL_FOLDER, "carbon_tax")
+        serialize_file(
             electricity_minimodel_timeseries,
             PKL_FOLDER,
             "electricity_minimodel_timeseries",

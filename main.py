@@ -1,4 +1,6 @@
 """Runs the data loading scripts"""
+import time
+from mppsteel.utility.utils import get_logger
 
 from mppsteel.data_loading.data_import import load_data
 from mppsteel.minimodels.hydrogen_minimodel import generate_hydrogen_timeseries
@@ -26,7 +28,12 @@ from mppsteel.results.investments import investment_results
 
 from mppsteel.model_config import MODEL_YEAR_END
 
+logger = get_logger("Main Model Code")
+
 if __name__ == "__main__":
+    starttime = time.clock()
+
+    minitime = time
     # Load all data
     load_data(serialize_only=True)
 
@@ -77,3 +84,6 @@ if __name__ == "__main__":
 
     # Create Production Table
     production_results_flow(serialize_only=True)
+
+    endtime = time.clock()
+    logger.info(f'Total runtime is {starttime - endtime:0.4f} seconds')

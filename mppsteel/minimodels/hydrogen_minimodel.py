@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 
 # For logger and units dict
-from mppsteel.utility.utils import get_logger, read_pickle_folder, serialize_df
+from mppsteel.utility.utils import get_logger, read_pickle_folder, serialize_file
 
 from mppsteel.model_config import (
     PKL_FOLDER,
@@ -372,7 +372,7 @@ def generate_hydrogen_timeseries(serialize_only: bool = False) -> pd.DataFrame:
 
     if serialize_only:
         # Serialize timeseries
-        serialize_df(
+        serialize_file(
             hydrogen_minimodel_timeseries, PKL_FOLDER, "hydrogen_minimodel_timeseries"
         )
         return

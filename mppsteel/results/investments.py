@@ -12,7 +12,7 @@ from mppsteel.model.solver import (
 )
 
 from mppsteel.utility.utils import (
-    read_pickle_folder, get_logger, serialise_file
+    read_pickle_folder, get_logger, serialize_file
 )
 
 # Create logger
@@ -80,5 +80,5 @@ def investment_results(serialize_only: bool = False):
     investment_results_df = pd.DataFrame(data_container).set_index(['year']).sort_values('year')
     if serialize_only:
         logger.info(f'-- Serializing dataframes')
-        serialise_file(investment_results_df, PKL_FOLDER, "investment_results_df")
+        serialize_file(investment_results_df, PKL_FOLDER, "investment_results_df")
     return investment_results_df

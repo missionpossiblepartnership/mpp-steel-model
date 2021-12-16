@@ -181,8 +181,8 @@ def combine_timeseries(
     logger.info(f"Combining the original and extended timeseries")
     df_c = df.copy()
     new_df = pd.DataFrame(index=range(len(added_date_range)), columns=df_c.columns)
-    new_df["year"] = added_date_range
-    new_df["value"] = values
+    new_df[year_value_col_dict['year']] = added_date_range
+    new_df[year_value_col_dict['value']] = values
     for col_val in static_col_mapper.items():
         new_df[col_val[0]] = col_val[1]
     return pd.concat([df_c, new_df])

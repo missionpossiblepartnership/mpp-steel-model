@@ -12,7 +12,7 @@ from mppsteel.model.solver import (
 )
 
 from mppsteel.utility.utils import (
-    serialise_file, get_logger, read_pickle_folder
+    serialize_file, get_logger, read_pickle_folder
 )
 
 from mppsteel.data_loading.data_interface import (
@@ -164,5 +164,5 @@ def generate_variable_plant_summary(serialize_only: bool = False):
 
     if serialize_only:
         logger.info(f'-- Serializing dataframes')
-        serialise_file(all_plant_variable_costs_summary, PKL_FOLDER, "all_plant_variable_costs_summary")
+        serialize_file(all_plant_variable_costs_summary, PKL_FOLDER, "all_plant_variable_costs_summary")
     return all_plant_variable_costs_summary

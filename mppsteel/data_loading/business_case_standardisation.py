@@ -4,7 +4,7 @@
 import pandas as pd
 
 # For logger
-from mppsteel.utility.utils import get_logger, read_pickle_folder, serialise_file
+from mppsteel.utility.utils import get_logger, read_pickle_folder, serialize_file
 
 from mppsteel.model_config import (
     PKL_FOLDER,
@@ -1362,6 +1362,6 @@ def standardise_business_cases(serialize_only: bool = False) -> pd.DataFrame:
     """
     full_summary_df = generate_full_consumption_table(TECH_REFERENCE_LIST)
     if serialize_only:
-        serialise_file(full_summary_df, PKL_FOLDER, "standardised_business_cases")
+        serialize_file(full_summary_df, PKL_FOLDER, "standardised_business_cases")
         return
     return full_summary_df

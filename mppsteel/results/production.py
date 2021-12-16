@@ -20,7 +20,7 @@ from mppsteel.model.tco import (
 )
 
 from mppsteel.utility.utils import (
-    read_pickle_folder, get_logger, serialise_file
+    read_pickle_folder, get_logger, serialize_file
 )
 
 # Create logger
@@ -210,7 +210,7 @@ def production_results_flow(serialize_only: bool = False):
 
     if serialize_only:
         logger.info(f'-- Serializing dataframes')
-        serialise_file(production_results_all, IMPORT_DATA_PATH, "production_stats_all")
-        serialise_file(production_emissions, IMPORT_DATA_PATH, "production_emissions")
-        serialise_file(global_metaresults, IMPORT_DATA_PATH, "global_metaresults")
+        serialize_file(production_results_all, IMPORT_DATA_PATH, "production_stats_all")
+        serialize_file(production_emissions, IMPORT_DATA_PATH, "production_emissions")
+        serialize_file(global_metaresults, IMPORT_DATA_PATH, "global_metaresults")
     return results_dict

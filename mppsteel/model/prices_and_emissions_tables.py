@@ -8,7 +8,7 @@ from mppsteel.utility.utils import (
     get_logger,
     read_pickle_folder,
     CountryMetadata,
-    serialize_df,
+    serialize_file,
 )
 
 from mppsteel.model_config import PKL_FOLDER, TECH_REFERENCE_LIST
@@ -425,11 +425,11 @@ def price_and_emissions_flow(serialize_only: bool = False):
     opex_sheet = create_total_opex(cost_tech_summary)
 
     if serialize_only:
-        serialize_df(s1_summary_df, PKL_FOLDER, "calculated_s1_emissions")
-        serialize_df(emissions_s2_summary, PKL_FOLDER, "calculated_s2_emissions")
-        serialize_df(emissions_s3_summary, PKL_FOLDER, "calculated_s3_emissions")
-        serialize_df(cost_tech_summary, PKL_FOLDER, "calculated_variable_costs")
-        serialize_df(opex_sheet, PKL_FOLDER, "calculated_total_opex")
+        serialize_file(s1_summary_df, PKL_FOLDER, "calculated_s1_emissions")
+        serialize_file(emissions_s2_summary, PKL_FOLDER, "calculated_s2_emissions")
+        serialize_file(emissions_s3_summary, PKL_FOLDER, "calculated_s3_emissions")
+        serialize_file(cost_tech_summary, PKL_FOLDER, "calculated_variable_costs")
+        serialize_file(opex_sheet, PKL_FOLDER, "calculated_total_opex")
         return
     return {
         "s1_calculations": s1_summary_df,

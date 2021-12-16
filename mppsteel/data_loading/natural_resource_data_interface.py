@@ -10,7 +10,7 @@ from mppsteel.utility.utils import (
     read_pickle_folder,
     country_mapping_fixer,
     country_matcher,
-    serialize_df,
+    serialize_file,
 )
 
 from mppsteel.model_config import PKL_FOLDER
@@ -338,8 +338,8 @@ def natural_resource_preprocessor(serialize_only: bool = False) -> dict:
 
     if serialize_only:
         # Serialize timeseries
-        serialize_df(wind_df, PKL_FOLDER, "wind_processed")
-        serialize_df(solar_df, PKL_FOLDER, "solar_processed")
-        serialize_df(natural_gas_df, PKL_FOLDER, "natural_gas_processed")
+        serialize_file(wind_df, PKL_FOLDER, "wind_processed")
+        serialize_file(solar_df, PKL_FOLDER, "solar_processed")
+        serialize_file(natural_gas_df, PKL_FOLDER, "natural_gas_processed")
         return
     return {"solar": solar_df, "wind": wind_df, "natural_gas": natural_gas_df}
