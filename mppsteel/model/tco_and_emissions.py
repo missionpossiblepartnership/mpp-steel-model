@@ -174,8 +174,8 @@ def generate_capex_financial_summary(
     )
 
     return {
-        "future_value": round(fv_calc, rounding),
-        "interest_payments": round(pmt_calc, rounding),
+        "future_value": fv_calc.round(rounding),
+        "interest_payments": pmt_calc.round(rounding),
         "total_interest": round(ipmt.sum(), rounding),
         "principal_schedule": ppmt.round(rounding),
         "interest_schedule": ipmt.round(rounding),
