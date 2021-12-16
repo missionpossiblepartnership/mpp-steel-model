@@ -1149,11 +1149,10 @@ def fix_exceptions(
             if "Electricity" in temp_process_df["material_category"].unique():
                 if process == "Basic Oxygen Steelmaking + Casting":
                     temp_process_df.loc[
-                        temp_process_df["process_detail"] == "Energy-oxygen furnace",
-                        "value",
+                        (temp_process_df["process_detail"] == "Energy-oxygen furnace") & ( temp_process_df["material_category"] == 'Electricity'), "value"
                     ] = elec_values_dict["Basic Oxygen Steelmaking + Casting - Oxygen"]
                     temp_process_df.loc[
-                        temp_process_df["process_detail"] == "Energy-casting", "value"
+                        (temp_process_df["process_detail"] == "Energy-casting") & ( temp_process_df["material_category"] == 'Electricity'), "value"
                     ] = elec_values_dict["Basic Oxygen Steelmaking + Casting - Casting"]
                     df_dict_c[process] = temp_process_df
                 else:
