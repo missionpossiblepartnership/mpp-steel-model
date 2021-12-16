@@ -157,7 +157,7 @@ def timeseries_generator(
     # Define schema for the DataFrame
     df_schema = {"year": int, "value": float, "units": str}
     # Define the year range for the df
-    year_range = range(start_year, end_year + 1)
+    year_range = range(int(start_year), int(end_year + 1))
     # Create the DataFrame
     df = pd.DataFrame(
         index=pd.RangeIndex(0, len(year_range)),

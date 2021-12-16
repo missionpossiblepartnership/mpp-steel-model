@@ -4,8 +4,8 @@ import pandas as pd
 import numpy as np
 
 # Get model parameters
-from .model_config import PKL_FOLDER
-from .utils import read_pickle_folder, get_logger
+from mppsteel.model_config import PKL_FOLDER
+from mppsteel.utility.utils import  get_logger
 
 # Create logger
 logger = get_logger("Timeseries Extender")
@@ -46,11 +46,11 @@ def create_timeseries_extension_components(
     static_columns = list(set(df_c.columns.to_list()) - set(time_series_values))
 
     current_last_year = df_c[year_colname].iloc[-1]
-    last_value = df_c.iloc[-1].value
+    last_value = df_c.iloc[-1][value_colname]
 
     df_c[year_colname] = pd.to_datetime(df_c[year_colname], format="%Y")
 
-    df_c.plot(x=year_colname, y=value_colname)
+    # df_c.plot(x=year_colname, y=value_colname)
     # https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
     full_date_range = pd.date_range(
         start=str(start_year),
@@ -97,7 +97,7 @@ def create_timeseries_extension_array(
     )
 
     # See https://numpy.org/doc/stable/reference/routines.array-creation.html for array generators
-    def percentage_change(x: float, pct=float):
+    def percentage_change(x: float, pct: float):
         return start_value + (x * pct / 100)
 
     series_length += 1
@@ -164,6 +164,7 @@ def combine_timeseries(
     df: pd.DataFrame,
     added_date_range: pd.DatetimeIndex,
     values: np.array,
+    year_value_col_dict: dict,
     static_col_mapper: dict,
 ) -> pd.DataFrame:
     """Produces a combined dataframe with the old timeseries and the new timeseries.
@@ -209,6 +210,7 @@ def full_model_flow(
     growth_type: str,
     value_change: float = 0,
     plot_dfs: bool = False,
+    year_only: bool = True, # change this!!!!
 ) -> pd.DataFrame:
     """A full run through the complete cycle to produce an extended timeseries.
 
@@ -246,7 +248,7 @@ def full_model_flow(
 
     dict_mapper = create_dict_mapper(df_f, static_columns, static_value_override_dict)
     combined_df = combine_timeseries(
-        df_f, extended_date_range, extra_series, dict_mapper
+        df_f, extended_date_range, extra_series, year_value_col_dict, dict_mapper
     )
     if plot_dfs:
         generate_timeseries_plots(
@@ -254,5 +256,7 @@ def full_model_flow(
             year_value_col_dict["year"],
             year_value_col_dict["value"],
         )
+    if year_only: # Change this!!!
+        combined_df[year_value_col_dict["year"]] = pd.DatetimeIndex(combined_df[year_value_col_dict["year"]]).year
 
     return combined_df

@@ -1158,7 +1158,7 @@ def fix_exceptions(
                     df_dict_c[process] = temp_process_df
                 else:
                     temp_process_df.loc[
-                        temp_process_df["process_detail"] == process, "value"
+                        temp_process_df["material_category"] == "Electricity", "value"
                     ] = elec_values_dict[process]
                     df_dict_c[process] = temp_process_df
 

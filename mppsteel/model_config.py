@@ -1,5 +1,6 @@
 """Config file for model parameters"""
 
+MODEL_YEAR_END = 2070
 BIOMASS_AV_TS_START_YEAR = 2020
 BIOMASS_AV_TS_END_YEAR = 2050
 BIOMASS_AV_TS_END_VALUE = 2000
@@ -290,3 +291,80 @@ HARD_CODED_FACTORS = {
         "Coke Production": 0,
     },
 }
+
+LOW_CARBON_TECHS = [
+    "BAT BF-BOF+CCUS",
+    "BAT BF-BOF+CCU",
+    "Smelting Reduction+CCUS",
+    "Electrolyzer-EAF",
+    "DRI-EAF+CCUS",
+    "DRI-EAF_100% green H2",
+    "DRI-Melt-BOF+CCUS",
+    "DRI-Melt-BOF_100% zero-C H2",
+    "Electrowinning-EAF",
+]
+
+END_STATE_TECHS = LOW_CARBON_TECHS.copy()
+END_STATE_TECHS += [r"BAT BF-BOF+BECCUS"]
+END_STATE_TECHS = END_STATE_TECHS[:10].copy()
+
+TRANSITIONAL_TECHS = [
+    "BAT BF-BOF_bio PCI",
+    "BAT BF-BOF_H2 PCI",
+    "DRI-EAF_50% green H2",
+    "DRI-EAF_50% bio-CH4",
+    "DRI-Melt-BOF",
+    "Smelting Reduction"
+]
+
+CURRENT_TECHS = [
+    "Avg BF-BOF",
+    "BAT BF-BOF",
+    "DRI-EAF",
+    "EAF"
+]
+
+TECHNOLOGY_STATES = {
+    'current': CURRENT_TECHS,
+    'transitional': TRANSITIONAL_TECHS,
+    'end_state': END_STATE_TECHS
+}
+
+
+TECH_MATERIAL_CHECK_DICT = {
+    "Avg BF-BOF": [],
+    "BAT BF-BOF": [],
+    "BAT BF-BOF_bio PCI": ['Bioenergy', 'Scrap'],
+    "BAT BF-BOF_H2 PCI": ['Scrap'],
+    "BAT BF-BOF+CCUS": ['Used CO2', 'Used CO2', 'Scrap'],
+    "DRI-EAF": [],
+    "DRI-EAF_50% green H2": [],
+    "DRI-EAF_50% bio-CH4": ['Bioenergy'],
+    "DRI-EAF+CCUS": ['Used CO2', ],
+    "DRI-EAF_100% green H2": [],
+    "Smelting Reduction": ['Scrap'],
+    "Smelting Reduction+CCUS": ['Used CO2', 'Scrap'],
+    "EAF": ['Scrap EAF'],
+    "Electrolyzer-EAF": [],
+    "BAT BF-BOF+CCU": ['Used CO2', 'Scrap'],
+    "DRI-Melt-BOF": [],
+    "DRI-Melt-BOF+CCUS": ['Used CO2', ],
+    "DRI-Melt-BOF_100% zero-C H2": [],
+    "Electrowinning-EAF": [],
+    "BAT BF-BOF+BECCUS": ['Captured CO2', 'Bioenergy', 'Scrap'],
+}
+
+CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION = 0.95
+CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION = 0.6
+SCRAP_OVERSUPPLY_CUTOFF_FOR_NEW_EAF_PLANT_DECISION = 0.15
+AVERAGE_LEVEL_OF_CAPACITY = 0.95
+
+RESOURCE_CONTAINER_REF = {'Bioenergy': 'biomass', 'Scrap': 'scrap', 'Used CO2': 'used_co2', 'Captured CO2': 'captured_co2'}
+
+TCO_RANK_2_SCALER = 1.3
+TCO_RANK_1_SCALER = 1.1
+ABATEMENT_RANK_2 = 2.37656461606311 # Switching from Avg BF-BOF to BAT BF-BOF+CCUS
+ABATEMENT_RANK_3 = 0.932690243851946 # Switching from Avg BF-BOF to BAT BF-BOF_bio PCI
+
+GREEN_PREMIUM_MIN_PCT = 0.01
+GREEN_PREMIUM_MAX_PCT = 0.05

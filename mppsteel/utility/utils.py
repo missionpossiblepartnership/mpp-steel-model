@@ -1,5 +1,6 @@
 """Utility library for functions used throughout the module"""
 import logging
+import itertools
 import pickle
 import sys
 import os
@@ -317,3 +318,7 @@ def create_line_through_points(
     # Combine pair DataFrames into one DataFrame
     combined_df = pd.concat(df_list)
     return combined_df.set_index("year")
+
+def create_list_permutations(list1: list, list2: list):
+    comb =  [list(zip(each_permutation, list2)) for each_permutation in itertools.permutations(list1, len(list2))]
+    return list(itertools.chain(*comb))
