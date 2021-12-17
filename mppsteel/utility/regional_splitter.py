@@ -5,9 +5,9 @@ import pandas as pd
 import numpy as np
 
 # For logger and units dict
-from .utils import get_logger, read_pickle_folder, CountryMetadata, serialize_file
+from mppsteel.utility.utils import get_logger, read_pickle_folder
 
-from .model_config import PKL_FOLDER
+from mppsteel.model_config import PKL_FOLDER
 
 # Create logger
 logger = get_logger("Regional Splitter")
