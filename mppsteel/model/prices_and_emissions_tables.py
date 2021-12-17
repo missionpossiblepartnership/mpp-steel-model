@@ -8,6 +8,7 @@ from mppsteel.utility.utils import (
     get_logger,
     read_pickle_folder,
     serialize_file,
+    timer_func,
 )
 
 from mppsteel.model_config import MODEL_YEAR_END, MODEL_YEAR_START, PKL_FOLDER
@@ -388,7 +389,7 @@ def generate_prices_dataframe(df: pd.DataFrame, year_end: int):
 
     return variable_cost_df
 
-
+@timer_func
 def price_and_emissions_flow(serialize_only: bool = False):
     business_cases_summary = read_pickle_folder(
         PKL_FOLDER, "standardised_business_cases", "df"

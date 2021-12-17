@@ -3,7 +3,7 @@
 import pandas as pd
 
 # For logger and units dict
-from mppsteel.utility.utils import get_logger, extract_data, serialize_df_dict
+from mppsteel.utility.utils import get_logger, extract_data, serialize_df_dict, timer_func
 
 # Get model parameters
 from mppsteel.model_config import IMPORT_DATA_PATH, PKL_FOLDER
@@ -41,7 +41,7 @@ def create_wind_df() -> pd.DataFrame:
     wind_df.reset_index(drop=True, inplace=True)
     return wind_df
 
-
+@timer_func
 def load_data(serialize_only: bool = False) -> dict:
     """Loads all the data you specify when the function is called.
 

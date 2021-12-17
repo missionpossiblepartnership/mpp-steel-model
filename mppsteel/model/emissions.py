@@ -3,7 +3,7 @@
 import pandas as pd
 
 # For logger and units dict
-from mppsteel.utility.utils import get_logger, read_pickle_folder, serialize_file
+from mppsteel.utility.utils import get_logger, read_pickle_folder, serialize_file, timer_func
 
 from mppsteel.model_config import (
     MODEL_YEAR_END,
@@ -81,7 +81,7 @@ def compare_emissions(
     )
     return df
 
-
+@timer_func
 def calculate_emissions(
     year_end: int = MODEL_YEAR_END, output_type: str = "full", serialize_only: bool = False
 ) -> pd.DataFrame:

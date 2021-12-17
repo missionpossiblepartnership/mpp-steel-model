@@ -13,6 +13,7 @@ from mppsteel.utility.utils import (
     read_pickle_folder,
     serialize_file,
     CountryMetadata,
+    timer_func,
 )
 
 from mppsteel.model_config import PKL_FOLDER
@@ -121,7 +122,7 @@ def country_ref_getter(country_ref_dict: dict, country_code: str, ref: str = "")
         return getattr(country_class, ref)
     return country_class
 
-
+@timer_func
 def create_country_ref(serialize_only: bool = False) -> dict:
     """Preprocesses the country data.
 

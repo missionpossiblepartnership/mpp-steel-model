@@ -4,7 +4,7 @@
 import pandas as pd
 
 # For logger
-from mppsteel.utility.utils import get_logger, read_pickle_folder, serialize_file
+from mppsteel.utility.utils import get_logger, read_pickle_folder, serialize_file, timer_func
 
 from mppsteel.model_config import (
     PKL_FOLDER
@@ -1353,7 +1353,7 @@ def fix_exceptions(
 
     return df_dict_c
 
-
+@timer_func
 def standardise_business_cases(serialize_only: bool = False) -> pd.DataFrame:
     """Standardises the business cases for each technology into per t steel.
 

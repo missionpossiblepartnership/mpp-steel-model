@@ -9,7 +9,7 @@ from mppsteel.model_config import (
 )
 
 from mppsteel.utility.utils import (
-    read_pickle_folder, get_logger, serialize_file
+    read_pickle_folder, get_logger, serialize_file, timer_func
 )
 
 # Create logger
@@ -58,6 +58,7 @@ def investment_row_calculator(inv_df: pd.DataFrame, capex_df: pd.DataFrame, tech
     }
     return new_row
 
+@timer_func
 def investment_results(serialize_only: bool = False):
     logger.info(f'Generating Investment Results')
     tech_choice_dict = read_pickle_folder(PKL_FOLDER, 'tech_choice_dict', 'df')

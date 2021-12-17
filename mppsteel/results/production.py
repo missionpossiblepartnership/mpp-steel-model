@@ -21,7 +21,7 @@ from mppsteel.model.tco import (
 )
 
 from mppsteel.utility.utils import (
-    read_pickle_folder, get_logger, serialize_file
+    read_pickle_folder, get_logger, serialize_file, timer_func
 )
 
 # Create logger
@@ -192,6 +192,7 @@ def load_materials_mapper():
     material_col_names = [material.lower().replace(' ', '_') for material in materials]
     return dict(zip(materials, material_col_names))
 
+@timer_func
 def production_results_flow(serialize_only: bool = False):
     logger.info(f'- Starting Production Results Model Flow')
     new_steel_demand = extend_steel_demand(MODEL_YEAR_END)

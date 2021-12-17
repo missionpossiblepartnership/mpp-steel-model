@@ -4,6 +4,7 @@ import pandas as pd
 # For logger and units dict
 from mppsteel.utility.utils import (
     get_logger,
+    timer_func,
     read_pickle_folder,
     serialize_file,
     country_mapping_fixer,
@@ -105,6 +106,7 @@ def apply_countries_to_steel_plants(steel_plant_formatted: pd.DataFrame):
 
     return steel_plants
 
+@timer_func
 def steel_plant_processor(
     serialize_only: bool = False,
     remove_non_operating_plants: bool = False) -> pd.DataFrame:

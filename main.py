@@ -1,6 +1,6 @@
 """Runs the data loading scripts"""
 import time
-from mppsteel.utility.utils import get_logger, pickle_to_csv
+from mppsteel.utility.utils import get_logger, pickle_to_csv, TIME_CONTAINER
 
 from mppsteel.data_loading.data_import import load_data
 from mppsteel.minimodels.hydrogen_minimodel import generate_hydrogen_timeseries
@@ -28,12 +28,14 @@ from mppsteel.results.investments import investment_results
 
 from mppsteel.model_config import MODEL_YEAR_END
 
+
 logger = get_logger("Main Model Code")
 
 if __name__ == "__main__":
-    starttime = time.time()
+    timing_dict = {}
 
     # Load all data
+
     load_data(serialize_only=True)
 
     # Run hydrogen minimodel
@@ -92,7 +94,4 @@ if __name__ == "__main__":
 
     pickle_to_csv('investment_results_df')
 
-    endtime = time.time()
-
-    
-    logger.info(f'Total runtime is {endtime - starttime:0.4f} seconds')
+    logger.info(f'{TIME_CONTAINER.return_time_container()}')

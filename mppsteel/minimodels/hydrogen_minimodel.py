@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 
 # For logger and units dict
-from mppsteel.utility.utils import get_logger, read_pickle_folder, serialize_file
+from mppsteel.utility.utils import get_logger, read_pickle_folder, serialize_file, timer_func
 
 from mppsteel.model_config import (
     PKL_FOLDER,
@@ -295,7 +295,7 @@ def create_required_stack_replacements_df(stack_df: pd.DataFrame) -> pd.DataFram
     stack_df_c["units"] = ""
     return stack_df_c
 
-
+@timer_func
 def generate_hydrogen_timeseries(serialize_only: bool = False) -> pd.DataFrame:
     """Generates a timeseries of hydrogen prices taking into account all of the necessary assumptions.
 

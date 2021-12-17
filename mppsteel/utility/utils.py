@@ -1,6 +1,7 @@
 """Utility library for functions used throughout the module"""
 import logging
 import itertools
+import time
 import pickle
 import sys
 import os
@@ -324,3 +325,28 @@ def pickle_to_csv(pickle_filename: str, csv_filename: str = ''):
         df.to_csv(f"{OUTPUT_FOLDER}/{csv_filename}.csv")
     else:
         df.to_csv(f"{OUTPUT_FOLDER}/{pickle_filename}.csv")
+
+def format_times(start_t: float, end_t: float):
+    time_diff = end_t - start_t
+    return f'{time_diff:0.2f} seconds | {time_diff / 60 :0.2f} minutes'
+
+class TimeContainerClass:
+    def __init__(self):
+        self.time_container = {}
+
+    def update_time(self, func_name: str, timings: str):
+        self.time_container[func_name] = timings
+    
+    def return_time_container(self):
+        return self.time_container
+
+TIME_CONTAINER = TimeContainerClass()
+
+def timer_func(func):
+    def wrap_func(*args, **kwargs):
+        t1 = time.time()
+        result = func(*args, **kwargs)
+        t2 = time.time()
+        TIME_CONTAINER.update_time(func.__name__, format_times(t1, t2))
+        return result
+    return wrap_func

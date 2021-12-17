@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 
 # For logger and units dict
-from mppsteel.utility.utils import get_logger, read_pickle_folder, serialize_file
+from mppsteel.utility.utils import get_logger, read_pickle_folder, serialize_file, timer_func
 
 # Get model parameters
 from mppsteel.model_config import (
@@ -282,7 +282,7 @@ def timeseries_generator(
     logger.info(f"{timeseries_type} timeseries complete")
     return df
 
-
+@timer_func
 def generate_timeseries(serialize_only: bool = False) -> dict:
     """Generates timeseries for biomass, carbon taxes and electricity.
 

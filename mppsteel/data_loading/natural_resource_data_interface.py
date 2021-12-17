@@ -11,6 +11,7 @@ from mppsteel.utility.utils import (
     country_mapping_fixer,
     country_matcher,
     serialize_file,
+    timer_func,
 )
 
 from mppsteel.model_config import PKL_FOLDER
@@ -275,7 +276,7 @@ NG_FIXED_COUNTRIES = {
     "U.S. Virgin Islands": "VIR",
 }
 
-
+@timer_func
 def natural_resource_preprocessor(serialize_only: bool = False) -> dict:
     """Preprocesses dataframe for wind, solar and natural gas.
 

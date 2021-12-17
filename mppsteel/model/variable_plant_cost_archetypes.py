@@ -12,7 +12,7 @@ from mppsteel.model.solver import (
 )
 
 from mppsteel.utility.utils import (
-    serialize_file, get_logger, read_pickle_folder
+    serialize_file, get_logger, read_pickle_folder, timer_func
 )
 
 from mppsteel.data_loading.data_interface import (
@@ -158,6 +158,7 @@ def format_variable_costs(variable_cost_df: pd.DataFrame):
     df_c['cost'] = df_c['cost'].replace('', 0)
     return df_c.groupby(by=['plant_iteration', 'year', 'technology']).sum().sort_values(by=['plant_iteration', 'year', 'technology'])
 
+@timer_func
 def generate_variable_plant_summary(serialize_only: bool = False):
     all_plant_variable_costs = plant_variable_costs(MODEL_YEAR_END)
     all_plant_variable_costs_summary = format_variable_costs(all_plant_variable_costs)

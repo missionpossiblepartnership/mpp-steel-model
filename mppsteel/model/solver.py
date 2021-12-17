@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 from mppsteel.utility.utils import (
     read_pickle_folder, serialize_file,
-    get_logger, return_furnace_group
+    get_logger, return_furnace_group, timer_func
 )
 
 from mppsteel.model_config import (
@@ -491,7 +491,7 @@ def load_resource_usage_dict(yearly_usage_df: pd.DataFrame):
     resource_usage_dict['captured_co2'] = list({yearly_usage_df.loc['Captured CO2']['value'] or 0})
     return resource_usage_dict
 
-
+@timer_func
 def solver_flow(year_end: int, serialize_only: bool = False):
 
     tech_choice_dict = choose_technology(

@@ -12,7 +12,7 @@ from mppsteel.model_config import (
 )
 
 from mppsteel.utility.utils import (
-    serialize_file, get_logger, read_pickle_folder
+    serialize_file, get_logger, read_pickle_folder, timer_func
 )
 # Create logger
 logger = get_logger("Investment Cycles")
@@ -94,6 +94,7 @@ def create_investment_cycle_ref(steel_plant_df: pd.DataFrame):
     investment_years_inc_off_cycle = [add_off_cycle_investment_years(inv_year, INVESTMENT_OFFCYCLE_BUFFER_TOP, INVESTMENT_OFFCYCLE_BUFFER_TAIL) for inv_year in investment_years]
     return create_investment_cycle_reference(steel_plant_df['plant_name'].values, investment_years_inc_off_cycle, MODEL_YEAR_END)
 
+@timer_func
 def investment_cycle_flow(serialize_only: bool = False):
     steel_plants_aug = read_pickle_folder(PKL_FOLDER, 'steel_plants_processed', 'df')
     plant_investment_cycles = create_investment_cycle_ref(steel_plants_aug)

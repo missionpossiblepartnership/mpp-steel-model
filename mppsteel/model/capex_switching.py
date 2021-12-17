@@ -10,6 +10,7 @@ from mppsteel.utility.utils import (
     read_pickle_folder,
     serialize_file,
     create_line_through_points,
+    timer_func,
 )
 
 from mppsteel.model_config import (
@@ -329,7 +330,7 @@ def get_capex_values(
         .sort_index(ascending=True)
     )
 
-
+@timer_func
 def create_capex_timeseries(serialize_only: bool = False) -> pd.DataFrame:
     """Runs through the flow to create a capex dictionary.
 
