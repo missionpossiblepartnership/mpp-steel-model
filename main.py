@@ -88,6 +88,9 @@ def full_flow():
     data_import_and_preprocessing_refresh()
     half_model_run()
 
+def business_case_flow():
+    standardise_business_cases(serialize_only=True)
+
 
 parser = argparse.ArgumentParser(description='The MPP Python Steel Model Command Line Interface')
 parser.add_argument(
@@ -104,6 +107,8 @@ parser.add_argument(
     "--i", action="store_true", help="Runs the data import scripts scripts directly")
 parser.add_argument(
     "--r", action="store_true", help="Runs the data refresh scripts directly")
+parser.add_argument(
+    "--b", action="store_true", help="Runs the business cases script directly")
 
 if __name__ == "__main__":
 
