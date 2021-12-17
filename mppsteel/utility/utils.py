@@ -13,6 +13,8 @@ import numpy as np
 import wbgapi as wb
 import pycountry
 
+from mppsteel.utility.reference_lists import NEW_COUNTRY_COL_LIST
+
 
 FORMATTER = logging.Formatter("%(asctime)s — %(name)s — %(levelname)s — %(message)s")
 LOG_FILE = "MPP_STEEL_LOGFILE.log"

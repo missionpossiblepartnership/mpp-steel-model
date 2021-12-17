@@ -20,4 +20,4 @@ from mppsteel.results.production import production_results_flow
 
 # standardise_business_cases(serialize_only=True)
 
-print(solver_flow(MODEL_YEAR_END))
+production_results_flow(serialize_only=True)

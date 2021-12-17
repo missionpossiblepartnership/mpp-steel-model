@@ -33,7 +33,6 @@ logger = get_logger("Main Model Code")
 if __name__ == "__main__":
     starttime = time.time()
 
-    minitime = time
     # Load all data
     load_data(serialize_only=True)
 
@@ -47,7 +46,7 @@ if __name__ == "__main__":
     standardise_business_cases(serialize_only=True)
 
     # Run natural resource preprocessor
-    natural_resource_preprocessor(serialize_only=True)
+    # natural_resource_preprocessor(serialize_only=True)
 
     # Process Steel plants
     steel_plant_preprocessor(serialize_only=True)

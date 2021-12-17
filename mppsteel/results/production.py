@@ -211,7 +211,7 @@ def production_results_flow(serialize_only: bool = False):
 
     if serialize_only:
         logger.info(f'-- Serializing dataframes')
-        serialize_file(production_results_all, IMPORT_DATA_PATH, "production_stats_all")
-        serialize_file(production_emissions, IMPORT_DATA_PATH, "production_emissions")
-        serialize_file(global_metaresults, IMPORT_DATA_PATH, "global_metaresults")
+        serialize_file(production_results_all, PKL_FOLDER, "production_stats_all")
+        serialize_file(production_emissions, PKL_FOLDER, "production_emissions")
+        serialize_file(global_metaresults, PKL_FOLDER, "global_metaresults")
     return results_dict

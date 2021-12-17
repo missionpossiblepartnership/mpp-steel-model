@@ -145,6 +145,7 @@ def load_data(serialize_only: bool = False) -> dict:
         IMPORT_DATA_PATH, "Ethanol Plastic Charcoal", "csv"
     )
 
+    """
     # Import Solar Data
     solar_filename = "Solar - Global Photovoltaic Potential Country Rankings.xlsx"
     solar = pd.read_excel(
@@ -152,14 +153,16 @@ def load_data(serialize_only: bool = False) -> dict:
         sheet_name=0,
         skiprows=1,
         usecols=range(21),
-    )
+    ) 
+    
 
     # Import Wind data
-    wind = create_wind_df()
+    ## wind = create_wind_df()
 
     # Import Natural Gas Data
     natural_gas_filename = "EIA Natural Gas Reserves.csv"
     natural_gas = pd.read_csv(f"{IMPORT_DATA_PATH}/{natural_gas_filename}", skiprows=1)
+    """
 
     # Define a data dictionary
     df_dict = {
@@ -188,9 +191,9 @@ def load_data(serialize_only: bool = False) -> dict:
         "hydrogen_electrolyzer_capex": hydrogen_electrolyzer_capex,
         "carbon_tax_assumptions": carbon_tax_assumptions,
         "ethanol_plastic_charcoal": ethanol_plastic_charcoal,
-        "solar": solar,
-        "wind": wind,
-        "natural_gas": natural_gas,
+        # "solar": solar,
+        # "wind": wind,
+        # "natural_gas": natural_gas,
     }
 
     if serialize_only:
