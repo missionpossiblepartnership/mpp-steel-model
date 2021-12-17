@@ -5,7 +5,11 @@ import pandas as pd
 from tqdm import tqdm
 
 from mppsteel.model_config import (
-    MODEL_YEAR_START, PKL_FOLDER, MODEL_YEAR_END, NET_ZERO_TARGET,
+    MODEL_YEAR_START, MODEL_YEAR_END, PKL_FOLDER,
+    NET_ZERO_TARGET, NET_ZERO_VARIANCE,
+    INVESTMENT_CYCLE_LENGTH, INVESTMENT_CYCLE_VARIANCE, 
+    INVESTMENT_OFFCYCLE_BUFFER_TOP, INVESTMENT_OFFCYCLE_BUFFER_TAIL,
+    
 )
 
 from mppsteel.model.solver import (
@@ -20,12 +24,12 @@ logger = get_logger("Investment Cycles")
 
 def calculate_investment_years(
     op_start_year: int, cutoff_start_year: int = MODEL_YEAR_START,
-    cutoff_end_year: int = MODEL_YEAR_END, inv_intervals: int = 20
+    cutoff_end_year: int = MODEL_YEAR_END, inv_intervals: int = INVESTMENT_CYCLE_LENGTH
 ):
     logger.info('Calculating investment years')
     x = op_start_year
     decision_years = []
-    unique_investment_interval = inv_intervals + random.randrange(-3, 3, 1)
+    unique_investment_interval = inv_intervals + random.randrange(-INVESTMENT_CYCLE_VARIANCE, INVESTMENT_CYCLE_VARIANCE, 1)
     while x < cutoff_end_year:
         if x < cutoff_start_year:
             x+=unique_investment_interval
@@ -36,30 +40,28 @@ def calculate_investment_years(
 
 def add_off_cycle_investment_years(
     main_investment_cycle: list,
-    start_buff: int = 3, end_buff: int = 8,
+    start_buff, end_buff,
 ):
     inv_cycle_length = len(main_investment_cycle)
     range_list = []
 
-    # For inv_cycle_length = 2
-    first_year = main_investment_cycle[0]
-    second_year = main_investment_cycle[1]
-    first_range = range(first_year+start_buff, second_year-end_buff)
+    def net_zero_year_bring_forward(year: int):
+        if year in range(NET_ZERO_TARGET+1, NET_ZERO_TARGET+NET_ZERO_VARIANCE+1):
+            bring_forward_date = NET_ZERO_TARGET-1
+            logger.info(f'Investment Cycle Brought Forward to {bring_forward_date}')
+            return bring_forward_date
+        return year
+
+    # For inv_cycle_length = 1
+    first_year = net_zero_year_bring_forward(main_investment_cycle[0])
     range_list.append(first_year)
-    range_list.append(first_range)
-    range_list.append(second_year)
 
-    if inv_cycle_length == 3:
-        third_year = main_investment_cycle[2]
-        second_range = range(second_year+start_buff, third_year-end_buff)
-        range_list.append(second_range)
-        range_list.append(third_year)
-
-    if inv_cycle_length == 4:
-        fourth_year = main_investment_cycle[3]
-        third_range = range(third_year+start_buff, third_year-fourth_year)
-        range_list.append(third_range)
-        range_list.append(fourth_year)
+    if inv_cycle_length > 1:
+        for index in range(1, inv_cycle_length):
+            inv_year = net_zero_year_bring_forward(main_investment_cycle[index])
+            range_object = range(main_investment_cycle[index-1]+start_buff, inv_year-end_buff)
+            range_list.append(range_object)
+            range_list.append(inv_year)
 
     return range_list
 
@@ -95,7 +97,7 @@ def create_investment_cycle_reference(plant_names: list, investment_years: list,
 def create_investment_cycle_ref(steel_plant_df: pd.DataFrame):
     logger.info('Creating investment cycle')
     investment_years = steel_plant_df['start_of_operation'].apply(lambda year: apply_investment_years(year))
-    investment_years_inc_off_cycle = [add_off_cycle_investment_years(inv_year) for inv_year in investment_years]
+    investment_years_inc_off_cycle = [add_off_cycle_investment_years(inv_year, INVESTMENT_OFFCYCLE_BUFFER_TOP, INVESTMENT_OFFCYCLE_BUFFER_TAIL) for inv_year in investment_years]
     return create_investment_cycle_reference(steel_plant_df['plant_name'].values, investment_years_inc_off_cycle, MODEL_YEAR_END)
 
 def investment_cycle_flow(serialize_only: bool = False):
