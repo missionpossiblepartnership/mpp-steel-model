@@ -15,7 +15,7 @@ from mppsteel.utility.utils import (
 
 # Get model parameters
 from mppsteel.model_config import (
-    PKL_FOLDER, IMPORT_DATA_PATH,
+    PKL_FOLDER,
     EMISSIONS_FACTOR_SLAG,
     ENERGY_DENSITY_MET_COAL,
 )

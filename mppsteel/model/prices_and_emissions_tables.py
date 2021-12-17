@@ -7,11 +7,12 @@ import pandas as pd
 from mppsteel.utility.utils import (
     get_logger,
     read_pickle_folder,
-    CountryMetadata,
     serialize_file,
 )
 
-from mppsteel.model_config import MODEL_YEAR_END, MODEL_YEAR_START, PKL_FOLDER, TECH_REFERENCE_LIST
+from mppsteel.model_config import MODEL_YEAR_END, MODEL_YEAR_START, PKL_FOLDER
+from mppsteel.utility.reference_lists import TECH_REFERENCE_LIST
+
 from mppsteel.data_loading.data_interface import (
     commodity_data_getter,
     static_energy_prices_getter,
@@ -57,7 +58,7 @@ def apply_emissions(
     df_list = []
 
     for year in year_range:
-        print(f"calculating year {year}")
+        logger.info(f"calculating year {year}")
         df_c = df.copy()
         df_c["year"] = year
         df_c["S1"] = ""
@@ -198,7 +199,7 @@ def generate_variable_costs(
     selected_region = list({region or "USA"})[0]
 
     for year in year_range:
-        print(f"calculating year {year}")
+        logger.info(f"calculating year {year}")
         df_c = df.copy()
         df_c["Static"] = ""
         df_c["Feedstock"] = ""

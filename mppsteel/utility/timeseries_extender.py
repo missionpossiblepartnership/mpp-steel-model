@@ -4,7 +4,6 @@ import pandas as pd
 import numpy as np
 
 # Get model parameters
-from mppsteel.model_config import PKL_FOLDER
 from mppsteel.utility.utils import  get_logger
 
 # Create logger

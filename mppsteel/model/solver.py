@@ -9,12 +9,14 @@ from mppsteel.utility.utils import (
 )
 
 from mppsteel.model_config import (
-    MODEL_YEAR_START, PKL_FOLDER, SWITCH_DICT,
-    TECHNOLOGY_STATES, FURNACE_GROUP_DICT,
-    TECH_MATERIAL_CHECK_DICT,
-    RESOURCE_CONTAINER_REF,
+    MODEL_YEAR_START, PKL_FOLDER,
     GREEN_PREMIUM_MIN_PCT, GREEN_PREMIUM_MAX_PCT,
     MODEL_YEAR_END, SWITCH_RANK_PROPORTIONS,
+)
+
+from mppsteel.utility.reference_lists import (
+    SWITCH_DICT, TECHNOLOGY_STATES, FURNACE_GROUP_DICT,
+    TECH_MATERIAL_CHECK_DICT, RESOURCE_CONTAINER_REF,
 )
 
 from mppsteel.minimodels.timeseries_generator import (

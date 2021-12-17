@@ -7,7 +7,10 @@ import pandas as pd
 from mppsteel.utility.utils import get_logger, read_pickle_folder, serialize_file
 
 from mppsteel.model_config import (
-    PKL_FOLDER,
+    PKL_FOLDER
+)
+
+from mppsteel.utility.reference_lists import (
     TECH_REFERENCE_LIST,
     FURNACE_GROUP_DICT,
     PER_T_STEEL_DICT_UNITS,

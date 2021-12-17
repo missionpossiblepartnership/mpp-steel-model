@@ -9,10 +9,14 @@ from mppsteel.utility.utils import (
 )
 
 from mppsteel.model_config import (
-    MODEL_YEAR_START, PKL_FOLDER, SWITCH_DICT, DISCOUNT_RATE,
+    MODEL_YEAR_START, PKL_FOLDER, DISCOUNT_RATE,
     TCO_RANK_1_SCALER, TCO_RANK_2_SCALER,
     ABATEMENT_RANK_2, ABATEMENT_RANK_3,
     EUR_USD_CONVERSION
+)
+
+from mppsteel.utility.reference_lists import (
+    SWITCH_DICT
 )
 
 # Create logger

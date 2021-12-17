@@ -12,10 +12,8 @@ from mppsteel.utility.utils import (
 
 from mppsteel.model_config import PKL_FOLDER
 
-
 # Create logger
 logger = get_logger("Steel Plant Class")
-
 
 def steel_plant_formatter(df: pd.DataFrame) -> pd.DataFrame:
     """Formats the steel plants data input.

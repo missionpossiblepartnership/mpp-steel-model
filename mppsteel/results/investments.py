@@ -4,7 +4,6 @@ import pandas as pd
 from tqdm import tqdm
 
 from mppsteel.model_config import (
-    MODEL_YEAR_END,
     MODEL_YEAR_START,
     PKL_FOLDER
 )

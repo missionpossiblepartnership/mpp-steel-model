@@ -9,8 +9,11 @@ from mppsteel.model_config import (
     MODEL_YEAR_END,
     MODEL_YEAR_START,
     PKL_FOLDER,
-    SWITCH_DICT,
     INVESTMENT_CYCLE_LENGTH,
+)
+
+from mppsteel.utility.reference_lists import (
+    SWITCH_DICT,
 )
 
 # Create logger

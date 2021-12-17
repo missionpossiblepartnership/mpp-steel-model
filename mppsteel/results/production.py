@@ -4,10 +4,11 @@ import pandas as pd
 from tqdm import tqdm
 
 from mppsteel.model_config import (
-    IMPORT_DATA_PATH, LOW_CARBON_TECHS,
-    AVERAGE_LEVEL_OF_CAPACITY, 
+    IMPORT_DATA_PATH, AVERAGE_LEVEL_OF_CAPACITY,
     MODEL_YEAR_START, MODEL_YEAR_END, PKL_FOLDER
 )
+
+from mppsteel.utility.reference_lists import LOW_CARBON_TECHS
 
 from mppsteel.model.solver import (
     calculate_primary_and_secondary, load_materials,

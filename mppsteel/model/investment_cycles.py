@@ -9,7 +9,7 @@ from mppsteel.model_config import (
     NET_ZERO_TARGET, NET_ZERO_VARIANCE,
     INVESTMENT_CYCLE_LENGTH, INVESTMENT_CYCLE_VARIANCE, 
     INVESTMENT_OFFCYCLE_BUFFER_TOP, INVESTMENT_OFFCYCLE_BUFFER_TAIL,
-    
+
 )
 
 from mppsteel.model.solver import (
@@ -26,7 +26,6 @@ def calculate_investment_years(
     op_start_year: int, cutoff_start_year: int = MODEL_YEAR_START,
     cutoff_end_year: int = MODEL_YEAR_END, inv_intervals: int = INVESTMENT_CYCLE_LENGTH
 ):
-    logger.info('Calculating investment years')
     x = op_start_year
     decision_years = []
     unique_investment_interval = inv_intervals + random.randrange(-INVESTMENT_CYCLE_VARIANCE, INVESTMENT_CYCLE_VARIANCE, 1)

@@ -86,4 +86,4 @@ if __name__ == "__main__":
     production_results_flow(serialize_only=True)
 
     endtime = time.time()
-    logger.info(f'Total runtime is {starttime - endtime:0.4f} seconds')
+    logger.info(f'Total runtime is {endtime - starttime:0.4f} seconds')

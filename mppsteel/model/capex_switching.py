@@ -14,11 +14,14 @@ from mppsteel.utility.utils import (
 
 from mppsteel.model_config import (
     PKL_FOLDER,
+    SWITCH_CAPEX_DATA_POINTS,
+    MODEL_YEAR_END, MODEL_YEAR_START
+)
+
+from mppsteel.utility.reference_lists import (
     FURNACE_GROUP_DICT,
     TECH_REFERENCE_LIST,
     SWITCH_DICT,
-    SWITCH_CAPEX_DATA_POINTS,
-    MODEL_YEAR_END, MODEL_YEAR_START
 )
 from mppsteel.data_loading.data_interface import capex_generator
 
