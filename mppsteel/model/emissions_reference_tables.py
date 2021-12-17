@@ -306,7 +306,7 @@ def generate_emissions_dataframe(df: pd.DataFrame, year_end: int):
 
     # S3 emissions: all the emissions associated, not with the company itself,
     # but that the organisation is indirectly responsible for, up and down its value chain.
-    final_scope3_ef_df = read_pickle_folder(PKL_DATA_IMPORTS, "final_scope3_ef_df", "df")
+    final_scope3_ef_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, "final_scope3_ef_df", "df")
 
     # Carbon Taxes
     carbon_tax = read_pickle_folder(PKL_DATA_INTERMEDIATE, "carbon_tax", "df")
@@ -326,71 +326,8 @@ def generate_emissions_dataframe(df: pd.DataFrame, year_end: int):
 
     return emissions, carbon
 
-
-def generate_prices_dataframe(df: pd.DataFrame, year_end: int):
-
-    solar_ref = read_pickle_folder(PKL_DATA_INTERMEDIATE, "solar_processed", "df")
-    wind_ref = read_pickle_folder(PKL_DATA_INTERMEDIATE, "wind_processed", "df")
-    natural_gas_ref = read_pickle_folder(PKL_DATA_INTERMEDIATE, "natural_gas_processed", "df")
-
-    # Static Energy Prices:
-    static_energy_prices = read_pickle_folder(PKL_DATA_IMPORTS, "static_energy_prices", "df")[
-        ["Metric", "Year", "Value"]
-    ]
-
-    # Feedstock prices: Everything else
-    feedstock_prices = read_pickle_folder(PKL_DATA_IMPORTS, "feedstock_prices", "df")
-
-    # Commodities data: Ethanol, Charcoal, Plastic Waste
-    commodities_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, "commodities_df", "df")
-
-    commodities_dict = commodity_data_getter(commodities_df)
-    commodity_dictname_mapper = {
-        "plastic": "Plastic waste",
-        "ethanol": "Ethanol",
-        "charcoal": "Charcoal",
-    }
-    for key in commodity_dictname_mapper.keys():
-        commodities_dict[commodity_dictname_mapper[key]] = commodities_dict.pop(key)
-
-    # Electricity prices
-    electricity_minimodel_timeseries = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "electricity_minimodel_timeseries", "df"
-    )
-
-    # Hydrogen prices
-    hydrogen_minimodel_timeseries = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "hydrogen_minimodel_timeseries", "df"
-    )
-
-    feedstock_dict = {
-        **commodities_dict,
-        **dict(zip(feedstock_prices["Metric"], feedstock_prices["Value"])),
-    }
-
-    variable_cost_df = generate_variable_costs(
-        df=df.copy(),
-        year_end=year_end,
-        static_energy_df=static_energy_prices,
-        feedstock_dict=feedstock_dict,
-        electricity_df=electricity_minimodel_timeseries,
-        hydrogen_df=hydrogen_minimodel_timeseries,
-        natural_gas_ref=natural_gas_ref,
-        solar_ref=solar_ref,
-        wind_ref=wind_ref,
-    )
-    variable_cost_df.drop(labels=["value"], axis=1, inplace=True)
-    variable_cost_df = variable_cost_df.melt(
-        id_vars=["technology", "year", "material_category", "unit"],
-        var_name=["cost_type"],
-        value_name="cost",
-    )
-    variable_cost_df["cost"] = variable_cost_df["cost"].replace("", 0)
-
-    return variable_cost_df
-
 @timer_func
-def price_and_emissions_flow(serialize_only: bool = False):
+def generate_emissions_flow(serialize_only: bool = False):
     business_cases_summary = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "standardised_business_cases", "df"
     )
@@ -419,26 +356,14 @@ def price_and_emissions_flow(serialize_only: bool = False):
         .groupby(by=["year", "technology"])
         .sum()
     )
-    variable_costs = generate_prices_dataframe(business_cases_summary_c, MODEL_YEAR_END)
-    cost_tech_summary = (
-        variable_costs.groupby(by=["year", "technology"]).sum().sort_values(by=["year"])
-    )
-    opex_sheet = create_total_opex(cost_tech_summary)
 
     if serialize_only:
         serialize_file(s1_summary_df, PKL_DATA_INTERMEDIATE, "calculated_s1_emissions")
         serialize_file(emissions_s2_summary, PKL_DATA_INTERMEDIATE, "calculated_s2_emissions")
         serialize_file(emissions_s3_summary, PKL_DATA_INTERMEDIATE, "calculated_s3_emissions")
-        serialize_file(cost_tech_summary, PKL_DATA_INTERMEDIATE, "calculated_variable_costs")
-        serialize_file(opex_sheet, PKL_DATA_INTERMEDIATE, "calculated_total_opex")
         return
     return {
         "s1_calculations": s1_summary_df,
         "s2_calculations": emissions_s2_summary,
         "s3_calculations": emissions_s3_summary,
-        "variable_costs": cost_tech_summary,
-        "opex_calculations": opex_sheet,
     }
-
-
-# price_and_emissions_flow(serialize_only=True)

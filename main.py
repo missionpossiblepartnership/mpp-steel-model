@@ -16,7 +16,7 @@ from mppsteel.data_loading.data_interface import (
     create_capex_opex_dict,
     generate_preprocessed_emissions_data,
 )
-from mppsteel.model.prices_and_emissions_tables import price_and_emissions_flow
+from mppsteel.model.emissions_reference_tables import generate_emissions_reference_flow
 from mppsteel.model.capex_switching import create_capex_timeseries
 from mppsteel.model.emissions import calculate_emissions
 from mppsteel.model.investment_cycles import investment_cycle_flow
@@ -48,11 +48,11 @@ if __name__ == "__main__":
     # Run natural resource preprocessor
     # natural_resource_preprocessor(serialize_only=True)
 
-    # Process Steel plants
-    steel_plant_processor(serialize_only=True, remove_non_operating_plants=True)
-
     # Run Country Reference
     create_country_ref(serialize_only=True)
+
+    # Process Steel plants
+    steel_plant_processor(serialize_only=True, remove_non_operating_plants=True)
 
     # Create Capex Opex dict
     create_capex_opex_dict(serialize_only=True)
@@ -60,8 +60,8 @@ if __name__ == "__main__":
     # Create preprocessed emissions dataframes
     generate_preprocessed_emissions_data(serialize_only=True)
 
-    # Create emissions, price and opex tables
-    price_and_emissions_flow(serialize_only=True)
+    # Create emissions
+    generate_emissions_reference_flow(serialize_only=True)
 
     # Create capex tables
     create_capex_timeseries(serialize_only=True)
