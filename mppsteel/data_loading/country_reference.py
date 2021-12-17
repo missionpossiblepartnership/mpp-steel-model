@@ -11,11 +11,12 @@ import pycountry
 from mppsteel.utility.utils import (
     get_logger,
     read_pickle_folder,
-    serialize_df,
+    serialize_file,
     CountryMetadata,
+    timer_func,
 )
 
-from mppsteel.model_config import PKL_FOLDER
+from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
 
 # Create logger
 logger = get_logger("Country Reference")
@@ -121,7 +122,7 @@ def country_ref_getter(country_ref_dict: dict, country_code: str, ref: str = "")
         return getattr(country_class, ref)
     return country_class
 
-
+@timer_func
 def create_country_ref(serialize_only: bool = False) -> dict:
     """Preprocesses the country data.
 
@@ -132,14 +133,12 @@ def create_country_ref(serialize_only: bool = False) -> dict:
         dict: A dictionary of each country code to metadata.
     """
     logger.info("Creating final Country Reference dictionary")
-    country_ref = read_pickle_folder(PKL_FOLDER, "country_ref")
+    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref")
     country_ref = country_df_formatter(country_ref)
     cr_dict = create_country_ref_dict(country_ref, CountryMetadata)
 
-    country_ref_getter(cr_dict, "GBR", "rmi_region")
-
     if serialize_only:
-        serialize_df(cr_dict, PKL_FOLDER, "country_reference_dict")
+        serialize_file(cr_dict, PKL_DATA_INTERMEDIATE, "country_reference_dict")
         return
     return cr_dict
 

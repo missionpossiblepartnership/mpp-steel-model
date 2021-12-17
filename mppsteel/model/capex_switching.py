@@ -2,22 +2,28 @@
 
 # For Data Manipulation
 import pandas as pd
+from tqdm import tqdm
 
 # For logger
 from mppsteel.utility.utils import (
     get_logger,
     read_pickle_folder,
-    serialise_file,
-    serialize_df,
+    serialize_file,
     create_line_through_points,
+    timer_func,
 )
 
 from mppsteel.model_config import (
-    PKL_FOLDER,
+    PKL_DATA_IMPORTS,
+    PKL_DATA_INTERMEDIATE,
+    SWITCH_CAPEX_DATA_POINTS,
+    MODEL_YEAR_END, MODEL_YEAR_START
+)
+
+from mppsteel.utility.reference_lists import (
     FURNACE_GROUP_DICT,
     TECH_REFERENCE_LIST,
     SWITCH_DICT,
-    SWITCH_CAPEX_DATA_POINTS,
 )
 from mppsteel.data_loading.data_interface import capex_generator
 
@@ -69,17 +75,17 @@ def get_capex_values(
     hard_coded_capex_values = create_line_through_points(SWITCH_CAPEX_DATA_POINTS)
 
     # Create a year range
-    year_range = range(2020, tuple({year_end + 1 or 2021})[0])
+    year_range = range(MODEL_YEAR_START, tuple({year_end + 1 or 2021})[0])
     if single_year:
         year_range = [single_year]
 
     year_list = []
-    for year in year_range:
+    for year in tqdm(year_range, total=len(year_range), desc='Get Capex Values'):
         logger.info(f"Calculating year {year}")
 
         tech_list = []
-        for technology in SWITCH_DICT.keys():
-            logger.info(f"-- Generating Capex values for {technology}")
+        for technology in tqdm(SWITCH_DICT.keys(), total=len(SWITCH_DICT), desc=f'Technology'):
+            # logger.info(f"-- Generating Capex values for {technology}")
 
             df_temp = df_dict_c[technology].copy()
             for new_technology in SWITCH_DICT[technology]:
@@ -325,7 +331,7 @@ def get_capex_values(
         .sort_index(ascending=True)
     )
 
-
+@timer_func
 def create_capex_timeseries(serialize_only: bool = False) -> pd.DataFrame:
     """Runs through the flow to create a capex dictionary.
 
@@ -337,7 +343,7 @@ def create_capex_timeseries(serialize_only: bool = False) -> pd.DataFrame:
     """
     logger.info("Creating the base switching dict")
     switching_dict = create_switching_dfs(TECH_REFERENCE_LIST)
-    capex_dict = read_pickle_folder(PKL_FOLDER, "capex_dict")
+    capex_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "capex_dict")
     max_model_year = max([int(year) for year in SWITCH_CAPEX_DATA_POINTS.keys()])
     switching_df_with_capex = get_capex_values(
         df_switching_dict=switching_dict,
@@ -345,5 +351,5 @@ def create_capex_timeseries(serialize_only: bool = False) -> pd.DataFrame:
         year_end=max_model_year,
     )
     if serialize_only:
-        serialize_df(switching_df_with_capex, PKL_FOLDER, "capex_switching_df")
+        serialize_file(switching_df_with_capex, PKL_DATA_INTERMEDIATE, "capex_switching_df")
     return switching_df_with_capex

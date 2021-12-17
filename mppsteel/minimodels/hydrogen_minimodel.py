@@ -7,10 +7,11 @@ import pandas as pd
 import numpy as np
 
 # For logger and units dict
-from mppsteel.utility.utils import get_logger, read_pickle_folder, serialize_df
+from mppsteel.utility.utils import get_logger, read_pickle_folder, serialize_file, timer_func
 
 from mppsteel.model_config import (
-    PKL_FOLDER,
+    PKL_DATA_IMPORTS,
+    PKL_DATA_INTERMEDIATE,
     EUR_USD_CONVERSION,
     HYDROGEN_PRICE_START_YEAR,
     HYDROGEN_PRICE_END_YEAR,
@@ -295,7 +296,7 @@ def create_required_stack_replacements_df(stack_df: pd.DataFrame) -> pd.DataFram
     stack_df_c["units"] = ""
     return stack_df_c
 
-
+@timer_func
 def generate_hydrogen_timeseries(serialize_only: bool = False) -> pd.DataFrame:
     """Generates a timeseries of hydrogen prices taking into account all of the necessary assumptions.
 
@@ -342,7 +343,7 @@ def generate_hydrogen_timeseries(serialize_only: bool = False) -> pd.DataFrame:
 
     logger.info("Reading electrolyzer capex timeseries")
     electrolyzer_capex_timeseries = read_pickle_folder(
-        PKL_FOLDER, "hydrogen_electrolyzer_capex"
+        PKL_DATA_IMPORTS, "hydrogen_electrolyzer_capex"
     )[["metric", "year", "units", "value"]]
     electrolyzer_capex_timeseries["metric"] = "electrolyzer_capex"
 
@@ -372,8 +373,8 @@ def generate_hydrogen_timeseries(serialize_only: bool = False) -> pd.DataFrame:
 
     if serialize_only:
         # Serialize timeseries
-        serialize_df(
-            hydrogen_minimodel_timeseries, PKL_FOLDER, "hydrogen_minimodel_timeseries"
+        serialize_file(
+            hydrogen_minimodel_timeseries, PKL_DATA_INTERMEDIATE, "hydrogen_minimodel_timeseries"
         )
         return
 

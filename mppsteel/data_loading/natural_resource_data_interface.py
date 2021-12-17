@@ -10,10 +10,11 @@ from mppsteel.utility.utils import (
     read_pickle_folder,
     country_mapping_fixer,
     country_matcher,
-    serialize_df,
+    serialize_file,
+    timer_func,
 )
 
-from mppsteel.model_config import PKL_FOLDER
+from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
 
 # Create logger
 logger = get_logger("Natural Resource")
@@ -275,7 +276,7 @@ NG_FIXED_COUNTRIES = {
     "U.S. Virgin Islands": "VIR",
 }
 
-
+@timer_func
 def natural_resource_preprocessor(serialize_only: bool = False) -> dict:
     """Preprocesses dataframe for wind, solar and natural gas.
 
@@ -287,11 +288,11 @@ def natural_resource_preprocessor(serialize_only: bool = False) -> dict:
     """
 
     # SOLAR
-    solar_df = read_pickle_folder(PKL_FOLDER, "solar")
+    solar_df = read_pickle_folder(PKL_DATA_IMPORTS, "solar")
     solar_df = solar_formatter(solar_df, scaled=True)
 
     # WIND
-    wind_df = read_pickle_folder(PKL_FOLDER, "wind")
+    wind_df = read_pickle_folder(PKL_DATA_IMPORTS, "wind")
     territory_fixer = {
         "Overlapping claim Western Saharan Exclusive Economic Zone": "Western Sahara"
     }
@@ -319,7 +320,7 @@ def natural_resource_preprocessor(serialize_only: bool = False) -> dict:
     wind_df = wind_formatter(wind_df, scaled=True)
 
     # NATURAL GAS
-    natural_gas_df = read_pickle_folder(PKL_FOLDER, "natural_gas")
+    natural_gas_df = read_pickle_folder(PKL_DATA_IMPORTS, "natural_gas")
     natural_gas_df = natural_gas_formatter(natural_gas_df, scaled=True)
     natural_gas_countries = natural_gas_df["Country"].unique().tolist()
     ng_matching_dict, unmatched_dict = country_matcher(natural_gas_countries)
@@ -338,8 +339,8 @@ def natural_resource_preprocessor(serialize_only: bool = False) -> dict:
 
     if serialize_only:
         # Serialize timeseries
-        serialize_df(wind_df, PKL_FOLDER, "wind_processed")
-        serialize_df(solar_df, PKL_FOLDER, "solar_processed")
-        serialize_df(natural_gas_df, PKL_FOLDER, "natural_gas_processed")
+        serialize_file(wind_df, PKL_DATA_INTERMEDIATE, "wind_processed")
+        serialize_file(solar_df, PKL_DATA_INTERMEDIATE, "solar_processed")
+        serialize_file(natural_gas_df, PKL_DATA_INTERMEDIATE, "natural_gas_processed")
         return
     return {"solar": solar_df, "wind": wind_df, "natural_gas": natural_gas_df}

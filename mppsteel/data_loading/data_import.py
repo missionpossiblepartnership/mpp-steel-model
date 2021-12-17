@@ -3,10 +3,10 @@
 import pandas as pd
 
 # For logger and units dict
-from mppsteel.utility.utils import get_logger, extract_data, serialize_df_dict
+from mppsteel.utility.utils import get_logger, extract_data, serialize_df_dict, timer_func
 
 # Get model parameters
-from mppsteel.model_config import IMPORT_DATA_PATH, PKL_FOLDER
+from mppsteel.model_config import IMPORT_DATA_PATH, PKL_DATA_IMPORTS
 
 # Create logger
 logger = get_logger("Data Import")
@@ -41,7 +41,7 @@ def create_wind_df() -> pd.DataFrame:
     wind_df.reset_index(drop=True, inplace=True)
     return wind_df
 
-
+@timer_func
 def load_data(serialize_only: bool = False) -> dict:
     """Loads all the data you specify when the function is called.
 
@@ -145,6 +145,7 @@ def load_data(serialize_only: bool = False) -> dict:
         IMPORT_DATA_PATH, "Ethanol Plastic Charcoal", "csv"
     )
 
+    """
     # Import Solar Data
     solar_filename = "Solar - Global Photovoltaic Potential Country Rankings.xlsx"
     solar = pd.read_excel(
@@ -153,13 +154,13 @@ def load_data(serialize_only: bool = False) -> dict:
         skiprows=1,
         usecols=range(21),
     )
-
     # Import Wind data
-    wind = create_wind_df()
+    ## wind = create_wind_df()
 
     # Import Natural Gas Data
     natural_gas_filename = "EIA Natural Gas Reserves.csv"
     natural_gas = pd.read_csv(f"{IMPORT_DATA_PATH}/{natural_gas_filename}", skiprows=1)
+    """
 
     # Define a data dictionary
     df_dict = {
@@ -188,13 +189,13 @@ def load_data(serialize_only: bool = False) -> dict:
         "hydrogen_electrolyzer_capex": hydrogen_electrolyzer_capex,
         "carbon_tax_assumptions": carbon_tax_assumptions,
         "ethanol_plastic_charcoal": ethanol_plastic_charcoal,
-        "solar": solar,
-        "wind": wind,
-        "natural_gas": natural_gas,
+        # "solar": solar,
+        # "wind": wind,
+        # "natural_gas": natural_gas,
     }
 
     if serialize_only:
         # Turn dataframes into pickle files
-        serialize_df_dict(PKL_FOLDER, df_dict)
+        serialize_df_dict(PKL_DATA_IMPORTS, df_dict)
         return
     return df_dict
