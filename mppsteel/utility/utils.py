@@ -15,6 +15,8 @@ import pycountry
 
 from mppsteel.utility.reference_lists import NEW_COUNTRY_COL_LIST
 
+from mppsteel.model_config import PKL_FOLDER, OUTPUT_FOLDER
+
 
 FORMATTER = logging.Formatter("%(asctime)s — %(name)s — %(levelname)s — %(message)s")
 LOG_FILE = "MPP_STEEL_LOGFILE.log"
@@ -271,7 +273,7 @@ def create_line_through_points(
     Returns:
         pd.DataFrame: A dataframe with an index as year and one value column.
     """
-
+    logger.info(f'Creating line through points {year_value_dict}')
     # Creates a pairing for all elements based on location
     def create_value_pairings(iterable: list) -> list:
         value_pairings = []
@@ -312,3 +314,13 @@ def return_furnace_group(furnace_dict: dict, tech:str):
     for key in furnace_dict.keys():
         if tech in furnace_dict[key]:
             return furnace_dict[key]
+
+
+def pickle_to_csv(pickle_filename: str, csv_filename: str = ''):
+    df = read_pickle_folder(PKL_FOLDER, pickle_filename)
+    logger.info(f'||| Saving {pickle_filename} pickle file as {csv_filename or pickle_filename}.csv')
+    if csv_filename:
+        
+        df.to_csv(f"{OUTPUT_FOLDER}/{csv_filename}.csv")
+    else:
+        df.to_csv(f"{OUTPUT_FOLDER}/{pickle_filename}.csv")

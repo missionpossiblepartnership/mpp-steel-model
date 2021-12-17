@@ -3,7 +3,7 @@
 # Define Data Path
 IMPORT_DATA_PATH = "mppsteel/data/import_data"
 PKL_FOLDER = "mppsteel/data/pkl_data"
-CSV_OUTPUT_FOLDER = "mppsteel/data/csv_output_data"
+OUTPUT_FOLDER = "mppsteel/data/output_data"
 
 MODEL_YEAR_START = 2020
 MODEL_YEAR_END = 2050
