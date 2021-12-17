@@ -24,5 +24,5 @@ from mppsteel.utility.utils import pickle_to_csv, TIME_CONTAINER
 
 # standardise_business_cases(serialize_only=True)
 
-steel_plant_processor()
+generate_variable_plant_summary(serialize_only=True)
 print(TIME_CONTAINER.return_time_container())

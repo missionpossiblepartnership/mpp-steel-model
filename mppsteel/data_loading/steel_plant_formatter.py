@@ -125,8 +125,8 @@ def steel_plant_processor(
         pd.DataFrame: A dataframe containing the preprocessed steel plants.
     """
     logger.info("Preprocessing the Steel Plant Data")
-    steel_plants = read_pickle_folder(PKL_DATA_IMPORTS, "steel_plants", remove_non_operating_plants)
-    steel_plants = steel_plant_formatter(steel_plants)
+    steel_plants = read_pickle_folder(PKL_DATA_IMPORTS, "steel_plants")
+    steel_plants = steel_plant_formatter(steel_plants, remove_non_operating_plants)
     steel_plants = apply_countries_to_steel_plants(steel_plants)
 
     if serialize_only:

@@ -343,7 +343,7 @@ def create_capex_timeseries(serialize_only: bool = False) -> pd.DataFrame:
     """
     logger.info("Creating the base switching dict")
     switching_dict = create_switching_dfs(TECH_REFERENCE_LIST)
-    capex_dict = read_pickle_folder(PKL_DATA_IMPORTS, "capex_dict")
+    capex_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "capex_dict")
     max_model_year = max([int(year) for year in SWITCH_CAPEX_DATA_POINTS.keys()])
     switching_df_with_capex = get_capex_values(
         df_switching_dict=switching_dict,

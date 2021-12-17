@@ -1,7 +1,6 @@
 """Main solving script for deciding investment decisions."""
 
 import pandas as pd
-import modin.pandas as pd
 from tqdm import tqdm
 
 from mppsteel.utility.utils import (

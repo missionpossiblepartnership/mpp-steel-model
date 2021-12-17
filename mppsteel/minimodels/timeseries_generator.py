@@ -8,7 +8,8 @@ from mppsteel.utility.utils import get_logger, read_pickle_folder, serialize_fil
 
 # Get model parameters
 from mppsteel.model_config import (
-    PKL_FOLDER,
+    PKL_DATA_IMPORTS,
+    PKL_DATA_INTERMEDIATE,
     BIOMASS_AV_TS_END_VALUE,
     BIOMASS_AV_TS_END_YEAR,
     BIOMASS_AV_TS_START_YEAR,
@@ -40,7 +41,7 @@ def get_grid_refs(df: pd.DataFrame, geography: str, metrics: list) -> pd.DataFra
 
 
 def get_grid_data():
-    power_grid_assumptions = read_pickle_folder(PKL_FOLDER, "power_grid_assumptions")
+    power_grid_assumptions = read_pickle_folder(PKL_DATA_IMPORTS, "power_grid_assumptions")
     grid_electricity_price_sweden = (
         sum(
             get_grid_refs(
@@ -332,11 +333,11 @@ def generate_timeseries(serialize_only: bool = False) -> dict:
 
     if serialize_only:
         # Serialize timeseries
-        serialize_file(biomass_availability, PKL_FOLDER, "biomass_availability")
-        serialize_file(carbon_tax, PKL_FOLDER, "carbon_tax")
+        serialize_file(biomass_availability, PKL_DATA_INTERMEDIATE, "biomass_availability")
+        serialize_file(carbon_tax, PKL_DATA_INTERMEDIATE, "carbon_tax")
         serialize_file(
             electricity_minimodel_timeseries,
-            PKL_FOLDER,
+            PKL_DATA_INTERMEDIATE,
             "electricity_minimodel_timeseries",
         )
         return

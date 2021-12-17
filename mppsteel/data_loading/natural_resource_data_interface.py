@@ -14,7 +14,7 @@ from mppsteel.utility.utils import (
     timer_func,
 )
 
-from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE, PKL_FOLDER
+from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
 
 # Create logger
 logger = get_logger("Natural Resource")

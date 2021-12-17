@@ -19,7 +19,7 @@ from mppsteel.data_loading.data_interface import (
     commodity_data_getter, static_energy_prices_getter,
 )
 
-from mppsteel.model.prices_and_emissions_tables import (
+from mppsteel.model.emissions_reference_tables import (
     dynamic_energy_price_getter
 )
 

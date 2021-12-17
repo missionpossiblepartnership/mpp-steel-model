@@ -14,10 +14,12 @@ import numpy as np
 import wbgapi as wb
 import pycountry
 
-from mppsteel.utility.reference_lists import NEW_COUNTRY_COL_LIST
+from mppsteel.utility.reference_lists import NEW_COUNTRY_COL_LIST, FILES_TO_REFRESH
 
-from mppsteel.model_config import PKL_FOLDER, OUTPUT_FOLDER
-
+from mppsteel.model_config import (
+    PKL_DATA_FINAL, OUTPUT_FOLDER, 
+    PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
+)
 
 FORMATTER = logging.Formatter("%(asctime)s — %(name)s — %(levelname)s — %(message)s")
 LOG_FILE = "MPP_STEEL_LOGFILE.log"
@@ -122,20 +124,6 @@ def extract_data(
         return pd.read_csv(full_filename)
 
 
-def serialize_df_dict(data_path: str, data_dict: dict):
-    """Iterate through each df and store the file as pickle or feather. Does not return any object.
-
-    Args:
-        data_ref (dict): A data dictionary where the DataFrames are stored
-        data_path (str): The path where the pickle files will be stored
-    """
-    logger.info(f"||| Serializing each df to a pickle file {data_path}")
-    for df_name in data_dict.keys():
-        with open(f"{data_path}/{df_name}.pickle", "wb") as f:
-            # Pickle the 'data' dictionary using the highest protocol available.
-            logger.info(f"* Saving df {df_name} to pickle")
-            pickle.dump(data_dict[df_name], f, pickle.HIGHEST_PROTOCOL)
-
 
 def serialize_file(object, pkl_folder: str, filename: str):
     """Serializes a file using the pickle protocol.
@@ -149,6 +137,18 @@ def serialize_file(object, pkl_folder: str, filename: str):
         # Pickle the 'data' using the highest protocol available.
         logger.info(f"* Saving Pickle file {filename} to path")
         pickle.dump(object, f, pickle.HIGHEST_PROTOCOL)
+
+
+def serialize_df_dict(data_path: str, data_dict: dict):
+    """Iterate through each df and store the file as pickle or feather. Does not return any object.
+
+    Args:
+        data_ref (dict): A data dictionary where the DataFrames are stored
+        data_path (str): The path where the pickle files will be stored
+    """
+    logger.info(f"||| Serializing each df to a pickle file {data_path}")
+    for df_name in data_dict.keys():
+        serialize_file(data_dict[df_name], data_path, df_name)
 
 
 def countries_extractor(extract_type: str = ["countries", "regions"]) -> pd.DataFrame:
@@ -318,7 +318,7 @@ def return_furnace_group(furnace_dict: dict, tech:str):
 
 
 def pickle_to_csv(pickle_filename: str, csv_filename: str = ''):
-    df = read_pickle_folder(PKL_FOLDER, pickle_filename)
+    df = read_pickle_folder(PKL_DATA_FINAL, pickle_filename)
     logger.info(f'||| Saving {pickle_filename} pickle file as {csv_filename or pickle_filename}.csv')
     if csv_filename:
         
@@ -328,7 +328,7 @@ def pickle_to_csv(pickle_filename: str, csv_filename: str = ''):
 
 def format_times(start_t: float, end_t: float):
     time_diff = end_t - start_t
-    return f'{time_diff:0.2f} seconds | {time_diff / 60 :0.2f} minutes'
+    return f'{time_diff :0.2f} seconds | {time_diff / 60 :0.2f} minutes'
 
 class TimeContainerClass:
     def __init__(self):
@@ -337,16 +337,20 @@ class TimeContainerClass:
     def update_time(self, func_name: str, timings: str):
         self.time_container[func_name] = timings
     
-    def return_time_container(self):
-        return self.time_container
+    def return_time_container(self, return_object: bool = False):
+        time_container = self.time_container
+        for entry in time_container:
+            print(f'The {entry[0]} function took {entry[1]}')
+        if return_object:
+            return time_container
 
 TIME_CONTAINER = TimeContainerClass()
 
 def timer_func(func):
     def wrap_func(*args, **kwargs):
-        t1 = time.time()
+        starttime = time.time()
         result = func(*args, **kwargs)
-        t2 = time.time()
-        TIME_CONTAINER.update_time(func.__name__, format_times(t1, t2))
+        endtime = time.time()
+        TIME_CONTAINER.update_time(func.__name__, format_times(starttime, endtime))
         return result
     return wrap_func

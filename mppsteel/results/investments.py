@@ -6,7 +6,7 @@ from tqdm import tqdm
 from mppsteel.model_config import (
     MODEL_YEAR_START,
     PKL_DATA_INTERMEDIATE,
-    PKL_FOLDER, PKL_DATA_FINAL
+    PKL_DATA_FINAL
 )
 
 from mppsteel.utility.utils import (
@@ -80,4 +80,5 @@ def investment_results(serialize_only: bool = False):
     if serialize_only:
         logger.info(f'-- Serializing dataframes')
         serialize_file(investment_results_df, PKL_DATA_FINAL, "investment_results_df")
+        return
     return investment_results_df
