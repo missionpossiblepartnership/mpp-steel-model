@@ -18,6 +18,7 @@ from mppsteel.model_config import (
     TECH_REFERENCE_LIST,
     SWITCH_DICT,
     SWITCH_CAPEX_DATA_POINTS,
+    MODEL_YEAR_END, MODEL_YEAR_START
 )
 from mppsteel.data_loading.data_interface import capex_generator
 
@@ -69,7 +70,7 @@ def get_capex_values(
     hard_coded_capex_values = create_line_through_points(SWITCH_CAPEX_DATA_POINTS)
 
     # Create a year range
-    year_range = range(2020, tuple({year_end + 1 or 2021})[0])
+    year_range = range(MODEL_YEAR_START, tuple({year_end + 1 or 2021})[0])
     if single_year:
         year_range = [single_year]
 

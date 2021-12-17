@@ -5,7 +5,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from mppsteel.model_config import (
-    PKL_FOLDER, MODEL_YEAR_END, NET_ZERO_TARGET,
+    MODEL_YEAR_START, PKL_FOLDER, MODEL_YEAR_END, NET_ZERO_TARGET,
 )
 
 from mppsteel.model.solver import (
@@ -19,7 +19,7 @@ from mppsteel.utility.utils import (
 logger = get_logger("Investment Cycles")
 
 def calculate_investment_years(
-    op_start_year: int, cutoff_start_year: int = 2020,
+    op_start_year: int, cutoff_start_year: int = MODEL_YEAR_START,
     cutoff_end_year: int = MODEL_YEAR_END, inv_intervals: int = 20
 ):
     logger.info('Calculating investment years')
@@ -65,7 +65,7 @@ def add_off_cycle_investment_years(
 
 def apply_investment_years(year_value):
     if pd.isna(year_value):
-        return calculate_investment_years(2020)
+        return calculate_investment_years(MODEL_YEAR_START)
     elif '(anticipated)' in str(year_value):
         year_value = year_value[:4]
         return calculate_investment_years(int(year_value))
@@ -78,7 +78,7 @@ def apply_investment_years(year_value):
 def create_investment_cycle_reference(plant_names: list, investment_years: list, year_end: int):
     logger.info('Creating the investment cycle reference table')
     zipped_plant_investments = zip(plant_names, investment_years)
-    year_range = range(2020, year_end+1)
+    year_range = range(MODEL_YEAR_START, year_end+1)
     df = pd.DataFrame(columns=['plant_name', 'year', 'switch_type'])
 
     for plant_name, investments in tqdm(zipped_plant_investments, total=len(plant_names), desc='Investment Cycles'):

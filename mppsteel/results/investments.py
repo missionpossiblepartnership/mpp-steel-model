@@ -4,6 +4,8 @@ import pandas as pd
 from tqdm import tqdm
 
 from mppsteel.model_config import (
+    MODEL_YEAR_END,
+    MODEL_YEAR_START,
     PKL_FOLDER
 )
 
@@ -69,7 +71,7 @@ def investment_results(serialize_only: bool = False):
     plant_names = steel_plant_df['plant_name'].values
     capex_df = create_capex_dict()
     max_year = max([int(year) for year in tech_choice_dict.keys()])
-    year_range = range(2020, max_year+1)
+    year_range = range(MODEL_YEAR_START, max_year+1)
     data_container = []
     for plant_name in tqdm(plant_names, desc='Steel Plant Investments'):
         for year in year_range:

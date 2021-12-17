@@ -9,7 +9,7 @@ from mppsteel.utility.utils import (
 )
 
 from mppsteel.model_config import (
-    PKL_FOLDER, SWITCH_DICT, DISCOUNT_RATE,
+    MODEL_YEAR_START, PKL_FOLDER, SWITCH_DICT, DISCOUNT_RATE,
     TCO_RANK_1_SCALER, TCO_RANK_2_SCALER,
     ABATEMENT_RANK_2, ABATEMENT_RANK_3,
     EUR_USD_CONVERSION
@@ -46,7 +46,7 @@ def discounted_opex(
     opex_value_dict: dict,
     technology: str,
     interest_rate: float,
-    start_year: int = 2020,
+    start_year: int = MODEL_YEAR_START,
     date_span: int = 20,
 ) -> list:
     """Produces a list of Present values based on predicted opex numbers.
@@ -187,7 +187,7 @@ def compare_capex(
     base_tech: str,
     switch_tech: str,
     interest_rate: float,
-    start_year: int = 2020,
+    start_year: int = MODEL_YEAR_START,
     date_span: int = 20,
 ) -> pd.DataFrame:
     """[summary]
@@ -196,7 +196,7 @@ def compare_capex(
         base_tech (str): The technology to start from.
         switch_tech (str): The technology to be switched to.
         interest_rate (float): The rate of interest to be applied to the capex.
-        start_year (int, optional): The start date of the opex and capex calculations. Defaults to 2020.
+        start_year (int, optional): The start date of the opex and capex calculations. Defaults to MODEL_YEAR_START.
         date_span (int, optional): The years that comprise the investment. Defaults to 20.
 
     Returns:

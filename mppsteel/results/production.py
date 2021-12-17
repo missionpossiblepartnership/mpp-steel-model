@@ -5,8 +5,8 @@ from tqdm import tqdm
 
 from mppsteel.model_config import (
     IMPORT_DATA_PATH, LOW_CARBON_TECHS,
-    AVERAGE_LEVEL_OF_CAPACITY, MODEL_YEAR_END,
-    PKL_FOLDER
+    AVERAGE_LEVEL_OF_CAPACITY, 
+    MODEL_YEAR_START, MODEL_YEAR_END, PKL_FOLDER
 )
 
 from mppsteel.model.solver import (
@@ -30,7 +30,7 @@ def generate_production_stats(
     tech_capacity_df: pd.DataFrame, steel_df: pd.DataFrame, year_end: int):
     logger.info(f'- Generating Production Results from capacity')
     df_list = []
-    year_range = range(2020, year_end+1)
+    year_range = range(MODEL_YEAR_START, year_end+1)
     for year in tqdm(year_range, total=len(year_range), desc='Production Stats'):
         df = tech_capacity_df[tech_capacity_df['year'] == year].copy()
         capacity_sum = df['capacity'].sum()
@@ -48,7 +48,7 @@ def tech_capacity_splits():
     tech_choices_dict = read_pickle_folder(PKL_FOLDER, 'tech_choice_dict', 'df')
     max_year = max([int(year) for year in tech_choices_dict.keys()])
     steel_plants = tech_capacities_dict.keys()
-    year_range = range(2020, max_year+1)
+    year_range = range(MODEL_YEAR_START, max_year+1)
     df_list = []
 
     for year in tqdm(year_range, total=len(year_range), desc='Tech Capacity Splits'):
@@ -151,7 +151,7 @@ def global_metaresults_calculator(
         return tech_capacity_df[tech_capacity_df['year'] == year][['capacity']].sum().values[0]
 
     # Base DataFrame
-    year_range = list(range(2020, year_end+1))
+    year_range = list(range(MODEL_YEAR_START, year_end+1))
     df = pd.DataFrame({'year': year_range, 'steel_demand': 0, 'steel_capacity': 0, 'potential_extra_capacity': 0})
 
     # Assign initial values

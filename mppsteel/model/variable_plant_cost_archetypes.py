@@ -4,7 +4,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from mppsteel.model_config import (
-    PKL_FOLDER,
+    MODEL_YEAR_END, PKL_FOLDER, MODEL_YEAR_START
 )
 
 from mppsteel.model.solver import (
@@ -26,7 +26,7 @@ from mppsteel.model.prices_and_emissions_tables import (
 # Create logger
 logger = get_logger("Variable Plant Cost Archetypes")
 
-def plant_variable_costs():
+def plant_variable_costs(year_end: int):
     df_list = []
 
     options = [[0,0,0],[1,0,0],[1,1,0],[1,1,1],[0,1,1],[0,0,1],[0,1,0],[1,0,1]]
@@ -44,7 +44,7 @@ def plant_variable_costs():
         df = generate_variable_costs(
             business_cases_df=business_cases,
             plant_iteration=plant_iteration,
-            year_end=2050,
+            year_end=year_end,
             feedstock_dict=feedstock_dict,
             static_energy_df=static_energy_prices,
             electricity_df=electricity_minimodel_timeseries,
@@ -89,7 +89,7 @@ def generate_variable_costs(
     feedstock_list = list(feedstock_dict.keys())
 
     # Create a year range
-    year_range = range(2020, tuple({year_end+1 or 2021})[0])
+    year_range = range(MODEL_YEAR_START, tuple({year_end+1 or 2021})[0])
 
     for year in tqdm(year_range, desc='Variable costs'):
         df_c = business_cases_df.copy()
@@ -159,7 +159,7 @@ def format_variable_costs(variable_cost_df: pd.DataFrame):
     return df_c.groupby(by=['plant_iteration', 'year', 'technology']).sum().sort_values(by=['plant_iteration', 'year', 'technology'])
 
 def generate_variable_plant_summary(serialize_only: bool = False):
-    all_plant_variable_costs = plant_variable_costs()
+    all_plant_variable_costs = plant_variable_costs(MODEL_YEAR_END)
     all_plant_variable_costs_summary = format_variable_costs(all_plant_variable_costs)
 
     if serialize_only:

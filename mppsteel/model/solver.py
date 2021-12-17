@@ -9,7 +9,7 @@ from mppsteel.utility.utils import (
 )
 
 from mppsteel.model_config import (
-    PKL_FOLDER, SWITCH_DICT,
+    MODEL_YEAR_START, PKL_FOLDER, SWITCH_DICT,
     TECHNOLOGY_STATES, FURNACE_GROUP_DICT,
     TECH_MATERIAL_CHECK_DICT,
     RESOURCE_CONTAINER_REF,
@@ -302,7 +302,7 @@ def choose_technology(
     all_plant_variable_costs_summary = read_pickle_folder(PKL_FOLDER, 'all_plant_variable_costs_summary', 'df')
     biomass_availability = read_pickle_folder(PKL_FOLDER, 'biomass_availability', 'df')
     ccs_co2 = read_pickle_folder(PKL_FOLDER, 'ccs_co2', 'df')
-    green_premium_timeseries = timeseries_generator(2020,year_end,GREEN_PREMIUM_MIN_PCT,GREEN_PREMIUM_MAX_PCT,'pct')
+    green_premium_timeseries = timeseries_generator(MODEL_YEAR_START,year_end,GREEN_PREMIUM_MIN_PCT,GREEN_PREMIUM_MAX_PCT,'pct')
     emissions_switching_df_summary = read_pickle_folder(PKL_FOLDER, 'emissions_switching_df_summary', 'df')
     materials = load_materials()
     opex_values_dict = read_pickle_folder(PKL_FOLDER, 'capex_dict', 'df')
@@ -311,7 +311,7 @@ def choose_technology(
 
     all_plant_names = plant_df['plant_name'].copy()
 
-    year_range = range(2020, year_end+1)
+    year_range = range(MODEL_YEAR_START, year_end+1)
     current_plant_choices = {}
     for year in tqdm(year_range, total=len(year_range), desc='Years'):
         logger.info(f'Running investment decisions for {year}')

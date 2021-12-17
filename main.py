@@ -31,7 +31,7 @@ from mppsteel.model_config import MODEL_YEAR_END
 logger = get_logger("Main Model Code")
 
 if __name__ == "__main__":
-    starttime = time.clock()
+    starttime = time.time()
 
     minitime = time
     # Load all data
@@ -85,5 +85,5 @@ if __name__ == "__main__":
     # Create Production Table
     production_results_flow(serialize_only=True)
 
-    endtime = time.clock()
+    endtime = time.time()
     logger.info(f'Total runtime is {starttime - endtime:0.4f} seconds')

@@ -11,7 +11,7 @@ from mppsteel.utility.utils import (
     serialize_file,
 )
 
-from mppsteel.model_config import PKL_FOLDER, TECH_REFERENCE_LIST
+from mppsteel.model_config import MODEL_YEAR_END, MODEL_YEAR_START, PKL_FOLDER, TECH_REFERENCE_LIST
 from mppsteel.data_loading.data_interface import (
     commodity_data_getter,
     static_energy_prices_getter,
@@ -50,7 +50,7 @@ def apply_emissions(
     s3_emissions_resources = s3_emissions_df["Fuel"].unique().tolist()
 
     # Create a year range
-    year_range = range(2020, tuple({year_end + 1 or 2021})[0])
+    year_range = range(MODEL_YEAR_START, tuple({year_end + 1 or 2021})[0])
     if single_year:
         year_range = [single_year]
 
@@ -188,7 +188,7 @@ def generate_variable_costs(
     feedstock_list = list(feedstock_dict.keys())
 
     # Create a year range
-    year_range = range(2020, tuple({year_end + 1 or 2021})[0])
+    year_range = range(MODEL_YEAR_START, tuple({year_end + 1 or 2021})[0])
     if single_year:
         year_range = [single_year]
 
@@ -237,7 +237,7 @@ def generate_variable_costs(
                 df_c.loc[row.Index, "Feedstock"] = resource_consumed * price_unit_value
 
             if resource == "Natural gas":
-                scalar_calc = natural_gas_ref.loc[selected_region, 2020]["value"].max()
+                scalar_calc = natural_gas_ref.loc[selected_region, MODEL_YEAR_START]["value"].max()
                 if scalar_calc == 1:
                     price_unit_value = natural_gas_low
                 else:
@@ -389,7 +389,6 @@ def generate_prices_dataframe(df: pd.DataFrame, year_end: int):
 
 
 def price_and_emissions_flow(serialize_only: bool = False):
-    year_end = 2050
     business_cases_summary = read_pickle_folder(
         PKL_FOLDER, "standardised_business_cases", "df"
     )
@@ -399,7 +398,7 @@ def price_and_emissions_flow(serialize_only: bool = False):
         .reset_index(drop=True)
     )
     emissions_df = business_cases_summary_c.copy()
-    emissions, carbon = generate_emissions_dataframe(business_cases_summary_c, year_end)
+    emissions, carbon = generate_emissions_dataframe(business_cases_summary_c, MODEL_YEAR_END)
     emissions_s1_summary = emissions[emissions["scope"] == "S1"]
     s1_summary_df = (
         emissions_s1_summary[["technology", "year", "emissions"]]
@@ -418,7 +417,7 @@ def price_and_emissions_flow(serialize_only: bool = False):
         .groupby(by=["year", "technology"])
         .sum()
     )
-    variable_costs = generate_prices_dataframe(business_cases_summary_c, year_end)
+    variable_costs = generate_prices_dataframe(business_cases_summary_c, MODEL_YEAR_END)
     cost_tech_summary = (
         variable_costs.groupby(by=["year", "technology"]).sum().sort_values(by=["year"])
     )

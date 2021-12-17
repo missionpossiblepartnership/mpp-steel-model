@@ -6,6 +6,8 @@ import pandas as pd
 from mppsteel.utility.utils import get_logger, read_pickle_folder, serialize_file
 
 from mppsteel.model_config import (
+    MODEL_YEAR_END,
+    MODEL_YEAR_START,
     PKL_FOLDER,
     SWITCH_DICT,
     INVESTMENT_CYCLE_LENGTH,
@@ -15,14 +17,14 @@ from mppsteel.model_config import (
 logger = get_logger("Emissions")
 
 def get_emissions_by_year(
-    df: pd.DataFrame, tech: str, start_year: int = 2020, date_span: int = 20
+    df: pd.DataFrame, tech: str, start_year: int = MODEL_YEAR_START, date_span: int = 20
 ) -> dict:
     """Generates a dictionary of years as keys, and emissions as values.
 
     Args:
         df (pd.DataFrame): A DataFrame containing emissions.
         tech (str): The technology to subset the DataFrame.
-        start_year (int, optional): The start year for the technology. Defaults to 2020.
+        start_year (int, optional): The start year for the technology. Defaults to ModelYearStart.
         date_span (int, optional): The years that comprise the investment. Defaults to 20.
 
     Returns:
@@ -52,7 +54,7 @@ def compare_emissions(
     base_tech: str,
     comp_tech: str,
     emission_type: str,
-    start_year: int = 2020,
+    start_year: int = MODEL_YEAR_START,
     date_span: int = 20,
 ):
 
@@ -78,7 +80,7 @@ def compare_emissions(
 
 
 def calculate_emissions(
-    year_end: int = 2050, output_type: str = "full", serialize_only: bool = False
+    year_end: int = MODEL_YEAR_END, output_type: str = "full", serialize_only: bool = False
 ) -> pd.DataFrame:
     """Calculates the complete array of technology switch matches to years.
 
@@ -107,7 +109,7 @@ def calculate_emissions(
     s1_emissions = read_pickle_folder(PKL_FOLDER, "calculated_s1_emissions", "df")
     s2_emissions = read_pickle_folder(PKL_FOLDER, "calculated_s2_emissions", "df")
     s3_emissions = read_pickle_folder(PKL_FOLDER, "calculated_s3_emissions", "df")
-    year_range = range(2020, year_end + 1)
+    year_range = range(MODEL_YEAR_START, year_end + 1)
     for year in year_range:
         logger.info(f"Calculating technology emissions for {year}")
         for base_tech in SWITCH_DICT.keys():
