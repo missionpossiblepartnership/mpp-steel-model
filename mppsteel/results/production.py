@@ -4,8 +4,9 @@ import pandas as pd
 from tqdm import tqdm
 
 from mppsteel.model_config import (
-    IMPORT_DATA_PATH, AVERAGE_LEVEL_OF_CAPACITY,
-    MODEL_YEAR_START, MODEL_YEAR_END, PKL_FOLDER
+    AVERAGE_LEVEL_OF_CAPACITY,
+    MODEL_YEAR_START, MODEL_YEAR_END,
+    PKL_DATA_INTERMEDIATE, PKL_DATA_FINAL
 )
 
 from mppsteel.utility.reference_lists import LOW_CARBON_TECHS
@@ -46,7 +47,7 @@ def tech_capacity_splits():
 
     logger.info(f'- Generating Capacity split DataFrame')
     tech_capacities_dict = create_plant_capacities_dict()
-    tech_choices_dict = read_pickle_folder(PKL_FOLDER, 'tech_choice_dict', 'df')
+    tech_choices_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'tech_choice_dict', 'df')
     max_year = max([int(year) for year in tech_choices_dict.keys()])
     steel_plants = tech_capacities_dict.keys()
     year_range = range(MODEL_YEAR_START, max_year+1)
@@ -212,7 +213,7 @@ def production_results_flow(serialize_only: bool = False):
 
     if serialize_only:
         logger.info(f'-- Serializing dataframes')
-        serialize_file(production_results_all, PKL_FOLDER, "production_stats_all")
-        serialize_file(production_emissions, PKL_FOLDER, "production_emissions")
-        serialize_file(global_metaresults, PKL_FOLDER, "global_metaresults")
+        serialize_file(production_results_all, PKL_DATA_FINAL, "production_stats_all")
+        serialize_file(production_emissions, PKL_DATA_FINAL, "production_emissions")
+        serialize_file(global_metaresults, PKL_DATA_FINAL, "global_metaresults")
     return results_dict

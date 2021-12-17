@@ -5,7 +5,8 @@ from tqdm import tqdm
 
 from mppsteel.model_config import (
     MODEL_YEAR_START,
-    PKL_FOLDER
+    PKL_DATA_INTERMEDIATE,
+    PKL_FOLDER, PKL_DATA_FINAL
 )
 
 from mppsteel.utility.utils import (
@@ -16,7 +17,7 @@ from mppsteel.utility.utils import (
 logger = get_logger("Investment Results")
 
 def create_capex_dict():
-    capex = read_pickle_folder(PKL_FOLDER, 'capex_switching_df', 'df')
+    capex = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'capex_switching_df', 'df')
     capex_c = capex.copy()
     capex_c.reset_index(inplace=True)
     capex_c.columns = [col.lower().replace(' ', '_') for col in capex_c.columns]
@@ -61,9 +62,9 @@ def investment_row_calculator(inv_df: pd.DataFrame, capex_df: pd.DataFrame, tech
 @timer_func
 def investment_results(serialize_only: bool = False):
     logger.info(f'Generating Investment Results')
-    tech_choice_dict = read_pickle_folder(PKL_FOLDER, 'tech_choice_dict', 'df')
-    plant_investment_cycles = read_pickle_folder(PKL_FOLDER, 'plant_investment_cycles', 'df')
-    steel_plant_df = read_pickle_folder(PKL_FOLDER, 'steel_plants_processed', 'df')
+    tech_choice_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'tech_choice_dict', 'df')
+    plant_investment_cycles = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'plant_investment_cycles', 'df')
+    steel_plant_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'steel_plants_processed', 'df')
     plant_names = steel_plant_df['plant_name'].values
     capex_df = create_capex_dict()
     max_year = max([int(year) for year in tech_choice_dict.keys()])
@@ -78,5 +79,5 @@ def investment_results(serialize_only: bool = False):
     investment_results_df = pd.DataFrame(data_container).set_index(['year']).sort_values('year')
     if serialize_only:
         logger.info(f'-- Serializing dataframes')
-        serialize_file(investment_results_df, PKL_FOLDER, "investment_results_df")
+        serialize_file(investment_results_df, PKL_DATA_FINAL, "investment_results_df")
     return investment_results_df

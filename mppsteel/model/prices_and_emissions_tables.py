@@ -11,7 +11,7 @@ from mppsteel.utility.utils import (
     timer_func,
 )
 
-from mppsteel.model_config import MODEL_YEAR_END, MODEL_YEAR_START, PKL_FOLDER
+from mppsteel.model_config import MODEL_YEAR_END, MODEL_YEAR_START, PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
 from mppsteel.utility.reference_lists import TECH_REFERENCE_LIST
 
 from mppsteel.data_loading.data_interface import (
@@ -284,7 +284,7 @@ def generate_variable_costs(
 
 
 def create_total_opex(df: pd.DataFrame) -> pd.DataFrame:
-    capex_dict = read_pickle_folder(PKL_FOLDER, "capex_dict", "df")
+    capex_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "capex_dict", "df")
     opex_df = capex_dict["other_opex"].reorder_levels(["Year", "Technology"])
     df_c = df.copy()
     for row in df_c.itertuples():
@@ -298,18 +298,18 @@ def create_total_opex(df: pd.DataFrame) -> pd.DataFrame:
 def generate_emissions_dataframe(df: pd.DataFrame, year_end: int):
 
     # S1 emissions covers the Green House Gas (GHG) emissions that a company makes directly
-    s1_emissions = read_pickle_folder(PKL_FOLDER, "s1_emissions_factors", "df")
+    s1_emissions = read_pickle_folder(PKL_DATA_IMPORTS, "s1_emissions_factors", "df")
 
     # Scope 2 Emissions: These are the emissions it makes indirectly
     # like when the electricity or energy it buys for heating and cooling buildings
-    grid_emissivity = read_pickle_folder(PKL_FOLDER, "grid_emissivity", "df")
+    grid_emissivity = read_pickle_folder(PKL_DATA_IMPORTS, "grid_emissivity", "df")
 
     # S3 emissions: all the emissions associated, not with the company itself,
     # but that the organisation is indirectly responsible for, up and down its value chain.
-    final_scope3_ef_df = read_pickle_folder(PKL_FOLDER, "final_scope3_ef_df", "df")
+    final_scope3_ef_df = read_pickle_folder(PKL_DATA_IMPORTS, "final_scope3_ef_df", "df")
 
     # Carbon Taxes
-    carbon_tax = read_pickle_folder(PKL_FOLDER, "carbon_tax", "df")
+    carbon_tax = read_pickle_folder(PKL_DATA_INTERMEDIATE, "carbon_tax", "df")
 
     non_standard_dict_ref = create_emissions_ref_dict(df, TECH_REFERENCE_LIST)
 
@@ -329,20 +329,20 @@ def generate_emissions_dataframe(df: pd.DataFrame, year_end: int):
 
 def generate_prices_dataframe(df: pd.DataFrame, year_end: int):
 
-    solar_ref = read_pickle_folder(PKL_FOLDER, "solar_processed", "df")
-    wind_ref = read_pickle_folder(PKL_FOLDER, "wind_processed", "df")
-    natural_gas_ref = read_pickle_folder(PKL_FOLDER, "natural_gas_processed", "df")
+    solar_ref = read_pickle_folder(PKL_DATA_INTERMEDIATE, "solar_processed", "df")
+    wind_ref = read_pickle_folder(PKL_DATA_INTERMEDIATE, "wind_processed", "df")
+    natural_gas_ref = read_pickle_folder(PKL_DATA_INTERMEDIATE, "natural_gas_processed", "df")
 
     # Static Energy Prices:
-    static_energy_prices = read_pickle_folder(PKL_FOLDER, "static_energy_prices", "df")[
+    static_energy_prices = read_pickle_folder(PKL_DATA_IMPORTS, "static_energy_prices", "df")[
         ["Metric", "Year", "Value"]
     ]
 
     # Feedstock prices: Everything else
-    feedstock_prices = read_pickle_folder(PKL_FOLDER, "feedstock_prices", "df")
+    feedstock_prices = read_pickle_folder(PKL_DATA_IMPORTS, "feedstock_prices", "df")
 
     # Commodities data: Ethanol, Charcoal, Plastic Waste
-    commodities_df = read_pickle_folder(PKL_FOLDER, "commodities_df", "df")
+    commodities_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, "commodities_df", "df")
 
     commodities_dict = commodity_data_getter(commodities_df)
     commodity_dictname_mapper = {
@@ -355,12 +355,12 @@ def generate_prices_dataframe(df: pd.DataFrame, year_end: int):
 
     # Electricity prices
     electricity_minimodel_timeseries = read_pickle_folder(
-        PKL_FOLDER, "electricity_minimodel_timeseries", "df"
+        PKL_DATA_INTERMEDIATE, "electricity_minimodel_timeseries", "df"
     )
 
     # Hydrogen prices
     hydrogen_minimodel_timeseries = read_pickle_folder(
-        PKL_FOLDER, "hydrogen_minimodel_timeseries", "df"
+        PKL_DATA_INTERMEDIATE, "hydrogen_minimodel_timeseries", "df"
     )
 
     feedstock_dict = {
@@ -392,7 +392,7 @@ def generate_prices_dataframe(df: pd.DataFrame, year_end: int):
 @timer_func
 def price_and_emissions_flow(serialize_only: bool = False):
     business_cases_summary = read_pickle_folder(
-        PKL_FOLDER, "standardised_business_cases", "df"
+        PKL_DATA_INTERMEDIATE, "standardised_business_cases", "df"
     )
     business_cases_summary_c = (
         business_cases_summary.loc[business_cases_summary["material_category"] != 0]
@@ -426,11 +426,11 @@ def price_and_emissions_flow(serialize_only: bool = False):
     opex_sheet = create_total_opex(cost_tech_summary)
 
     if serialize_only:
-        serialize_file(s1_summary_df, PKL_FOLDER, "calculated_s1_emissions")
-        serialize_file(emissions_s2_summary, PKL_FOLDER, "calculated_s2_emissions")
-        serialize_file(emissions_s3_summary, PKL_FOLDER, "calculated_s3_emissions")
-        serialize_file(cost_tech_summary, PKL_FOLDER, "calculated_variable_costs")
-        serialize_file(opex_sheet, PKL_FOLDER, "calculated_total_opex")
+        serialize_file(s1_summary_df, PKL_DATA_INTERMEDIATE, "calculated_s1_emissions")
+        serialize_file(emissions_s2_summary, PKL_DATA_INTERMEDIATE, "calculated_s2_emissions")
+        serialize_file(emissions_s3_summary, PKL_DATA_INTERMEDIATE, "calculated_s3_emissions")
+        serialize_file(cost_tech_summary, PKL_DATA_INTERMEDIATE, "calculated_variable_costs")
+        serialize_file(opex_sheet, PKL_DATA_INTERMEDIATE, "calculated_total_opex")
         return
     return {
         "s1_calculations": s1_summary_df,

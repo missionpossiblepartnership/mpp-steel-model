@@ -1,9 +1,13 @@
 """Config file for model parameters"""
 
 # Define Data Path
-IMPORT_DATA_PATH = "mppsteel/data/import_data"
-PKL_FOLDER = "mppsteel/data/pkl_data"
-OUTPUT_FOLDER = "mppsteel/data/output_data"
+CORE_DATA_PATH = "mppsteel/data"
+IMPORT_DATA_PATH = f"{CORE_DATA_PATH}/import_data"
+OUTPUT_FOLDER = f"{CORE_DATA_PATH}/output_data"
+PKL_FOLDER = f"{CORE_DATA_PATH}/pkl_data"
+PKL_DATA_IMPORTS = f"{PKL_FOLDER}/imported_data"
+PKL_DATA_INTERMEDIATE = f"{PKL_FOLDER}/intermediate_data"
+PKL_DATA_FINAL = f"{PKL_FOLDER}/final_data"
 
 MODEL_YEAR_START = 2020
 MODEL_YEAR_END = 2050

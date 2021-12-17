@@ -4,7 +4,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from mppsteel.model_config import (
-    MODEL_YEAR_END, PKL_FOLDER, MODEL_YEAR_START
+    MODEL_YEAR_END, PKL_DATA_IMPORTS, MODEL_YEAR_START, PKL_DATA_INTERMEDIATE
 )
 
 from mppsteel.model.solver import (
@@ -32,10 +32,10 @@ def plant_variable_costs(year_end: int):
     options = [[0,0,0],[1,0,0],[1,1,0],[1,1,1],[0,1,1],[0,0,1],[0,1,0],[1,0,1]]
     plant_iterations = {''.join([str(num) for num in option]): option for option in options}
 
-    electricity_minimodel_timeseries = read_pickle_folder(PKL_FOLDER, 'electricity_minimodel_timeseries', 'df')
-    hydrogen_minimodel_timeseries = read_pickle_folder(PKL_FOLDER, 'hydrogen_minimodel_timeseries', 'df')
+    electricity_minimodel_timeseries = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'electricity_minimodel_timeseries', 'df')
+    hydrogen_minimodel_timeseries = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'hydrogen_minimodel_timeseries', 'df')
 
-    static_energy_prices = read_pickle_folder(PKL_FOLDER, 'static_energy_prices', 'df')[['Metric', 'Year', 'Value']]
+    static_energy_prices = read_pickle_folder(PKL_DATA_IMPORTS, 'static_energy_prices', 'df')[['Metric', 'Year', 'Value']]
     feedstock_dict = generate_feedstock_dict()
 
     business_cases = load_business_cases()
@@ -57,8 +57,8 @@ def plant_variable_costs(year_end: int):
 
 
 def generate_feedstock_dict():
-    commodities_df = read_pickle_folder(PKL_FOLDER, 'commodities_df', 'df')
-    feedstock_prices = read_pickle_folder(PKL_FOLDER, 'feedstock_prices', 'df')
+    commodities_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'commodities_df', 'df')
+    feedstock_prices = read_pickle_folder(PKL_DATA_IMPORTS, 'feedstock_prices', 'df')
     commodities_dict = commodity_data_getter(commodities_df)
     commodity_dictname_mapper = {'plastic': 'Plastic waste', 'ethanol': 'Ethanol', 'charcoal': 'Charcoal'}
     for key in commodity_dictname_mapper.keys():
@@ -165,5 +165,5 @@ def generate_variable_plant_summary(serialize_only: bool = False):
 
     if serialize_only:
         logger.info(f'-- Serializing dataframes')
-        serialize_file(all_plant_variable_costs_summary, PKL_FOLDER, "all_plant_variable_costs_summary")
+        serialize_file(all_plant_variable_costs_summary, PKL_DATA_INTERMEDIATE, "all_plant_variable_costs_summary")
     return all_plant_variable_costs_summary

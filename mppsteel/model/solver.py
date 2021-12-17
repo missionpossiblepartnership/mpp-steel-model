@@ -1,6 +1,7 @@
 """Main solving script for deciding investment decisions."""
 
 import pandas as pd
+import modin.pandas as pd
 from tqdm import tqdm
 
 from mppsteel.utility.utils import (
@@ -9,7 +10,7 @@ from mppsteel.utility.utils import (
 )
 
 from mppsteel.model_config import (
-    MODEL_YEAR_START, PKL_FOLDER,
+    MODEL_YEAR_START, PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE,
     GREEN_PREMIUM_MIN_PCT, GREEN_PREMIUM_MAX_PCT,
     MODEL_YEAR_END, SWITCH_RANK_PROPORTIONS,
 )
@@ -38,7 +39,7 @@ logger = get_logger("Solver")
 
 
 def read_and_format_tech_availability():
-    tech_availability = read_pickle_folder(PKL_FOLDER, 'tech_availability', 'df')
+    tech_availability = read_pickle_folder(PKL_DATA_IMPORTS, 'tech_availability', 'df')
     tech_availability.columns = [col.lower().replace(' ', '_') for col in tech_availability.columns]
     return tech_availability[['technology', 'main_technology_type', 'technology_phase', 'year_available_from', 'year_available_until']].set_index('technology')
 
@@ -68,7 +69,7 @@ def plant_closure_check(utilization_rate: float, cutoff: float, current_tech: st
 
 def create_plant_capacities_dict():
     # Edit this one!
-    steel_plant_df = read_pickle_folder(PKL_FOLDER, 'steel_plants_processed', 'df')
+    steel_plant_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'steel_plants_processed', 'df')
     technologies = steel_plant_df['technology_in_2020']
     plant_names = steel_plant_df['plant_name']
     primary_capacities = steel_plant_df['primary_capacity_2020']
@@ -296,17 +297,17 @@ def choose_technology(
             print(f'{plant_name} : {extra}')
             print(df[df['plant_name'] == plant_name]['technology_in_2020'].values[0])
 
-    plant_df = read_pickle_folder(PKL_FOLDER, 'steel_plants_processed', 'df')
-    investment_year_ref = read_pickle_folder(PKL_FOLDER, 'plant_investment_cycles', 'df')
+    plant_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'steel_plants_processed', 'df')
+    investment_year_ref = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'plant_investment_cycles', 'df')
     steel_demand_df = extend_steel_demand(MODEL_YEAR_END)
-    carbon_tax_df = read_pickle_folder(PKL_FOLDER, 'carbon_tax', 'df')
-    all_plant_variable_costs_summary = read_pickle_folder(PKL_FOLDER, 'all_plant_variable_costs_summary', 'df')
-    biomass_availability = read_pickle_folder(PKL_FOLDER, 'biomass_availability', 'df')
-    ccs_co2 = read_pickle_folder(PKL_FOLDER, 'ccs_co2', 'df')
+    carbon_tax_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'carbon_tax', 'df')
+    all_plant_variable_costs_summary = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'all_plant_variable_costs_summary', 'df')
+    biomass_availability = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'biomass_availability', 'df')
+    ccs_co2 = read_pickle_folder(PKL_DATA_IMPORTS, 'ccs_co2', 'df')
     green_premium_timeseries = timeseries_generator(MODEL_YEAR_START,year_end,GREEN_PREMIUM_MIN_PCT,GREEN_PREMIUM_MAX_PCT,'pct')
-    emissions_switching_df_summary = read_pickle_folder(PKL_FOLDER, 'emissions_switching_df_summary', 'df')
+    emissions_switching_df_summary = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'emissions_switching_df_summary', 'df')
     materials = load_materials()
-    opex_values_dict = read_pickle_folder(PKL_FOLDER, 'capex_dict', 'df')
+    opex_values_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'capex_dict', 'df')
     business_cases = load_business_cases()
     plant_capacities_dict = create_plant_capacities_dict()
 
@@ -503,5 +504,5 @@ def solver_flow(year_end: int, serialize_only: bool = False):
 
     if serialize_only:
         logger.info(f'-- Serializing dataframes')
-        serialize_file(tech_choice_dict, PKL_FOLDER, "tech_choice_dict")
+        serialize_file(tech_choice_dict, PKL_DATA_INTERMEDIATE, "tech_choice_dict")
     return tech_choice_dict

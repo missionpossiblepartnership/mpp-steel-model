@@ -6,7 +6,7 @@ import pandas as pd
 from mppsteel.utility.utils import get_logger, extract_data, serialize_df_dict, timer_func
 
 # Get model parameters
-from mppsteel.model_config import IMPORT_DATA_PATH, PKL_FOLDER
+from mppsteel.model_config import IMPORT_DATA_PATH, PKL_DATA_IMPORTS
 
 # Create logger
 logger = get_logger("Data Import")
@@ -153,9 +153,7 @@ def load_data(serialize_only: bool = False) -> dict:
         sheet_name=0,
         skiprows=1,
         usecols=range(21),
-    ) 
-    
-
+    )
     # Import Wind data
     ## wind = create_wind_df()
 
@@ -198,6 +196,6 @@ def load_data(serialize_only: bool = False) -> dict:
 
     if serialize_only:
         # Turn dataframes into pickle files
-        serialize_df_dict(PKL_FOLDER, df_dict)
+        serialize_df_dict(PKL_DATA_IMPORTS, df_dict)
         return
     return df_dict

@@ -1,6 +1,8 @@
 """Function to create a steel plant class."""
 import pandas as pd
 
+from mppsteel.data_loading.country_reference import match_country
+
 # For logger and units dict
 from mppsteel.utility.utils import (
     get_logger,
@@ -8,10 +10,10 @@ from mppsteel.utility.utils import (
     read_pickle_folder,
     serialize_file,
     country_mapping_fixer,
-    country_matcher,
+    country_matcher
 )
 
-from mppsteel.model_config import PKL_FOLDER
+from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
 
 # Create logger
 logger = get_logger("Steel Plant Formatter")
@@ -104,6 +106,10 @@ def apply_countries_to_steel_plants(steel_plant_formatted: pd.DataFrame):
 
     steel_plants = country_mapping_fixer(df_c, "country", "country_code", country_fixer_dict)
 
+    country_reference_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'country_reference_dict', 'df')
+
+    steel_plants['region'] = steel_plants['country_code'].apply(lambda x: match_country(x, country_reference_dict))
+
     return steel_plants
 
 @timer_func
@@ -119,12 +125,12 @@ def steel_plant_processor(
         pd.DataFrame: A dataframe containing the preprocessed steel plants.
     """
     logger.info("Preprocessing the Steel Plant Data")
-    steel_plants = read_pickle_folder(PKL_FOLDER, "steel_plants", remove_non_operating_plants)
+    steel_plants = read_pickle_folder(PKL_DATA_IMPORTS, "steel_plants", remove_non_operating_plants)
     steel_plants = steel_plant_formatter(steel_plants)
     steel_plants = apply_countries_to_steel_plants(steel_plants)
 
     if serialize_only:
-        serialize_file(steel_plants, PKL_FOLDER, "steel_plants_processed")
+        serialize_file(steel_plants, PKL_DATA_INTERMEDIATE, "steel_plants_processed")
         return
 
     return steel_plants

@@ -9,7 +9,8 @@ from mppsteel.utility.utils import (
 )
 
 from mppsteel.model_config import (
-    MODEL_YEAR_START, PKL_FOLDER, DISCOUNT_RATE,
+    MODEL_YEAR_START, PKL_DATA_INTERMEDIATE, 
+    DISCOUNT_RATE,
     TCO_RANK_1_SCALER, TCO_RANK_2_SCALER,
     ABATEMENT_RANK_2, ABATEMENT_RANK_3,
     EUR_USD_CONVERSION
@@ -208,21 +209,11 @@ def compare_capex(
     """
 
     # logger.info(f'- Comparing capex values for {base_tech} and {switch_tech}')
-    opex_values_dict = read_pickle_folder(PKL_FOLDER, "capex_dict", "df")["other_opex"]
-    variable_costs = read_pickle_folder(PKL_FOLDER, "calculated_variable_costs", "df")
-    variable_costs = variable_costs.reorder_levels(["technology", "year"])
-    variable_costs.rename(columns={"cost": "value"}, inplace=True)
-    capex = read_pickle_folder(PKL_FOLDER, "capex_switching_df", "df")
+    capex = read_pickle_folder(PKL_DATA_INTERMEDIATE, "capex_switching_df", "df")
     capex_c = capex.copy()
     capex_c.reset_index(inplace=True)
     capex_c.columns = [col.lower().replace(" ", "_") for col in capex_c.columns]
     capex_c = capex_c.set_index(["year", "start_technology"]).sort_index()
-    other_opex_values = discounted_opex(
-        opex_values_dict, switch_tech, interest_rate, start_year
-    )
-    variable_opex_values = discounted_opex(
-        variable_costs, switch_tech, interest_rate, start_year
-    )
     annual_capex_value = get_capital_schedules(
         capex_c, base_tech, switch_tech, start_year, interest_rate
     )["interest_payments"]
@@ -237,14 +228,10 @@ def compare_capex(
             "end_technology": switch_tech,
             "start_year": start_year,
             "years": years,
-            "other_opex": other_opex_values,
-            "variable_opex": variable_opex_values,
             "annual_capex": discounted_annual_capex_array,
         }
     )
-    df["tco"] = df["other_opex"] + df["variable_opex"] + df["annual_capex"]
     return df
-
 
 def carbon_tax_estimate(emission_dict_ref: dict, carbon_tax_df: pd.DataFrame, year: int):
     year_ref = year
@@ -314,30 +301,11 @@ def calculate_capex(start_year):
     full_df = pd.concat(df_list)
     return full_df.set_index(['year', 'start_technology'])
 
-def get_capex_year(capex_df: pd.DataFrame, start_tech: str, end_tech: str, switch_year: int):
-    df_c = None
-    if switch_year > 2050:
-        df_c = capex_df.loc[2050, start_tech].copy()
-    elif 2020 <= switch_year <= 2050:
-        df_c = capex_df.loc[switch_year, start_tech].copy()
-
-    raw_switch_value = df_c.loc[df_c['new_technology'] == end_tech]['value'].values[0]
-
-    financial_summary = generate_capex_financial_summary(
-        principal=raw_switch_value,
-        interest_rate=DISCOUNT_RATE,
-        years=20,
-        downpayment=0,
-        compounding_type='annual',
-        rounding=2
-    )
-
-    return financial_summary
 
 def create_emissions_dict():
-    calculated_s1_emissions = read_pickle_folder(PKL_FOLDER, 'calculated_s1_emissions', 'df')
-    calculated_s2_emissions = read_pickle_folder(PKL_FOLDER, 'calculated_s2_emissions', 'df')
-    calculated_s3_emissions = read_pickle_folder(PKL_FOLDER, 'calculated_s3_emissions', 'df')
+    calculated_s1_emissions = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'calculated_s1_emissions', 'df')
+    calculated_s2_emissions = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'calculated_s2_emissions', 'df')
+    calculated_s3_emissions = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'calculated_s3_emissions', 'df')
     return {'s1': calculated_s1_emissions, 's2': calculated_s2_emissions, 's3': calculated_s3_emissions}
 
 
@@ -391,7 +359,7 @@ def tco_calc(
     capex_values = calculate_capex(start_year).swaplevel().loc[plant_tech].groupby('end_technology').sum()
     return capex_values + opex_values / investment_cycle
 
-def capex_values_for_levilised_steelmaking(capex_df: pd.DataFrame, int_rate: float, year: int, payments: int):
+def capex_values_for_levelised_steelmaking(capex_df: pd.DataFrame, int_rate: float, year: int, payments: int):
     df_temp = capex_df.swaplevel().loc[year]
     value_list = []
     for tech_row in df_temp.itertuples():
@@ -405,17 +373,17 @@ def capex_values_for_levilised_steelmaking(capex_df: pd.DataFrame, int_rate: flo
 def levelised_steelmaking_cost(year: pd.DataFrame, include_greenfield: bool = False):
     # Levelised of cost of steelmaking = OtherOpex + VariableOpex + RenovationCapex w/ 7% over 20 years (+ GreenfieldCapex w/ 7% over 40 years)
     df_list = []
-    all_plant_variable_costs_summary = read_pickle_folder(PKL_FOLDER, 'all_plant_variable_costs_summary', 'df')
-    opex_values_dict = read_pickle_folder(PKL_FOLDER, 'capex_dict', 'df')
+    all_plant_variable_costs_summary = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'all_plant_variable_costs_summary', 'df')
+    opex_values_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'capex_dict', 'df')
     for iteration in all_plant_variable_costs_summary.index.get_level_values(0).unique():
         variable_costs = all_plant_variable_costs_summary.loc[iteration, year]
         other_opex = opex_values_dict['other_opex'].swaplevel().loc[year]
-        brownfield_capex = capex_values_for_levilised_steelmaking(opex_values_dict['brownfield'], DISCOUNT_RATE, year, 20)
+        brownfield_capex = capex_values_for_levelised_steelmaking(opex_values_dict['brownfield'], DISCOUNT_RATE, year, 20)
         variable_costs.rename(mapper={'cost': 'value'}, axis=1, inplace=True)
         variable_costs.rename(mapper={'technology': 'Technology'}, axis=0, inplace=True)
         combined_df = variable_costs + other_opex + brownfield_capex
         if include_greenfield:
-            greenfield_capex = capex_values_for_levilised_steelmaking(opex_values_dict['greenfield'], DISCOUNT_RATE, year, 40)
+            greenfield_capex = capex_values_for_levelised_steelmaking(opex_values_dict['greenfield'], DISCOUNT_RATE, year, 40)
             combined_df = variable_costs + other_opex + greenfield_capex + brownfield_capex
         combined_df['iteration'] = iteration
         df_list.append(combined_df)

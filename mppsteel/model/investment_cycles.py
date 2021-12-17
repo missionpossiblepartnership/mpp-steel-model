@@ -5,7 +5,8 @@ import pandas as pd
 from tqdm import tqdm
 
 from mppsteel.model_config import (
-    MODEL_YEAR_START, MODEL_YEAR_END, PKL_FOLDER,
+    MODEL_YEAR_START, MODEL_YEAR_END, 
+    PKL_DATA_INTERMEDIATE, PKL_DATA_IMPORTS,
     NET_ZERO_TARGET, NET_ZERO_VARIANCE,
     INVESTMENT_CYCLE_LENGTH, INVESTMENT_CYCLE_VARIANCE,
     INVESTMENT_OFFCYCLE_BUFFER_TOP, INVESTMENT_OFFCYCLE_BUFFER_TAIL,
@@ -96,10 +97,10 @@ def create_investment_cycle_ref(steel_plant_df: pd.DataFrame):
 
 @timer_func
 def investment_cycle_flow(serialize_only: bool = False):
-    steel_plants_aug = read_pickle_folder(PKL_FOLDER, 'steel_plants_processed', 'df')
+    steel_plants_aug = read_pickle_folder(PKL_DATA_IMPORTS, 'steel_plants_processed', 'df')
     plant_investment_cycles = create_investment_cycle_ref(steel_plants_aug)
 
     if serialize_only:
         logger.info(f'-- Serializing Investment Cycle Reference')
-        serialize_file(plant_investment_cycles, PKL_FOLDER, "plant_investment_cycles")
+        serialize_file(plant_investment_cycles, PKL_DATA_INTERMEDIATE, "plant_investment_cycles")
     return plant_investment_cycles

@@ -1,6 +1,7 @@
 """Script to generate Switching tables for TCO and emission abatement"""
 
 import pandas as pd
+from tqdm import tqdm
 
 # For logger and units dict
 from mppsteel.utility.utils import get_logger, read_pickle_folder, serialize_file, timer_func
@@ -8,7 +9,7 @@ from mppsteel.utility.utils import get_logger, read_pickle_folder, serialize_fil
 from mppsteel.model_config import (
     MODEL_YEAR_END,
     MODEL_YEAR_START,
-    PKL_FOLDER,
+    PKL_DATA_INTERMEDIATE, PKL_DATA_IMPORTS,
     INVESTMENT_CYCLE_LENGTH,
 )
 
@@ -109,11 +110,11 @@ def calculate_emissions(
         "start_tech_values",
         "comp_tech_values",
     ]
-    s1_emissions = read_pickle_folder(PKL_FOLDER, "calculated_s1_emissions", "df")
-    s2_emissions = read_pickle_folder(PKL_FOLDER, "calculated_s2_emissions", "df")
-    s3_emissions = read_pickle_folder(PKL_FOLDER, "calculated_s3_emissions", "df")
+    s1_emissions = read_pickle_folder(PKL_DATA_IMPORTS, "calculated_s1_emissions", "df")
+    s2_emissions = read_pickle_folder(PKL_DATA_IMPORTS, "calculated_s2_emissions", "df")
+    s3_emissions = read_pickle_folder(PKL_DATA_IMPORTS, "calculated_s3_emissions", "df")
     year_range = range(MODEL_YEAR_START, year_end + 1)
-    for year in year_range:
+    for year in tqdm(year_range, total=len(year_range), desc='Emissions'):
         logger.info(f"Calculating technology emissions for {year}")
         for base_tech in SWITCH_DICT.keys():
             for switch_tech in SWITCH_DICT[base_tech]:
@@ -159,8 +160,8 @@ def calculate_emissions(
     )
 
     if serialize_only:
-        serialize_file(full_summary_df, PKL_FOLDER, "emissions_switching_df_summary")
-        serialize_file(full_df, PKL_FOLDER, "emissions_switching_df_full")
+        serialize_file(full_summary_df, PKL_DATA_INTERMEDIATE, "emissions_switching_df_summary")
+        serialize_file(full_df, PKL_DATA_INTERMEDIATE, "emissions_switching_df_full")
         return
 
     if output_type == "summary":

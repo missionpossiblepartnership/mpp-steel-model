@@ -1,5 +1,4 @@
 """Runs the data loading scripts"""
-import time
 from mppsteel.utility.utils import get_logger, pickle_to_csv, TIME_CONTAINER
 
 from mppsteel.data_loading.data_import import load_data
@@ -27,7 +26,6 @@ from mppsteel.results.production import production_results_flow
 from mppsteel.results.investments import investment_results
 
 from mppsteel.model_config import MODEL_YEAR_END
-
 
 logger = get_logger("Main Model Code")
 

@@ -15,7 +15,8 @@ from mppsteel.utility.utils import (
 
 # Get model parameters
 from mppsteel.model_config import (
-    PKL_FOLDER,
+    PKL_DATA_IMPORTS,
+    PKL_DATA_INTERMEDIATE,
     EMISSIONS_FACTOR_SLAG,
     ENERGY_DENSITY_MET_COAL,
 )
@@ -287,36 +288,36 @@ def scope3_ef_getter(df: pd.DataFrame, fuel: str, year: str) -> float:
 
 
 def create_capex_opex_dict(serialize_only: bool = False):
-    greenfield_capex_df = read_pickle_folder(PKL_FOLDER, "greenfield_capex")
-    brownfield_capex_df = read_pickle_folder(PKL_FOLDER, "brownfield_capex")
-    other_opex_df = read_pickle_folder(PKL_FOLDER, "other_opex")
+    greenfield_capex_df = read_pickle_folder(PKL_DATA_IMPORTS, "greenfield_capex")
+    brownfield_capex_df = read_pickle_folder(PKL_DATA_IMPORTS, "brownfield_capex")
+    other_opex_df = read_pickle_folder(PKL_DATA_IMPORTS, "other_opex")
     capex_dict = capex_dictionary_generator(
         greenfield_capex_df, brownfield_capex_df, other_opex_df
     )
     if serialize_only:
-        serialize_file(capex_dict, PKL_FOLDER, "capex_dict")
+        serialize_file(capex_dict, PKL_DATA_INTERMEDIATE, "capex_dict")
         return
     return capex_dict
 
 def generate_preprocessed_emissions_data(serialize_only: bool = False):
     ethanol_plastic_charcoal = read_pickle_folder(
-        PKL_FOLDER, "ethanol_plastic_charcoal"
+        PKL_DATA_IMPORTS, "ethanol_plastic_charcoal"
     )
     commodities_df = format_commodities_data(
         ethanol_plastic_charcoal, COMMODITY_MATERIAL_MAPPER
     )
-    s3_emissions_factors_2 = read_pickle_folder(PKL_FOLDER, "s3_emissions_factors_2")
+    s3_emissions_factors_2 = read_pickle_folder(PKL_DATA_IMPORTS, "s3_emissions_factors_2")
     scope3df_2_formatted = format_scope3_ef_2(
         s3_emissions_factors_2, EMISSIONS_FACTOR_SLAG
     )
     slag_new_values = scope3df_2_formatted["value"].values
-    s3_emissions_factors_1 = read_pickle_folder(PKL_FOLDER, "s3_emissions_factors_1")
+    s3_emissions_factors_1 = read_pickle_folder(PKL_DATA_IMPORTS, "s3_emissions_factors_1")
     final_scope3_ef_df = modify_scope3_ef_1(
         s3_emissions_factors_1, slag_new_values, ENERGY_DENSITY_MET_COAL
     )
     if serialize_only:
-        serialize_file(commodities_df, PKL_FOLDER, "commodities_df")
-        serialize_file(final_scope3_ef_df, PKL_FOLDER, "final_scope3_ef_df")
+        serialize_file(commodities_df, PKL_DATA_INTERMEDIATE, "commodities_df")
+        serialize_file(final_scope3_ef_df, PKL_DATA_INTERMEDIATE, "final_scope3_ef_df")
         return
     return commodities_df, final_scope3_ef_df
 
@@ -327,7 +328,7 @@ def format_bc(df: pd.DataFrame):
     return df_c
 
 def load_business_cases():
-    standardised_business_cases = read_pickle_folder(PKL_FOLDER, 'standardised_business_cases', 'df')
+    standardised_business_cases = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'standardised_business_cases', 'df')
     return format_bc(standardised_business_cases)
 
 def load_materials():
@@ -339,7 +340,7 @@ def extend_steel_demand(year_end: int):
     scenarios = ['Circular', 'BAU']
     steel_types = ['Crude', 'Scrap']
     steel_demand_perms = create_list_permutations(steel_types, scenarios)
-    global_demand = read_pickle_folder(PKL_FOLDER, 'steel_demand', 'df')
+    global_demand = read_pickle_folder(PKL_DATA_IMPORTS, 'steel_demand', 'df')
     df_list = []
     for permutation in steel_demand_perms:
         steel_type = permutation[0]
@@ -372,9 +373,3 @@ def extend_steel_demand(year_end: int):
         )
         df_list.append(df)
     return pd.concat(df_list).reset_index(drop=True)
-
-def add_regions_to_steel_plants():
-    steel_plants_clean = read_pickle_folder(PKL_FOLDER, 'steel_plants_processed', 'df')
-    country_reference_dict = read_pickle_folder(PKL_FOLDER, 'country_reference_dict', 'df')
-    steel_plants_clean['region'] = steel_plants_clean['country_code'].apply(lambda x: match_country(x, country_reference_dict))
-    return steel_plants_clean
