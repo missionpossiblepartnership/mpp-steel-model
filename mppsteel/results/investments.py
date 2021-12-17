@@ -8,10 +8,6 @@ from mppsteel.model_config import (
     PKL_FOLDER
 )
 
-from mppsteel.model.solver import (
-    generate_formatted_steel_plants,
-)
-
 from mppsteel.utility.utils import (
     read_pickle_folder, get_logger, serialize_file
 )
@@ -66,7 +62,7 @@ def investment_results(serialize_only: bool = False):
     logger.info(f'Generating Investment Results')
     tech_choice_dict = read_pickle_folder(PKL_FOLDER, 'tech_choice_dict', 'df')
     plant_investment_cycles = read_pickle_folder(PKL_FOLDER, 'plant_investment_cycles', 'df')
-    steel_plant_df = generate_formatted_steel_plants()
+    steel_plant_df = read_pickle_folder(PKL_FOLDER, 'steel_plants_processed', 'df')
     plant_names = steel_plant_df['plant_name'].values
     capex_df = create_capex_dict()
     max_year = max([int(year) for year in tech_choice_dict.keys()])

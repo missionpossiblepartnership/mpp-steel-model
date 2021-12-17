@@ -11,7 +11,7 @@ from mppsteel.data_loading.business_case_standardisation import (
 from mppsteel.data_loading.natural_resource_data_interface import (
     natural_resource_preprocessor,
 )
-from mppsteel.data_loading.steel_plant_formatter import steel_plant_preprocessor
+from mppsteel.data_loading.steel_plant_formatter import steel_plant_processor
 from mppsteel.data_loading.country_reference import create_country_ref
 from mppsteel.data_loading.data_interface import (
     create_capex_opex_dict,
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     # natural_resource_preprocessor(serialize_only=True)
 
     # Process Steel plants
-    steel_plant_preprocessor(serialize_only=True)
+    steel_plant_processor(serialize_only=True, remove_non_operating_plants=True)
 
     # Run Country Reference
     create_country_ref(serialize_only=True)

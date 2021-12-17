@@ -25,8 +25,7 @@ from mppsteel.minimodels.timeseries_generator import (
 
 from mppsteel.data_loading.data_interface import (
     ccs_co2_getter, biomass_getter, steel_demand_value_selector,
-    generate_formatted_steel_plants, load_materials,
-    load_business_cases, extend_steel_demand
+    load_materials, load_business_cases, extend_steel_demand
 )
 
 from mppsteel.model.tco import (
@@ -69,7 +68,7 @@ def plant_closure_check(utilization_rate: float, cutoff: float, current_tech: st
 
 def create_plant_capacities_dict():
     # Edit this one!
-    steel_plant_df = generate_formatted_steel_plants()
+    steel_plant_df = read_pickle_folder(PKL_FOLDER, 'steel_plants_processed', 'df')
     technologies = steel_plant_df['technology_in_2020']
     plant_names = steel_plant_df['plant_name']
     primary_capacities = steel_plant_df['primary_capacity_2020']
@@ -297,7 +296,7 @@ def choose_technology(
             print(f'{plant_name} : {extra}')
             print(df[df['plant_name'] == plant_name]['technology_in_2020'].values[0])
 
-    plant_df = generate_formatted_steel_plants()
+    plant_df = read_pickle_folder(PKL_FOLDER, 'steel_plants_processed', 'df')
     investment_year_ref = read_pickle_folder(PKL_FOLDER, 'plant_investment_cycles', 'df')
     steel_demand_df = extend_steel_demand(MODEL_YEAR_END)
     carbon_tax_df = read_pickle_folder(PKL_FOLDER, 'carbon_tax', 'df')

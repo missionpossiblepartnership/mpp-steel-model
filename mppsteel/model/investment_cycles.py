@@ -7,17 +7,12 @@ from tqdm import tqdm
 from mppsteel.model_config import (
     MODEL_YEAR_START, MODEL_YEAR_END, PKL_FOLDER,
     NET_ZERO_TARGET, NET_ZERO_VARIANCE,
-    INVESTMENT_CYCLE_LENGTH, INVESTMENT_CYCLE_VARIANCE, 
+    INVESTMENT_CYCLE_LENGTH, INVESTMENT_CYCLE_VARIANCE,
     INVESTMENT_OFFCYCLE_BUFFER_TOP, INVESTMENT_OFFCYCLE_BUFFER_TAIL,
-
-)
-
-from mppsteel.model.solver import (
-    generate_formatted_steel_plants,
 )
 
 from mppsteel.utility.utils import (
-    serialize_file, get_logger
+    serialize_file, get_logger, read_pickle_folder
 )
 # Create logger
 logger = get_logger("Investment Cycles")
@@ -100,7 +95,7 @@ def create_investment_cycle_ref(steel_plant_df: pd.DataFrame):
     return create_investment_cycle_reference(steel_plant_df['plant_name'].values, investment_years_inc_off_cycle, MODEL_YEAR_END)
 
 def investment_cycle_flow(serialize_only: bool = False):
-    steel_plants_aug = generate_formatted_steel_plants()
+    steel_plants_aug = read_pickle_folder(PKL_FOLDER, 'steel_plants_processed', 'df')
     plant_investment_cycles = create_investment_cycle_ref(steel_plants_aug)
 
     if serialize_only:

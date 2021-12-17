@@ -333,65 +333,6 @@ def load_business_cases():
 def load_materials():
     return load_business_cases()['material_category'].unique()
 
-def format_steel_plant_df(df: pd.DataFrame):
-    df_c = df.copy() 
-    steel_plant_cols_to_remove = [
-        'Fill in data BF-BOF',
-        'Fill in data EAF', 'Fill in data DRI',
-        'Estimated BF-BOF capacity (kt steel/y)',
-        'Estimated EAF capacity (kt steel/y)',
-        'Estimated DRI capacity (kt sponge iron/y)',
-        'Estimated DRI-EAF capacity (kt steel/y)',
-        'Source', 'Excel Tab'
-    ]
-    df_c.drop(steel_plant_cols_to_remove, axis=1, inplace = True)
-    new_steel_plant_cols = [
-        'plant_name', 'parent', 'country', 'region', 'coordinates', 'status', 'start_of_operation',
-        'BFBOF_capacity', 'EAF_capacity', 'DRI_capacity', 'DRIEAF_capacity', 'abundant_res',
-        'ccs_available', 'cheap_natural_gas', 'industrial_cluster', 'technology_in_2020']
-    df_c = df_c.rename(mapper=dict(zip(df_c.columns, new_steel_plant_cols)), axis=1)
-    return df_c
-
-def extract_steel_plant_capacity(df: pd.DataFrame):
-    def convert_to_float(val):
-        try:
-            return float(val)
-        except:
-            if isinstance(val, float):
-                return val
-        return 0
-    df_c = df.copy()
-    capacity_cols = ['BFBOF_capacity', 'EAF_capacity', 'DRI_capacity', 'DRIEAF_capacity']
-    for row in df_c.itertuples():
-        tech = row.technology_in_2020
-        for col in capacity_cols:
-            if col == 'EAF_capacity':
-                if tech == 'EAF':
-                    value = convert_to_float(row.EAF_capacity)
-                    df_c.loc[row.Index, 'primary_capacity_2020'] = 0
-            elif col == 'BFBOF_capacity':
-                if tech in ['Avg BF-BOF', 'BAT BF-BOF']:
-                    value = convert_to_float(row.BFBOF_capacity)
-                    df_c.loc[row.Index, 'primary_capacity_2020'] = value
-            elif col == 'DRIEAF_capacity':
-                if tech in ['DRI-EAF', 'DRI-EAF+CCUS']:
-                    value = convert_to_float(row.DRIEAF_capacity)
-                    df_c.loc[row.Index, 'primary_capacity_2020'] = value
-            elif col == 'DRI_capacity':
-                if tech == 'DRI':
-                    value = convert_to_float(row.DRI_capacity)
-                    df_c.loc[row.Index, 'primary_capacity_2020'] = value
-            else:
-                df_c.loc[row.Index, 'primary_capacity_2020'] = 0
-    df_c['secondary_capacity_2020'] = df_c['EAF_capacity'].apply(lambda x: convert_to_float(x)) - df_c['DRIEAF_capacity'].apply(lambda x: convert_to_float(x)) 
-    return df_c
-
-def generate_formatted_steel_plants():
-    # Notice this comes from the raw steel plant file - fix in script
-    steel_plants_raw = read_pickle_folder(PKL_FOLDER, 'steel_plants', 'df')
-    steel_plants_raw_c = format_steel_plant_df(steel_plants_raw)
-    steel_plants_aug = extract_steel_plant_capacity(steel_plants_raw_c)
-    return steel_plants_aug[steel_plants_aug['technology_in_2020'] != 'Not operating'].reset_index(drop=True)
 
 def extend_steel_demand(year_end: int):
     logger.info(f'-- Extedning the Steel Demand DataFrame to {year_end}')

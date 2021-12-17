@@ -16,8 +16,10 @@ from mppsteel.results.investments import investment_results
 
 from mppsteel.results.production import production_results_flow
 
+from mppsteel.data_loading.steel_plant_formatter import steel_plant_processor
+
 # solver_flow(2025, serialize_only=True)
 
 # standardise_business_cases(serialize_only=True)
 
-production_results_flow(serialize_only=True)
+steel_plant_processor(serialize_only=True, remove_non_operating_plants=True)
