@@ -1,0 +1,191 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "model_configurations",
+  "steps": [
+    {
+      "file": "mppsteel/model_config.py",
+      "description": "# Welcome\nWelcome to the code tour on the model parameters.\n\nAlong this tour we will show what the parameters are, and how the are used. In case one needs to modify any parameter while running the model it is possible with the following code:\n\n```python\nimport mppsteel # Import the library\n\n# mppsteel.model_config.{parameter_to_change} = {new_value}\n# For example, to change the core data path:\nmppsteel.model_config.CORE_DATA_PATH = \"this/new/path\" \n```",
+      "line": 1
+    },
+    {
+      "file": "mppsteel/model_config.py",
+      "description": "## Data\n\nThe data paths define where the the inputs, intermediate data files, and outputs are going to be located. by default they are set to read from the `mppsteel/data` directory, and the children directories are used to store the intermediate data and final outputs.",
+      "line": 10,
+      "selection": {
+        "start": {
+          "line": 4,
+          "character": 1
+        },
+        "end": {
+          "line": 10,
+          "character": 44
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model_config.py",
+      "description": "## Model dates\n\nThe dates are used to define the beggining and end year of the model, by default they are 2020 and 2050.",
+      "line": 13,
+      "selection": {
+        "start": {
+          "line": 12,
+          "character": 1
+        },
+        "end": {
+          "line": 13,
+          "character": 22
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model_config.py",
+      "description": "### Biomass\n\nThese parameters are used to set the start and end year of the biomass availability and the end value of the biomass",
+      "line": 17,
+      "selection": {
+        "start": {
+          "line": 15,
+          "character": 1
+        },
+        "end": {
+          "line": 17,
+          "character": 31
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model_config.py",
+      "description": "### Carbon tax\n\nThe parameters that controls the carbon tax years (start and end) and the starting and ending value of the carbon tax.",
+      "line": 22,
+      "selection": {
+        "start": {
+          "line": 19,
+          "character": 1
+        },
+        "end": {
+          "line": 22,
+          "character": 27
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model_config.py",
+      "description": "### Electricity\n\nControl the changes in elecricity prices by years",
+      "line": 26,
+      "selection": {
+        "start": {
+          "line": 24,
+          "character": 1
+        },
+        "end": {
+          "line": 26,
+          "character": 34
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model_config.py",
+      "description": "### Hydrogen \n\nControl the start and end years of the hydrogen",
+      "line": 29,
+      "selection": {
+        "start": {
+          "line": 28,
+          "character": 1
+        },
+        "end": {
+          "line": 29,
+          "character": 31
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model_config.py",
+      "description": "### Energy",
+      "line": 32,
+      "selection": {
+        "start": {
+          "line": 31,
+          "character": 1
+        },
+        "end": {
+          "line": 32,
+          "character": 40
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model_config.py",
+      "description": "## Investment scenarios\n\n#TODO:\nExplain what each one means",
+      "line": 41,
+      "selection": {
+        "start": {
+          "line": 34,
+          "character": 1
+        },
+        "end": {
+          "line": 41,
+          "character": 30
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model_config.py",
+      "description": "## Swith CAPEX data points\n\n",
+      "line": 47,
+      "selection": {
+        "start": {
+          "line": 43,
+          "character": 1
+        },
+        "end": {
+          "line": 47,
+          "character": 2
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model_config.py",
+      "description": "## Plant capacity",
+      "line": 52,
+      "selection": {
+        "start": {
+          "line": 49,
+          "character": 1
+        },
+        "end": {
+          "line": 52,
+          "character": 33
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model_config.py",
+      "description": "## Ranking for TCO and Abatment",
+      "line": 57,
+      "selection": {
+        "start": {
+          "line": 54,
+          "character": 1
+        },
+        "end": {
+          "line": 57,
+          "character": 87
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model_config.py",
+      "description": "## Green premium and switch ranking",
+      "line": 61,
+      "selection": {
+        "start": {
+          "line": 59,
+          "character": 1
+        },
+        "end": {
+          "line": 61,
+          "character": 57
+        }
+      }
+    }
+  ]
+}
