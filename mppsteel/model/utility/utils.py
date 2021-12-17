@@ -340,7 +340,7 @@ class TimeContainerClass:
     def return_time_container(self, return_object: bool = False):
         time_container = self.time_container
         for entry in time_container:
-            print(f'The {entry} function took {time_container[entry]}')
+            print(f'The {entry[0]} function took {entry[1]}')
         if return_object:
             return time_container
 

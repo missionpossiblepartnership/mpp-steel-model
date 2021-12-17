@@ -135,4 +135,7 @@ if __name__ == "__main__":
     if args.r:
         data_import_and_preprocessing_refresh()
 
+    if args.b:
+        standardise_business_cases()
+
     TIME_CONTAINER.return_time_container()
