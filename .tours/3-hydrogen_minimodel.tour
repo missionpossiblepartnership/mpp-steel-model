@@ -1,0 +1,206 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "#3 hydrogen_minimodel",
+  "steps": [
+    {
+      "file": "mppsteel/minimodels/hydrogen_minimodel.py",
+      "description": "# Hydrogen\n\nThis module contains the minimodel for calculating the Hydrogen prices. Along this tour we will cover the different functions used to interact with this minimodel.",
+      "line": 1
+    },
+    {
+      "file": "mppsteel/minimodels/hydrogen_minimodel.py",
+      "description": "## Generate hydrogen timeseries\n\nThis is the main function in the minimodel, it is used to generate the timeseries of hydrogen prices while taking into account all the necessary assumptions.",
+      "line": 308,
+      "selection": {
+        "start": {
+          "line": 300,
+          "character": 1
+        },
+        "end": {
+          "line": 308,
+          "character": 8
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/hydrogen_minimodel.py",
+      "description": "### Timeseries generator\n\nThe first step is to generate all the necesasary timeseries for all the assumptions. For these steps the function `timeseries_generator`is used.\n\nThe time series that will be generated are:\n+ `vre_price_average`\n+ `vre_price_favorable`\n+ `stack_lifetime`\n+ `stack_capex`\n+ `energy_consumption`\n\nFor all of the above timeseries the function that is used is the `timeseries_generator` that will be cover next.",
+      "line": 342,
+      "selection": {
+        "start": {
+          "line": 310,
+          "character": 4
+        },
+        "end": {
+          "line": 342,
+          "character": 6
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/hydrogen_minimodel.py",
+      "description": "### Timeseries generator function\n\nThis is the main function used to generate the timeseries. The arguments it takes are the type of timeseries, the start and end year and the units used for the value column.",
+      "line": 57,
+      "selection": {
+        "start": {
+          "line": 44,
+          "character": 1
+        },
+        "end": {
+          "line": 57,
+          "character": 8
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/hydrogen_minimodel.py",
+      "description": "#### Dataframe creation\n\nCreate the dataframe that will store the timeseries. The dataframe will have three columns:\n\n+ `year` with the years from start to end as integers\n+ `value` The value for the given year and unit\n+ `units` String with the type of unit for the value",
+      "line": 70,
+      "selection": {
+        "start": {
+          "line": 59,
+          "character": 5
+        },
+        "end": {
+          "line": 70,
+          "character": 6
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/hydrogen_minimodel.py",
+      "description": "#### Scenarios\n\nThese lines check the `kwargs` for the scenario that will be used to generate the time series, then function `vre_price_selector` takes the scenario and year and returns the price according to the year and scenario selected. ",
+      "line": 89,
+      "selection": {
+        "start": {
+          "line": 77,
+          "character": 5
+        },
+        "end": {
+          "line": 89,
+          "character": 47
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/hydrogen_minimodel.py",
+      "description": "### Calculate values\n\nAt this point we have the dataframe with the years in the time series, the units, and the start and end prices. The next step is to populate the values along the dataframe. To do so this functions takes as arguments the dataframe, the values for the start and end years, and the `mid_values_function`, the name of the function that will be used to calculate the missing values.",
+      "line": 126,
+      "selection": {
+        "start": {
+          "line": 92,
+          "character": 5
+        },
+        "end": {
+          "line": 126,
+          "character": 20
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/hydrogen_minimodel.py",
+      "description": "#### Middle values\n\nThese functions are used to define the middle values between the starting and end year in the timeseries depending on the units that are being calculated.",
+      "line": 139,
+      "selection": {
+        "start": {
+          "line": 128,
+          "character": 4
+        },
+        "end": {
+          "line": 139,
+          "character": 87
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/hydrogen_minimodel.py",
+      "description": "#### Application\n\nOnce that the functions where defined and the initial dataframe created, this cotnrol flow statmenst check the type of the timeseries being created and uses the previous functions to populate the fataframe.",
+      "line": 184,
+      "selection": {
+        "start": {
+          "line": 141,
+          "character": 5
+        },
+        "end": {
+          "line": 184,
+          "character": 10
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/hydrogen_minimodel.py",
+      "description": "#### Final steps\n\nThe final steps are to use the correct data types for each column in the data frame, add a new column with the metric name and remove the trailing underscore. Finally, the function returns the newly created dataframe with the timeseries.",
+      "line": 196,
+      "selection": {
+        "start": {
+          "line": 186,
+          "character": 5
+        },
+        "end": {
+          "line": 196,
+          "character": 14
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/hydrogen_minimodel.py",
+      "description": "## Read external timeseries\n\nAfter having create the hydrogen timeseries, the script reads in the `electrolzer_capex_time_series` from the pickle file.",
+      "line": 348,
+      "selection": {
+        "start": {
+          "line": 345,
+          "character": 5
+        },
+        "end": {
+          "line": 348,
+          "character": 67
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/hydrogen_minimodel.py",
+      "description": "### Combine dataframes\n\nAll the newly crreated dataframes are then combined to create the dataframe with all the grid reference. In this new dataframe all of the columns are named as the metric, and the values of the colums are the value of the metric in the given year.\n\n|Year|Metric_1|Metric_2|Metric_3|Metric_4|\n|---|---|---|---|---|\n|2020|1|1|1|1|\n|...|...|...|...|...|\n|2050|final_value_metric_1|final_value_metric_2|final_value_metric_3|final_value_metric_4|",
+      "line": 361,
+      "selection": {
+        "start": {
+          "line": 350,
+          "character": 5
+        },
+        "end": {
+          "line": 361,
+          "character": 6
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/hydrogen_minimodel.py",
+      "description": "### Calculate hydrogen prices\n\nBased on the timeseries previously calculated and the combined dataframe, now its possible to calculate the green hydrogen prices. \n\nThe first two objects `green_h2_prices_average_gj` and `green_h2_prices_favorable_gj` are created with the function `create_green_h2_prices` that takes the dataframe with the grid reference, an string argument to identify if its the favorable or average, and a parameter to calculate th eprices in gigajoule if set to `True`",
+      "line": 372,
+      "selection": {
+        "start": {
+          "line": 363,
+          "character": 4
+        },
+        "end": {
+          "line": 372,
+          "character": 6
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/hydrogen_minimodel.py",
+      "description": "#### H2 prices\n\nthe function `create_green_h2_prices` is used to calculate the hydrogen prices using the hydrogen assumption timeseries. The function takes three main arguments:\n\n+ `df` pandas dataframe with the grid reference timeseries\n+ `scenario` String to indicate if its a favorable or average scenario\n+ `as_gj` Boolean, if `True` calculate the values as gigajoule",
+      "line": 233,
+      "selection": {
+        "start": {
+          "line": 221,
+          "character": 1
+        },
+        "end": {
+          "line": 233,
+          "character": 8
+        }
+      }
+    }
+  ]
+}

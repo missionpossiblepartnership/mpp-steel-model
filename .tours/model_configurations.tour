@@ -1,6 +1,6 @@
 {
   "$schema": "https://aka.ms/codetour-schema",
-  "title": "model_configurations",
+  "title": "#1 - model_configurations",
   "steps": [
     {
       "file": "mppsteel/model_config.py",
@@ -129,7 +129,7 @@
     },
     {
       "file": "mppsteel/model_config.py",
-      "description": "## Swith CAPEX data points\n\n",
+      "description": "## Switch CAPEX data points\n\n",
       "line": 47,
       "selection": {
         "start": {
