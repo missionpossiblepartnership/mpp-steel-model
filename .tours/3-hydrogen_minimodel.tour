@@ -1,6 +1,6 @@
 {
   "$schema": "https://aka.ms/codetour-schema",
-  "title": "#3 hydrogen_minimodel",
+  "title": "#3 - hydrogen_minimodel",
   "steps": [
     {
       "file": "mppsteel/minimodels/hydrogen_minimodel.py",
@@ -199,6 +199,96 @@
         "end": {
           "line": 233,
           "character": 8
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/hydrogen_minimodel.py",
+      "description": "#### H2 price column\n\nCreate a new column in the dataframe to store the green h2 price.",
+      "line": 237,
+      "selection": {
+        "start": {
+          "line": 235,
+          "character": 5
+        },
+        "end": {
+          "line": 237,
+          "character": 27
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/hydrogen_minimodel.py",
+      "description": "#### Price function\n\nThis iterim function takes the row of the dataframe and check for the scenario, then depending on the scenario gets the price and the sstorage price.",
+      "line": 246,
+      "selection": {
+        "start": {
+          "line": 239,
+          "character": 5
+        },
+        "end": {
+          "line": 246,
+          "character": 40
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/hydrogen_minimodel.py",
+      "description": "### Price per year\n\nThe code iterates over the dataframe rows and gets the vre_price and storage_price making use of the price function, with those prices then it calculate the energy cost, cpaex and opex for the current year, and calculate the green h2 price per year.",
+      "line": 267,
+      "selection": {
+        "start": {
+          "line": 249,
+          "character": 5
+        },
+        "end": {
+          "line": 268,
+          "character": 1
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/hydrogen_minimodel.py",
+      "description": "### Euro/Kg\n\nThe green h2 price is calculated as EUR / kg by default, and this code populate the unit column.",
+      "line": 273,
+      "selection": {
+        "start": {
+          "line": 269,
+          "character": 5
+        },
+        "end": {
+          "line": 273,
+          "character": 30
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/hydrogen_minimodel.py",
+      "description": "### As Gigajoule\n\nIf the argument `as_gj` was set to `True`, the code calculate the price as EUR/GJ for each one of the values and changes the `value`and `unit` columns.",
+      "line": 277,
+      "selection": {
+        "start": {
+          "line": 275,
+          "character": 4
+        },
+        "end": {
+          "line": 277,
+          "character": 85
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/hydrogen_minimodel.py",
+      "description": "## Hydrogen minimodel\n\nThe final output of the hydrogen_minimodel is the timeseries that contains the green h2 prices in gigajoules for the average and favorable scenarios.\n\nIf the argument `serialize_only` is set to `True` it saves the data frame as a pickle, otherwise it returns the dataframe.",
+      "line": 381,
+      "selection": {
+        "start": {
+          "line": 374,
+          "character": 5
+        },
+        "end": {
+          "line": 381,
+          "character": 41
         }
       }
     }
