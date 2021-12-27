@@ -256,6 +256,96 @@
           "character": 64
         }
       }
+    },
+    {
+      "file": "mppsteel/data_loading/business_case_standardisation.py",
+      "description": "### EAF Factor calculations\n\nTODO",
+      "line": 522,
+      "selection": {
+        "start": {
+          "line": 495,
+          "character": 5
+        },
+        "end": {
+          "line": 522,
+          "character": 76
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/business_case_standardisation.py",
+      "description": "### DRI-EAF Factor calculations\n\nTODO.",
+      "line": 560,
+      "selection": {
+        "start": {
+          "line": 524,
+          "character": 5
+        },
+        "end": {
+          "line": 560,
+          "character": 10
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/business_case_standardisation.py",
+      "description": "### Factor list\n\nTODO",
+      "line": 580,
+      "selection": {
+        "start": {
+          "line": 562,
+          "character": 4
+        },
+        "end": {
+          "line": 580,
+          "character": 6
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/business_case_standardisation.py",
+      "description": "### Read data\n\nTODO.",
+      "line": 584,
+      "selection": {
+        "start": {
+          "line": 581,
+          "character": 5
+        },
+        "end": {
+          "line": 584,
+          "character": 49
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/business_case_standardisation.py",
+      "description": "### Data to dictionary\n\nTODO.",
+      "line": 595,
+      "selection": {
+        "start": {
+          "line": 586,
+          "character": 5
+        },
+        "end": {
+          "line": 595,
+          "character": 35
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/business_case_standardisation.py",
+      "description": "### Return \n\nTODO.",
+      "line": 600,
+      "selection": {
+        "start": {
+          "line": 596,
+          "character": 3
+        },
+        "end": {
+          "line": 600,
+          "character": 33
+        }
+      }
     }
   ]
 }
