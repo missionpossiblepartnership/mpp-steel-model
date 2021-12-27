@@ -1,0 +1,36 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "#4 - timeseries",
+  "steps": [
+    {
+      "file": "mppsteel/minimodels/timeseries_generator.py",
+      "description": "# Timeseries\n\nThis module generates the timeseries needed for the model. The module contains multiple functions to deal with specific timeseries susch as biomass, carbon tax, and electricity prices.\n\nIn this tour we will cover from the main function and the functions that are used to create the specific timeseries.",
+      "line": 1,
+      "selection": {
+        "start": {
+          "line": 1,
+          "character": 1
+        },
+        "end": {
+          "line": 1,
+          "character": 62
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/timeseries_generator.py",
+      "description": "## generate_timeseries\n\nThis is the main function to generate the timeseries for biomass, carbon taxes and electricity costs. The function creates a dataframe for each one and returns a dictionary with the keys as the name of the timeseries and the corresponding `pandas.DataFrame` as the values.\n\n```python\ntimeseries_dict = {\n                 \"biomass\": pandas.DataFrame,\n                 \"carbon_tax\": pandas.DataFrame,\n                 \"electricity\": pandas.DataFrame\"\n                 }\n```\nThe function takes a boolean `serialize_only` argument, by default is set to `False` in case of being set up to `True` the functions does not returns the data dictionary and only saves it as a pickle in the intermediate data folder.",
+      "line": 295,
+      "selection": {
+        "start": {
+          "line": 287,
+          "character": 1
+        },
+        "end": {
+          "line": 295,
+          "character": 8
+        }
+      }
+    }
+  ]
+}
