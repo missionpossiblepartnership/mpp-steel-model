@@ -194,6 +194,26 @@
     },
     {
       "file": "mppsteel/data_loading/business_case_standardisation.py",
+      "description": "### Tech process getter\n\nGet the technology process for the given technology, process and step.",
+      "line": 62,
+      "selection": {
+        "start": {
+          "line": 54,
+          "character": 1
+        },
+        "end": {
+          "line": 62,
+          "character": 3
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/business_case_standardisation.py",
+      "description": "### Filter dataframe and return value.\n\nThe function has a control flow implemented to check the possible combinations of having a `step`, `material`, and `process_detail` or neither. \n\nOnce the control flow checks, the function returns the value of the dataframe after being filtered out. For example, in the case there is a `process_detail` and not `material` and not `step` it returns filter only by technology, process and process detail.\n\n```python\nreturn df_c[\n             (df_c[\"technology\"] == technology) & \n             (df_c[\"process\"] == process) &\n             (df_c[\"process_detail\"] == process_detail)\n             ][\"value\"].values[0]\n```",
+      "line": 124
+    },
+    {
+      "file": "mppsteel/data_loading/business_case_standardisation.py",
       "description": "### Bosc_hot_metal_required\n\nTo calculate the bosc hot metal required the function multiplies the previously calculated hot_metal_required times the `BASIC_OXYGEN_STEELMAKING_CASTING_FACTOR` previously loaded.",
       "line": 415,
       "selection": {
@@ -236,26 +256,6 @@
           "character": 64
         }
       }
-    },
-    {
-      "file": "mppsteel/data_loading/business_case_standardisation.py",
-      "description": "### Tech process getter\n\nGet the technology process for the given technology, process and step.",
-      "line": 62,
-      "selection": {
-        "start": {
-          "line": 54,
-          "character": 1
-        },
-        "end": {
-          "line": 62,
-          "character": 3
-        }
-      }
-    },
-    {
-      "file": "mppsteel/data_loading/business_case_standardisation.py",
-      "description": "### Filter dataframe and return value.\n\nThe function has a control flow implemented to check the possible combinations of having a `step`, `material`, and `process_detail` or neither. \n\nOnce the control flow checks, the function returns the value of the dataframe after being filtered out. For example, in the case there is a `process_detail` and not `material` and not `step` it returns filter only by technology, process and process detail.\n\n```python\nreturn df_c[\n             (df_c[\"technology\"] == technology) & \n             (df_c[\"process\"] == process) &\n             (df_c[\"process_detail\"] == process_detail)\n             ][\"value\"].values[0]\n```",
-      "line": 124
     }
   ]
 }
