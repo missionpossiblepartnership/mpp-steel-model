@@ -346,6 +346,161 @@
           "character": 33
         }
       }
+    },
+    {
+      "file": "mppsteel/data_loading/business_case_standardisation.py",
+      "description": "### Technology processes\n\nTODO.",
+      "line": 1039
+    },
+    {
+      "file": "mppsteel/data_loading/business_case_standardisation.py",
+      "description": "### Create mini process dfs\n\nTODO\n\n```python\ndef create_mini_process_dfs(\n    df: pd.DataFrame,\n    technology_name: str,\n    process_mapper: dict,\n    factor_value_dict: dict,\n):\n    logger.info(f\"-- Creating process dictionary for {technology_name}\")\n    df_c = df.copy()\n    df_dict = {}\n    for process in process_mapper[technology_name]:\n        df_f = tech_process_getter(df_c, technology_name, process=process)\n        df_f[\"value\"] = df_f[\"value\"] * factor_value_dict[process]\n        df_dict[process] = df_f\n    return df_dict\n```",
+      "line": 1042,
+      "selection": {
+        "start": {
+          "line": 1040,
+          "character": 1
+        },
+        "end": {
+          "line": 1042,
+          "character": 6
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/business_case_standardisation.py",
+      "description": "### Fix exceptions\n\nTODO.",
+      "line": 1050,
+      "selection": {
+        "start": {
+          "line": 1043,
+          "character": 5
+        },
+        "end": {
+          "line": 1050,
+          "character": 6
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/business_case_standardisation.py",
+      "description": "### Fix exceptions function\n\nTODO",
+      "line": 1100,
+      "selection": {
+        "start": {
+          "line": 1094,
+          "character": 1
+        },
+        "end": {
+          "line": 1100,
+          "character": 3
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/business_case_standardisation.py",
+      "description": "#### Load data\n\nTODO",
+      "line": 1107,
+      "selection": {
+        "start": {
+          "line": 1104,
+          "character": 5
+        },
+        "end": {
+          "line": 1107,
+          "character": 83
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/business_case_standardisation.py",
+      "description": "### Limestone df editor\n\nTODO",
+      "line": 1053,
+      "selection": {
+        "start": {
+          "line": 1051,
+          "character": 5
+        },
+        "end": {
+          "line": 1053,
+          "character": 6
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/business_case_standardisation.py",
+      "description": "### CCS df editor\n\nTODO",
+      "line": 1060,
+      "selection": {
+        "start": {
+          "line": 1054,
+          "character": 5
+        },
+        "end": {
+          "line": 1060,
+          "character": 6
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/business_case_standardisation.py",
+      "description": "### CCU df editor\n\nTODO",
+      "line": 1063,
+      "selection": {
+        "start": {
+          "line": 1061,
+          "character": 5
+        },
+        "end": {
+          "line": 1063,
+          "character": 6
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/business_case_standardisation.py",
+      "description": "### Self gen df editor\n\nTODO",
+      "line": 1070,
+      "selection": {
+        "start": {
+          "line": 1064,
+          "character": 4
+        },
+        "end": {
+          "line": 1070,
+          "character": 6
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/business_case_standardisation.py",
+      "description": "### Combine dataframe\n\nTODO",
+      "line": 1073,
+      "selection": {
+        "start": {
+          "line": 1071,
+          "character": 5
+        },
+        "end": {
+          "line": 1073,
+          "character": 23
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/business_case_standardisation.py",
+      "description": "### Returns\n\nTODO",
+      "line": 1368,
+      "selection": {
+        "start": {
+          "line": 1365,
+          "character": 5
+        },
+        "end": {
+          "line": 1368,
+          "character": 27
+        }
+      }
     }
   ]
 }
