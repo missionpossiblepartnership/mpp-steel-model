@@ -1,0 +1,101 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "#0 - Full model run",
+  "steps": [
+    {
+      "file": "main.py",
+      "description": "# Main file\n\nTHe main interface with the model can be accessed with this file, a command line tool to run the full model, in the terminal run:\n```bash\npython main.py -a\n```",
+      "line": 1,
+      "selection": {
+        "start": {
+          "line": 1,
+          "character": 1
+        },
+        "end": {
+          "line": 1,
+          "character": 36
+        }
+      }
+    },
+    {
+      "file": "main.py",
+      "description": "## Command Line Interface\n\nThe command line interface for the MPP Python Steel Model takes different arguments to run the model.",
+      "line": 111,
+      "selection": {
+        "start": {
+          "line": 95,
+          "character": 1
+        },
+        "end": {
+          "line": 111,
+          "character": 80
+        }
+      }
+    },
+    {
+      "file": "main.py",
+      "description": "## Full flow\n\nIf the argument in the CLI is -a, the script will generate a full run of the model.",
+      "line": 118,
+      "selection": {
+        "start": {
+          "line": 117,
+          "character": 5
+        },
+        "end": {
+          "line": 118,
+          "character": 20
+        }
+      }
+    },
+    {
+      "file": "main.py",
+      "description": "## Full flow\n\nThe full flow of the model calls two main steps:\n1. data import and preprocessing refresh\n2. half model run",
+      "line": 87
+    },
+    {
+      "file": "main.py",
+      "description": "## Data import and preprocessing refresh\n\nThe data import and prepocessing calls the two process for importing the data and preprocessing it. Each of these steps have multiple stages.",
+      "line": 77,
+      "selection": {
+        "start": {
+          "line": 75,
+          "character": 1
+        },
+        "end": {
+          "line": 77,
+          "character": 31
+        }
+      }
+    },
+    {
+      "file": "main.py",
+      "description": "## Data import\n\nThe data import stage consists of the following steps (click in each one to go to the specific tour)\n    \n  1. [Load data][load_data]\n  2. [Generate hydrogen timeseries][hydrogen_minimodel]\n  3. [Generate timeseries][timeseries]\n  4. [Standarise business cases][Standarise business case]\n  5. [Create country reference][Country reference]",
+      "line": 42,
+      "selection": {
+        "start": {
+          "line": 36,
+          "character": 1
+        },
+        "end": {
+          "line": 42,
+          "character": 44
+        }
+      }
+    },
+    {
+      "file": "main.py",
+      "description": "## Data preprocessing\n\nThe data preprocessing phase consists of the following steps:\n\n  1. [Steel plant processor][Steel plant formatter]\n  2. [Create capex and opex dictionary][CAPEX OPEX dict]\n  3. [Generate preprocessed emissions data][Preprocessed emissions data]\n  4. [Create capex timeseries][]\n  5. [Calculate emissions][]\n  6. [Investment cycle flow][]\n  7. [Generate variable plant summar][]",
+      "line": 53,
+      "selection": {
+        "start": {
+          "line": 44,
+          "character": 1
+        },
+        "end": {
+          "line": 53,
+          "character": 57
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "#8 - CAPEX OPEX dict",
+  "steps": [
+    {
+      "file": "mppsteel/data_loading/data_interface.py",
+      "description": "# CAPEX OPEX Dictionary\n\nThis function reads the capex and opex data and generates a dictionary combining the data together.",
+      "line": 290,
+      "selection": {
+        "start": {
+          "line": 290,
+          "character": 1
+        },
+        "end": {
+          "line": 290,
+          "character": 58
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/data_interface.py",
+      "description": "## Read data\n\nRead the CAPEX and OPEX data from the `PKL_DATA_IMPORTS` folder.",
+      "line": 293,
+      "selection": {
+        "start": {
+          "line": 291,
+          "character": 5
+        },
+        "end": {
+          "line": 293,
+          "character": 71
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/data_interface.py",
+      "description": "## CAPEX Dictionary\n\nUse the previously loaded data to create the CAPEX dictionary with the folloeing function:\n\n```python\ndef capex_dictionary_generator(\n    greenfield_df: pd.DataFrame, brownfield_df: pd.DataFrame, other_df: pd.DataFrame\n) -> dict:\n    \"\"\"[summary]\n\n    Args:\n        greenfield_df (pd.DataFrame): A dataframe of greenfield capex\n        brownfield_df (pd.DataFrame): A dataframe of brownfield capex\n        other_df (pd.DataFrame): A dataframe of other opex\n\n    Returns:\n        dict: A dictionary of the formatted capex and opex dataframes\n    \"\"\"\n\n    brownfield_df.drop(\n        [\"Available from\", \"Available until\", \"Technology type\"], axis=1, inplace=True\n    )\n    return {\n        \"greenfield\": melt_and_index(\n            greenfield_df, [\"Technology\"], \"Year\", [\"Technology\", \"Year\"]\n        ),\n        \"brownfield\": melt_and_index(\n            brownfield_df, [\"Technology\"], \"Year\", [\"Technology\", \"Year\"]\n        ),\n        \"other_opex\": melt_and_index(\n            other_df, [\"Technology\"], \"Year\", [\"Technology\", \"Year\"]\n        ),\n    }\n```",
+      "line": 296,
+      "selection": {
+        "start": {
+          "line": 294,
+          "character": 5
+        },
+        "end": {
+          "line": 296,
+          "character": 6
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/data_interface.py",
+      "description": "### Return\n\nIf the `serialize_only` argument was set to `True` save the dictionary as a pickle, otherwise return the dictionary.",
+      "line": 300,
+      "selection": {
+        "start": {
+          "line": 297,
+          "character": 5
+        },
+        "end": {
+          "line": 300,
+          "character": 22
+        }
+      }
+    }
+  ]
+}
