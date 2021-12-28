@@ -96,6 +96,36 @@
           "character": 16
         }
       }
+    },
+    {
+      "file": "mppsteel/data_loading/country_reference.py",
+      "description": "### Country reference dictionary\n\nThe next step in the `create_country_ref` function is to create the dictionary With the countries metadata DataFrame using the `create_country_ref_dict` function.\n\n```python\ndef create_country_ref_dict(df: pd.DataFrame, country_metadata_nt: namedtuple) -> dict:\n    \"\"\"Creates a dictionary based on the a DataFrame with country metadata using\n    alpha3 country code as the dict key.\n\n    Args:\n        df (pd.DataFrame): A dataframe with country metadata.\n\n    Returns:\n        dict: [A dictionary with country code as the dictionary key.\n    \"\"\"\n    logger.info(\"Creating Country Reference dictionary\")\n    country_ref_dict = {}\n    for row in df.itertuples():\n        country_ref_dict[row.country_code] = country_metadata_nt(\n            row.country_code,\n            row.country,\n            row.official_name,\n            row.m49_code,\n            row.region,\n            row.continent,\n            row.wsa_region,\n            row.rmi_region,\n        )\n    return country_ref_dict\n```",
+      "line": 138,
+      "selection": {
+        "start": {
+          "line": 138,
+          "character": 5
+        },
+        "end": {
+          "line": 138,
+          "character": 32
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/country_reference.py",
+      "description": "### Return\n\nOnce the dictionary is created the functions can return it if the `serialize_only` argument was set to `False`, otherwise it saves the dictionary as a pickle in the `PKL_DATA_INTERMEDIATE` folder.",
+      "line": 143,
+      "selection": {
+        "start": {
+          "line": 140,
+          "character": 5
+        },
+        "end": {
+          "line": 143,
+          "character": 19
+        }
+      }
     }
   ]
 }
