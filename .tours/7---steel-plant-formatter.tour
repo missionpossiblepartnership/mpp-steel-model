@@ -1,0 +1,181 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "#7 - Steel plant formatter",
+  "steps": [
+    {
+      "file": "mppsteel/data_loading/steel_plant_formatter.py",
+      "description": "# Steel plant formater\n\nThis module is in charge of formatting the steel plant and returning the plants in a `pandas.DataFrame`",
+      "line": 1
+    },
+    {
+      "file": "mppsteel/data_loading/steel_plant_formatter.py",
+      "description": "## steel_plant_processor\n\nThe main function to process the steel plants. The function takes two arguments `serialize_only` a boolean argument to define if the data will be returned or if it will be saved as a pickle. And, `remove_non_operating_plants` used to remove the steel plants that are not operating.",
+      "line": 126,
+      "selection": {
+        "start": {
+          "line": 116,
+          "character": 1
+        },
+        "end": {
+          "line": 126,
+          "character": 8
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/steel_plant_formatter.py",
+      "description": "### Load data\n\nLoad the steel plants data pickle from the `PKL_DATA_IMPORTS`",
+      "line": 128,
+      "selection": {
+        "start": {
+          "line": 128,
+          "character": 5
+        },
+        "end": {
+          "line": 128,
+          "character": 72
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/steel_plant_formatter.py",
+      "description": "### Steel plant formatter\n\nThis line calls the `steel_plan_formatter` function to format the plants, passing the steel plants data previously loaded and the `remode_non_operating_plants` argument.",
+      "line": 129,
+      "selection": {
+        "start": {
+          "line": 129,
+          "character": 5
+        },
+        "end": {
+          "line": 129,
+          "character": 84
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/steel_plant_formatter.py",
+      "description": "## Steel plant formatter\n\nThe function to format the steel plants data input. It removes columns that wont be used, rename columns and extract steel plant capacity. If the `remove_non_operating_plants` argument is set to `True`it will remove the plants that are not operating.",
+      "line": 29,
+      "selection": {
+        "start": {
+          "line": 21,
+          "character": 1
+        },
+        "end": {
+          "line": 29,
+          "character": 8
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/steel_plant_formatter.py",
+      "description": "### Drop columns & Rename\n\nDrop the specified columns that wont be used anymore, and rename the columns",
+      "line": 46,
+      "selection": {
+        "start": {
+          "line": 32,
+          "character": 5
+        },
+        "end": {
+          "line": 46,
+          "character": 85
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/steel_plant_formatter.py",
+      "description": "### Country code column\n\nCreate a new country code column in the data frame and fill it with an empty string.",
+      "line": 48,
+      "selection": {
+        "start": {
+          "line": 48,
+          "character": 4
+        },
+        "end": {
+          "line": 48,
+          "character": 30
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/steel_plant_formatter.py",
+      "description": "### Extract plant capacity\n\nThe dataframe is sent to the `extract_steel_plant_capacity` function to get the steel capacity for 2020",
+      "line": 50,
+      "selection": {
+        "start": {
+          "line": 50,
+          "character": 5
+        },
+        "end": {
+          "line": 50,
+          "character": 46
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/steel_plant_formatter.py",
+      "description": "## Extract steel plant capacity\n\nThe function extracts the steel plant capacity by checking the capacity columns and setting the value to float.",
+      "line": 58,
+      "selection": {
+        "start": {
+          "line": 58,
+          "character": 1
+        },
+        "end": {
+          "line": 58,
+          "character": 52
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/steel_plant_formatter.py",
+      "description": "### Primary capacity\n\nThe primary capacity of the plant is calculated by iterating over the rows in the dataframe and the capacity columns. for each iteration the code checks if the column is in the capacity columns and then depending on the technology extracts the value from the capacity, converts it into float and sets the `primary_capacity_2020` to the extracted value.",
+      "line": 89,
+      "selection": {
+        "start": {
+          "line": 68,
+          "character": 5
+        },
+        "end": {
+          "line": 89,
+          "character": 65
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/steel_plant_formatter.py",
+      "description": "### Secondary capacity\n\nTo calculate the secondary capacity for 2020 the coad gets the EAF capacity for each row and substracts the DRIEAF capacity with the following code:\n```python\ndf_c['EAF_capacity'].apply(lambda x: convert_to_float(x)) - df_c['DRIEAF_capacity'].apply(lambda x: convert_to_float(x)) \n```\n",
+      "line": 90
+    },
+    {
+      "file": "mppsteel/data_loading/steel_plant_formatter.py",
+      "description": "### Apply countries to steel plants\n\nOnce the steel plants were formatter, the next step is to apply the countries to the dataframe with the steel plants with the following function:\n```python\ndef apply_countries_to_steel_plants(steel_plant_formatted: pd.DataFrame):\n    logger.info(\"Applying Country Data to Steel Plants\")\n    df_c = steel_plant_formatted.copy()\n    steel_plant_countries = df_c[\"country\"].unique().tolist()\n    matching_dict, unmatched_dict = country_matcher(steel_plant_countries)\n    logger.info(\"- Applying the codes of the matched countries to the steel plant column\")\n    df_c[\"country_code\"] = df_c[\"country\"].apply(lambda x: matching_dict[x])\n    country_fixer_dict = {\"Korea, North\": \"PRK\"}\n    steel_plants = country_mapping_fixer(df_c, \"country\", \"country_code\", country_fixer_dict)\n    country_reference_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'country_reference_dict', 'df')\n    steel_plants['region'] = steel_plants['country_code'].apply(lambda x: match_country(x, country_reference_dict))\n    return steel_plant\n```",
+      "line": 130,
+      "selection": {
+        "start": {
+          "line": 130,
+          "character": 5
+        },
+        "end": {
+          "line": 130,
+          "character": 65
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/steel_plant_formatter.py",
+      "description": "### Return\n\nThe final step is to return the dataframe with the steel plants formatted and with the country code in the dataframe. At this step if the `serialize_only` argument was set to `True` the dataframe will be serialize into a pickle, otherwise it will return the DataFrame.",
+      "line": 136,
+      "selection": {
+        "start": {
+          "line": 132,
+          "character": 5
+        },
+        "end": {
+          "line": 136,
+          "character": 24
+        }
+      }
+    }
+  ]
+}
