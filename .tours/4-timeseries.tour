@@ -1,6 +1,6 @@
 {
   "$schema": "https://aka.ms/codetour-schema",
-  "title": "#4 - timeseries",
+  "title": "#04 - timeseries",
   "steps": [
     {
       "file": "mppsteel/minimodels/timeseries_generator.py",

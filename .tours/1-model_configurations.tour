@@ -1,6 +1,6 @@
 {
   "$schema": "https://aka.ms/codetour-schema",
-  "title": "#1 - model_configurations",
+  "title": "#01 - model_configurations",
   "steps": [
     {
       "file": "mppsteel/model_config.py",
@@ -174,7 +174,7 @@
     },
     {
       "file": "mppsteel/model_config.py",
-      "description": "## Green premium and switch ranking",
+      "description": "## Green premium and switch ranking\n\n**The next step shows the [full model run][Full model run]**",
       "line": 61,
       "selection": {
         "start": {

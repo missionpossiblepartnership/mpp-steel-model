@@ -1,6 +1,6 @@
 {
   "$schema": "https://aka.ms/codetour-schema",
-  "title": "#7 - Steel plant formatter",
+  "title": "#07 - Steel plant formatter",
   "steps": [
     {
       "file": "mppsteel/data_loading/steel_plant_formatter.py",

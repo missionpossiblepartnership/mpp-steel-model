@@ -1,6 +1,6 @@
 {
   "$schema": "https://aka.ms/codetour-schema",
-  "title": "#6 - Country reference",
+  "title": "#06 - Country reference",
   "steps": [
     {
       "file": "mppsteel/data_loading/country_reference.py",

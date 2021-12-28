@@ -1,6 +1,6 @@
 {
   "$schema": "https://aka.ms/codetour-schema",
-  "title": "#8 - CAPEX OPEX dict",
+  "title": "#08 - CAPEX OPEX dict",
   "steps": [
     {
       "file": "mppsteel/data_loading/data_interface.py",

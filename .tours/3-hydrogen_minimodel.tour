@@ -1,6 +1,6 @@
 {
   "$schema": "https://aka.ms/codetour-schema",
-  "title": "#3 - hydrogen_minimodel",
+  "title": "#03 - hydrogen_minimodel",
   "steps": [
     {
       "file": "mppsteel/minimodels/hydrogen_minimodel.py",

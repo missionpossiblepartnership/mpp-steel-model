@@ -1,6 +1,6 @@
 {
   "$schema": "https://aka.ms/codetour-schema",
-  "title": "#9 - Preprocessed emissions data",
+  "title": "#09 - Preprocessed emissions data",
   "steps": [
     {
       "file": "mppsteel/data_loading/data_interface.py",

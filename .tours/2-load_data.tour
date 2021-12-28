@@ -1,6 +1,6 @@
 {
   "$schema": "https://aka.ms/codetour-schema",
-  "title": "#2 - load_data",
+  "title": "#02 - load_data",
   "steps": [
     {
       "file": "mppsteel/data_loading/data_import.py",
