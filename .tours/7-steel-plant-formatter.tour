@@ -144,7 +144,7 @@
     },
     {
       "file": "mppsteel/data_loading/steel_plant_formatter.py",
-      "description": "### Secondary capacity\n\nTo calculate the secondary capacity for 2020 the coad gets the EAF capacity for each row and substracts the DRIEAF capacity with the following code:\n```python\ndf_c['EAF_capacity'].apply(lambda x: convert_to_float(x)) - df_c['DRIEAF_capacity'].apply(lambda x: convert_to_float(x)) \n```\n",
+      "description": "### Secondary capacity\n\nTo calculate the secondary capacity for 2020 the code gets the EAF capacity for each row and subtracts the DRIEAF capacity with the following code:\n```python\ndf_c['EAF_capacity'].apply(lambda x: convert_to_float(x)) - df_c['DRIEAF_capacity'].apply(lambda x: convert_to_float(x)) \n```\n",
       "line": 90
     },
     {
