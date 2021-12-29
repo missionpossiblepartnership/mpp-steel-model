@@ -1,0 +1,11 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "#15 - Production results",
+  "steps": [
+    {
+      "file": "mppsteel/results/production.py",
+      "description": "# Production results\n\nThis module contains the functions used to get the results out of the model based on the technology switches.",
+      "line": 1
+    }
+  ]
+}

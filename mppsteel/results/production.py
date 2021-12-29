@@ -30,6 +30,16 @@ logger = get_logger("Production Results")
 
 def generate_production_stats(
     tech_capacity_df: pd.DataFrame, steel_df: pd.DataFrame, year_end: int):
+    """[summary]
+
+    Args:
+        tech_capacity_df (pd.DataFrame): [description]
+        steel_df (pd.DataFrame): [description]
+        year_end (int): [description]
+
+    Returns:
+        [type]: [description]
+    """    
     logger.info(f'- Generating Production Results from capacity')
     df_list = []
     year_range = range(MODEL_YEAR_START, year_end+1)
@@ -44,7 +54,11 @@ def generate_production_stats(
 
 
 def tech_capacity_splits():
+    """[summary]
 
+    Returns:
+        [type]: [description]
+    """    
     logger.info(f'- Generating Capacity split DataFrame')
     tech_capacities_dict = create_plant_capacities_dict()
     tech_choices_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'tech_choice_dict', 'df')
@@ -64,6 +78,15 @@ def tech_capacity_splits():
     return pd.concat(df_list), max_year
 
 def production_stats_generator(production_df: pd.DataFrame, as_summary: bool = False):
+    """[summary]
+
+    Args:
+        production_df (pd.DataFrame): [description]
+        as_summary (bool, optional): [description]. Defaults to False.
+
+    Returns:
+        [type]: [description]
+    """    
     logger.info(f'- Generating Material Usage stats')
     df_c = production_df.copy()
     material_dict_mapper = load_materials_mapper()
@@ -97,6 +120,15 @@ def production_stats_generator(production_df: pd.DataFrame, as_summary: bool = F
     return df_c
 
 def generate_production_emission_stats(production_df: pd.DataFrame, as_summary: bool = False):
+    """[summary]
+
+    Args:
+        production_df (pd.DataFrame): [description]
+        as_summary (bool, optional): [description]. Defaults to False.
+
+    Returns:
+        [type]: [description]
+    """    
     logger.info(f'- Generating Material Usage stats')
     emissions_dict = create_emissions_dict()
 
@@ -130,6 +162,17 @@ def global_metaresults_calculator(
     production_results_df: pd.DataFrame,
     year_end,
     ):
+    """[summary]
+
+    Args:
+        steel_market_df (pd.DataFrame): [description]
+        tech_capacity_df (pd.DataFrame): [description]
+        production_results_df (pd.DataFrame): [description]
+        year_end ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """    
     # Initial Steel capacity values
     logger.info(f'- Generating Global Metaresults')
     
@@ -181,20 +224,53 @@ def global_metaresults_calculator(
     return df
 
 def business_case_getter(df: pd.DataFrame, tech: str, material: str):
+    """[summary]
+
+    Args:
+        df (pd.DataFrame): [description]
+        tech (str): [description]
+        material (str): [description]
+
+    Returns:
+        [type]: [description]
+    """    
     if material in df[(df['technology'] == tech)]['material_category'].unique():
         return df[(df['technology'] == tech) & (df['material_category'] == material)]['value'].values[0]
     return 0
 
 def get_tech_choice(tc_dict: dict, year: int, plant_name: str):
+    """[summary]
+
+    Args:
+        tc_dict (dict): [description]
+        year (int): [description]
+        plant_name (str): [description]
+
+    Returns:
+        [type]: [description]
+    """    
     return tc_dict[str(year)][plant_name]
 
 def load_materials_mapper():
+    """[summary]
+
+    Returns:
+        [type]: [description]
+    """    
     materials = load_materials()
     material_col_names = [material.lower().replace(' ', '_') for material in materials]
     return dict(zip(materials, material_col_names))
 
 @timer_func
 def production_results_flow(serialize_only: bool = False):
+    """[summary]
+
+    Args:
+        serialize_only (bool, optional): [description]. Defaults to False.
+
+    Returns:
+        [type]: [description]
+    """    
     logger.info(f'- Starting Production Results Model Flow')
     new_steel_demand = extend_steel_demand(MODEL_YEAR_END)
     tech_capacity_df, max_solver_year = tech_capacity_splits()

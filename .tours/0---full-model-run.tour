@@ -104,7 +104,22 @@
     },
     {
       "file": "main.py",
-      "description": "## Model calculation phase\n\nThis is the function to call the solver flow.",
+      "description": "## Model results phase\n\nThere are two functions to get the results out of the model:\n\n  1. [production_results_flow][]\n  2. [investment_results][]",
+      "line": 60,
+      "selection": {
+        "start": {
+          "line": 58,
+          "character": 1
+        },
+        "end": {
+          "line": 60,
+          "character": 44
+        }
+      }
+    },
+    {
+      "file": "main.py",
+      "description": "## Model calculation phase\n\nAt this moment the [solver_flow function is called][Solver]",
       "line": 56,
       "selection": {
         "start": {
