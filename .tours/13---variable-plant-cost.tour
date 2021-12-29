@@ -1,0 +1,71 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "#13 - Variable plant cost",
+  "steps": [
+    {
+      "file": "mppsteel/model/variable_plant_cost_archetypes.py",
+      "description": "# Variable plant cost\n\nThis module contains the functions used to determine the variable plant cost types dependent on regions",
+      "line": 1
+    },
+    {
+      "file": "mppsteel/model/variable_plant_cost_archetypes.py",
+      "description": "## Generate variable plant summary\n\nThe main function to create the plant costs and summary. The function takes a boolean argument `serialize_only`, if set to `True` the function saves the plants variable costs summary as a pickle, if `False` it returns the dataframe.",
+      "line": 205,
+      "selection": {
+        "start": {
+          "line": 197,
+          "character": 1
+        },
+        "end": {
+          "line": 205,
+          "character": 12
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/variable_plant_cost_archetypes.py",
+      "description": "### Plant variable costs\n\nThe first step is to use the constant `MODEL_YEAR_END` to calculate the plant variable costs with the function `plant_variable_coststs`",
+      "line": 206,
+      "selection": {
+        "start": {
+          "line": 206,
+          "character": 1
+        },
+        "end": {
+          "line": 206,
+          "character": 68
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/variable_plant_cost_archetypes.py",
+      "description": "## Plant variable cost\n\nThe function calculates the variable costs for the plants and returns a dataframe with it.",
+      "line": 37,
+      "selection": {
+        "start": {
+          "line": 29,
+          "character": 1
+        },
+        "end": {
+          "line": 37,
+          "character": 12
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/variable_plant_cost_archetypes.py",
+      "description": "### Set up\n\nIn the set up state the function loads the necesary data from the pickle files that where created in previous stages of the model",
+      "line": 49,
+      "selection": {
+        "start": {
+          "line": 38,
+          "character": 5
+        },
+        "end": {
+          "line": 49,
+          "character": 43
+        }
+      }
+    }
+  ]
+}
