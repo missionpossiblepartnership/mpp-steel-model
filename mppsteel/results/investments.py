@@ -17,6 +17,11 @@ from mppsteel.utility.utils import (
 logger = get_logger("Investment Results")
 
 def create_capex_dict():
+    """[summary]
+
+    Returns:
+        [type]: [description]
+    """    
     capex = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'capex_switching_df', 'df')
     capex_c = capex.copy()
     capex_c.reset_index(inplace=True)
@@ -24,6 +29,17 @@ def create_capex_dict():
     return capex_c.set_index(['year', 'start_technology']).sort_index()
 
 def get_capex_ref(capex_df: pd.DataFrame, year: int, start_tech: str, new_tech: str):
+    """[summary]
+
+    Args:
+        capex_df (pd.DataFrame): [description]
+        year (int): [description]
+        start_tech (str): [description]
+        new_tech (str): [description]
+
+    Returns:
+        [type]: [description]
+    """    
     capex_year = year
     if year > 2050:
         capex_year = 2050
@@ -33,13 +49,45 @@ def get_capex_ref(capex_df: pd.DataFrame, year: int, start_tech: str, new_tech: 
     return capex_ref.loc[capex_ref['new_technology'] == new_tech]['value'].values[0]
 
 def investment_switch_getter(inv_df: pd.DataFrame, year: int, plant_name: str):
+    """[summary]
+
+    Args:
+        inv_df (pd.DataFrame): [description]
+        year (int): [description]
+        plant_name (str): [description]
+
+    Returns:
+        [type]: [description]
+    """    
     inv_df_ref = inv_df.reset_index().set_index(['year', 'plant_name']).sort_values(['year'])
     return inv_df_ref.loc[year, plant_name].values[0]
 
 def get_tech_choice(tc_dict: dict, year: int, plant_name: str):
+    """[summary]
+
+    Args:
+        tc_dict (dict): [description]
+        year (int): [description]
+        plant_name (str): [description]
+
+    Returns:
+        [type]: [description]
+    """    
     return tc_dict[str(year)][plant_name]
 
 def investment_row_calculator(inv_df: pd.DataFrame, capex_df: pd.DataFrame, tech_choices: dict, plant_name: str, year: int):
+    """[summary]
+
+    Args:
+        inv_df (pd.DataFrame): [description]
+        capex_df (pd.DataFrame): [description]
+        tech_choices (dict): [description]
+        plant_name (str): [description]
+        year (int): [description]
+
+    Returns:
+        [type]: [description]
+    """    
     switch_type = investment_switch_getter(inv_df, year, plant_name)
 
     if year == 2020:
@@ -61,6 +109,14 @@ def investment_row_calculator(inv_df: pd.DataFrame, capex_df: pd.DataFrame, tech
 
 @timer_func
 def investment_results(serialize_only: bool = False):
+    """[summary]
+
+    Args:
+        serialize_only (bool, optional): [description]. Defaults to False.
+
+    Returns:
+        [type]: [description]
+    """    
     logger.info(f'Generating Investment Results')
     tech_choice_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'tech_choice_dict', 'df')
     plant_investment_cycles = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'plant_investment_cycles', 'df')
