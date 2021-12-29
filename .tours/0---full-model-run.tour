@@ -84,7 +84,7 @@
     },
     {
       "file": "main.py",
-      "description": "## Data preprocessing\n\nThe data preprocessing phase consists of the following steps:\n\n  1. [Steel plant processor][Steel plant formatter]\n  2. [Create capex and opex dictionary][CAPEX OPEX dict]\n  3. [Generate preprocessed emissions data][Preprocessed emissions data]\n  4. [Create capex timeseries][CAPEX switching]\n  5. [Calculate emissions][Emissions]\n  6. [Investment cycle flow][Investment Cycle]\n  7. [Generate variable plant summar][]",
+      "description": "## Data preprocessing\n\nThe data preprocessing phase consists of the following steps:\n\n  1. [Steel plant processor][Steel plant formatter]\n  2. [Create capex and opex dictionary][CAPEX OPEX dict]\n  3. [Generate preprocessed emissions data][Preprocessed emissions data]\n  4. [Create capex timeseries][CAPEX switching]\n  5. [Calculate emissions][Emissions]\n  6. [Investment cycle flow][Investment Cycle]\n  7. [Generate variable plant summary][Variable plant cost]",
       "line": 53,
       "selection": {
         "start": {
@@ -94,6 +94,26 @@
         "end": {
           "line": 53,
           "character": 57
+        }
+      }
+    },
+    {
+      "file": "main.py",
+      "description": "## Half model run\n\nThe half model run function calls the following steps:\n+ `model_calculation_phase()`\n+ `model_results_phase()`\n+ `model_outputs_phase()`",
+      "line": 79
+    },
+    {
+      "file": "main.py",
+      "description": "## Model calculation phase\n\nThis is the function to call the solver flow.",
+      "line": 56,
+      "selection": {
+        "start": {
+          "line": 55,
+          "character": 1
+        },
+        "end": {
+          "line": 56,
+          "character": 62
         }
       }
     }
