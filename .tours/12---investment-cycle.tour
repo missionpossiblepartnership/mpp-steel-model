@@ -1,0 +1,131 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "#12 - Investment Cycle",
+  "steps": [
+    {
+      "file": "mppsteel/model/investment_cycles.py",
+      "description": "# Investment Cycle\n\nThe functions in this file are used to determine the investment cycles for the steel plants.",
+      "line": 1
+    },
+    {
+      "file": "mppsteel/model/investment_cycles.py",
+      "description": "## Investment cycle flow\n\nThe main function to create the investment cycles. THe function takes a boolean argument `serialize_only`, when set to `True` it will save the result as a pickle and do not return anything.",
+      "line": 107,
+      "selection": {
+        "start": {
+          "line": 99,
+          "character": 1
+        },
+        "end": {
+          "line": 107,
+          "character": 11
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/investment_cycles.py",
+      "description": "### Read data\n\nRead the pickle with the steel plants processed, and loads them as a `pandas.DataFrame`",
+      "line": 108,
+      "selection": {
+        "start": {
+          "line": 108,
+          "character": 5
+        },
+        "end": {
+          "line": 108,
+          "character": 97
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/investment_cycles.py",
+      "description": "## Plant investment cycle\n\nUse the function `create_investment_cycle_ref` to create the investment cycles.",
+      "line": 109,
+      "selection": {
+        "start": {
+          "line": 109,
+          "character": 5
+        },
+        "end": {
+          "line": 109,
+          "character": 76
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/investment_cycles.py",
+      "description": "## create_investment_cycle_ref\n\nTo create the investment cycle reference this function takes the steel plant DataFrame and uses the `start_of_operation` column to find the investment years with the function `apply_investment_years`:\n```python\ndef apply_investment_years(year_value):\n    if pd.isna(year_value):\n        return calculate_investment_years(MODEL_YEAR_START)\n    elif '(anticipated)' in str(year_value):\n        year_value = year_value[:4]\n        return calculate_investment_years(int(year_value))\n    else:\n        try:\n            return calculate_investment_years(int(float(year_value)))\n        except:\n            return calculate_investment_years(int(year_value[:4]))\n```\nThen creates a list with the off cycle investment years using the following function:\n```python\ndef add_off_cycle_investment_years(main_investment_cycle: list, start_buff, end_buff,):\n    inv_cycle_length = len(main_investment_cycle)\n    range_list = []\n    def net_zero_year_bring_forward(year: int):\n        if year in range(NET_ZERO_TARGET+1, NET_ZERO_TARGET+NET_ZERO_VARIANCE+1):\n            bring_forward_date = NET_ZERO_TARGET-1\n            logger.info(f'Investment Cycle Brought Forward to {bring_forward_date}')\n            return bring_forward_date\n        return year\n      # For inv_cycle_length = 1\n    first_year = net_zero_year_bring_forward(main_investment_cycle[0])\n    range_list.append(first_year)\n    if inv_cycle_length > 1:\n        for index in range(1, inv_cycle_length):\n            inv_year = net_zero_year_bring_forward(main_investment_cycle[index])\n            range_object = range(main_investment_cycle[index-1]+start_buff, inv_year-end_buff)\n            range_list.append(range_object)\n            range_list.append(inv_year)\n    return range_list\n```\n and returns the result of the function `create_investment_cyclcle_reference`.",
+      "line": 96,
+      "selection": {
+        "start": {
+          "line": 92,
+          "character": 1
+        },
+        "end": {
+          "line": 96,
+          "character": 130
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/investment_cycles.py",
+      "description": "### Create investment cycle reference\n\nThe function creates the plants names, investment years and year end to calculate the investment cycles",
+      "line": 75,
+      "selection": {
+        "start": {
+          "line": 75,
+          "character": 6
+        },
+        "end": {
+          "line": 75,
+          "character": 97
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/investment_cycles.py",
+      "description": "### Investment cycles\n\nTo create the investment cycles the function iterates over the zipped plants and investment years to populate the new dataframe with the columns plant_name, year, switch_type",
+      "line": 81,
+      "selection": {
+        "start": {
+          "line": 77,
+          "character": 5
+        },
+        "end": {
+          "line": 81,
+          "character": 117
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/investment_cycles.py",
+      "description": "### Investment cycle\n\nWhile iterating by plants, it also iterates by year and checks if the year is an investment year or not, if it is an investment year it sets the `switch_type` to `main_cycle` otherwise, it sets the `switch_type` to `trans_switch`. \n\nWhen the loops ends the function sets the index of the dataframe to the year and switch_type and returns the dataframe.",
+      "line": 90,
+      "selection": {
+        "start": {
+          "line": 82,
+          "character": 9
+        },
+        "end": {
+          "line": 90,
+          "character": 49
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/investment_cycles.py",
+      "description": "### Returns \n\nOnce the `plant_investment_cycles` DataFrame was created the function can save it into a pickle file if the `serialize_only` argument was set to `True`, otherwise it returns the dataframe.",
+      "line": 115,
+      "selection": {
+        "start": {
+          "line": 111,
+          "character": 5
+        },
+        "end": {
+          "line": 115,
+          "character": 35
+        }
+      }
+    }
+  ]
+}
