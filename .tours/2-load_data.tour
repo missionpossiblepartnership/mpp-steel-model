@@ -1,0 +1,66 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "#02 - load_data",
+  "steps": [
+    {
+      "file": "mppsteel/data_loading/data_import.py",
+      "description": "## Load data\n\nThis is the main function to load all the data that is needed to run the full model. When the `serialize_only` argument is set to `True`it will save the data as pickle and will not return the data dictionary.\n\nThe function calls other functions to load the specific data, such as the greenfiel_capex, brownfield_capex, ccs_co2, etc. Once all the data is loaded it will be store into a dictionary.",
+      "line": 53,
+      "selection": {
+        "start": {
+          "line": 45,
+          "character": 1
+        },
+        "end": {
+          "line": 53,
+          "character": 8
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/data_import.py",
+      "description": "### Greenfield capex\n\n",
+      "line": 57,
+      "selection": {
+        "start": {
+          "line": 55,
+          "character": 5
+        },
+        "end": {
+          "line": 57,
+          "character": 6
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/data_import.py",
+      "description": "## Data dictionary\n\nWith the data loaded as multiple `pandas.DataFrame`, the function creates a dictionary where the keys are the names of the data and the values are the corresponding DataFrame.",
+      "line": 195,
+      "selection": {
+        "start": {
+          "line": 166,
+          "character": 4
+        },
+        "end": {
+          "line": 195,
+          "character": 6
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/data_import.py",
+      "description": "## Return\n\nAt the end the function returns the data dictionary if `serialize_only` is set to `False`, else the functions saves the data dictionary as a pickle, using the `PKL_DATA_IMPORTS` constant that was defined in `model_config.py`",
+      "line": 201,
+      "selection": {
+        "start": {
+          "line": 197,
+          "character": 4
+        },
+        "end": {
+          "line": 201,
+          "character": 19
+        }
+      }
+    }
+  ]
+}

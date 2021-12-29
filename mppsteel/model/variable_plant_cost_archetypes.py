@@ -27,6 +27,14 @@ from mppsteel.model.emissions_reference_tables import (
 logger = get_logger("Variable Plant Cost Archetypes")
 
 def plant_variable_costs(year_end: int):
+    """[summary]
+
+    Args:
+        year_end (int): [description]
+
+    Returns:
+        [type]: [description]
+    """    
     df_list = []
 
     options = [[0,0,0],[1,0,0],[1,1,0],[1,1,1],[0,1,1],[0,0,1],[0,1,0],[1,0,1]]
@@ -57,6 +65,11 @@ def plant_variable_costs(year_end: int):
 
 
 def generate_feedstock_dict():
+    """[summary]
+
+    Returns:
+        [type]: [description]
+    """    
     commodities_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'commodities_df', 'df')
     feedstock_prices = read_pickle_folder(PKL_DATA_IMPORTS, 'feedstock_prices', 'df')
     commodities_dict = commodity_data_getter(commodities_df)
@@ -75,6 +88,20 @@ def generate_variable_costs(
     electricity_df: pd.DataFrame = None,
     hydrogen_df: pd.DataFrame = None
 ) -> pd.DataFrame:
+    """[summary]
+
+    Args:
+        business_cases_df (pd.DataFrame): [description]
+        plant_iteration (list, optional): [description]. Defaults to None.
+        year_end (int, optional): [description]. Defaults to None.
+        feedstock_dict (dict, optional): [description]. Defaults to None.
+        static_energy_df (pd.DataFrame, optional): [description]. Defaults to None.
+        electricity_df (pd.DataFrame, optional): [description]. Defaults to None.
+        hydrogen_df (pd.DataFrame, optional): [description]. Defaults to None.
+
+    Returns:
+        pd.DataFrame: [description]
+    """
 
     df_list = []
 
@@ -151,6 +178,14 @@ def generate_variable_costs(
     return combined_df
 
 def format_variable_costs(variable_cost_df: pd.DataFrame):
+    """[summary]
+
+    Args:
+        variable_cost_df (pd.DataFrame): [description]
+
+    Returns:
+        [type]: [description]
+    """    
 
     df_c = variable_cost_df.copy()
     df_c.drop(labels=['value'], axis=1, inplace=True)
@@ -160,6 +195,14 @@ def format_variable_costs(variable_cost_df: pd.DataFrame):
 
 @timer_func
 def generate_variable_plant_summary(serialize_only: bool = False):
+    """[summary]
+
+    Args:
+        serialize_only (bool, optional): [description]. Defaults to False.
+
+    Returns:
+        [type]: [description]
+    """    
     all_plant_variable_costs = plant_variable_costs(MODEL_YEAR_END)
     all_plant_variable_costs_summary = format_variable_costs(all_plant_variable_costs)
 
