@@ -1,0 +1,201 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "#14 - Solver",
+  "steps": [
+    {
+      "file": "mppsteel/model/solver.py",
+      "description": "# Solver\n\nThis is the main solver script for deciding investment decisions for each steel plant.",
+      "line": 1,
+      "selection": {
+        "start": {
+          "line": 41,
+          "character": 8
+        },
+        "end": {
+          "line": 41,
+          "character": 17
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/solver.py",
+      "description": "## Solver flow\n\nTHe main function to call the solver, it takes two arguments, the end year of the model and a boolean `serialize_only` that when set to `True` saves the `tec_choice_dict` as a pickle instead of returning it outside of the function.\n\nThe main part of the function is calling the `choose_technology` function with the apropiate parameters.",
+      "line": 684,
+      "selection": {
+        "start": {
+          "line": 663,
+          "character": 1
+        },
+        "end": {
+          "line": 684,
+          "character": 28
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/solver.py",
+      "description": "## Choose technology\n\nTODO function description.",
+      "line": 426,
+      "selection": {
+        "start": {
+          "line": 411,
+          "character": 1
+        },
+        "end": {
+          "line": 426,
+          "character": 11
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/solver.py",
+      "description": "### Setup stage\n\nLoad all the required data, extract the plant capacities, the plants names, and create a year range to iterate over.",
+      "line": 452,
+      "selection": {
+        "start": {
+          "line": 435,
+          "character": 6
+        },
+        "end": {
+          "line": 452,
+          "character": 31
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/solver.py",
+      "description": "### Main loop\n\nIterate over the years to get the investment decisions for the given year. The process is as follows:\n\n  1. Get the switcher and non switchers plants\n  2. Get two dataframes, one for switchers and one for non switchers\n  3. Set the technologies\n  4. Set the material usage per plant\n  5. Start a new loop for non switchers",
+      "line": 473,
+      "selection": {
+        "start": {
+          "line": 453,
+          "character": 5
+        },
+        "end": {
+          "line": 473,
+          "character": 81
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/solver.py",
+      "description": "### Non switchers loop\n\nStart the non switchers loop to assign the technology choice as follows:\n\n  1. If the year is 2020, set the technology to the one the plant was using in 2020\n  2. If the year is not 2020, set the technology to the one used in the previous year, e.g. if year is 2030, set the technology to the one used in 2029.",
+      "line": 482,
+      "selection": {
+        "start": {
+          "line": 474,
+          "character": 9
+        },
+        "end": {
+          "line": 482,
+          "character": 110
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/solver.py",
+      "description": "### Loop for switchers\n\nThe main loop for plants that have a technology switch in the given year.",
+      "line": 485,
+      "selection": {
+        "start": {
+          "line": 485,
+          "character": 1
+        },
+        "end": {
+          "line": 485,
+          "character": 109
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/solver.py",
+      "description": "### Current tech\n\nCheck for the current technology in the plant, if the year is 2020 set it to the one the plant was using in 2020, othewise, set the current technology to the one used in the previous year.",
+      "line": 497,
+      "selection": {
+        "start": {
+          "line": 490,
+          "character": 13
+        },
+        "end": {
+          "line": 497,
+          "character": 78
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/solver.py",
+      "description": "### Check technology\n\nCHeck if the technology is set to `Not operating` or `Close plant`, if so, set the technology for the given plant at the given year as `Close plant`. Else, check the logic to take a decission regarding the switch.",
+      "line": 503,
+      "selection": {
+        "start": {
+          "line": 499,
+          "character": 13
+        },
+        "end": {
+          "line": 503,
+          "character": 18
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/solver.py",
+      "description": "### Switch type and plant values\n\nGet the switch type for the given plant at the given year, calculate the tco for the plant and the given year, with the tco for the plant rank the technologies, and the emissions_switching_df_summary_final_rank.",
+      "line": 513,
+      "selection": {
+        "start": {
+          "line": 505,
+          "character": 17
+        },
+        "end": {
+          "line": 513,
+          "character": 169
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/solver.py",
+      "description": "### Switch type main cycle\n\nIf the type of the switch is a main cycle, calculate the overall scores for the technologies using the data about the plant, year, and other constrains, such as biomass availability, material, business cases, etc.\n\nOnce the scores were calculated, get the technology with the best score. If the best ranking technology is the same as the one that is currently in use at the plant, do not change the technology. If the technology is different, set the technolgy for the given plant at the given year, as the best ranking technology.",
+      "line": 546,
+      "selection": {
+        "start": {
+          "line": 515,
+          "character": 17
+        },
+        "end": {
+          "line": 546,
+          "character": 84
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/solver.py",
+      "description": "### Switch type trans switch\n\nIf the switch type is a trans switch, calculate the best ranking technology, and check if it is different, if different do nothing. Else, keep the current technology as the best score technology.",
+      "line": 581,
+      "selection": {
+        "start": {
+          "line": 548,
+          "character": 17
+        },
+        "end": {
+          "line": 581,
+          "character": 84
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/solver.py",
+      "description": "### Return\n\nReturn the current plant choices dataframe outside the function.",
+      "line": 583,
+      "selection": {
+        "start": {
+          "line": 583,
+          "character": 5
+        },
+        "end": {
+          "line": 583,
+          "character": 33
+        }
+      }
+    }
+  ]
+}
