@@ -66,6 +66,126 @@
           "character": 43
         }
       }
+    },
+    {
+      "file": "mppsteel/model/variable_plant_cost_archetypes.py",
+      "description": "### Plant iteration\n\nIterate over the plants and generate the variable costs by calling the function `generate_variable_costs`, the function will return a DataFrame that is appended to the `df_list`",
+      "line": 62,
+      "selection": {
+        "start": {
+          "line": 51,
+          "character": 5
+        },
+        "end": {
+          "line": 62,
+          "character": 27
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/variable_plant_cost_archetypes.py",
+      "description": "## Generate variable cost\n\nThis function creates the dataframe for the given steel plant, the dataframe contains the cost of the resources that were used.",
+      "line": 104,
+      "selection": {
+        "start": {
+          "line": 82,
+          "character": 1
+        },
+        "end": {
+          "line": 104,
+          "character": 8
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/variable_plant_cost_archetypes.py",
+      "description": "### Setup stage\n\nThe setup for the loop includes to create an empty list to save the dataframes, get a list of resources, and a list of feedstock, finally, a year range to iterate over.",
+      "line": 119,
+      "selection": {
+        "start": {
+          "line": 106,
+          "character": 5
+        },
+        "end": {
+          "line": 119,
+          "character": 73
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/variable_plant_cost_archetypes.py",
+      "description": "### Iterate over years\n\nIterate over the years in the year range and add the columns `static`, `Feedstock`, `Electricity`, `Hydrogen`, and `Natural gas` to a copy of the `business_cases_df`. THen set the static and dynamic years variables, and get the prices for electicity, hydrogen, and natural gas.",
+      "line": 142,
+      "selection": {
+        "start": {
+          "line": 121,
+          "character": 5
+        },
+        "end": {
+          "line": 142,
+          "character": 106
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/variable_plant_cost_archetypes.py",
+      "description": "### Iterate over rows\n\nFor each row in the dataframe get the resource type and the consumption of the given resource. Then, check to which resource list the resource belongs to, get the unit value and calculate the price by multiplying the resource consumed times the price. \nCreate a new column with the year and append the dataframe into `df_list`.",
+      "line": 175,
+      "selection": {
+        "start": {
+          "line": 144,
+          "character": 9
+        },
+        "end": {
+          "line": 175,
+          "character": 29
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/variable_plant_cost_archetypes.py",
+      "description": "### Final step\n\nThe final step is to concatenate all the dataframes from the `df_list` and return the combined dataframe.",
+      "line": 178,
+      "selection": {
+        "start": {
+          "line": 177,
+          "character": 5
+        },
+        "end": {
+          "line": 178,
+          "character": 23
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/variable_plant_cost_archetypes.py",
+      "description": "### Return \n\nOnce that all the variable costs where generated for all the plants, the final step is to concatenate all the plants dataframes and return the concatenated dataframe.",
+      "line": 64,
+      "selection": {
+        "start": {
+          "line": 64,
+          "character": 5
+        },
+        "end": {
+          "line": 64,
+          "character": 53
+        }
+      }
+    },
+    {
+      "file": "mppsteel/model/variable_plant_cost_archetypes.py",
+      "description": "### variable costs summary\n\nWith all the plants variable costs calcuated, the next step is to get the summary with the `format_variable_costs` function:\n```python\ndef format_variable_costs(variable_cost_df: pd.DataFrame):\n    df_c = variable_cost_df.copy()\n    df_c.drop(labels=['value'], axis=1, inplace=True)\n    df_c = df_c.melt(id_vars=['plant_iteration', 'technology', 'year', 'material_category', 'unit'],var_name=['cost_type'], value_name='cost')\n    df_c['cost'] = df_c['cost'].replace('', 0)\n    return df_c.groupby(by=['plant_iteration', 'year', 'technology']).sum().sort_values(by['plant_iteration', 'year', 'technology']) \n```",
+      "line": 207,
+      "selection": {
+        "start": {
+          "line": 207,
+          "character": 1
+        },
+        "end": {
+          "line": 207,
+          "character": 87
+        }
+      }
     }
   ]
 }
