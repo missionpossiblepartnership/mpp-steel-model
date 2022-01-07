@@ -5,6 +5,7 @@ import argparse
 from mppsteel.utility.utils import get_logger, pickle_to_csv, TIME_CONTAINER
 
 from mppsteel.data_loading.data_import import load_data
+from mppsteel.data_loading.reg_steel_demand_formatter import get_steel_demand
 from mppsteel.minimodels.hydrogen_minimodel import generate_hydrogen_timeseries
 from mppsteel.minimodels.timeseries_generator import generate_timeseries
 from mppsteel.data_loading.business_case_standardisation import (
@@ -35,6 +36,7 @@ logger = get_logger("Main Model Code")
 # Model phasing
 def data_import_stage():
     load_data(serialize_only=True)
+    get_steel_demand(serialize_only=True)
     generate_hydrogen_timeseries(serialize_only=True)
     generate_timeseries(serialize_only=True)
     standardise_business_cases(serialize_only=True)

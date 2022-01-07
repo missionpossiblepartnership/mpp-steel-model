@@ -145,22 +145,10 @@ def load_data(serialize_only: bool = False) -> dict:
         IMPORT_DATA_PATH, "Ethanol Plastic Charcoal", "csv"
     )
 
-    """
-    # Import Solar Data
-    solar_filename = "Solar - Global Photovoltaic Potential Country Rankings.xlsx"
-    solar = pd.read_excel(
-        io=f"{IMPORT_DATA_PATH}/{solar_filename}",
-        sheet_name=0,
-        skiprows=1,
-        usecols=range(21),
+    # Import Regional Steel Demand Data
+    regional_steel_demand = extract_data(
+        IMPORT_DATA_PATH, "Regional Steel Demand", "csv"
     )
-    # Import Wind data
-    ## wind = create_wind_df()
-
-    # Import Natural Gas Data
-    natural_gas_filename = "EIA Natural Gas Reserves.csv"
-    natural_gas = pd.read_csv(f"{IMPORT_DATA_PATH}/{natural_gas_filename}", skiprows=1)
-    """
 
     # Define a data dictionary
     df_dict = {
@@ -174,6 +162,7 @@ def load_data(serialize_only: bool = False) -> dict:
         "feedstock_prices": feedstock_prices,
         "grid_emissivity": grid_emissivity,
         "steel_demand": steel_demand,
+        "regional_steel_demand": regional_steel_demand,
         "steel_plants": steel_plants,
         "tech_availability": tech_availability,
         "crude_regional_real": crude_regional_real,
@@ -189,9 +178,6 @@ def load_data(serialize_only: bool = False) -> dict:
         "hydrogen_electrolyzer_capex": hydrogen_electrolyzer_capex,
         "carbon_tax_assumptions": carbon_tax_assumptions,
         "ethanol_plastic_charcoal": ethanol_plastic_charcoal,
-        # "solar": solar,
-        # "wind": wind,
-        # "natural_gas": natural_gas,
     }
 
     if serialize_only:

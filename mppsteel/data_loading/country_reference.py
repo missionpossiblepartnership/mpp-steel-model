@@ -122,6 +122,14 @@ def country_ref_getter(country_ref_dict: dict, country_code: str, ref: str = "")
         return getattr(country_class, ref)
     return country_class
 
+def get_countries_from_group(country_ref: pd.DataFrame, grouping: str, group: str, exc_list: list = None):
+    df_c = country_ref[['ISO-alpha3 code', grouping]].copy()
+    code_list = df_c.set_index([grouping, 'ISO-alpha3 code']).sort_index().loc[group].index.unique().to_list()
+    if exc_list:
+        exc_codes = [match_country(country) for country in exc_list]
+        return list(set(code_list).difference(exc_codes))
+    return code_list
+
 @timer_func
 def create_country_ref(serialize_only: bool = False) -> dict:
     """Preprocesses the country data.
