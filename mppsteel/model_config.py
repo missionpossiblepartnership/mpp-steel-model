@@ -2,6 +2,7 @@
 
 # Define Data Path
 CORE_DATA_PATH = "mppsteel/data"
+LOG_PATH = "logs/"
 IMPORT_DATA_PATH = f"{CORE_DATA_PATH}/import_data"
 OUTPUT_FOLDER = f"{CORE_DATA_PATH}/output_data"
 PKL_FOLDER = f"{CORE_DATA_PATH}/pkl_data"
