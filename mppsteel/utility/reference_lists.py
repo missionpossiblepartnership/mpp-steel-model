@@ -343,3 +343,9 @@ electricity_self_gen_group = (
 RESOURCE_CONTAINER_REF = {'Bioenergy': 'biomass', 'Scrap': 'scrap', 'Used CO2': 'used_co2', 'Captured CO2': 'captured_co2'}
 
 FILES_TO_REFRESH = []
+
+EU_COUNTRIES = [
+    'AUT','BEL','BGR','CYP','CZE','DEU','DNK','ESP','EST',
+    'FIN','FRA','GRC','HRV','HUN','IRL','ITA','LTU','LUX',
+    'LVA','MLT','NLD','POL','PRT','ROU','SVK','SVN','SWE'
+]

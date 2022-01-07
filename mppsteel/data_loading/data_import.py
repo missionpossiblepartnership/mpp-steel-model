@@ -6,7 +6,7 @@ import pandas as pd
 from mppsteel.utility.utils import get_logger, extract_data, serialize_df_dict, timer_func
 
 # Get model parameters
-from mppsteel.model_config import IMPORT_DATA_PATH, PKL_DATA_IMPORTS
+from mppsteel.model_config import IMPORT_DATA_PATH, PKL_DATA_IMPORTS, PE_MODEL_FILENAME_DICT, PE_MODEL_SHEETNAME_DICT
 
 # Create logger
 logger = get_logger("Data Import")
@@ -29,17 +29,11 @@ def replace_rows(df: pd.DataFrame, header_row: int) -> pd.DataFrame:
     return df_c
 
 
-def create_wind_df() -> pd.DataFrame:
-    df_sheets = []
-    wind_filename = "Wind -Technical Potential at the country level.xlsx"
-    for sheet in range(7):
-        df_sheet = pd.read_excel(
-            io=f"{IMPORT_DATA_PATH}/{wind_filename}", sheet_name=sheet
-        )
-        df_sheets.append(df_sheet)
-    wind_df = pd.concat(df_sheets)
-    wind_df.reset_index(drop=True, inplace=True)
-    return wind_df
+def get_pe_model_data(model_name: str):
+    def get_path(model_name: str, filenames_dict: dict):
+        return f'{IMPORT_DATA_PATH}/{filenames_dict[model_name]}'
+    datapath = get_path(model_name, PE_MODEL_FILENAME_DICT)
+    return pd.read_excel(datapath, sheet_name=PE_MODEL_SHEETNAME_DICT[model_name])
 
 @timer_func
 def load_data(serialize_only: bool = False) -> dict:
@@ -150,6 +144,11 @@ def load_data(serialize_only: bool = False) -> dict:
         IMPORT_DATA_PATH, "Regional Steel Demand", "csv"
     )
 
+    # Import Price and Emissions Models
+    power_model = get_pe_model_data('power')
+    hydrogen_model = get_pe_model_data('hydrogen')
+    ccus_model = get_pe_model_data('ccus')
+
     # Define a data dictionary
     df_dict = {
         "greenfield_capex": greenfield_capex,
@@ -178,6 +177,9 @@ def load_data(serialize_only: bool = False) -> dict:
         "hydrogen_electrolyzer_capex": hydrogen_electrolyzer_capex,
         "carbon_tax_assumptions": carbon_tax_assumptions,
         "ethanol_plastic_charcoal": ethanol_plastic_charcoal,
+        "power_model": power_model,
+        "hydrogen_model": hydrogen_model,
+        "ccus_model": ccus_model,
     }
 
     if serialize_only:

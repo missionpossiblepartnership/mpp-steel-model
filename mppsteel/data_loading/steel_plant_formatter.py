@@ -90,6 +90,14 @@ def extract_steel_plant_capacity(df: pd.DataFrame):
     df_c['secondary_capacity_2020'] = df_c['EAF_capacity'].apply(lambda x: convert_to_float(x)) - df_c['DRIEAF_capacity'].apply(lambda x: convert_to_float(x)) 
     return df_c
 
+def get_countries_from_group(country_ref: pd.DataFrame, grouping: str, group: str, exc_list: list = None):
+    df_c = country_ref[['ISO-alpha3 code', grouping]].copy()
+    code_list = df_c.set_index([grouping, 'ISO-alpha3 code']).sort_index().loc[group].index.unique().to_list()
+    if exc_list:
+        exc_codes = [match_country(country) for country in exc_list]
+        return list(set(code_list).difference(exc_codes))
+    return code_list
+
 def apply_countries_to_steel_plants(steel_plant_formatted: pd.DataFrame):
     logger.info("Applying Country Data to Steel Plants")
     df_c = steel_plant_formatted.copy()

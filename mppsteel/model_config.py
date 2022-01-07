@@ -10,6 +10,18 @@ PKL_DATA_IMPORTS = f"{PKL_FOLDER}/imported_data"
 PKL_DATA_INTERMEDIATE = f"{PKL_FOLDER}/intermediate_data"
 PKL_DATA_FINAL = f"{PKL_FOLDER}/final_data"
 
+PE_MODEL_FILENAME_DICT = {
+    'power': 'Power Model.xlsx',
+    'ccus': 'CCUS Model.xlsx',
+    'hydrogen': 'H2 Model.xlsx',
+}
+
+PE_MODEL_SHEETNAME_DICT = {
+    'power': ['GridPrice', 'GridEmissions', 'RESPrice'],
+    'ccus': ['Transport', 'Storage'],
+    'hydrogen': ['Prices', 'Emissions']
+}
+
 MODEL_YEAR_START = 2020
 MODEL_YEAR_END = 2050
 

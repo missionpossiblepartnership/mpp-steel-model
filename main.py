@@ -11,9 +11,7 @@ from mppsteel.minimodels.timeseries_generator import generate_timeseries
 from mppsteel.data_loading.business_case_standardisation import (
     standardise_business_cases,
 )
-from mppsteel.data_loading.natural_resource_data_interface import (
-    natural_resource_preprocessor,
-)
+from mppsteel.data_loading.pe_model_formatter import format_pe_data
 from mppsteel.data_loading.steel_plant_formatter import steel_plant_processor
 from mppsteel.data_loading.country_reference import create_country_ref
 from mppsteel.data_loading.data_interface import (
@@ -37,10 +35,10 @@ logger = get_logger("Main Model Code")
 def data_import_stage():
     load_data(serialize_only=True)
     get_steel_demand(serialize_only=True)
+    format_pe_data(serialize_only=True)
     generate_hydrogen_timeseries(serialize_only=True)
     generate_timeseries(serialize_only=True)
     standardise_business_cases(serialize_only=True)
-    # natural_resource_preprocessor(serialize_only=True)
     create_country_ref(serialize_only=True)
 
 def data_preprocessing_phase():

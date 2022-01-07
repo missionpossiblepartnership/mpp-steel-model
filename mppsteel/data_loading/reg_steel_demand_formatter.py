@@ -1,5 +1,5 @@
-"""Formats Regional Steel Demand and defines getter function
-"""
+"""Formats Regional Steel Demand and defines getter function"""
+
 import itertools
 import pandas as pd
 
@@ -10,9 +10,9 @@ from mppsteel.utility.utils import (
     timer_func,
     read_pickle_folder,
     serialize_file,
+    match_country
 )
 
-from mppsteel.data_loading.country_reference import get_countries_from_group
 # Create logger
 logger = get_logger("Regional Steel Demand Formatter")
 
@@ -26,6 +26,14 @@ def get_unique_countries(country_arrays):
     b_set = set(tuple(x) for x in country_arrays)
     b_list = [list(x) for x in b_set if x]
     return list(itertools.chain(*b_list))
+
+def get_countries_from_group(country_ref: pd.DataFrame, grouping: str, group: str, exc_list: list = None):
+    df_c = country_ref[['ISO-alpha3 code', grouping]].copy()
+    code_list = df_c.set_index([grouping, 'ISO-alpha3 code']).sort_index().loc[group].index.unique().to_list()
+    if exc_list:
+        exc_codes = [match_country(country) for country in exc_list]
+        return list(set(code_list).difference(exc_codes))
+    return code_list
 
 def steel_demand_region_assignor(region: str, country_ref: pd.DataFrame, rmi_matcher: dict):
     if region in rmi_matcher.keys():
