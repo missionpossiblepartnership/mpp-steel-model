@@ -103,27 +103,6 @@ def load_data(serialize_only: bool = False) -> dict:
         IMPORT_DATA_PATH, "Carbon Tax Assumptions", "csv"
     )
 
-    # Import WSA data
-    crude_regional_shares = extract_data(
-        IMPORT_DATA_PATH, "WSA World Steel In Figures 2021", "xlsx", 0
-    )
-    crude_regional_real = extract_data(
-        IMPORT_DATA_PATH, "WSA World Steel In Figures 2021", "xlsx", 1
-    )
-    iron_ore_pig_iron = extract_data(
-        IMPORT_DATA_PATH, "WSA World Steel In Figures 2021", "xlsx", 2
-    )
-
-    crude_trade = replace_rows(
-        extract_data(IMPORT_DATA_PATH, "WSA World Steel In Figures 2021", "xlsx", 3), 1
-    ).fillna(0)
-    iron_ore_trade = replace_rows(
-        extract_data(IMPORT_DATA_PATH, "WSA World Steel In Figures 2021", "xlsx", 4), 1
-    ).fillna(0)
-    scrap_trade = replace_rows(
-        extract_data(IMPORT_DATA_PATH, "WSA World Steel In Figures 2021", "xlsx", 5), 1
-    ).fillna(0)
-
     # Import Technology Business Cases
     business_cases = replace_rows(
         extract_data(IMPORT_DATA_PATH, "Business Cases One Table", "xlsx"), 0
@@ -164,12 +143,6 @@ def load_data(serialize_only: bool = False) -> dict:
         "regional_steel_demand": regional_steel_demand,
         "steel_plants": steel_plants,
         "tech_availability": tech_availability,
-        "crude_regional_real": crude_regional_real,
-        "crude_regional_shares": crude_regional_shares,
-        "iron_ore_pig_iron": iron_ore_pig_iron,
-        "crude_trade": crude_trade,
-        "iron_ore_trade": iron_ore_trade,
-        "scrap_trade": scrap_trade,
         "s3_emissions_factors_1": s3_emissions_factors_1,
         "s3_emissions_factors_2": s3_emissions_factors_2,
         "business_cases": business_cases,
