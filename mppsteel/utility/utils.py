@@ -358,3 +358,33 @@ def timer_func(func):
         TIME_CONTAINER.update_time(func.__name__, format_times(starttime, endtime))
         return result
     return wrap_func
+
+def add_scenarios(df: pd.DataFrame, scenario_dict: dict):
+    df_c = df.copy()
+    for key in scenario_dict.keys():
+        df_c[f'scenario_{key}'] = scenario_dict[key]
+    return df_c
+
+
+def stdout_query(question: str, default: str, options: str):
+    """Ask a yes/no question via raw_input() and return their answer.
+
+    "question" is a string that is presented to the user.
+    "default" is the presumed answer if the user just hits <Enter>.
+            It must be "yes" (the default), "no" or None (meaning
+            an answer is required of the user).
+
+    The "answer" return value is True for "yes" or False for "no".
+    """
+    if default not in options:
+        raise ValueError(f'invalid default answer {default}. Not in options: {options}')
+
+    while True:
+        sys.stdout.write(f'{question} {default}')
+        choice = input().lower()
+        if choice == '':
+            return default
+        elif choice != "" and choice in options:
+            return choice
+        elif choice != "" and choice not in options:
+            sys.stdout.write(f"Please respond with a choice from {options}.\n")
