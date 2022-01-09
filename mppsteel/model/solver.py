@@ -25,8 +25,8 @@ from mppsteel.minimodels.timeseries_generator import (
 )
 
 from mppsteel.data_loading.data_interface import (
-    ccs_co2_getter, biomass_getter, steel_demand_value_selector,
-    load_materials, load_business_cases, extend_steel_demand
+    ccs_co2_getter, biomass_getter,
+    load_materials, load_business_cases
 )
 
 from mppsteel.data_loading.reg_steel_demand_formatter import (
@@ -191,9 +191,8 @@ def material_usage(
     """
 
     plant_capacity = calculate_primary_and_secondary(plant_capacities, plant_name, tech) / 1000
-    # steel_demand = steel_demand_value_selector(steel_plant_df, 'Crude', year, 'bau')
     plant_country = steel_plant_df[steel_plant_df['plant_name'] == plant_name]['country_code'].values[0]
-    steel_demand = steel_demand_getter(steel_plant_df, year, steel_demand_scenario, 'Crude', plant_country)
+    steel_demand = steel_demand_getter(steel_plant_df, year, steel_demand_scenario, 'crude', plant_country)
     capacity_sum = total_plant_capacity(plant_capacities)
     projected_production = (plant_capacity / capacity_sum) * steel_demand
     material_list = []
@@ -287,7 +286,7 @@ def plant_tech_resource_checker(
                     if current_usage == 0:
                         logger.info('First usage for {material_check}')
                     resource_remaining = material_capacity - current_usage
-                    plant_usage = material_usage(plant_capacities, steel_demand_df, business_cases, materials_list, plant_name, year, tech, materials_to_check)
+                    plant_usage = material_usage(plant_capacities, steel_demand_df, business_cases, materials_list, plant_name, year, tech, materials_to_check, steel_demand_scenario)
                     if plant_usage > resource_remaining:
                         print(f'{year} -> {plant_name} cannot adopt {tech} because usage of {material_check} exceeds capacity | uses {plant_usage} of remaining {resource_remaining}')
                         material_check_container.append(False)
@@ -584,6 +583,7 @@ def choose_technology(
                         materials,
                         year,
                         plant_name,
+                        steel_demand_scenario,
                         current_tech,
                         tech_moratorium=tech_moratorium,
                         transitional_switch_only=True,
@@ -636,7 +636,7 @@ def material_usage_per_plant(
     for plant_name, tech in zipped_data:
         plant_capacity = calculate_primary_and_secondary(plant_capacities, plant_name, tech) / 1000
         plant_country = steel_plant_df[steel_plant_df['plant_name'] == plant_name]['country_code'].values[0]
-        steel_demand = steel_demand_getter(steel_plant_df, year, steel_demand_scenario, 'Crude', plant_country)
+        steel_demand = steel_demand_getter(steel_demand_df, year, steel_demand_scenario, 'crude', plant_country)
         projected_production = (plant_capacity / capacity_sum) * steel_demand
         df = pd.DataFrame(index=materials_list, columns=['value'])
         for material in materials_list:
@@ -707,7 +707,7 @@ def solver_flow(scenario_dict: dict, year_end: int, serialize_only: bool = False
         error_plant='SSAB Americas Alabama steel plant',
         carbon_tax_scenario=scenario_dict['carbon_tax'],
         green_premium_scenario=scenario_dict['green_premium'],
-        steel_demand_scenario=['steel_demand_scenario']
+        steel_demand_scenario=scenario_dict['steel_demand_scenario']
         )
 
     tech_choice_dict = add_scenarios(tech_choice_dict, scenario_dict)

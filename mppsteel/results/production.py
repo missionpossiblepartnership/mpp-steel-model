@@ -50,7 +50,7 @@ def generate_production_stats(
     for year in tqdm(year_range, total=len(year_range), desc='Production Stats'):
         df = tech_capacity_df[tech_capacity_df['year'] == year].copy()
         capacity_sum = df['capacity'].sum()
-        steel_demand = steel_demand_getter(steel_df, year, steel_demand_scenario, 'Crude', 'World')
+        steel_demand = steel_demand_getter(steel_df, year, steel_demand_scenario, 'crude', 'World')
         df['production'] = (df['capacity'] / capacity_sum) * steel_demand
         df['low_carbon_tech'] = df['technology'].apply(lambda tech: 'Y' if tech in LOW_CARBON_TECHS else 'N')
         df_list.append(df)
@@ -205,7 +205,7 @@ def global_metaresults_calculator(
     df = pd.DataFrame({'year': year_range, 'steel_demand': 0, 'steel_capacity': 0, 'potential_extra_capacity': 0})
 
     # Assign initial values
-    df['steel_demand'] = df['year'].apply(lambda year: steel_demand_getter(steel_market_df, year, steel_demand_scenario, 'Crude', 'World'))
+    df['steel_demand'] = df['year'].apply(lambda year: steel_demand_getter(steel_market_df, year, steel_demand_scenario, 'crude', 'World'))
     df['steel_capacity'] = df['year'].apply(lambda x: initial_capacity_assignor(x))
 
     # Assign iterative values
@@ -223,7 +223,7 @@ def global_metaresults_calculator(
             df.loc[row.Index, 'potential_extra_capacity'] = potential_extra_capacity(steel_capacity, row.steel_demand)
 
     df['capacity_utilization_factor'] = (df['steel_demand'] / df['steel_capacity']).round(3)
-    df['scrap_availability'] = df['year'].apply(lambda year: steel_demand_getter(steel_market_df, year, steel_demand_scenario, 'Crude', 'World'))
+    df['scrap_availability'] = df['year'].apply(lambda year: steel_demand_getter(steel_market_df, year, steel_demand_scenario, 'crude', 'World'))
     df['scrap_consumption'] = [production_results_df.loc[year]['scrap'].sum() for year in year_range]
     df['scrap_avail_above_cons'] = df['scrap_availability'] - df['scrap_consumption']
     return df
