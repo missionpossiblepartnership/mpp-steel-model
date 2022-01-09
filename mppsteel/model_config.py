@@ -80,7 +80,7 @@ DEFAULT_SCENARIO = {
     'green_premium': True, # bool
     'electricity_cost_scenario': 'average', # low / average / high
     'hydrogen_cost_scenario': 'average', # low / average / high
-    'steel_demand_scenario': 
+    'steel_demand_scenario': 'average' # bau / average / high
 }
 
 COST_SCENARIO_MAPPER = {
@@ -91,7 +91,8 @@ COST_SCENARIO_MAPPER = {
 
 STEEL_DEMAND_SCENARIO_MAPPER = {
     'bau': 'BAU',
-    'high': 'High Circ'
+    'high': 'High Circ',
+    'average': 'average'
 }
 
 true_false = [True, False]

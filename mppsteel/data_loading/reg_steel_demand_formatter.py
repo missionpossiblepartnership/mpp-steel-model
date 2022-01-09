@@ -79,10 +79,15 @@ def steel_demand_getter(
         year = 2050
 
     # Apply subsets
-    # Scenario: BAU, High Circ
+    # Scenario: BAU, High Circ, average
     # Metric: crude, scrap
-    df_c = df_c.xs((str(year), STEEL_DEMAND_SCENARIO_MAPPER[scenario], metric_mapper[metric]), level=['year', 'Scenario', 'Metric'])
-    df_c.reset_index(drop=True, inplace=True)
-
-    # Return the value figure
-    return df_c.value.values[0]
+    scenario_entry = STEEL_DEMAND_SCENARIO_MAPPER[scenario]
+    if scenario_entry == 'average':
+        df1_val = df_c.xs((str(year), 'BAU', metric_mapper[metric]), level=['year', 'Scenario', 'Metric']).value.values[0]
+        df2_val = df_c.xs((str(year), 'High Circ', metric_mapper[metric]), level=['year', 'Scenario', 'Metric']).value.values[0]
+        return (df1_val + df2_val) / 2
+    else:
+        df_c = df_c.xs((str(year), scenario_entry, metric_mapper[metric]), level=['year', 'Scenario', 'Metric'])
+        df_c.reset_index(drop=True, inplace=True)
+        # Return the value figure
+        return df_c.value.values[0]
