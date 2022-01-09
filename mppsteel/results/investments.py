@@ -10,7 +10,8 @@ from mppsteel.model_config import (
 )
 
 from mppsteel.utility.utils import (
-    read_pickle_folder, get_logger, serialize_file, timer_func
+    read_pickle_folder, get_logger, serialize_file,
+    timer_func, add_scenarios
 )
 
 # Create logger
@@ -108,7 +109,7 @@ def investment_row_calculator(inv_df: pd.DataFrame, capex_df: pd.DataFrame, tech
     return new_row
 
 @timer_func
-def investment_results(serialize_only: bool = False):
+def investment_results(scenario_dict: dict, serialize_only: bool = False):
     """[summary]
 
     Args:
@@ -132,9 +133,11 @@ def investment_results(serialize_only: bool = False):
                 investment_row_calculator(
                     plant_investment_cycles, capex_df, tech_choice_dict, plant_name, year
                     ))
+    
     investment_results_df = pd.DataFrame(data_container).set_index(['year']).sort_values('year')
+    investment_results_df = add_scenarios(investment_results_df, scenario_dict)
+
     if serialize_only:
         logger.info(f'-- Serializing dataframes')
         serialize_file(investment_results_df, PKL_DATA_FINAL, "investment_results_df")
-        return
     return investment_results_df

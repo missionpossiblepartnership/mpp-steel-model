@@ -22,7 +22,8 @@ from mppsteel.model.tco import (
 )
 
 from mppsteel.utility.utils import (
-    read_pickle_folder, get_logger, serialize_file, timer_func
+    read_pickle_folder, get_logger, serialize_file, timer_func,
+    add_scenarios
 )
 
 # Create logger
@@ -262,7 +263,7 @@ def load_materials_mapper():
     return dict(zip(materials, material_col_names))
 
 @timer_func
-def production_results_flow(serialize_only: bool = False):
+def production_results_flow(scenario_dict: dict, serialize_only: bool = False):
     """[summary]
 
     Args:
@@ -286,6 +287,9 @@ def production_results_flow(serialize_only: bool = False):
         'production_emissions': production_emissions,
         'global_metaresults': global_metaresults
         }
+
+    for key in results_dict.keys():
+        results_dict[key] = add_scenarios(results_dict[key], scenario_dict)
 
     if serialize_only:
         logger.info(f'-- Serializing dataframes')
