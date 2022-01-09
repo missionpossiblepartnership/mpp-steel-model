@@ -454,7 +454,8 @@ def choose_technology(
 
     plant_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'steel_plants_processed', 'df')
     investment_year_ref = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'plant_investment_cycles', 'df')
-    steel_demand_df = extend_steel_demand(MODEL_YEAR_END)
+    # steel_demand_df = extend_steel_demand(MODEL_YEAR_END)
+    steel_demand_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'regional_steel_demand_formatted', 'df')
     carbon_tax_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'carbon_tax', 'df')
     all_plant_variable_costs_summary = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'all_plant_variable_costs_summary', 'df')
     biomass_availability = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'biomass_availability', 'df')

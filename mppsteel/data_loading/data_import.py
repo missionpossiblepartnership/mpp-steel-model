@@ -84,9 +84,6 @@ def load_data(serialize_only: bool = False) -> dict:
     # Import feedstock prices
     feedstock_prices = extract_data(IMPORT_DATA_PATH, "Feedstock Prices", "xlsx")
 
-    # Import steel demand
-    steel_demand = extract_data(IMPORT_DATA_PATH, "Steel Demand", "csv")
-
     # Import steel plant data
     steel_plants = extract_data(IMPORT_DATA_PATH, "Steel Plant Data Full", "xlsx")
 
@@ -139,7 +136,6 @@ def load_data(serialize_only: bool = False) -> dict:
         "static_energy_prices": static_energy_prices,
         "feedstock_prices": feedstock_prices,
         "grid_emissivity": grid_emissivity,
-        "steel_demand": steel_demand,
         "regional_steel_demand": regional_steel_demand,
         "steel_plants": steel_plants,
         "tech_availability": tech_availability,

@@ -13,8 +13,11 @@ from mppsteel.utility.reference_lists import LOW_CARBON_TECHS
 
 from mppsteel.model.solver import (
     calculate_primary_and_secondary, load_materials,
-    steel_demand_value_selector, extend_steel_demand,
     load_business_cases, create_plant_capacities_dict,
+)
+
+from mppsteel.data_loading.reg_steel_demand_formatter import (
+    steel_demand_getter
 )
 
 from mppsteel.model.tco import (
@@ -30,7 +33,7 @@ from mppsteel.utility.utils import (
 logger = get_logger("Production Results")
 
 def generate_production_stats(
-    tech_capacity_df: pd.DataFrame, steel_df: pd.DataFrame, year_end: int):
+    tech_capacity_df: pd.DataFrame, steel_df: pd.DataFrame, steel_demand_scenario: str, year_end: int):
     """[summary]
 
     Args:
@@ -47,7 +50,7 @@ def generate_production_stats(
     for year in tqdm(year_range, total=len(year_range), desc='Production Stats'):
         df = tech_capacity_df[tech_capacity_df['year'] == year].copy()
         capacity_sum = df['capacity'].sum()
-        steel_demand = steel_demand_value_selector(steel_df, 'Crude', year, 'bau')
+        steel_demand = steel_demand_getter(steel_df, year, steel_demand_scenario, 'Crude', 'World')
         df['production'] = (df['capacity'] / capacity_sum) * steel_demand
         df['low_carbon_tech'] = df['technology'].apply(lambda tech: 'Y' if tech in LOW_CARBON_TECHS else 'N')
         df_list.append(df)
@@ -161,6 +164,7 @@ def global_metaresults_calculator(
     steel_market_df: pd.DataFrame,
     tech_capacity_df: pd.DataFrame,
     production_results_df: pd.DataFrame,
+    steel_demand_scenario: str,
     year_end,
     ):
     """[summary]
@@ -201,7 +205,7 @@ def global_metaresults_calculator(
     df = pd.DataFrame({'year': year_range, 'steel_demand': 0, 'steel_capacity': 0, 'potential_extra_capacity': 0})
 
     # Assign initial values
-    df['steel_demand'] = df['year'].apply(lambda year: steel_demand_value_selector(steel_market_df, 'Crude', year, 'bau'))
+    df['steel_demand'] = df['year'].apply(lambda year: steel_demand_getter(steel_market_df, year, steel_demand_scenario, 'Crude', 'World'))
     df['steel_capacity'] = df['year'].apply(lambda x: initial_capacity_assignor(x))
 
     # Assign iterative values
@@ -219,7 +223,7 @@ def global_metaresults_calculator(
             df.loc[row.Index, 'potential_extra_capacity'] = potential_extra_capacity(steel_capacity, row.steel_demand)
 
     df['capacity_utilization_factor'] = (df['steel_demand'] / df['steel_capacity']).round(3)
-    df['scrap_availability'] = df['year'].apply(lambda year: steel_demand_value_selector(steel_market_df, 'Scrap', year, 'bau'))
+    df['scrap_availability'] = df['year'].apply(lambda year: steel_demand_getter(steel_market_df, year, steel_demand_scenario, 'Crude', 'World'))
     df['scrap_consumption'] = [production_results_df.loc[year]['scrap'].sum() for year in year_range]
     df['scrap_avail_above_cons'] = df['scrap_availability'] - df['scrap_consumption']
     return df
@@ -273,14 +277,16 @@ def production_results_flow(scenario_dict: dict, serialize_only: bool = False):
         [type]: [description]
     """    
     logger.info(f'- Starting Production Results Model Flow')
-    new_steel_demand = extend_steel_demand(MODEL_YEAR_END)
+    # new_steel_demand = extend_steel_demand(MODEL_YEAR_END)
+    steel_demand_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'regional_steel_demand_formatted', 'df')
     tech_capacity_df, max_solver_year = tech_capacity_splits()
-    production_results = generate_production_stats(tech_capacity_df, new_steel_demand, max_solver_year)
+    steel_demand_scenario = scenario_dict['steel_demand_scenario']
+    production_results = generate_production_stats(tech_capacity_df, steel_demand_df, steel_demand_scenario, max_solver_year)
 
     production_results_all = production_stats_generator(production_results)
     production_emissions = generate_production_emission_stats(production_results)
     global_metaresults = global_metaresults_calculator(
-        new_steel_demand, tech_capacity_df, production_results_all, max_solver_year)
+        steel_demand_df, tech_capacity_df, production_results_all, steel_demand_scenario, max_solver_year)
 
     results_dict = {
         'production_results_all': production_results_all,
