@@ -163,9 +163,9 @@ def format_pe_data(serialize_only: bool = False):
 
 def power_data_getter(
     df_dict: dict, data_type: str, year: int, country_code: str,
-    re_dict: dict = {}, re_type: str = '',
+    re_dict: dict = None, re_type: str = '',
     default_country: str = 'USA', grid_scenario: str = 'Central',
-    cost_scenario: str = 'Baseline', customer: str = 'Commercial'
+    cost_scenario: str = 'Baseline', customer: str = 'Industry'
     ):
     # map data_type to df_dict keys
     data_type_mapper = dict(zip(['grid', 'renewable', 'emissions'], OUTPUT_SHEETS['power']))
@@ -200,7 +200,7 @@ def power_data_getter(
 
 def hydrogen_data_getter(
     df_dict: dict, data_type: str, year: int, country_code: str,
-    default_country: str = 'USA', variable: str = None, 
+    default_country: str = 'USA', variable: str = None,
     cost_scenario: str = 'Baseline', prod_scenario: str = 'Utility plant, grid'
     ):
     # map data_type to df_dict keys
@@ -228,6 +228,7 @@ def hydrogen_data_getter(
     df_c = df_c[
         (df_c['Cost scenario'] == cost_scenario) & (df_c['Production scenario'] == prod_scenario)]
     
+    
     if (data_type=='prices') and variable:
         df_c = df_c[(df_c['Variable'] == variable)]
     elif (data_type=='prices') and not variable:
@@ -243,8 +244,8 @@ def hydrogen_data_getter(
 
 def ccus_data_getter(
     df_dict: dict, data_type: str, country_code: str,
-    default_country: str = 'GBL', 
-    transport_type: str = 'Onshore Pipeline', 
+    default_country: str = 'GBL',
+    transport_type: str = 'Onshore Pipeline',
     cost_scenario: str = 'BaseCase',
     storage_location: str = 'Onshore',
     storage_type: str = 'Saline aquifers',

@@ -10,7 +10,8 @@ from mppsteel.utility.utils import (
 
 from mppsteel.model_config import (
     MODEL_YEAR_START, PKL_DATA_INTERMEDIATE, 
-    DISCOUNT_RATE,
+    DISCOUNT_RATE, INVESTMENT_CYCLE_LENGTH,
+    STEEL_PLANT_LIFETIME,
     TCO_RANK_1_SCALER, TCO_RANK_2_SCALER,
     ABATEMENT_RANK_2, ABATEMENT_RANK_3,
     EUR_USD_CONVERSION
@@ -193,7 +194,7 @@ def compare_capex(
     switch_tech: str,
     interest_rate: float,
     start_year: int = MODEL_YEAR_START,
-    date_span: int = 20,
+    date_span: int = INVESTMENT_CYCLE_LENGTH,
 ) -> pd.DataFrame:
     """[summary]
 
@@ -217,7 +218,7 @@ def compare_capex(
     annual_capex_value = get_capital_schedules(
         capex_c, base_tech, switch_tech, start_year, interest_rate
     )["interest_payments"]
-    annual_capex_array = np.full(20, annual_capex_value) * -1
+    annual_capex_array = np.full(date_span, annual_capex_value) * -1
     discounted_annual_capex_array = calculate_present_values(
         annual_capex_array, interest_rate
     )
@@ -264,11 +265,12 @@ def get_opex_costs(
     carbon_tax_timeseries: pd.DataFrame,
     green_premium_timeseries: pd.DataFrame,
     steel_plant_capacity: pd.DataFrame,
-    include_carbon_tax: bool = False,
-    include_green_premium: bool = False,
+    include_carbon_tax: bool,
+    include_green_premium: bool,
 ):
-    combined_row = str(plant.abundant_res) + str(plant.ccs_available) + str(plant.cheap_natural_gas)
-    variable_costs = variable_costs_df.loc[combined_row, year]
+    # combined_row = str(plant.abundant_res) + str(plant.ccs_available) + str(plant.cheap_natural_gas)
+    # variable_costs = variable_costs_df.loc[combined_row, year]
+    variable_costs = variable_costs_df.loc[plant.region, year]
     opex_costs = opex_df.swaplevel().loc[year]
 
     # single results
@@ -315,7 +317,10 @@ def get_discounted_opex_values(
     variable_cost_summary: pd.DataFrame,
     green_premium_timeseries: pd.DataFrame,
     other_opex_df: pd.DataFrame,
-    year_interval: int = 20, int_rate: float = 0.07):
+    include_carbon_tax: bool,
+    include_green_premium: bool,
+    year_interval: int, int_rate: float):
+
     year_range = range(year_start, year_start+year_interval+1)
     df_list = []
     emissions_dict = create_emissions_dict()
@@ -332,8 +337,8 @@ def get_discounted_opex_values(
             carbon_tax_df,
             green_premium_timeseries,
             steel_plant_df,
-            include_carbon_tax=True,
-            include_green_premium=True
+            include_carbon_tax=include_carbon_tax,
+            include_green_premium=include_green_premium
         )
         df['year'] = year_ref
         df_list.append(df)
@@ -348,13 +353,16 @@ def get_discounted_opex_values(
 
 def tco_calc(
     plant, start_year: int, plant_tech: str, carbon_tax_df: pd.DataFrame,
-    steel_plant_df: pd.DataFrame, variable_cost_summary: pd.DataFrame, 
-    green_premium_timeseries: pd.DataFrame, other_opex_df: pd.DataFrame, 
-    investment_cycle: int = 20
+    steel_plant_df: pd.DataFrame, variable_cost_summary: pd.DataFrame,
+    green_premium_timeseries: pd.DataFrame, other_opex_df: pd.DataFrame,
+    include_carbon_tax: bool, include_green_premium: bool,
+    investment_cycle: int
     ):
     opex_values = get_discounted_opex_values(
         plant, start_year, carbon_tax_df, steel_plant_df, variable_cost_summary,
-        green_premium_timeseries, other_opex_df, int_rate=DISCOUNT_RATE
+        green_premium_timeseries, other_opex_df,
+        include_carbon_tax=include_carbon_tax, include_green_premium=include_green_premium,
+        year_interval=investment_cycle, int_rate=DISCOUNT_RATE,
         )
     capex_values = calculate_capex(start_year).swaplevel().loc[plant_tech].groupby('end_technology').sum()
     return capex_values + opex_values / investment_cycle
@@ -375,20 +383,20 @@ def levelised_steelmaking_cost(year: pd.DataFrame, include_greenfield: bool = Fa
     df_list = []
     all_plant_variable_costs_summary = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'all_plant_variable_costs_summary', 'df')
     opex_values_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'capex_dict', 'df')
-    for iteration in all_plant_variable_costs_summary.index.get_level_values(0).unique():
-        variable_costs = all_plant_variable_costs_summary.loc[iteration, year]
+    for plant_country_ref in all_plant_variable_costs_summary.index.get_level_values(0).unique():
+        variable_costs = all_plant_variable_costs_summary.loc[plant_country_ref, year]
         other_opex = opex_values_dict['other_opex'].swaplevel().loc[year]
-        brownfield_capex = capex_values_for_levelised_steelmaking(opex_values_dict['brownfield'], DISCOUNT_RATE, year, 20)
+        brownfield_capex = capex_values_for_levelised_steelmaking(opex_values_dict['brownfield'], DISCOUNT_RATE, year, INVESTMENT_CYCLE_LENGTH)
         variable_costs.rename(mapper={'cost': 'value'}, axis=1, inplace=True)
         variable_costs.rename(mapper={'technology': 'Technology'}, axis=0, inplace=True)
         combined_df = variable_costs + other_opex + brownfield_capex
         if include_greenfield:
-            greenfield_capex = capex_values_for_levelised_steelmaking(opex_values_dict['greenfield'], DISCOUNT_RATE, year, 40)
+            greenfield_capex = capex_values_for_levelised_steelmaking(opex_values_dict['greenfield'], DISCOUNT_RATE, year, STEEL_PLANT_LIFETIME)
             combined_df = variable_costs + other_opex + greenfield_capex + brownfield_capex
-        combined_df['iteration'] = iteration
+        combined_df['plant_country_ref'] = plant_country_ref
         df_list.append(combined_df)
     df = pd.concat(df_list)
-    return df.reset_index().rename(mapper={'index': 'technology'},axis=1).set_index(['iteration', 'technology'])
+    return df.reset_index().rename(mapper={'index': 'technology'},axis=1).set_index(['plant_country_ref', 'technology'])
 
 def normalise_data(data):
     return (data - np.min(data)) / (np.max(data) - np.min(data))

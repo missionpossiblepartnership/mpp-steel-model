@@ -5,13 +5,14 @@ from tqdm import tqdm
 
 from mppsteel.utility.utils import (
     read_pickle_folder, serialize_file,
-    get_logger, return_furnace_group, timer_func
+    get_logger, return_furnace_group, 
+    timer_func, add_scenarios
 )
 
 from mppsteel.model_config import (
     MODEL_YEAR_START, PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE,
     GREEN_PREMIUM_MIN_PCT, GREEN_PREMIUM_MAX_PCT,
-    MODEL_YEAR_END, SWITCH_RANK_PROPORTIONS,
+    MODEL_YEAR_END, SWITCH_RANK_PROPORTIONS, INVESTMENT_CYCLE_LENGTH
 )
 
 from mppsteel.utility.reference_lists import (
@@ -26,6 +27,10 @@ from mppsteel.minimodels.timeseries_generator import (
 from mppsteel.data_loading.data_interface import (
     ccs_co2_getter, biomass_getter, steel_demand_value_selector,
     load_materials, load_business_cases, extend_steel_demand
+)
+
+from mppsteel.data_loading.reg_steel_demand_formatter import (
+    steel_demand_getter
 )
 
 from mppsteel.model.tco import (
@@ -166,7 +171,8 @@ def total_plant_capacity(plant_cap_dict: dict):
 
 def material_usage(
     plant_capacities: dict, steel_plant_df: pd.DataFrame, business_cases: pd.DataFrame,
-    materials_list: list, plant_name: str, year: float, tech: str, material: str
+    materials_list: list, plant_name: str, year: float, tech: str, material: str,
+    steel_demand_scenario: str
     ):
     """[summary]
 
@@ -182,10 +188,12 @@ def material_usage(
 
     Returns:
         [type]: [description]
-    """    
+    """
 
     plant_capacity = calculate_primary_and_secondary(plant_capacities, plant_name, tech) / 1000
-    steel_demand = steel_demand_value_selector(steel_plant_df, 'Crude', year, 'bau')
+    # steel_demand = steel_demand_value_selector(steel_plant_df, 'Crude', year, 'bau')
+    plant_country = steel_plant_df[steel_plant_df['plant_name'] == plant_name]['country_code'].values[0]
+    steel_demand = steel_demand_getter(steel_plant_df, year, steel_demand_scenario, 'Crude', plant_country)
     capacity_sum = total_plant_capacity(plant_capacities)
     projected_production = (plant_capacity / capacity_sum) * steel_demand
     material_list = []
@@ -200,6 +208,8 @@ def plant_tech_resource_checker(
     base_tech: str,
     year: int,
     steel_demand_df: pd.DataFrame,
+    steel_plant_df: pd.DataFrame,
+    steel_demand_scenario: str,
     business_cases: pd.DataFrame,
     biomass_df: pd.DataFrame,
     ccs_co2_df: pd.DataFrame,
@@ -260,7 +270,9 @@ def plant_tech_resource_checker(
 
             if material_check in ['Scrap', 'Scrap EAF']:
                 material_ref = 'Scrap'
-                material_capacity = steel_demand_value_selector(steel_demand_df, 'Scrap', year, 'bau')
+                # material_capacity = steel_demand_value_selector(steel_demand_df, 'Scrap', year, 'bau')
+                plant_country = steel_plant_df[steel_plant_df['plant_name'] == plant_name]['country_code'].values[0]
+                material_capacity = steel_demand_getter(steel_plant_df, year, steel_demand_scenario, 'Crude', plant_country)
                 materials_to_check = ['Scrap']
 
             # Checking for zero
@@ -327,6 +339,7 @@ def overall_scores(
     emissions_df: pd.DataFrame,
     proportions_dict: dict,
     steel_demand_df: pd.DataFrame,
+    steel_plant_df: pd.DataFrame,
     business_cases: pd.DataFrame,
     biomass_df: pd.DataFrame,
     ccs_co2_df: pd.DataFrame,
@@ -334,6 +347,7 @@ def overall_scores(
     materials_list: list,
     year: int,
     plant_name: str,
+    steel_demand_scenario: str,
     base_tech: str = '',
     tech_moratorium: bool = False,
     transitional_switch_only: bool = False,
@@ -347,6 +361,7 @@ def overall_scores(
         emissions_df (pd.DataFrame): [description]
         proportions_dict (dict): [description]
         steel_demand_df (pd.DataFrame): [description]
+        steel_plant_df (pd.DataFrame): [description]
         business_cases (pd.DataFrame): [description]
         biomass_df (pd.DataFrame): [description]
         ccs_co2_df (pd.DataFrame): [description]
@@ -354,6 +369,7 @@ def overall_scores(
         materials_list (list): [description]
         year (int): [description]
         plant_name (str): [description]
+        steel_demand_scenario (str): [description]
         base_tech (str, optional): [description]. Defaults to ''.
         tech_moratorium (bool, optional): [description]. Defaults to False.
         transitional_switch_only (bool, optional): [description]. Defaults to False.
@@ -379,6 +395,7 @@ def overall_scores(
     # Constraints checks
     constraints_check = plant_tech_resource_checker(
         plant_name, base_tech, year, steel_demand_df,
+        steel_plant_df, steel_demand_scenario,
         business_cases, materials_list, biomass_df,
         ccs_co2_df, TECH_MATERIAL_CHECK_DICT,
         RESOURCE_CONTAINER_REF, material_usage_dict_container,
@@ -411,7 +428,10 @@ def overall_scores(
 def choose_technology(
     year_end: int, rank_only: bool = False, 
     tech_moratorium: bool = False,
-    error_plant: str = ''
+    error_plant: str = '',
+    carbon_tax_scenario: bool = False, 
+    green_premium_scenario: bool = False,
+    steel_demand_scenario: str = 'bau'
     ):
     """[summary]
 
@@ -468,7 +488,7 @@ def choose_technology(
         else:
             technologies = current_plant_choices[str(year-1)].values()
 
-        yearly_usage = material_usage_per_plant(non_switchers, technologies, business_cases, plant_capacities_dict, steel_demand_df, materials, year)
+        yearly_usage = material_usage_per_plant(non_switchers, technologies, business_cases, plant_df, plant_capacities_dict, steel_demand_df, materials, year, steel_demand_scenario)
         material_usage_dict = load_resource_usage_dict(yearly_usage)
         logger.info(f'-- Running investment decisions for Non Switching Plants')
         for plant_name in tqdm(non_switchers, total=len(non_switchers), desc=f'Non Switchers {year}'):
@@ -507,7 +527,8 @@ def choose_technology(
                 tco = tco_calc(
                     plant, year, current_tech, carbon_tax_df, plant_df,
                     all_plant_variable_costs_summary, green_premium_timeseries,
-                    opex_values_dict['other_opex'])
+                    opex_values_dict['other_opex'],carbon_tax_scenario, green_premium_scenario,
+                    INVESTMENT_CYCLE_LENGTH)
 
                 tco_switching_df_summary_final_rank = tco_min_ranker(tco, ['value'], rank_only)
                 emissions_switching_df_summary_final_rank = abatement_min_ranker(emissions_switching_df_summary, current_tech, year, ['abated_s1_emissions'], rank_only)
@@ -520,6 +541,7 @@ def choose_technology(
                         emissions_switching_df_summary_final_rank,
                         SWITCH_RANK_PROPORTIONS,
                         steel_demand_df,
+                        plant_df,
                         business_cases,
                         biomass_availability,
                         ccs_co2,
@@ -527,6 +549,7 @@ def choose_technology(
                         materials,
                         year,
                         plant_name,
+                        steel_demand_scenario,
                         current_tech,
                         tech_moratorium=tech_moratorium,
                         material_usage_dict_container=material_usage_dict,
@@ -586,9 +609,11 @@ def material_usage_per_plant(
     plant_list: list,
     technology_list: list,
     business_cases: pd.DataFrame,
+    steel_plant_df: pd.DataFrame,
     plant_capacities: dict,
     steel_demand_df: pd.DataFrame,
-    materials_list: list, year: float):
+    materials_list: list, year: float,
+    steel_demand_scenario: str):
     """[summary]
 
     Args:
@@ -605,10 +630,12 @@ def material_usage_per_plant(
     """    
     df_list = []
     zipped_data = zip(plant_list, technology_list)
-    steel_demand = steel_demand_value_selector(steel_demand_df, 'Crude', year, 'bau')
+    # steel_demand = steel_demand_value_selector(steel_demand_df, 'Crude', year, 'bau')
     capacity_sum = total_plant_capacity(plant_capacities)
     for plant_name, tech in zipped_data:
         plant_capacity = calculate_primary_and_secondary(plant_capacities, plant_name, tech) / 1000
+        plant_country = steel_plant_df[steel_plant_df['plant_name'] == plant_name]['country_code'].values[0]
+        steel_demand = steel_demand_getter(steel_plant_df, year, steel_demand_scenario, 'Crude', plant_country)
         projected_production = (plant_capacity / capacity_sum) * steel_demand
         df = pd.DataFrame(index=materials_list, columns=['value'])
         for material in materials_list:
@@ -659,8 +686,9 @@ def load_resource_usage_dict(yearly_usage_df: pd.DataFrame):
     resource_usage_dict['captured_co2'] = list({yearly_usage_df.loc['Captured CO2']['value'] or 0})
     return resource_usage_dict
 
+
 @timer_func
-def solver_flow(year_end: int, serialize_only: bool = False):
+def solver_flow(scenario_dict: dict, year_end: int, serialize_only: bool = False):
     """[summary]
 
     Args:
@@ -669,14 +697,19 @@ def solver_flow(year_end: int, serialize_only: bool = False):
 
     Returns:
         [type]: [description]
-    """    
+    """
 
     tech_choice_dict = choose_technology(
         year_end=year_end,
         rank_only=True,
-        tech_moratorium=True,
-        error_plant='SSAB Americas Alabama steel plant'
+        tech_moratorium=scenario_dict['tech_moratorium'],
+        error_plant='SSAB Americas Alabama steel plant',
+        carbon_tax_scenario=scenario_dict['carbon_tax'],
+        green_premium_scenario=scenario_dict['green_premium'],
+        steel_demand_scenario=['steel_demand_scenario']
         )
+
+    tech_choice_dict = add_scenarios(tech_choice_dict, scenario_dict)
 
     if serialize_only:
         logger.info(f'-- Serializing dataframes')

@@ -3,7 +3,7 @@
 import itertools
 import pandas as pd
 
-from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
+from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE, STEEL_DEMAND_SCENARIO_MAPPER
 
 from mppsteel.utility.utils import (
     get_logger,
@@ -22,7 +22,6 @@ RMI_MATCHER = {
 }
 
 def get_unique_countries(country_arrays):
-    logger.info('Getting unique list of countries')
     b_set = set(tuple(x) for x in country_arrays)
     b_list = [list(x) for x in b_set if x]
     return list(itertools.chain(*b_list))
@@ -67,6 +66,7 @@ def steel_demand_getter(
         'crude': 'Crude steel demand',
         'scrap': 'Scrap availability',
     }
+
     
     # Apply country check and use default
     if country_code in country_list:
@@ -81,7 +81,7 @@ def steel_demand_getter(
     # Apply subsets
     # Scenario: BAU, High Circ
     # Metric: crude, scrap
-    df_c = df_c.xs((str(year), scenario, metric_mapper[metric]), level=['year', 'Scenario', 'Metric'])
+    df_c = df_c.xs((str(year), STEEL_DEMAND_SCENARIO_MAPPER[scenario], metric_mapper[metric]), level=['year', 'Scenario', 'Metric'])
     df_c.reset_index(drop=True, inplace=True)
 
     # Return the value figure
