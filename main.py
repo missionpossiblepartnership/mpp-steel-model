@@ -26,13 +26,17 @@ parser.add_argument(
 parser.add_argument(
     "--i", action="store_true", help="Runs the data import scripts scripts directly")
 parser.add_argument(
-    "--r", action="store_true", help="Runs the data refresh scripts directly")
+    "--d", action="store_true", help="Runs the data refresh scripts directly")
+parser.add_argument(
+    "--r", action="store_true", help="Runs the model results scripts directly")
 parser.add_argument(
     "--b", action="store_true", help="Runs the business cases script directly")
 parser.add_argument(
     "--v", action="store_true", help="Runs the variable costs sumary script directly")
 parser.add_argument(
     "--q", action="store_true", help="Adds custom scenario inputs to the model")
+parser.add_argument(
+    "--t", action="store_true", help="Runs the results and output scripts directly")
 
 if __name__ == "__main__":
 
@@ -67,13 +71,19 @@ if __name__ == "__main__":
     if args.p:
         data_preprocessing_phase(scenario_args)
 
-    if args.r:
+    if args.d:
         data_import_and_preprocessing_refresh(scenario_args)
+
+    if args.r:
+        model_results_phase(scenario_args)
 
     if args.b:
         standardise_business_cases(serialize_only=True)
 
     if args.v:
         generate_variable_plant_summary(scenario_args, serialize_only=True)
+    
+    if args.t:
+        results_and_output(scenario_args)
 
     TIME_CONTAINER.return_time_container()

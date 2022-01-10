@@ -66,6 +66,7 @@ def tech_capacity_splits():
     logger.info(f'- Generating Capacity split DataFrame')
     tech_capacities_dict = create_plant_capacities_dict()
     tech_choices_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'tech_choice_dict', 'df')
+    print(tech_choices_dict.keys())
     max_year = max([int(year) for year in tech_choices_dict.keys()])
     steel_plants = tech_capacities_dict.keys()
     year_range = range(MODEL_YEAR_START, max_year+1)
@@ -299,7 +300,7 @@ def production_results_flow(scenario_dict: dict, serialize_only: bool = False):
 
     if serialize_only:
         logger.info(f'-- Serializing dataframes')
-        serialize_file(production_results_all, PKL_DATA_FINAL, "production_stats_all")
-        serialize_file(production_emissions, PKL_DATA_FINAL, "production_emissions")
-        serialize_file(global_metaresults, PKL_DATA_FINAL, "global_metaresults")
+        serialize_file(results_dict['production_results_all'], PKL_DATA_FINAL, "production_stats_all")
+        serialize_file(results_dict['production_emissions'], PKL_DATA_FINAL, "production_emissions")
+        serialize_file(results_dict['global_metaresults'], PKL_DATA_FINAL, "global_metaresults")
     return results_dict

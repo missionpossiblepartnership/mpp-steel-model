@@ -710,8 +710,6 @@ def solver_flow(scenario_dict: dict, year_end: int, serialize_only: bool = False
         steel_demand_scenario=scenario_dict['steel_demand_scenario']
         )
 
-    tech_choice_dict = add_scenarios(tech_choice_dict, scenario_dict)
-
     if serialize_only:
         logger.info(f'-- Serializing dataframes')
         serialize_file(tech_choice_dict, PKL_DATA_INTERMEDIATE, "tech_choice_dict")

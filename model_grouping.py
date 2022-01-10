@@ -76,6 +76,10 @@ def half_model_run(scenario_dict: dict):
     model_results_phase(scenario_dict)
     model_outputs_phase()
 
+def results_and_output(scenario_dict: dict):
+    model_results_phase(scenario_dict)
+    model_outputs_phase()
+
 def outputs_only():
     model_outputs_phase()
 
