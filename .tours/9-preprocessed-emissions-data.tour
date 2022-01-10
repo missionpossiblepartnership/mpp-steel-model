@@ -1,0 +1,51 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "#09 - Preprocessed emissions data",
+  "steps": [
+    {
+      "file": "mppsteel/data_loading/data_interface.py",
+      "description": "## Generate preprocessed emissions data\n\nThis function reads multiple pre-existing data files to calculate the emissions data. If the `serialize_only` argument is set to `True` it will save the dataframes as pickles, otherwise the function returns the dataframes.",
+      "line": 302,
+      "selection": {
+        "start": {
+          "line": 302,
+          "character": 1
+        },
+        "end": {
+          "line": 302,
+          "character": 72
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/data_interface.py",
+      "description": "### Commodities dataframe\n\nFirst, the ethanol, plastic and charcoal data is loaded, then the data is formated with the function `format_commodities_data` to create the commodities dataframe.\nThe `format_commodities_data` function is as follows:\n```python\ndef format_commodities_data(df: pd.DataFrame, material_mapper: dict) -> pd.DataFrame:\n    df_c = df.copy()\n    logger.info(f\"Formatting the ethanol_plastics_charcoal data\")\n    columns_of_interest = [\n        \"Year\",\n        \"Reporter\",\n        \"Commodity Code\",\n        \"Netweight (kg)\",\n        \"Trade Value (US$)\",\n    ]\n    df_c = df_c[columns_of_interest]\n    df_c.columns = [\"year\", \"reporter\", \"commodity_code\", \"netweight\", \"trade_value\"]\n    df_c[\"commodity_code\"] = df_c[\"commodity_code\"].apply(\n        lambda x: material_mapper[str(x)]\n    )\n    df_c[\"implied_price\"] = \"\"\n    df_c[\"netweight\"].fillna(0, inplace=True)\n    for row in df_c.itertuples():\n        if row.netweight == 0:\n            df_c.loc[row.Index, \"implied_price\"] = 0\n        else:\n            df_c.loc[row.Index, \"implied_price\"] = row.trade_value / row.netweight\n    return df_c\n```\n",
+      "line": 308,
+      "selection": {
+        "start": {
+          "line": 303,
+          "character": 5
+        },
+        "end": {
+          "line": 308,
+          "character": 6
+        }
+      }
+    },
+    {
+      "file": "mppsteel/data_loading/data_interface.py",
+      "description": "### Scope 3 emissions factors\n\nThe first step to create the `final_scope3_ef_df` dataframe is to load the s3_emissions_factors_2 pickle, once the file is loaded, it is formated with the following function:\n```python\ndef format_scope3_ef_2(df: pd.DataFrame, emissions_factor_slag: float) -> pd.DataFrame:\n    df_c = df.copy()\n    df_c = df_c.drop([\"Unnamed: 1\"], axis=1).loc[0:0]\n    df_c = df_c.melt(id_vars=[\"Year\"])\n    df_c.rename(columns={\"Year\": \"metric\", \"variable\": \"year\"}, inplace=True)\n    df_c[\"value\"] = df_c[\"value\"].astype(float)\n    df_c[\"value\"] = df_c[\"value\"].apply(lambda x: x * emissions_factor_slag)\n    return df_c\n```\nWith the formated dataframe, the values for the rows are extracted  as they will be used to create the final_scope3_ef_df` with the `modify_scope3_ef_1` function as follows:\n```python\ndef modify_scope3_ef_1(\n    df: pd.DataFrame, slag_values: np.array, met_coal_density: float\n) -> pd.DataFrame:\n    df_c = df.copy()\n    scope3df_index = df_c.set_index([\"Category\", \"Fuel\", \"Unit\"])\n    scope3df_index.loc[\n        \"Scope 3 Emissions Factor\", \"Slag\", \"ton CO2eq / ton slag\"\n    ] = slag_values\n    met_coal_values = scope3df_index.loc[\n        \"Scope 3 Emissions Factor\", \"Met coal\", \"MtCO2eq / PJ\"\n    ].apply(lambda x: x * met_coal_density)\n    scope3df_index.loc[\n        \"Scope 3 Emissions Factor\", \"Met coal\", \"MtCO2eq / PJ\"\n    ] = met_coal_values\n    scope3df_index.reset_index(inplace=True)\n    scope3df_index.head()\n    return scope3df_index.melt(id_vars=[\"Category\", \"Fuel\", \"Unit\"], var_name=\"Year\")\n```",
+      "line": 317,
+      "selection": {
+        "start": {
+          "line": 309,
+          "character": 5
+        },
+        "end": {
+          "line": 317,
+          "character": 6
+        }
+      }
+    }
+  ]
+}

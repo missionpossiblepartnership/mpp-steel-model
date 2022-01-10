@@ -1,0 +1,256 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "#04 - timeseries",
+  "steps": [
+    {
+      "file": "mppsteel/minimodels/timeseries_generator.py",
+      "description": "# Timeseries\n\nThis module generates the timeseries needed for the model. The module contains multiple functions to deal with specific timeseries susch as biomass, carbon tax, and electricity prices.\n\nIn this tour we will cover from the main function and the functions that are used to create the specific timeseries.",
+      "line": 1,
+      "selection": {
+        "start": {
+          "line": 1,
+          "character": 1
+        },
+        "end": {
+          "line": 1,
+          "character": 62
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/timeseries_generator.py",
+      "description": "## generate_timeseries\n\nThis is the main function to generate the timeseries for biomass, carbon taxes and electricity costs. The function creates a dataframe for each one and returns a dictionary with the keys as the name of the timeseries and the corresponding `pandas.DataFrame` as the values.\n\n```python\ntimeseries_dict = {\n                 \"biomass\": pandas.DataFrame,\n                 \"carbon_tax\": pandas.DataFrame,\n                 \"electricity\": pandas.DataFrame\"\n                 }\n```\nThe function takes a boolean `serialize_only` argument, by default is set to `False` in case of being set up to `True` the functions does not returns the data dictionary and only saves it as a pickle in the intermediate data folder.",
+      "line": 295,
+      "selection": {
+        "start": {
+          "line": 287,
+          "character": 1
+        },
+        "end": {
+          "line": 295,
+          "character": 8
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/timeseries_generator.py",
+      "description": "### Create timeseries\n\nTo create the timeseries for biomass, carbon tax, and electricity prices, the function calls the `timeseries_generator` function that generates timeseries based on particular logic.",
+      "line": 330,
+      "selection": {
+        "start": {
+          "line": 297,
+          "character": 5
+        },
+        "end": {
+          "line": 330,
+          "character": 6
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/timeseries_generator.py",
+      "description": "## timeseries_generator function\n\nThis is the main timeseries function that will be used to generate the time series based on a particualr logic. The function takes multiple arguments:\n\n+ `timeseries_type` a string that defines the type of timeseries to generate, the options are Biomass, Carbon Tax, and Power.\n+ `start_year` the start date of the timeseries.\n+ `end_year` the end date of the timeseries.\n+ `end_value` Defines the terminal value of the timeseries (e.g. the final value for the carbon tax)\n+ `start_value` Defines the starting value for the timeseries.\n+ `units` Defines the units of the timeseries values. By default is an empty string.\n\nThe function returns a `pandas.DataFrame` with the timeseries.",
+      "line": 157,
+      "selection": {
+        "start": {
+          "line": 136,
+          "character": 1
+        },
+        "end": {
+          "line": 157,
+          "character": 8
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/timeseries_generator.py",
+      "description": "#### Dataframe creation\n\nCreate the dataframe that will store the timeseries. The dataframe will have three columns:\n\n+ `year` with the years from start to end as integers\n+ `value` The value for the given year and unit\n+ `units` String with the type of unit for the value",
+      "line": 170,
+      "selection": {
+        "start": {
+          "line": 158,
+          "character": 5
+        },
+        "end": {
+          "line": 170,
+          "character": 57
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/timeseries_generator.py",
+      "description": "### Scenarios\n\nThese lines check the `kwargs` for the scenario that will be used to generate the time series. If the `kwargs`are present then set the `power_scenario` variable to the apropiate one, othewise the `power_scenario` is an empty string.",
+      "line": 174,
+      "selection": {
+        "start": {
+          "line": 172,
+          "character": 5
+        },
+        "end": {
+          "line": 174,
+          "character": 44
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/timeseries_generator.py",
+      "description": "## Internal functions\n\nThere are three internal functions to create the specific timeseries for the biomass, carbon tax, and the power grid logic.\n\nAll three functions take a `pandas.DataFrame` as argument, and then applies the specifi process to create the time series. In the next steps we will cover each of those functions.",
+      "line": 175
+    },
+    {
+      "file": "mppsteel/minimodels/timeseries_generator.py",
+      "description": "### biomass_logic function\n\nThis function applies the logic to generate the biomass timeseries.\n\nThe function takes a `pandas.DataFrame` as the input argument and returns the `pandas.DataFrame` with the applied logic.",
+      "line": 184,
+      "selection": {
+        "start": {
+          "line": 176,
+          "character": 5
+        },
+        "end": {
+          "line": 184,
+          "character": 12
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/timeseries_generator.py",
+      "description": "#### Biomass logic\n\nThe function first creates a new copy from the DataFrame, the it iterates over the rows and ckecks the following logic:\n\n1. Skip the first two rows by checking if the index of the row is smaller than two, and sets the value to 0\n2. If the index is larger than two and smaller than the end year, set the value of biomass as:\n  ```python\n  end_value / (\n                1 + (np.exp(-0.45 * (row.year - ELECTRICITY_PRICE_MID_YEAR)))\n                )\n  ```\n3. Finally, sets the value for the last year as the `end_value`",
+      "line": 197,
+      "selection": {
+        "start": {
+          "line": 185,
+          "character": 9
+        },
+        "end": {
+          "line": 197,
+          "character": 20
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/timeseries_generator.py",
+      "description": "### carbon_tax_logic function\n\nThis function calculates the carbon tax timeseries based on the specific logic.",
+      "line": 207,
+      "selection": {
+        "start": {
+          "line": 199,
+          "character": 5
+        },
+        "end": {
+          "line": 207,
+          "character": 12
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/timeseries_generator.py",
+      "description": "#### Carbon tax logic\n\nThe function copies the dataframe into a new one, and then it iterates over the rows to apply the carbon tax logic as follows:\n\n1. If the index of the row is the first one, then set the value to the `start_value` parameter.\n2. If the index of the row is larger than the first one and smaller than the last year, then set the value with the following logic:\n    ```python\n    (end_value / len(year_range)) * (row.year - start_year)\n    ```\n3. For the last row set the value as the `end_value`\n\nFinally, the function returns the `pandas.DataFrame`",
+      "line": 219
+    },
+    {
+      "file": "mppsteel/minimodels/timeseries_generator.py",
+      "description": "### power_grid_logic function\n\nThe function to calculate the power grid timeseries is slightly different than the other functions, as this one takes the `scenario` parameter, a string indicating the power scenarios as favorable or average, and the mid_price_year parameter that defines the year that the model uses to calculate the middle price.",
+      "line": 235,
+      "selection": {
+        "start": {
+          "line": 221,
+          "character": 5
+        },
+        "end": {
+          "line": 235,
+          "character": 12
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/timeseries_generator.py",
+      "description": "#### Grid logic.\n\nCreate a copy of the dataframe and start looping through the rows.",
+      "line": 237,
+      "selection": {
+        "start": {
+          "line": 236,
+          "character": 9
+        },
+        "end": {
+          "line": 237,
+          "character": 38
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/timeseries_generator.py",
+      "description": "#### First year\n\nSkip the first year and set the electircity price as the default one for the start_year and scenario using the `grid_price_selector` function:\n\n```python\ndef grid_price_selector(year: int, scenario: str):\n    (\n        grid_electricity_price_sweden,\n        grid_electricity_price_eu,\n        t_and_d_premium,\n        diff_in_price_between_mid_and_large_business,\n    ) = get_grid_data()\n    if (scenario == \"favorable\") & (year == ELECTRICITY_PRICE_START_YEAR):\n        return grid_electricity_price_sweden\n    elif (scenario == \"average\") & (year == ELECTRICITY_PRICE_START_YEAR):\n        return grid_electricity_price_eu\n    elif (scenario == \"favorable\") & (year == ELECTRICITY_PRICE_MID_YEAR):\n        return GRID_ELECTRICITY_PRICE_FAVORABLE_MID.value\n    elif (scenario == \"average\") & (year == ELECTRICITY_PRICE_MID_YEAR):\n        return GRID_ELECTRICITY_PRICE_AVG_MID.value\n```",
+      "line": 242,
+      "selection": {
+        "start": {
+          "line": 239,
+          "character": 13
+        },
+        "end": {
+          "line": 242,
+          "character": 18
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/timeseries_generator.py",
+      "description": "#### First half years\n\nFor the first half years in the time series set the value of the electricity price by getting the grid_price_mid for the given scenario, divide it by the grid price in the start_year and given scenario, and elecate it to the power of 1 over the differenence between the mide_price_year and the start_year, times the value of the previous year.\n\n```python\n(\n    (\n        grid_price_mid(scenario) / grid_price_selector(ELECTRICITY_PRICE_START_YEAR, scenario)\n    ) ** (\n        1 / (mid_price_year - start_year)\n        )\n) * df_c.loc[row.Index - 1, \"value\"]\n```",
+      "line": 251
+    },
+    {
+      "file": "mppsteel/minimodels/timeseries_generator.py",
+      "description": "#### Middle year\n\nIf the date is the middle year, set the value to the grid_price for the middle year in the given scenario. This is done by calling the function `grid_price_mid`:\n\n```python\ndef grid_price_mid(scenario: str):\n    (\n        grid_electricity_price_sweden,\n        grid_electricity_price_eu,\n        t_and_d_premium,\n        diff_in_price_between_mid_and_large_business,\n    ) = get_grid_data()\n    return (\n        grid_price_selector(ELECTRICITY_PRICE_MID_YEAR, scenario)\n        * EUR_USD_CONVERSION\n        * (1 + t_and_d_premium)\n        * (1 - diff_in_price_between_mid_and_large_business)\n    )\n```\n",
+      "line": 254
+    },
+    {
+      "file": "mppsteel/minimodels/timeseries_generator.py",
+      "description": "#### Second half years\n\nIf the years are in the second half of the timeseries, then set the value using a similar logic than the one applied for the years int he first half.\n```python\n(\n    (\n        grid_price_last_year(scenario) / grid_price_mid(scenario)\n    ) ** (1 / (end_year - mid_price_year))\n) * df_c.loc[row.Index - 1, \"value\"]\n```",
+      "line": 260
+    },
+    {
+      "file": "mppsteel/minimodels/timeseries_generator.py",
+      "description": "#### Final year\n\nFor the final year use the `grip_price_last_year` scenario to set the final price. The function is:\n```python\ndef grid_price_last_year(scenario: str):\n    if scenario == \"favorable\":\n        return grid_price_mid(scenario) + (\n            DEEPLY_DECARBONISED_POWER_SYSTEM_PRICE_INCREASE.value * EUR_USD_CONVERSION\n        )\n    elif scenario == \"average\":\n        return grid_price_selector(ELECTRICITY_PRICE_START_YEAR, scenario) * (\n            1 - DEEPLY_DECARBONISED_POWER_SYSTEM_PRICE_AVG.value\n        )\n```",
+      "line": 263
+    },
+    {
+      "file": "mppsteel/minimodels/timeseries_generator.py",
+      "description": "#### Returns\n\nThe function adds two new columns, one for the category and one with the scenario used for the generation of the timeseries.\n\nThe datafrme with the timeseries is return.",
+      "line": 267,
+      "selection": {
+        "start": {
+          "line": 264,
+          "character": 9
+        },
+        "end": {
+          "line": 267,
+          "character": 20
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/timeseries_generator.py",
+      "description": "### Apply timeseries generator\n\nBased on the previously defined functions, the control flow applies the appropiate function to genrate the timeseries, once the time series is created it adds a new column to the data frame with the appropiate units for the values. And finally it returns the dataframe.",
+      "line": 283
+    },
+    {
+      "file": "mppsteel/minimodels/timeseries_generator.py",
+      "description": "## Electricity minimodel\n\nTo create the electricity minimodel timeseries, the function calculates the favorable and average electricity timeseries, and concatenate them into a single `pandas.DataFrame`",
+      "line": 332,
+      "selection": {
+        "start": {
+          "line": 332,
+          "character": 5
+        },
+        "end": {
+          "line": 332,
+          "character": 77
+        }
+      }
+    },
+    {
+      "file": "mppsteel/minimodels/timeseries_generator.py",
+      "description": "## Timeseries returns\n\nIf the argument `serialize_only` was set to `True`, the function saves the data as a pickle in the pickle intermediate folder. Otherwise, the function returns a dictionary with the DataFrames as values and the name of the timeseries as keys:\n```python\ntimeseries_dict = {\n                   \"biomass\": biomass_availability,\n                   \"carbon_tax\": carbon_tax,\n                   \"electricity\": electricity_minimodel_timeseries\n                   }\n```",
+      "line": 349
+    }
+  ]
+}

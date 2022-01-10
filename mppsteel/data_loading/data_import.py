@@ -6,7 +6,7 @@ import pandas as pd
 from mppsteel.utility.utils import get_logger, extract_data, serialize_df_dict, timer_func
 
 # Get model parameters
-from mppsteel.model_config import IMPORT_DATA_PATH, PKL_DATA_IMPORTS
+from mppsteel.model_config import IMPORT_DATA_PATH, PKL_DATA_IMPORTS, PE_MODEL_FILENAME_DICT, PE_MODEL_SHEETNAME_DICT
 
 # Create logger
 logger = get_logger("Data Import")
@@ -29,17 +29,11 @@ def replace_rows(df: pd.DataFrame, header_row: int) -> pd.DataFrame:
     return df_c
 
 
-def create_wind_df() -> pd.DataFrame:
-    df_sheets = []
-    wind_filename = "Wind -Technical Potential at the country level.xlsx"
-    for sheet in range(7):
-        df_sheet = pd.read_excel(
-            io=f"{IMPORT_DATA_PATH}/{wind_filename}", sheet_name=sheet
-        )
-        df_sheets.append(df_sheet)
-    wind_df = pd.concat(df_sheets)
-    wind_df.reset_index(drop=True, inplace=True)
-    return wind_df
+def get_pe_model_data(model_name: str):
+    def get_path(model_name: str, filenames_dict: dict):
+        return f'{IMPORT_DATA_PATH}/{filenames_dict[model_name]}'
+    datapath = get_path(model_name, PE_MODEL_FILENAME_DICT)
+    return pd.read_excel(datapath, sheet_name=PE_MODEL_SHEETNAME_DICT[model_name])
 
 @timer_func
 def load_data(serialize_only: bool = False) -> dict:
@@ -90,9 +84,6 @@ def load_data(serialize_only: bool = False) -> dict:
     # Import feedstock prices
     feedstock_prices = extract_data(IMPORT_DATA_PATH, "Feedstock Prices", "xlsx")
 
-    # Import steel demand
-    steel_demand = extract_data(IMPORT_DATA_PATH, "Steel Demand", "csv")
-
     # Import steel plant data
     steel_plants = extract_data(IMPORT_DATA_PATH, "Steel Plant Data Full", "xlsx")
 
@@ -109,27 +100,6 @@ def load_data(serialize_only: bool = False) -> dict:
         IMPORT_DATA_PATH, "Carbon Tax Assumptions", "csv"
     )
 
-    # Import WSA data
-    crude_regional_shares = extract_data(
-        IMPORT_DATA_PATH, "WSA World Steel In Figures 2021", "xlsx", 0
-    )
-    crude_regional_real = extract_data(
-        IMPORT_DATA_PATH, "WSA World Steel In Figures 2021", "xlsx", 1
-    )
-    iron_ore_pig_iron = extract_data(
-        IMPORT_DATA_PATH, "WSA World Steel In Figures 2021", "xlsx", 2
-    )
-
-    crude_trade = replace_rows(
-        extract_data(IMPORT_DATA_PATH, "WSA World Steel In Figures 2021", "xlsx", 3), 1
-    ).fillna(0)
-    iron_ore_trade = replace_rows(
-        extract_data(IMPORT_DATA_PATH, "WSA World Steel In Figures 2021", "xlsx", 4), 1
-    ).fillna(0)
-    scrap_trade = replace_rows(
-        extract_data(IMPORT_DATA_PATH, "WSA World Steel In Figures 2021", "xlsx", 5), 1
-    ).fillna(0)
-
     # Import Technology Business Cases
     business_cases = replace_rows(
         extract_data(IMPORT_DATA_PATH, "Business Cases One Table", "xlsx"), 0
@@ -145,22 +115,15 @@ def load_data(serialize_only: bool = False) -> dict:
         IMPORT_DATA_PATH, "Ethanol Plastic Charcoal", "csv"
     )
 
-    """
-    # Import Solar Data
-    solar_filename = "Solar - Global Photovoltaic Potential Country Rankings.xlsx"
-    solar = pd.read_excel(
-        io=f"{IMPORT_DATA_PATH}/{solar_filename}",
-        sheet_name=0,
-        skiprows=1,
-        usecols=range(21),
+    # Import Regional Steel Demand Data
+    regional_steel_demand = extract_data(
+        IMPORT_DATA_PATH, "Regional Steel Demand", "csv"
     )
-    # Import Wind data
-    ## wind = create_wind_df()
 
-    # Import Natural Gas Data
-    natural_gas_filename = "EIA Natural Gas Reserves.csv"
-    natural_gas = pd.read_csv(f"{IMPORT_DATA_PATH}/{natural_gas_filename}", skiprows=1)
-    """
+    # Import Price and Emissions Models
+    power_model = get_pe_model_data('power')
+    hydrogen_model = get_pe_model_data('hydrogen')
+    ccus_model = get_pe_model_data('ccus')
 
     # Define a data dictionary
     df_dict = {
@@ -173,15 +136,9 @@ def load_data(serialize_only: bool = False) -> dict:
         "static_energy_prices": static_energy_prices,
         "feedstock_prices": feedstock_prices,
         "grid_emissivity": grid_emissivity,
-        "steel_demand": steel_demand,
+        "regional_steel_demand": regional_steel_demand,
         "steel_plants": steel_plants,
         "tech_availability": tech_availability,
-        "crude_regional_real": crude_regional_real,
-        "crude_regional_shares": crude_regional_shares,
-        "iron_ore_pig_iron": iron_ore_pig_iron,
-        "crude_trade": crude_trade,
-        "iron_ore_trade": iron_ore_trade,
-        "scrap_trade": scrap_trade,
         "s3_emissions_factors_1": s3_emissions_factors_1,
         "s3_emissions_factors_2": s3_emissions_factors_2,
         "business_cases": business_cases,
@@ -189,9 +146,9 @@ def load_data(serialize_only: bool = False) -> dict:
         "hydrogen_electrolyzer_capex": hydrogen_electrolyzer_capex,
         "carbon_tax_assumptions": carbon_tax_assumptions,
         "ethanol_plastic_charcoal": ethanol_plastic_charcoal,
-        # "solar": solar,
-        # "wind": wind,
-        # "natural_gas": natural_gas,
+        "power_model": power_model,
+        "hydrogen_model": hydrogen_model,
+        "ccus_model": ccus_model,
     }
 
     if serialize_only:

@@ -74,7 +74,6 @@ def tech_process_getter(
             & (df_c["material_category"] == material)
             & (df_c["process_detail"] == process_detail)
         ]["value"].values[0]
-
     # 2 ONLY
     if material and step and not process_detail:
         return df_c[
@@ -97,7 +96,6 @@ def tech_process_getter(
             & (df_c["process_detail"] == process_detail)
             & (df_c["step"] == step)
         ]["value"].values[0]
-
     # 1 ONLY
     if material and not step and not process_detail:
         return df_c[
@@ -117,7 +115,6 @@ def tech_process_getter(
             & (df_c["process"] == process)
             & (df_c["process_detail"] == process_detail)
         ]["value"].values[0]
-
     # NONE
     if not full_ref:
         return df_c[(df_c["technology"] == technology) & (df_c["process"] == process)]
@@ -581,7 +578,7 @@ def create_production_factors(
         CCU_CO2_FACTOR,
         REMELT_FACTOR,
     ]
-    # Modified by Luis. Read data.
+    # Read data.
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     processes = bc_processes["process"].unique()

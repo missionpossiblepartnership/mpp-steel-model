@@ -2,12 +2,25 @@
 
 # Define Data Path
 CORE_DATA_PATH = "mppsteel/data"
+LOG_PATH = "logs/"
 IMPORT_DATA_PATH = f"{CORE_DATA_PATH}/import_data"
 OUTPUT_FOLDER = f"{CORE_DATA_PATH}/output_data"
 PKL_FOLDER = f"{CORE_DATA_PATH}/pkl_data"
 PKL_DATA_IMPORTS = f"{PKL_FOLDER}/imported_data"
 PKL_DATA_INTERMEDIATE = f"{PKL_FOLDER}/intermediate_data"
 PKL_DATA_FINAL = f"{PKL_FOLDER}/final_data"
+
+PE_MODEL_FILENAME_DICT = {
+    'power': 'Power Model.xlsx',
+    'ccus': 'CCUS Model.xlsx',
+    'hydrogen': 'H2 Model.xlsx',
+}
+
+PE_MODEL_SHEETNAME_DICT = {
+    'power': ['GridPrice', 'GridEmissions', 'RESPrice'],
+    'ccus': ['Transport', 'Storage'],
+    'hydrogen': ['Prices', 'Emissions']
+}
 
 MODEL_YEAR_START = 2020
 MODEL_YEAR_END = 2050
@@ -33,6 +46,7 @@ ENERGY_DENSITY_MET_COAL = 28  # [MJ/kg]
 
 DISCOUNT_RATE = 0.07
 EUR_USD_CONVERSION = 0.877
+STEEL_PLANT_LIFETIME = 40  # years
 INVESTMENT_CYCLE_LENGTH = 20  # years
 INVESTMENT_CYCLE_VARIANCE = 3 # years
 INVESTMENT_OFFCYCLE_BUFFER_TOP = 3
@@ -59,3 +73,37 @@ ABATEMENT_RANK_3 = 0.932690243851946 # Switching from Avg BF-BOF to BAT BF-BOF_b
 GREEN_PREMIUM_MIN_PCT = 0.01
 GREEN_PREMIUM_MAX_PCT = 0.05
 SWITCH_RANK_PROPORTIONS = {'tco': 0.6, 'emissions': 0.4}
+
+DEFAULT_SCENARIO = {
+    'tech_moratorium': True, # bool
+    'carbon_tax': False, # bool
+    'green_premium': True, # bool
+    'electricity_cost_scenario': 'average', # low / average / high
+    'hydrogen_cost_scenario': 'average', # low / average / high
+    'steel_demand_scenario': 'average' # bau / average / high
+}
+
+COST_SCENARIO_MAPPER = {
+    'low': 'Min',
+    'average': 'Baseline',
+    'high': 'Max',
+}
+
+STEEL_DEMAND_SCENARIO_MAPPER = {
+    'bau': 'BAU',
+    'high': 'High Circ',
+    'average': 'average'
+}
+
+true_false = [True, False]
+low_avg_high = list(COST_SCENARIO_MAPPER.keys())
+bau_hc = STEEL_DEMAND_SCENARIO_MAPPER.keys()
+
+SCENARIO_OPTIONS = {
+    'tech_moratorium': true_false,
+    'carbon_tax': true_false,
+    'green_premium': true_false,
+    'electricity_cost_scenario': low_avg_high,
+    'hydrogen_cost_scenario': low_avg_high,
+    'steel_demand_scenario': bau_hc
+}

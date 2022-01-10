@@ -7,6 +7,7 @@ import sys
 import os
 
 from collections import namedtuple
+from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 
 import pandas as pd
@@ -17,12 +18,14 @@ import pycountry
 from mppsteel.utility.reference_lists import NEW_COUNTRY_COL_LIST, FILES_TO_REFRESH
 
 from mppsteel.model_config import (
-    PKL_DATA_FINAL, OUTPUT_FOLDER, 
+    PKL_DATA_FINAL, OUTPUT_FOLDER, LOG_PATH,
     PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
 )
 
-FORMATTER = logging.Formatter("%(asctime)s — %(name)s — %(levelname)s — %(message)s")
-LOG_FILE = "MPP_STEEL_LOGFILE.log"
+def get_today_time():
+    return datetime.today().strftime('%y%m%d_%H%M%S')
+
+LOG_FORMATTER = logging.Formatter("%(asctime)s — %(name)s — %(levelname)s — %(message)s")
 
 
 def get_console_handler():
@@ -32,7 +35,7 @@ def get_console_handler():
         StreamHandler: A formatted stream handler
     """
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setFormatter(FORMATTER)
+    console_handler.setFormatter(LOG_FORMATTER)
     return console_handler
 
 
@@ -42,12 +45,14 @@ def get_file_handler():
     Returns:
         [type]: A formatted file handler
     """
-    file_handler = TimedRotatingFileHandler(LOG_FILE, when="midnight")
-    file_handler.setFormatter(FORMATTER)
+    today_time = get_today_time()
+    log_filepath = f"{LOG_PATH}/mppsteel_{today_time}.log"
+    file_handler = TimedRotatingFileHandler(log_filepath, when="midnight")
+    file_handler.setFormatter(LOG_FORMATTER)
     return file_handler
 
 
-def get_logger(logger_name, create_logfile: bool = False):
+def get_logger(logger_name, create_logfile: bool = True):
     """Creates a log object that can be outputted to file or std output.
 
     Args:
@@ -208,6 +213,15 @@ def country_mapping_fixer(
         df_c.loc[df_c[country_colname] == item[0], country_code_colname] = item[1]
     return df_c
 
+def match_country(country: str):
+    # try to match the country to using pycountry.
+    # If not match, return an empty string
+    try:
+        match = pycountry.countries.search_fuzzy(country)
+        match = match[0].alpha_3
+        return match
+    except:  # Currently no exception specification.
+        return ""
 
 def country_matcher(country_list: list, output_type: str = "all") -> dict:
     """Fuzzy matches a list of countries and creates a mapping of the country to alpha-3 name.
@@ -221,16 +235,6 @@ def country_matcher(country_list: list, output_type: str = "all") -> dict:
     Returns:
         dict: A dictionary(ies) based on the output_type parameters
     """
-
-    def match_country(country: str):
-        # try to match the country to using pycountry.
-        # If not match, return an empty string
-        try:
-            match = pycountry.countries.search_fuzzy(country)
-            match = match[0].alpha_3
-            return match
-        except:  # Currently no exception specification.
-            return ""
 
     # Generate matched entries
     countries_dict = {}
@@ -354,3 +358,33 @@ def timer_func(func):
         TIME_CONTAINER.update_time(func.__name__, format_times(starttime, endtime))
         return result
     return wrap_func
+
+def add_scenarios(df: pd.DataFrame, scenario_dict: dict):
+    df_c = df.copy()
+    for key in scenario_dict.keys():
+        df_c[f'scenario_{key}'] = scenario_dict[key]
+    return df_c
+
+
+def stdout_query(question: str, default: str, options: str):
+    """Ask a yes/no question via raw_input() and return their answer.
+
+    "question" is a string that is presented to the user.
+    "default" is the presumed answer if the user just hits <Enter>.
+            It must be "yes" (the default), "no" or None (meaning
+            an answer is required of the user).
+
+    The "answer" return value is True for "yes" or False for "no".
+    """
+    if default not in options:
+        raise ValueError(f'invalid default answer {default}. Not in options: {options}')
+
+    while True:
+        sys.stdout.write(f'{question} {default}')
+        choice = input().lower()
+        if choice == '':
+            return default
+        elif choice != "" and choice in options:
+            return choice
+        elif choice != "" and choice not in options:
+            sys.stdout.write(f"Please respond with a choice from {options}.\n")

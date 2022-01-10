@@ -97,6 +97,14 @@ def create_investment_cycle_ref(steel_plant_df: pd.DataFrame):
 
 @timer_func
 def investment_cycle_flow(serialize_only: bool = False):
+    """[summary]
+
+    Args:
+        serialize_only (bool, optional): [description]. Defaults to False.
+
+    Returns:
+        [type]: [description]
+    """    
     steel_plants_aug = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'steel_plants_processed', 'df')
     plant_investment_cycles = create_investment_cycle_ref(steel_plants_aug)
 

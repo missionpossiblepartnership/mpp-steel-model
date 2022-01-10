@@ -1,0 +1,111 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "#16 - Investment results",
+  "steps": [
+    {
+      "file": "mppsteel/results/investments.py",
+      "description": "# Investment results generator\n\nThis module contains the funtions used to generate the investment results based on the technology switches.",
+      "line": 1,
+      "selection": {
+        "start": {
+          "line": 1,
+          "character": 1
+        },
+        "end": {
+          "line": 1,
+          "character": 62
+        }
+      }
+    },
+    {
+      "file": "mppsteel/results/investments.py",
+      "description": "## Investment results\n\nThe main function that controls the generation of the investment results. The funtion takes one boolean argument `serialize_only` in case it is set to `True`, the function will save the output as a pickle and will not return it. Otherwise, it returns the investment result DataFrame.",
+      "line": 119,
+      "selection": {
+        "start": {
+          "line": 111,
+          "character": 1
+        },
+        "end": {
+          "line": 119,
+          "character": 12
+        }
+      }
+    },
+    {
+      "file": "mppsteel/results/investments.py",
+      "description": "### Data loading\n\nAt this stage the function loads the data that will be used to create the investment results, these are:\n\n  1. Technology choice dictionary\n  2. Plant investment cycles\n  3. Plant names\n  4. Capex DataFrame\n  5. Get the maximum year\n  6. Create a year range from the start year of the model to the end one + 1\n  4. Initiate an empty list.",
+      "line": 128,
+      "selection": {
+        "start": {
+          "line": 121,
+          "character": 5
+        },
+        "end": {
+          "line": 128,
+          "character": 24
+        }
+      }
+    },
+    {
+      "file": "mppsteel/results/investments.py",
+      "description": "### Iteration over plants\n\nIterate over the plants and the years to calculate the investment for the given plant at the given year using the function `investment_row_calculator` and append the data to the previously initialized list.",
+      "line": 134,
+      "selection": {
+        "start": {
+          "line": 129,
+          "character": 5
+        },
+        "end": {
+          "line": 134,
+          "character": 23
+        }
+      }
+    },
+    {
+      "file": "mppsteel/results/investments.py",
+      "description": "## Investment row calculator\n\nFunction to calculate the investment at the plant and year level.",
+      "line": 90,
+      "selection": {
+        "start": {
+          "line": 78,
+          "character": 1
+        },
+        "end": {
+          "line": 90,
+          "character": 12
+        }
+      }
+    },
+    {
+      "file": "mppsteel/results/investments.py",
+      "description": "### Create row\n\nTo create the investment row the funciton does the following:\n\n  1. Get the type of swith\n  2. Set the start technology\n  3. Get the technology choice for the given plant at the given year\n  4. Get the capex\n  5. Create the new row as a dictionary\n  6. Return the newly created row",
+      "line": 108,
+      "selection": {
+        "start": {
+          "line": 91,
+          "character": 5
+        },
+        "end": {
+          "line": 108,
+          "character": 19
+        }
+      }
+    },
+    {
+      "file": "mppsteel/results/investments.py",
+      "description": "### Return inestment results\n\nOnce the loop is over the data is used to create a new DataFrame with the investment results. The DataFrame can be returned or if the `serialize_only` argument was set to `True` the data is saved in the `PKL_DATA_FINAL` folder.",
+      "line": 140,
+      "selection": {
+        "start": {
+          "line": 135,
+          "character": 4
+        },
+        "end": {
+          "line": 140,
+          "character": 33
+        }
+      }
+    }
+  ]
+}
