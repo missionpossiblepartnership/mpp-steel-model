@@ -1,7 +1,6 @@
 """Graph generating functions"""
+import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 
 from mppsteel.utility.utils import get_logger
 
@@ -36,11 +35,18 @@ SCENARIO_COLOURS = {
     "Fast Abatement": '#4C6C9C'
 }
 
+def line_graph(df: pd.DataFrame, x: str, y: str, title: str, save_filepath:str=None, ext:str='png'):
+    fig_ = px.line(df, x=x, y=y, title=title)
 
-def line_chart(data, x, y, color, facet_col, name, x_axis, y_axis, text=None, color_discrete_map=None, save_filepath:str=None, ext:str='png'):
+    if save_filepath:
+        fig_.write_image(f'{save_filepath}.{ext}')
+
+    return fig_
+
+def line_chart(data, x, y, color, name, x_axis, y_axis, text=None, color_discrete_map=None, save_filepath:str=None, ext:str='png'):
     ## this need to be updated to account for multiple facets https://github.com/plotly/plotly.py/issues/2545
     fig_ = px.line(
-        data, x=x, y=y, color=color, facet_col=facet_col, facet_col_spacing=0.075, text=text, color_discrete_map=color_discrete_map
+        data, x=x, y=y, color=color, text=text, color_discrete_map=color_discrete_map
     )
     fig_.update_traces(mode="lines", hovertemplate=None)
     fig_.update_layout(

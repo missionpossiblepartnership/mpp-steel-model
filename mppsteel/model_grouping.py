@@ -70,6 +70,14 @@ def model_outputs_phase(new_folder: bool = False, timestamp: str = ''):
     for pkl_file in pkl_files:
         pickle_to_csv(save_path, pkl_file)
 
+def model_graphs_phase(new_folder: bool = False, timestamp: str = ''):
+    save_path = OUTPUT_FOLDER
+    if new_folder:
+        folder_filepath = f'{OUTPUT_FOLDER}/{timestamp}/graphs'
+        create_folder_if_nonexist(folder_filepath)
+        save_path = folder_filepath
+    create_graphs(save_path)
+
 # Group phases
 def data_import_refresh():
     data_import_stage()
@@ -85,19 +93,19 @@ def half_model_run(scenario_dict: dict, dated_output_folder: bool, timestamp: st
     model_calculation_phase(scenario_dict)
     model_results_phase(scenario_dict)
     model_outputs_phase(dated_output_folder, timestamp)
-    create_graphs(timestamp)
+    model_graphs_phase(dated_output_folder, timestamp)
 
 def results_and_output(scenario_dict: dict, dated_output_folder: bool, timestamp: str):
     model_results_phase(scenario_dict)
     model_outputs_phase(dated_output_folder, timestamp)
-    create_graphs(timestamp)
+    model_graphs_phase(dated_output_folder, timestamp)
 
 def outputs_only(dated_output_folder: bool, timestamp: str):
     model_outputs_phase(dated_output_folder, timestamp)
-    create_graphs(timestamp)
+    model_graphs_phase(dated_output_folder, timestamp)
 
-def graphs_only(timestamp: str):
-    create_graphs(timestamp)
+def graphs_only(timestamp: str, dated_output_folder: bool):
+    model_graphs_phase(dated_output_folder, timestamp)
 
 def full_flow(scenario_dict: dict, dated_output_folder: bool, timestamp: str):
     data_import_and_preprocessing_refresh(scenario_dict)

@@ -96,7 +96,7 @@ if __name__ == "__main__":
         results_and_output(scenario_dict=scenario_args, dated_output_folder=True, timestamp=timestamp)
 
     if args.g:
-        graphs_only(timestamp=timestamp)
+        graphs_only(timestamp=timestamp, dated_output_folder=True)
 
     if args.n:
         generate_minimodels(scenario_dict=scenario_args)
