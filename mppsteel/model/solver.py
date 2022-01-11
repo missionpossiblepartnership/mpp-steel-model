@@ -11,8 +11,7 @@ from mppsteel.utility.utils import (
 
 from mppsteel.model_config import (
     MODEL_YEAR_START, PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE,
-    GREEN_PREMIUM_MIN_PCT, GREEN_PREMIUM_MAX_PCT,
-    MODEL_YEAR_END, INVESTMENT_CYCLE_LENGTH
+    GREEN_PREMIUM_SCENARIOS, MODEL_YEAR_END, INVESTMENT_CYCLE_LENGTH
 )
 
 from mppsteel.utility.reference_lists import (
@@ -429,7 +428,7 @@ def choose_technology(
     tech_moratorium: bool = False,
     error_plant: str = '',
     carbon_tax_scenario: bool = False, 
-    green_premium_scenario: bool = False,
+    green_premium_scenario: float = 0,
     steel_demand_scenario: str = 'bau',
     tech_switch_scenario: dict = {'tco': 0.6, 'emissions': 0.4},
     ):
@@ -460,7 +459,8 @@ def choose_technology(
     all_plant_variable_costs_summary = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'all_plant_variable_costs_summary', 'df')
     biomass_availability = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'biomass_availability', 'df')
     ccs_co2 = read_pickle_folder(PKL_DATA_IMPORTS, 'ccs_co2', 'df')
-    green_premium_timeseries = timeseries_generator(MODEL_YEAR_START,year_end,GREEN_PREMIUM_MIN_PCT,GREEN_PREMIUM_MAX_PCT,'pct')
+    green_premium_scenario_values = GREEN_PREMIUM_SCENARIOS['green_premium_scenario']
+    green_premium_timeseries = timeseries_generator('carbon_tax', MODEL_YEAR_START,year_end, green_premium_scenario_values[1],green_premium_scenario_values[0],'pct')
     emissions_switching_df_summary = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'emissions_switching_df_summary', 'df')
     materials = load_materials()
     opex_values_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'capex_dict', 'df')
@@ -707,7 +707,7 @@ def solver_flow(scenario_dict: dict, year_end: int, serialize_only: bool = False
         tech_moratorium=scenario_dict['tech_moratorium'],
         error_plant='SSAB Americas Alabama steel plant',
         carbon_tax_scenario=scenario_dict['carbon_tax'],
-        green_premium_scenario=scenario_dict['green_premium'],
+        green_premium_scenario=scenario_dict['green_premium_scenario'],
         steel_demand_scenario=scenario_dict['steel_demand_scenario'],
         tech_switch_scenario=scenario_dict['tech_switch_scenario']
         )

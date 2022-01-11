@@ -91,7 +91,18 @@ TECH_SWITCH_SCENARIOS = {
     'max_abatement': {'tco': 0, 'emissions': 1},
     'lowest_cost': {'tco': 1, 'emissions': 0},
     'equal_weight': {'tco': 0.5, 'emissions': 0.5},
-    'default': {'tco': 0.6, 'emissions': 0.4}
+}
+
+GREEN_PREMIUM_SCENARIOS = {
+    'off': (0, 0),
+    'low': (0.01, 0.03),
+    'average': (0.025, 0.05),
+    'high': (0.05, 0.08),
+}
+
+GRID_DECARBONISATION_SCENARIOS = {
+    'high': 'Accelerated',
+    'low': 'Central',
 }
 
 true_false = [True, False]
@@ -100,8 +111,9 @@ low_avg_high = list(COST_SCENARIO_MAPPER.keys())
 SCENARIO_OPTIONS = {
     'tech_moratorium': true_false,
     'carbon_tax': true_false,
-    'green_premium': true_false,
+    'green_premium_scenario': GREEN_PREMIUM_SCENARIOS.keys(),
     'electricity_cost_scenario': low_avg_high,
+    'grid_scenario': GRID_DECARBONISATION_SCENARIOS.keys(),
     'hydrogen_cost_scenario': low_avg_high,
     'steel_demand_scenario': STEEL_DEMAND_SCENARIO_MAPPER.keys(),
     'tech_switch_scenario': TECH_SWITCH_SCENARIOS.keys()
@@ -112,7 +124,8 @@ DEFAULT_SCENARIO = {
     'carbon_tax': False, # bool
     'green_premium': True, # bool
     'electricity_cost_scenario': 'average', # low / average / high
+    'grid_scenario': 'high', # low / high
     'hydrogen_cost_scenario': 'average', # low / average / high
     'steel_demand_scenario': 'average', # bau / average / high
-    'tech_switch_scenario': 'default', # max_abatement / lowest_cost / equal_weight / default
+    'tech_switch_scenario': 'equal_weight', # max_abatement / lowest_cost / equal_weight / default
 }

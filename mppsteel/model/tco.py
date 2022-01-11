@@ -266,22 +266,21 @@ def get_opex_costs(
     green_premium_timeseries: pd.DataFrame,
     steel_plant_capacity: pd.DataFrame,
     include_carbon_tax: bool,
-    include_green_premium: bool,
+    green_premium_scenario: bool,
 ):
     # combined_row = str(plant.abundant_res) + str(plant.ccs_available) + str(plant.cheap_natural_gas)
     # variable_costs = variable_costs_df.loc[combined_row, year]
     variable_costs = variable_costs_df.loc[plant.region, year]
     opex_costs = opex_df.swaplevel().loc[year]
 
-    # single results
+    # Carbon Tax Result
     carbon_tax_result = 0
     if include_carbon_tax:
         carbon_tax_result = carbon_tax_estimate(emissions_dict_ref, carbon_tax_timeseries, year)
-    green_premium_value = 0
-    if include_green_premium:
-        steel_making_cost = get_steel_making_costs(steel_plant_capacity, variable_costs, plant.plant_name, plant.technology_in_2020)
-        green_premium = green_premium_timeseries[green_premium_timeseries['year'] == year]['value'].values[0]
-        green_premium_value = (steel_making_cost * green_premium)
+    # Include Green Premium
+    steel_making_cost = get_steel_making_costs(steel_plant_capacity, variable_costs, plant.plant_name, plant.technology_in_2020)
+    green_premium = green_premium_timeseries[green_premium_timeseries['year'] == year]['value'].values[0]
+    green_premium_value = (steel_making_cost * green_premium)
 
     variable_costs.rename(mapper={'cost': 'value'},axis=1, inplace=True)
     carbon_tax_result.rename(mapper={'emissions': 'value'},axis=1, inplace=True)
@@ -318,7 +317,7 @@ def get_discounted_opex_values(
     green_premium_timeseries: pd.DataFrame,
     other_opex_df: pd.DataFrame,
     include_carbon_tax: bool,
-    include_green_premium: bool,
+    green_premium_scenario: bool,
     year_interval: int, int_rate: float):
 
     year_range = range(year_start, year_start+year_interval+1)
@@ -338,7 +337,7 @@ def get_discounted_opex_values(
             green_premium_timeseries,
             steel_plant_df,
             include_carbon_tax=include_carbon_tax,
-            include_green_premium=include_green_premium
+            green_premium_scenario=green_premium_scenario
         )
         df['year'] = year_ref
         df_list.append(df)
@@ -355,13 +354,13 @@ def tco_calc(
     plant, start_year: int, plant_tech: str, carbon_tax_df: pd.DataFrame,
     steel_plant_df: pd.DataFrame, variable_cost_summary: pd.DataFrame,
     green_premium_timeseries: pd.DataFrame, other_opex_df: pd.DataFrame,
-    include_carbon_tax: bool, include_green_premium: bool,
+    include_carbon_tax: bool, green_premium_scenario: bool,
     investment_cycle: int
     ):
     opex_values = get_discounted_opex_values(
         plant, start_year, carbon_tax_df, steel_plant_df, variable_cost_summary,
         green_premium_timeseries, other_opex_df,
-        include_carbon_tax=include_carbon_tax, include_green_premium=include_green_premium,
+        include_carbon_tax=include_carbon_tax, green_premium_scenario=green_premium_scenario,
         year_interval=investment_cycle, int_rate=DISCOUNT_RATE,
         )
     capex_values = calculate_capex(start_year).swaplevel().loc[plant_tech].groupby('end_technology').sum()
