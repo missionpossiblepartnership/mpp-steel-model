@@ -200,8 +200,8 @@ def power_data_getter(
 
 def hydrogen_data_getter(
     df_dict: dict, data_type: str, year: int, country_code: str,
-    default_country: str = 'USA', variable: str = None,
-    cost_scenario: str = 'Baseline', prod_scenario: str = 'Utility plant, grid'
+    default_country: str = 'USA', variable: str = 'H2 price',
+    cost_scenario: str = 'Baseline', prod_scenario: str = 'On-site, dedicated VREs'
     ):
     # map data_type to df_dict keys
     data_type_mapper = {
