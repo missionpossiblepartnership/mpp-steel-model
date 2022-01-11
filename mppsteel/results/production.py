@@ -25,8 +25,7 @@ from mppsteel.model.tco import (
 )
 
 from mppsteel.utility.utils import (
-    read_pickle_folder, get_logger, serialize_file, timer_func,
-    add_scenarios
+    read_pickle_folder, get_logger, serialize_file, timer_func, add_results_metadata,
 )
 
 # Create logger
@@ -66,7 +65,8 @@ def tech_capacity_splits():
     logger.info(f'- Generating Capacity split DataFrame')
     tech_capacities_dict = create_plant_capacities_dict()
     tech_choices_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'tech_choice_dict', 'df')
-    print(tech_choices_dict.keys())
+    steel_plant_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'steel_plants_processed', 'df')
+    steel_plant_dict = dict(zip(steel_plant_df['plant_name'].values, steel_plant_df['country_code'].values))
     max_year = max([int(year) for year in tech_choices_dict.keys()])
     steel_plants = tech_capacities_dict.keys()
     year_range = range(MODEL_YEAR_START, max_year+1)
@@ -75,12 +75,16 @@ def tech_capacity_splits():
     for year in tqdm(year_range, total=len(year_range), desc='Tech Capacity Splits'):
         df = pd.DataFrame({'year': year, 'steel_plant': steel_plants, 'technology': '', 'capacity': 0})
         df['technology'] = df['steel_plant'].apply(lambda plant: get_tech_choice(tech_choices_dict, year, plant))
+        
         for row in df.itertuples():
             df.loc[row.Index, 'capacity'] = calculate_primary_and_secondary(tech_capacities_dict, row.steel_plant, row.technology) / 1000
         df = df[df['technology'] != 'Not operating']
         df_list.append(df)
 
-    return pd.concat(df_list), max_year
+    df_combined = pd.concat(df_list)
+    df_combined['country_code'] = df['steel_plant'].apply(lambda plant: steel_plant_dict[plant])
+
+    return df_combined, max_year
 
 def production_stats_generator(production_df: pd.DataFrame, as_summary: bool = False):
     """[summary]
@@ -278,12 +282,10 @@ def production_results_flow(scenario_dict: dict, serialize_only: bool = False):
         [type]: [description]
     """    
     logger.info(f'- Starting Production Results Model Flow')
-    # new_steel_demand = extend_steel_demand(MODEL_YEAR_END)
     steel_demand_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'regional_steel_demand_formatted', 'df')
     tech_capacity_df, max_solver_year = tech_capacity_splits()
     steel_demand_scenario = scenario_dict['steel_demand_scenario']
     production_results = generate_production_stats(tech_capacity_df, steel_demand_df, steel_demand_scenario, max_solver_year)
-
     production_results_all = production_stats_generator(production_results)
     production_emissions = generate_production_emission_stats(production_results)
     global_metaresults = global_metaresults_calculator(
@@ -296,7 +298,8 @@ def production_results_flow(scenario_dict: dict, serialize_only: bool = False):
         }
 
     for key in results_dict.keys():
-        results_dict[key] = add_scenarios(results_dict[key], scenario_dict)
+        if key in ['production_results_all', 'production_emissions']:
+            results_dict[key] = add_results_metadata(results_dict[key], scenario_dict)
 
     if serialize_only:
         logger.info(f'-- Serializing dataframes')

@@ -9,6 +9,7 @@ import os
 from collections import namedtuple
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
+from pathlib import Path
 
 import pandas as pd
 import numpy as np
@@ -19,7 +20,8 @@ from mppsteel.utility.reference_lists import NEW_COUNTRY_COL_LIST, FILES_TO_REFR
 
 from mppsteel.model_config import (
     PKL_DATA_FINAL, OUTPUT_FOLDER, LOG_PATH,
-    PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
+    PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE,
+    RESULTS_REGIONS_TO_MAP,
 )
 
 def get_today_time():
@@ -320,15 +322,15 @@ def return_furnace_group(furnace_dict: dict, tech:str):
         if tech in furnace_dict[key]:
             return furnace_dict[key]
 
+pd.DataFrame().to_csv()
 
-def pickle_to_csv(pickle_filename: str, csv_filename: str = ''):
+def pickle_to_csv(folder_path: str, pickle_filename: str, csv_filename: str = ''):
     df = read_pickle_folder(PKL_DATA_FINAL, pickle_filename)
     logger.info(f'||| Saving {pickle_filename} pickle file as {csv_filename or pickle_filename}.csv')
     if csv_filename:
-        
-        df.to_csv(f"{OUTPUT_FOLDER}/{csv_filename}.csv")
+        df.to_csv(f"{folder_path}/{csv_filename}.csv", index=False)
     else:
-        df.to_csv(f"{OUTPUT_FOLDER}/{pickle_filename}.csv")
+        df.to_csv(f"{folder_path}/{pickle_filename}.csv", index=False)
 
 def format_times(start_t: float, end_t: float):
     time_diff = end_t - start_t
@@ -388,3 +390,29 @@ def stdout_query(question: str, default: str, options: str):
             return choice
         elif choice != "" and choice not in options:
             sys.stdout.write(f"Please respond with a choice from {options}.\n")
+
+def get_region_from_country_code(country_code: str, schema: str, country_ref_dict: dict):
+    if country_code == 'TWN':
+        country_code = 'CHN'
+    country_metadata_obj = country_ref_dict[country_code]
+    options = ["m49_code", "region", "continent", "wsa_region", "rmi_region"]
+    if schema in dir(country_metadata_obj):
+        return getattr(country_metadata_obj, schema)
+    else:
+        raise AttributeError(f'Schema: {schema} is not an attribute of {country_code} CountryMetadata object. Choose from the following options: {options}')
+
+def add_regions(df: pd.DataFrame, country_ref_dict: dict, country_ref_col: str, region_schema: str,):
+    df_c = df.copy()
+    df_c[f'region_{region_schema}'] = df_c[country_ref_col].apply(lambda country: get_region_from_country_code(country, region_schema, country_ref_dict))
+    return df_c
+
+def add_results_metadata(df: pd.DataFrame, scenario_dict: dict):
+    country_reference_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'country_reference_dict', 'dict')
+    df_c = df.copy()
+    df_c = add_scenarios(df_c, scenario_dict)
+    for schema in RESULTS_REGIONS_TO_MAP:
+        df_c = add_regions(df_c, country_reference_dict, 'country_code', schema)
+    return df_c
+
+def create_folder_if_nonexist(folder_path: str):
+    Path(folder_path).mkdir(parents=True, exist_ok=True)

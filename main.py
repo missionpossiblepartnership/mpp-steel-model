@@ -46,44 +46,44 @@ if __name__ == "__main__":
 
     if args.q:
         logger.info(f'Including custom parameter inputs')
-        scenario_args = get_inputted_scenarios(SCENARIO_OPTIONS, scenario_args)
+        scenario_args = get_inputted_scenarios(scenario_options=SCENARIO_OPTIONS, default_scenario=scenario_args)
 
     logger.info(f'Running model with the following parameters {scenario_args}')
 
     if args.f:
-        full_flow(scenario_args)
+        full_flow(scenario_dict=scenario_args, dated_output_folder=True)
 
     if args.s:
-        model_calculation_phase(scenario_args)
+        model_calculation_phase(scenario_dict=scenario_args)
 
     if args.m:
-        model_results_phase(scenario_args)
+        model_results_phase(scenario_dict=scenario_args)
 
     if args.o:
-        outputs_only()
+        outputs_only(dated_output_folder=True)
 
     if args.h:
-        half_model_run(scenario_args)
+        half_model_run(scenario_dict=scenario_args, dated_output_folder=True)
 
     if args.i:
         data_import_refresh()
 
     if args.p:
-        data_preprocessing_phase(scenario_args)
+        data_preprocessing_phase(scenario_dict=scenario_args)
 
     if args.d:
-        data_import_and_preprocessing_refresh(scenario_args)
+        data_import_and_preprocessing_refresh(scenario_dict=scenario_args)
 
     if args.r:
-        model_results_phase(scenario_args)
+        model_results_phase(scenario_dict=scenario_args)
 
     if args.b:
         standardise_business_cases(serialize_only=True)
 
     if args.v:
-        generate_variable_plant_summary(scenario_args, serialize_only=True)
-    
+        generate_variable_plant_summary(scenario_dict=scenario_args, serialize_only=True)
+
     if args.t:
-        results_and_output(scenario_args)
+        results_and_output(scenario_dict=scenario_args, dated_output_folder=True)
 
     TIME_CONTAINER.return_time_container()

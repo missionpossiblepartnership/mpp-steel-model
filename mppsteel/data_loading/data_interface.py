@@ -25,10 +25,6 @@ from mppsteel.utility.timeseries_extender import (
     full_model_flow
 )
 
-from mppsteel.data_loading.country_reference import (
-    match_country
-)
-
 # Create logger
 logger = get_logger("Data Interface")
 

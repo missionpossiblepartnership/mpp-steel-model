@@ -141,8 +141,3 @@ def create_country_ref(serialize_only: bool = False) -> dict:
         serialize_file(cr_dict, PKL_DATA_INTERMEDIATE, "country_reference_dict")
         return
     return cr_dict
-
-def match_country(country_code: str, country_ref_dict: dict):
-    if country_code == 'TWN':
-        return 'Other Asia'
-    return country_ref_dict[country_code].wsa_region

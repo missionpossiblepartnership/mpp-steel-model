@@ -133,3 +133,6 @@ dmypy.json
 
 # logs
 /logs
+
+# output folder
+mppsteel/data/output_data
