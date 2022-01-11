@@ -1,7 +1,5 @@
 '''Model flow functions for the main script'''
 
-from datetime import datetime
-
 from mppsteel.utility.utils import (
     get_logger, pickle_to_csv, stdout_query,
     create_folder_if_nonexist
@@ -29,6 +27,7 @@ from mppsteel.model.variable_plant_cost_archetypes import generate_variable_plan
 from mppsteel.model.solver import solver_flow
 from mppsteel.results.production import production_results_flow
 from mppsteel.results.investments import investment_results
+from mppsteel.results.graph_production import create_graphs
 
 from mppsteel.model_config import MODEL_YEAR_END, OUTPUT_FOLDER
 
@@ -61,11 +60,10 @@ def model_results_phase(scenario_dict: dict):
     production_results_flow(scenario_dict, serialize_only=True)
     investment_results(scenario_dict, serialize_only=True)
 
-def model_outputs_phase(new_folder: bool = False):
+def model_outputs_phase(new_folder: bool = False, timestamp: str = ''):
     save_path = OUTPUT_FOLDER
     if new_folder:
-        folder_time = datetime.today().strftime('%d-%m-%y %H-%M')
-        folder_filepath = f'{OUTPUT_FOLDER}/{folder_time}'
+        folder_filepath = f'{OUTPUT_FOLDER}/{timestamp}'
         create_folder_if_nonexist(folder_filepath)
         save_path = folder_filepath
     pkl_files = [
@@ -85,21 +83,27 @@ def data_import_and_preprocessing_refresh(scenario_dict: dict):
     data_import_stage()
     data_preprocessing_phase(scenario_dict)
 
-def half_model_run(scenario_dict: dict, dated_output_folder: bool):
+def half_model_run(scenario_dict: dict, dated_output_folder: bool, timestamp: str):
     model_calculation_phase(scenario_dict)
     model_results_phase(scenario_dict)
-    model_outputs_phase(dated_output_folder)
+    model_outputs_phase(dated_output_folder, timestamp)
+    create_graphs(timestamp)
 
-def results_and_output(scenario_dict: dict, dated_output_folder: bool):
+def results_and_output(scenario_dict: dict, dated_output_folder: bool, timestamp: str):
     model_results_phase(scenario_dict)
-    model_outputs_phase(dated_output_folder)
+    model_outputs_phase(dated_output_folder, timestamp)
+    create_graphs(timestamp)
 
-def outputs_only(dated_output_folder: bool):
-    model_outputs_phase(dated_output_folder)
+def outputs_only(dated_output_folder: bool, timestamp: str):
+    model_outputs_phase(dated_output_folder, timestamp)
+    create_graphs(timestamp)
 
-def full_flow(scenario_dict: dict, dated_output_folder: bool):
+def graphs_only(timestamp: str):
+    create_graphs(timestamp)
+
+def full_flow(scenario_dict: dict, dated_output_folder: bool, timestamp: str):
     data_import_and_preprocessing_refresh(scenario_dict)
-    half_model_run(scenario_dict, dated_output_folder)
+    half_model_run(scenario_dict, dated_output_folder, timestamp)
 
 def business_case_flow():
     standardise_business_cases(serialize_only=True)

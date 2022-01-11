@@ -2,11 +2,13 @@
 
 import argparse
 
+from datetime import datetime
+
 from mppsteel.utility.utils import get_logger, TIME_CONTAINER
 
 from mppsteel.model_config import DEFAULT_SCENARIO, SCENARIO_OPTIONS
 
-from model_grouping import *
+from mppsteel.model_grouping import *
 
 logger = get_logger("Main Model Code")
 
@@ -37,12 +39,17 @@ parser.add_argument(
     "--q", action="store_true", help="Adds custom scenario inputs to the model")
 parser.add_argument(
     "--t", action="store_true", help="Runs the results and output scripts directly")
+parser.add_argument(
+    "--g", action="store_true", help="Runs the graph output script directly")
 
 if __name__ == "__main__":
 
     args = parser.parse_args()
 
     scenario_args = DEFAULT_SCENARIO
+
+    timestamp = datetime.today().strftime('%d-%m-%y %H-%M')
+    logger.info(f'Model running at {timestamp}')
 
     if args.q:
         logger.info(f'Including custom parameter inputs')
@@ -51,7 +58,7 @@ if __name__ == "__main__":
     logger.info(f'Running model with the following parameters {scenario_args}')
 
     if args.f:
-        full_flow(scenario_dict=scenario_args, dated_output_folder=True)
+        full_flow(scenario_dict=scenario_args, dated_output_folder=True, timestamp=timestamp)
 
     if args.s:
         model_calculation_phase(scenario_dict=scenario_args)
@@ -60,10 +67,10 @@ if __name__ == "__main__":
         model_results_phase(scenario_dict=scenario_args)
 
     if args.o:
-        outputs_only(dated_output_folder=True)
+        outputs_only(dated_output_folder=True, timestamp=timestamp)
 
     if args.h:
-        half_model_run(scenario_dict=scenario_args, dated_output_folder=True)
+        half_model_run(scenario_dict=scenario_args, dated_output_folder=True, timestamp=timestamp)
 
     if args.i:
         data_import_refresh()
@@ -84,6 +91,9 @@ if __name__ == "__main__":
         generate_variable_plant_summary(scenario_dict=scenario_args, serialize_only=True)
 
     if args.t:
-        results_and_output(scenario_dict=scenario_args, dated_output_folder=True)
+        results_and_output(scenario_dict=scenario_args, dated_output_folder=True, timestamp=timestamp)
+
+    if args.g:
+        graphs_only(timestamp=timestamp)
 
     TIME_CONTAINER.return_time_container()

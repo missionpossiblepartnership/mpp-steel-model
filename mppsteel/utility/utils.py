@@ -13,7 +13,6 @@ from pathlib import Path
 
 import pandas as pd
 import numpy as np
-import wbgapi as wb
 import pycountry
 
 from mppsteel.utility.reference_lists import NEW_COUNTRY_COL_LIST, FILES_TO_REFRESH
@@ -156,40 +155,6 @@ def serialize_df_dict(data_path: str, data_dict: dict):
     logger.info(f"||| Serializing each df to a pickle file {data_path}")
     for df_name in data_dict.keys():
         serialize_file(data_dict[df_name], data_path, df_name)
-
-
-def countries_extractor(extract_type: str = ["countries", "regions"]) -> pd.DataFrame:
-    """Connects to the world bank api to get country-level metadata
-
-    Args:
-        extract_type (str, optional): Decide whether to return countries or regions.
-        Defaults to ['countries', 'regions'].
-
-    Returns:
-        pd.DataFrame: A DataFrame containing the country/region metadata.
-    """
-    countries = wb.economy.DataFrame()
-    countries.reset_index(inplace=True)
-    df_mapping = countries[countries["aggregate"]][["id", "name"]]
-    region_dict = pd.Series(df_mapping.name.values, index=df_mapping.id).to_dict()
-
-    if extract_type == "countries":
-        countries = countries[~countries.id.isin(region_dict.keys())]
-
-    elif extract_type == "regions":
-        countries = countries[countries.id.isin(region_dict.keys())]
-
-    for col in ["region", "adminregion", "lendingType", "incomeLevel"]:
-        countries[col] = countries[col].apply(
-            lambda x: region_dict[x] if x in region_dict.keys() else ""
-        )
-    countries.drop(["aggregate", "lendingType", "adminregion"], axis=1, inplace=True)
-
-    countries.rename(columns={"id": "country_code", "name": "country"}, inplace=True)
-    countries.reset_index(drop=True, inplace=True)
-
-    return countries
-
 
 def country_mapping_fixer(
     df: pd.DataFrame,
