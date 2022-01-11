@@ -41,6 +41,8 @@ parser.add_argument(
     "--t", action="store_true", help="Runs the results and output scripts directly")
 parser.add_argument(
     "--g", action="store_true", help="Runs the graph output script directly")
+parser.add_argument(
+    "--n", action="store_true", help="Runs the minimodels script directly")
 
 if __name__ == "__main__":
 
@@ -95,5 +97,8 @@ if __name__ == "__main__":
 
     if args.g:
         graphs_only(timestamp=timestamp)
+
+    if args.n:
+        generate_minimodels(scenario_dict=scenario_args)
 
     TIME_CONTAINER.return_time_container()

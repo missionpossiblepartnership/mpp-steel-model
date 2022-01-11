@@ -7,7 +7,6 @@ from mppsteel.utility.utils import (
 
 from mppsteel.data_loading.data_import import load_data
 from mppsteel.data_loading.reg_steel_demand_formatter import get_steel_demand
-from mppsteel.minimodels.hydrogen_minimodel import generate_hydrogen_timeseries
 from mppsteel.minimodels.timeseries_generator import generate_timeseries
 from mppsteel.data_loading.business_case_standardisation import (
     standardise_business_cases,
@@ -38,12 +37,11 @@ def data_import_stage():
     load_data(serialize_only=True)
     get_steel_demand(serialize_only=True)
     format_pe_data(serialize_only=True)
-    generate_hydrogen_timeseries(serialize_only=True)
-    generate_timeseries(serialize_only=True)
     standardise_business_cases(serialize_only=True)
     create_country_ref(serialize_only=True)
 
 def data_preprocessing_phase(scenario_dict: dict):
+    generate_timeseries(serialize_only=True, scenario_dict=scenario_dict)
     steel_plant_processor(serialize_only=True, remove_non_operating_plants=True)
     create_capex_opex_dict(serialize_only=True)
     generate_preprocessed_emissions_data(serialize_only=True)
@@ -107,6 +105,9 @@ def full_flow(scenario_dict: dict, dated_output_folder: bool, timestamp: str):
 
 def business_case_flow():
     standardise_business_cases(serialize_only=True)
+
+def generate_minimodels(scenario_dict: dict):
+    generate_timeseries(serialize_only=True, scenario_dict=scenario_dict)
 
 def stdout_question(count_iter: int, scenario_type: str, scenario_options: dict, default_dict: dict):
     query = f'''

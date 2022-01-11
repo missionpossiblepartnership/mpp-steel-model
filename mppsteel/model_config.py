@@ -31,8 +31,6 @@ BIOMASS_AV_TS_END_VALUE = 2000
 
 CARBON_TAX_START_YEAR = 2020
 CARBON_TAX_END_YEAR = 2050
-CARBON_TAX_START_VALUE = 0
-CARBON_TAX_END_VALUE = 210
 
 ELECTRICITY_PRICE_START_YEAR = 2020
 ELECTRICITY_PRICE_MID_YEAR = 2035
@@ -100,29 +98,36 @@ GREEN_PREMIUM_SCENARIOS = {
     'high': (0.05, 0.08),
 }
 
+CARBON_TAX_SCENARIOS = {
+    'off': (0, 0),
+    'low': (0, 30),
+    'average': (0, 100),
+    'high': (0, 210),
+}
+
+CARBON_TAX_START_VALUE = 0
+CARBON_TAX_END_VALUE = 210
+
 GRID_DECARBONISATION_SCENARIOS = {
     'high': 'Accelerated',
     'low': 'Central',
 }
 
-true_false = [True, False]
-low_avg_high = list(COST_SCENARIO_MAPPER.keys())
-
 SCENARIO_OPTIONS = {
-    'tech_moratorium': true_false,
-    'carbon_tax': true_false,
+    'tech_moratorium': [True, False],
+    'carbon_tax': CARBON_TAX_SCENARIOS.keys(),
     'green_premium_scenario': GREEN_PREMIUM_SCENARIOS.keys(),
-    'electricity_cost_scenario': low_avg_high,
+    'electricity_cost_scenario': COST_SCENARIO_MAPPER.keys(),
     'grid_scenario': GRID_DECARBONISATION_SCENARIOS.keys(),
-    'hydrogen_cost_scenario': low_avg_high,
+    'hydrogen_cost_scenario': COST_SCENARIO_MAPPER.keys(),
     'steel_demand_scenario': STEEL_DEMAND_SCENARIO_MAPPER.keys(),
     'tech_switch_scenario': TECH_SWITCH_SCENARIOS.keys()
 }
 
 DEFAULT_SCENARIO = {
     'tech_moratorium': True, # bool
-    'carbon_tax': False, # bool
-    'green_premium': True, # bool
+    'carbon_tax_scenario': 'off', # off / low / average / high
+    'green_premium_scenario': 'off', # off / low / average / high
     'electricity_cost_scenario': 'average', # low / average / high
     'grid_scenario': 'high', # low / high
     'hydrogen_cost_scenario': 'average', # low / average / high
