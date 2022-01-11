@@ -1,8 +1,6 @@
 """Function to create a steel plant class."""
 import pandas as pd
 
-from mppsteel.data_loading.country_reference import match_country
-
 # For logger and units dict
 from mppsteel.utility.utils import (
     get_logger,
@@ -10,7 +8,9 @@ from mppsteel.utility.utils import (
     read_pickle_folder,
     serialize_file,
     country_mapping_fixer,
-    country_matcher
+    country_matcher,
+    match_country,
+    get_region_from_country_code
 )
 
 from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
@@ -116,7 +116,7 @@ def apply_countries_to_steel_plants(steel_plant_formatted: pd.DataFrame):
 
     country_reference_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'country_reference_dict', 'df')
 
-    steel_plants['region'] = steel_plants['country_code'].apply(lambda x: match_country(x, country_reference_dict))
+    steel_plants['region'] = steel_plants['country_code'].apply(lambda x: get_region_from_country_code(x, country_reference_dict))
 
     return steel_plants
 

@@ -107,3 +107,5 @@ SCENARIO_OPTIONS = {
     'hydrogen_cost_scenario': low_avg_high,
     'steel_demand_scenario': bau_hc
 }
+
+RESULTS_REGIONS_TO_MAP = ['wsa_region', 'continent', 'region']
