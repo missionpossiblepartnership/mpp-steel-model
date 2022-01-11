@@ -9,6 +9,7 @@ import os
 from collections import namedtuple
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
+from pathlib import Path
 
 import pandas as pd
 import numpy as np
@@ -20,7 +21,7 @@ from mppsteel.utility.reference_lists import NEW_COUNTRY_COL_LIST, FILES_TO_REFR
 from mppsteel.model_config import (
     PKL_DATA_FINAL, OUTPUT_FOLDER, LOG_PATH,
     PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE,
-    RESULTS_REGIONS_TO_MAP
+    RESULTS_REGIONS_TO_MAP,
 )
 
 def get_today_time():
@@ -322,14 +323,13 @@ def return_furnace_group(furnace_dict: dict, tech:str):
             return furnace_dict[key]
 
 
-def pickle_to_csv(pickle_filename: str, csv_filename: str = ''):
+def pickle_to_csv(folder_path: str, pickle_filename: str, csv_filename: str = ''):
     df = read_pickle_folder(PKL_DATA_FINAL, pickle_filename)
     logger.info(f'||| Saving {pickle_filename} pickle file as {csv_filename or pickle_filename}.csv')
     if csv_filename:
-        
-        df.to_csv(f"{OUTPUT_FOLDER}/{csv_filename}.csv")
+        df.to_csv(f"{folder_path}/{csv_filename}.csv")
     else:
-        df.to_csv(f"{OUTPUT_FOLDER}/{pickle_filename}.csv")
+        df.to_csv(f"{folder_path}/{pickle_filename}.csv")
 
 def format_times(start_t: float, end_t: float):
     time_diff = end_t - start_t
@@ -412,3 +412,6 @@ def add_results_metadata(df: pd.DataFrame, scenario_dict: dict):
     for schema in RESULTS_REGIONS_TO_MAP:
         df_c = add_regions(df_c, country_reference_dict, 'country_code', schema)
     return df_c
+
+def create_folder_if_nonexist(folder_path: str):
+    Path(folder_path).mkdir(parents=True, exist_ok=True)
