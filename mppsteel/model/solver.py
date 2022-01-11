@@ -12,7 +12,7 @@ from mppsteel.utility.utils import (
 from mppsteel.model_config import (
     MODEL_YEAR_START, PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE,
     GREEN_PREMIUM_MIN_PCT, GREEN_PREMIUM_MAX_PCT,
-    MODEL_YEAR_END, SWITCH_RANK_PROPORTIONS, INVESTMENT_CYCLE_LENGTH
+    MODEL_YEAR_END, INVESTMENT_CYCLE_LENGTH
 )
 
 from mppsteel.utility.reference_lists import (
@@ -430,7 +430,8 @@ def choose_technology(
     error_plant: str = '',
     carbon_tax_scenario: bool = False, 
     green_premium_scenario: bool = False,
-    steel_demand_scenario: str = 'bau'
+    steel_demand_scenario: str = 'bau',
+    tech_switch_scenario: dict = {'tco': 0.6, 'emissions': 0.4},
     ):
     """[summary]
 
@@ -539,7 +540,7 @@ def choose_technology(
                     scores, material_usage_dict = overall_scores(
                         tco_switching_df_summary_final_rank,
                         emissions_switching_df_summary_final_rank,
-                        SWITCH_RANK_PROPORTIONS,
+                        tech_switch_scenario,
                         steel_demand_df,
                         plant_df,
                         business_cases,
@@ -574,7 +575,7 @@ def choose_technology(
                     scores, material_usage_dict = overall_scores(
                         tco_switching_df_summary_final_rank,
                         emissions_switching_df_summary_final_rank,
-                        SWITCH_RANK_PROPORTIONS,
+                        tech_switch_scenario,
                         steel_demand_df,
                         business_cases,
                         biomass_availability,
@@ -707,7 +708,8 @@ def solver_flow(scenario_dict: dict, year_end: int, serialize_only: bool = False
         error_plant='SSAB Americas Alabama steel plant',
         carbon_tax_scenario=scenario_dict['carbon_tax'],
         green_premium_scenario=scenario_dict['green_premium'],
-        steel_demand_scenario=scenario_dict['steel_demand_scenario']
+        steel_demand_scenario=scenario_dict['steel_demand_scenario'],
+        tech_switch_scenario=scenario_dict['tech_switch_scenario']
         )
 
     if serialize_only:

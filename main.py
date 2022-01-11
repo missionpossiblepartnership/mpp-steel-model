@@ -82,7 +82,7 @@ if __name__ == "__main__":
 
     if args.v:
         generate_variable_plant_summary(scenario_args, serialize_only=True)
-    
+
     if args.t:
         results_and_output(scenario_args)
 
