@@ -73,14 +73,7 @@ ABATEMENT_RANK_3 = 0.932690243851946 # Switching from Avg BF-BOF to BAT BF-BOF_b
 GREEN_PREMIUM_MIN_PCT = 0.01
 GREEN_PREMIUM_MAX_PCT = 0.05
 
-DEFAULT_SCENARIO = {
-    'tech_moratorium': True, # bool
-    'carbon_tax': False, # bool
-    'green_premium': True, # bool
-    'electricity_cost_scenario': 'average', # low / average / high
-    'hydrogen_cost_scenario': 'average', # low / average / high
-    'steel_demand_scenario': 'average' # bau / average / high
-}
+RESULTS_REGIONS_TO_MAP = ['wsa_region', 'continent', 'region']
 
 COST_SCENARIO_MAPPER = {
     'low': 'Min',
@@ -114,4 +107,12 @@ SCENARIO_OPTIONS = {
     'tech_switch_scenario': TECH_SWITCH_SCENARIOS.keys()
 }
 
-RESULTS_REGIONS_TO_MAP = ['wsa_region', 'continent', 'region']
+DEFAULT_SCENARIO = {
+    'tech_moratorium': True, # bool
+    'carbon_tax': False, # bool
+    'green_premium': True, # bool
+    'electricity_cost_scenario': 'average', # low / average / high
+    'hydrogen_cost_scenario': 'average', # low / average / high
+    'steel_demand_scenario': 'average', # bau / average / high
+    'tech_switch_scenario': 'default', # max_abatement / lowest_cost / equal_weight / default
+}
