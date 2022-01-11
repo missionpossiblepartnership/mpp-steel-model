@@ -116,7 +116,7 @@ def apply_countries_to_steel_plants(steel_plant_formatted: pd.DataFrame):
 
     country_reference_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'country_reference_dict', 'df')
 
-    steel_plants['region'] = steel_plants['country_code'].apply(lambda x: get_region_from_country_code(x, country_reference_dict))
+    steel_plants['region'] = steel_plants['country_code'].apply(lambda x: get_region_from_country_code(x, 'wsa_region', country_reference_dict))
 
     return steel_plants
 

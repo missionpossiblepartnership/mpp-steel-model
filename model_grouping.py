@@ -4,7 +4,7 @@ from datetime import datetime
 
 from mppsteel.utility.utils import (
     get_logger, pickle_to_csv, stdout_query,
-    create_folder_if_nonexist, get_today_time
+    create_folder_if_nonexist
     )
 
 from mppsteel.data_loading.data_import import load_data
@@ -64,7 +64,7 @@ def model_results_phase(scenario_dict: dict):
 def model_outputs_phase(new_folder: bool = False):
     save_path = OUTPUT_FOLDER
     if new_folder:
-        folder_time = datetime.today().strftime('%d-%m-%y %H:%M')
+        folder_time = datetime.today().strftime('%d-%m-%y %H-%M')
         folder_filepath = f'{OUTPUT_FOLDER}/{folder_time}'
         create_folder_if_nonexist(folder_filepath)
         save_path = folder_filepath
@@ -97,9 +97,9 @@ def results_and_output(scenario_dict: dict, dated_output_folder: bool):
 def outputs_only(dated_output_folder: bool):
     model_outputs_phase(dated_output_folder)
 
-def full_flow(scenario_dict: dict):
+def full_flow(scenario_dict: dict, dated_output_folder: bool):
     data_import_and_preprocessing_refresh(scenario_dict)
-    half_model_run(scenario_dict)
+    half_model_run(scenario_dict, dated_output_folder)
 
 def business_case_flow():
     standardise_business_cases(serialize_only=True)

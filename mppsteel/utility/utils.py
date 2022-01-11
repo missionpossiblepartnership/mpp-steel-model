@@ -322,14 +322,15 @@ def return_furnace_group(furnace_dict: dict, tech:str):
         if tech in furnace_dict[key]:
             return furnace_dict[key]
 
+pd.DataFrame().to_csv()
 
 def pickle_to_csv(folder_path: str, pickle_filename: str, csv_filename: str = ''):
     df = read_pickle_folder(PKL_DATA_FINAL, pickle_filename)
     logger.info(f'||| Saving {pickle_filename} pickle file as {csv_filename or pickle_filename}.csv')
     if csv_filename:
-        df.to_csv(f"{folder_path}/{csv_filename}.csv")
+        df.to_csv(f"{folder_path}/{csv_filename}.csv", index=False)
     else:
-        df.to_csv(f"{folder_path}/{pickle_filename}.csv")
+        df.to_csv(f"{folder_path}/{pickle_filename}.csv", index=False)
 
 def format_times(start_t: float, end_t: float):
     time_diff = end_t - start_t

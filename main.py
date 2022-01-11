@@ -46,12 +46,12 @@ if __name__ == "__main__":
 
     if args.q:
         logger.info(f'Including custom parameter inputs')
-        scenario_args = get_inputted_scenarios(scenario_options=SCENARIO_OPTIONS, default_dict=scenario_args)
+        scenario_args = get_inputted_scenarios(scenario_options=SCENARIO_OPTIONS, default_scenario=scenario_args)
 
     logger.info(f'Running model with the following parameters {scenario_args}')
 
     if args.f:
-        full_flow(scenario_dict=scenario_args)
+        full_flow(scenario_dict=scenario_args, dated_output_folder=True)
 
     if args.s:
         model_calculation_phase(scenario_dict=scenario_args)
