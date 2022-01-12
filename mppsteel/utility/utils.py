@@ -15,6 +15,8 @@ import pandas as pd
 import numpy as np
 import pycountry
 
+from currency_converter import CurrencyConverter
+
 from mppsteel.utility.reference_lists import NEW_COUNTRY_COL_LIST, FILES_TO_REFRESH
 
 from mppsteel.model_config import (
@@ -289,8 +291,8 @@ def return_furnace_group(furnace_dict: dict, tech:str):
 
 pd.DataFrame().to_csv()
 
-def pickle_to_csv(folder_path: str, pickle_filename: str, csv_filename: str = ''):
-    df = read_pickle_folder(PKL_DATA_FINAL, pickle_filename)
+def pickle_to_csv(folder_path: str, pkl_folder: str, pickle_filename: str, csv_filename: str = ''):
+    df = read_pickle_folder(pkl_folder, pickle_filename)
     logger.info(f'||| Saving {pickle_filename} pickle file as {csv_filename or pickle_filename}.csv')
     if csv_filename:
         df.to_csv(f"{folder_path}/{csv_filename}.csv", index=False)
@@ -381,3 +383,21 @@ def add_results_metadata(df: pd.DataFrame, scenario_dict: dict):
 
 def create_folder_if_nonexist(folder_path: str):
     Path(folder_path).mkdir(parents=True, exist_ok=True)
+
+
+def get_currency_rate(base: str):
+    logger.info(f'Getting currency exchange rate for {base}')
+    c = CurrencyConverter()
+    if base.lower() == 'usd':
+        return c.convert(1, 'USD', 'EUR')
+    if base.lower() == 'eur':
+        return c.convert(1, 'EUR', 'USD')
+
+def create_folders_if_nonexistant(folder_list: list):
+    for folder_path in folder_list:
+        if os.path.isdir(folder_path):
+            logger.info(f'{folder_path} already exists')
+            pass
+        else:
+            logger.info(f'{folder_path} does not exist yet. Creating folder.')
+            Path(folder_path).mkdir(parents=True, exist_ok=True)

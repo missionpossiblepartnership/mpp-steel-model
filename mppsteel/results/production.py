@@ -20,9 +20,11 @@ from mppsteel.data_loading.reg_steel_demand_formatter import (
     steel_demand_getter
 )
 
-from mppsteel.model.tco import (
-    create_emissions_dict
+from mppsteel.data_loading.data_interface import (
+    load_business_cases
 )
+
+from mppsteel.model.tco import get_s2_emissions
 
 from mppsteel.utility.utils import (
     read_pickle_folder, get_logger, serialize_file, timer_func, add_results_metadata,
@@ -30,6 +32,11 @@ from mppsteel.utility.utils import (
 
 # Create logger
 logger = get_logger("Production Results")
+
+def create_emissions_dict():
+    calculated_s1_emissions = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'calculated_s1_emissions', 'df')
+    calculated_s3_emissions = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'calculated_s3_emissions', 'df')
+    return {'s1': calculated_s1_emissions, 's3': calculated_s3_emissions}
 
 def generate_production_stats(
     tech_capacity_df: pd.DataFrame, steel_df: pd.DataFrame, steel_demand_scenario: str, year_end: int):
@@ -75,7 +82,7 @@ def tech_capacity_splits():
     for year in tqdm(year_range, total=len(year_range), desc='Tech Capacity Splits'):
         df = pd.DataFrame({'year': year, 'steel_plant': steel_plants, 'technology': '', 'capacity': 0})
         df['technology'] = df['steel_plant'].apply(lambda plant: get_tech_choice(tech_choices_dict, year, plant))
-        
+
         for row in df.itertuples():
             df.loc[row.Index, 'capacity'] = calculate_primary_and_secondary(tech_capacities_dict, row.steel_plant, row.technology) / 1000
         df = df[df['technology'] != 'Not operating']
@@ -128,7 +135,15 @@ def production_stats_generator(production_df: pd.DataFrame, as_summary: bool = F
         return df_c.groupby(['year', 'technology']).sum()
     return df_c
 
-def generate_production_emission_stats(production_df: pd.DataFrame, as_summary: bool = False):
+def generate_production_emission_stats(
+    production_df: pd.DataFrame, 
+    power_model: pd.DataFrame,
+    hydrogen_model: pd.DataFrame,
+    business_cases: pd.DataFrame,
+    as_summary: bool = False,
+    electricity_cost_scenario: str = 'average',
+    grid_scenario: str = 'low',
+    hydrogen_cost_scenario: str =  'average'):
     """[summary]
 
     Args:
@@ -140,8 +155,10 @@ def generate_production_emission_stats(production_df: pd.DataFrame, as_summary: 
     """    
     logger.info(f'- Generating Material Usage stats')
     emissions_dict = create_emissions_dict()
+    emissions_name_ref = ['s1', 's2', 's3']
 
-    def emissions_getter(emission_dict: dict, emission_type: str, tech: str, year: int):
+    def emissions_getter(
+        emission_dict: dict, emission_type: str, tech: str, year: int):
         if year > 2050:
             year = 2050
         return emission_dict[emission_type].loc[year, tech].values[0]
@@ -149,17 +166,24 @@ def generate_production_emission_stats(production_df: pd.DataFrame, as_summary: 
     df_c = production_df.copy()
 
     # Create columns
-    for colname in emissions_dict.keys():
+    for colname in emissions_name_ref:
         df_c[f'{colname}_emissions'] = 0
 
         # Create values
     for row in tqdm(df_c.itertuples(), total=df_c.shape[0], desc='Production Emissions'):
         if row.technology == 'Close plant':
-            for colname in emissions_dict.keys():
+            for colname in emissions_name_ref:
                 df_c.loc[row.Index, f'{colname}_emissions'] = 0
         else:
-            for colname in emissions_dict.keys():
-                df_c.loc[row.Index, f'{colname}_emissions'] = row.production * emissions_getter(emissions_dict, colname, row.technology, row.year)
+            for colname in emissions_name_ref:
+                if colname in ['s1', 's3']:
+                    df_c.loc[row.Index, f'{colname}_emissions'] = row.production * emissions_getter(
+                        emissions_dict, colname, row.technology, row.year)
+                elif colname == 's2':
+                    df_c.loc[row.Index, f'{colname}_emissions'] = row.production * get_s2_emissions(
+                        power_model, hydrogen_model, business_cases,
+                        row.year, row.country_code, row.technology,
+                        electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario)
 
     if as_summary:
         return df_c.groupby(['year', 'technology']).sum()
@@ -283,11 +307,21 @@ def production_results_flow(scenario_dict: dict, serialize_only: bool = False):
     """    
     logger.info(f'- Starting Production Results Model Flow')
     steel_demand_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'regional_steel_demand_formatted', 'df')
+    business_cases = load_business_cases()
+    power_model = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'power_model_formatted', 'df')
+    hydrogen_model = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'hydrogen_model_formatted', 'df')
     tech_capacity_df, max_solver_year = tech_capacity_splits()
     steel_demand_scenario = scenario_dict['steel_demand_scenario']
+    electricity_cost_scenario=scenario_dict['electricity_cost_scenario']
+    grid_scenario=scenario_dict['grid_scenario']
+    hydrogen_cost_scenario=scenario_dict['hydrogen_cost_scenario']
     production_results = generate_production_stats(tech_capacity_df, steel_demand_df, steel_demand_scenario, max_solver_year)
     production_results_all = production_stats_generator(production_results)
-    production_emissions = generate_production_emission_stats(production_results)
+    production_emissions = generate_production_emission_stats(
+        production_results, power_model, hydrogen_model, business_cases,
+        electricity_cost_scenario=electricity_cost_scenario,
+        grid_scenario=grid_scenario,
+        hydrogen_cost_scenario=hydrogen_cost_scenario)
     global_metaresults = global_metaresults_calculator(
         steel_demand_df, tech_capacity_df, production_results_all, steel_demand_scenario, max_solver_year)
 

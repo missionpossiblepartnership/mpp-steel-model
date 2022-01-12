@@ -4,7 +4,8 @@ import pandas as pd
 from tqdm import tqdm
 
 from mppsteel.model_config import (
-    MODEL_YEAR_END, PKL_DATA_IMPORTS, MODEL_YEAR_START, PKL_DATA_INTERMEDIATE, COST_SCENARIO_MAPPER
+    MODEL_YEAR_END, PKL_DATA_IMPORTS, MODEL_YEAR_START, PKL_DATA_INTERMEDIATE, 
+    COST_SCENARIO_MAPPER, GRID_DECARBONISATION_SCENARIOS,
 )
 
 from mppsteel.model.solver import load_business_cases
@@ -17,9 +18,6 @@ from mppsteel.utility.utils import (
 from mppsteel.data_loading.data_interface import (
     commodity_data_getter, static_energy_prices_getter,
 )
-
-from mppsteel.model.emissions_reference_tables import dynamic_energy_price_getter
-
 
 from mppsteel.data_loading.pe_model_formatter import (
     power_data_getter, hydrogen_data_getter, ccus_data_getter, RE_DICT
@@ -43,7 +41,7 @@ def generate_feedstock_dict():
     return {**commodities_dict, **dict(zip(feedstock_prices['Metric'], feedstock_prices['Value']))}
 
 
-def plant_variable_costs(year_end: int, electricity_cost_scenario: str, hydrogen_cost_scenario: str):
+def plant_variable_costs(year_end: int, electricity_cost_scenario: str, grid_decarb_scenario: str, hydrogen_cost_scenario: str):
     """[summary]
 
     Args:
@@ -79,6 +77,7 @@ def plant_variable_costs(year_end: int, electricity_cost_scenario: str, hydrogen
             hydrogen_df=hydrogen_model_formatted,
             ccus_df=ccus_model_formatted,
             electricity_cost_scenario=electricity_cost_scenario,
+            grid_decarb_scenario=grid_decarb_scenario,
             hydrogen_cost_scenario=hydrogen_cost_scenario,
         )
         df['plant_country_ref'] = country_code
@@ -96,8 +95,9 @@ def generate_variable_costs(
     power_df: pd.DataFrame = None,
     hydrogen_df: pd.DataFrame = None,
     ccus_df: pd.DataFrame = None,
-    electricity_cost_scenario: bool = False,
-    hydrogen_cost_scenario: bool = False,
+    electricity_cost_scenario: str = '',
+    grid_decarb_scenario: str = '',
+    hydrogen_cost_scenario: str = '',
 ) -> pd.DataFrame:
     """[summary]
 
@@ -141,7 +141,7 @@ def generate_variable_costs(
         
         electricity_price = power_data_getter(
             power_df, 'grid', dynamic_year, plant_country_ref, RE_DICT,
-            default_country='USA', grid_scenario='Central',
+            default_country='USA', grid_scenario=GRID_DECARBONISATION_SCENARIOS[grid_decarb_scenario],
             cost_scenario=COST_SCENARIO_MAPPER[electricity_cost_scenario])
         
         hydrogen_price = hydrogen_data_getter(
@@ -211,9 +211,10 @@ def generate_variable_plant_summary(scenario_dict: dict, serialize_only: bool = 
         [type]: [description]
     """
     electricity_cost_scenario = scenario_dict['electricity_cost_scenario']
+    grid_scenario = scenario_dict['grid_scenario']
     hydrogen_cost_scenario = scenario_dict['hydrogen_cost_scenario']
 
-    all_plant_variable_costs = plant_variable_costs(MODEL_YEAR_END, electricity_cost_scenario, hydrogen_cost_scenario)
+    all_plant_variable_costs = plant_variable_costs(MODEL_YEAR_END, electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario)
     all_plant_variable_costs_summary = format_variable_costs(all_plant_variable_costs)
 
     if serialize_only:

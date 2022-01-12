@@ -50,7 +50,6 @@ def create_region_dict_generator(
         region_list = extract_unique_attrs("wsa_region")
     if region_type == "region":
         region_list = extract_unique_attrs("region")
-    print(region_list)
     if split_list:
         logger.info(f"-- Using a predefined distributional split")
         return dict(zip(region_list, split_list))

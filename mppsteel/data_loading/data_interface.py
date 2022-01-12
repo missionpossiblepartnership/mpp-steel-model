@@ -165,7 +165,6 @@ def ccs_co2_getter(df: pd.DataFrame, metric: str, year: str) -> float:
         year = 2050
     df_c = df.copy()
     metric_names = df_c["Metric"].unique()
-    # logger.info(f'Creating CCS CO2 getter with the following metrics: {metric_names}')
     df_c.set_index(["Metric", "Year"], inplace=True)
     # logger.info(f'Getting {metric} value for: {year}')
     value = df_c.loc[metric, year]["Value"]
