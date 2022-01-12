@@ -33,7 +33,6 @@ def apply_emissions(
     single_year: int = None,
     year_end: int = 2021,
     s1_emissions_df: pd.DataFrame = None,
-    s2_emissions_df: pd.DataFrame = None,
     s3_emissions_df: pd.DataFrame = None,
     carbon_tax_df: pd.DataFrame = None,
     non_standard_dict: dict = None,
@@ -42,7 +41,6 @@ def apply_emissions(
 
     # Create resources reference list
     s1_emissions_resources = s1_emissions_df["Metric"].unique().tolist()
-    s2_emissions_resources = ["Electricity"]
     s3_emissions_resources = s3_emissions_df["Fuel"].unique().tolist()
 
     # Create a year range
@@ -52,8 +50,10 @@ def apply_emissions(
 
     df_list = []
 
-    for year in year_range:
-        logger.info(f"calculating year {year}")
+    logger.info(f"calculating emissions reference tables")
+
+    for year in tqdm(year_range, total=len(year_range), desc='Emissions Reference Table'):
+        
         df_c = df.copy()
         df_c["year"] = year
         df_c["S1"] = ""
@@ -73,14 +73,6 @@ def apply_emissions(
                 )
             else:
                 df_c.loc[row.Index, "S1"] = 0
-
-            if resource in s2_emissions_resources:
-                emission_unit_value = grid_emissivity_getter(s2_emissions_df, year)
-                df_c.loc[row.Index, "S2"] = (
-                    resource_consumed * emission_unit_value / 1000
-                )
-            else:
-                df_c.loc[row.Index, "S2"] = 0
 
             if resource in s3_emissions_resources:
                 emission_unit_value = scope3_ef_getter(s3_emissions_df, resource, year)
@@ -183,7 +175,6 @@ def generate_emissions_dataframe(df: pd.DataFrame, year_end: int):
         df=df.copy(),
         year_end=year_end,
         s1_emissions_df=s1_emissions,
-        s2_emissions_df=grid_emissivity,
         s3_emissions_df=final_scope3_ef_df,
         non_standard_dict=non_standard_dict_ref,
         scope="1",
@@ -211,11 +202,6 @@ def generate_emissions_flow(serialize_only: bool = False):
     )
     em_exc_ref_dict = create_emissions_ref_dict(emissions_df, TECH_REFERENCE_LIST)
     s1_summary_df = full_emissions(s1_summary_df, em_exc_ref_dict, TECH_REFERENCE_LIST)
-    emissions_s2_summary = (
-        emissions[emissions["scope"] == "S2"][["technology", "year", "emissions"]]
-        .groupby(by=["year", "technology"])
-        .sum()
-    )
     emissions_s3_summary = (
         emissions[emissions["scope"] == "S3"][["technology", "year", "emissions"]]
         .groupby(by=["year", "technology"])
@@ -224,11 +210,9 @@ def generate_emissions_flow(serialize_only: bool = False):
 
     if serialize_only:
         serialize_file(s1_summary_df, PKL_DATA_INTERMEDIATE, "calculated_s1_emissions")
-        serialize_file(emissions_s2_summary, PKL_DATA_INTERMEDIATE, "calculated_s2_emissions")
         serialize_file(emissions_s3_summary, PKL_DATA_INTERMEDIATE, "calculated_s3_emissions")
         return
     return {
         "s1_calculations": s1_summary_df,
-        "s2_calculations": emissions_s2_summary,
         "s3_calculations": emissions_s3_summary,
     }
