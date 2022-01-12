@@ -57,7 +57,7 @@ def generate_subset(df: pd.DataFrame, grouping_col: str, value_col: str, region_
     return df_c
 
 
-def create_area_chart_1(df: pd.DataFrame, filepath: str = None):
+def steel_production_area_chart(df: pd.DataFrame, filepath: str = None):
     filename = 'steel_production_per_technology'
     logger.info(f'Creating area graph output: {filename}')
     if filepath:
@@ -75,13 +75,19 @@ def create_area_chart_1(df: pd.DataFrame, filepath: str = None):
     )
 
 
-def create_area_chart_2(df: pd.DataFrame, filepath: str = None):
-    filename = 'steel_production_emissions_per_technology'
+def emissions_area_chart(df: pd.DataFrame, filepath: str = None, scope: str = 'combined'):
+    scope_mapper = dict(zip(['s1', 's2', 's3'], EMISSION_COLS))
+    emission_cols = EMISSION_COLS
+    if scope in scope_mapper.keys():
+        emission_cols = [ scope_mapper[scope] ]
+    filename_string = ''.join(emission_cols)
+    filename = f'{scope}_emissions_per_technology'
     logger.info(f'Creating area graph output: {filename}')
     if filepath:
         filename = f'{filepath}/{filename}'
+
     return area_chart(
-        data=generate_production_emissions(df, 'technology', EMISSION_COLS).groupby(['year', 'technology']).agg('sum').reset_index(),
+        data=generate_production_emissions(df, 'technology', emission_cols).groupby(['year', 'technology']).agg('sum').reset_index(),
         x='year',
         y='value',
         color='technology',
@@ -92,7 +98,7 @@ def create_area_chart_2(df: pd.DataFrame, filepath: str = None):
         save_filepath=filename
     )
 
-def create_line_graph_1(df: pd.DataFrame, resource: str, regions: list = None, filepath: str = None):
+def resource_line_charts(df: pd.DataFrame, resource: str, regions: list = None, filepath: str = None):
     region_list = regions
     filename = f'{resource}_multiregional_line_graph'
     if not regions:
@@ -118,11 +124,13 @@ def create_line_graph_1(df: pd.DataFrame, resource: str, regions: list = None, f
 def create_graphs(filepath: str, ):
     production_stats_all = read_pickle_folder(PKL_DATA_FINAL, 'production_stats_all', 'df')
     production_emissions = read_pickle_folder(PKL_DATA_FINAL, 'production_emissions', 'df')
-    investment_results = read_pickle_folder(PKL_DATA_FINAL, 'investment_results_df', 'df')
+    investment_results = read_pickle_folder(PKL_DATA_FINAL, 'investment_results', 'df')
 
-    create_area_chart_1(production_emissions, filepath)
-    create_area_chart_2(production_emissions, filepath)
-    create_line_graph_1(production_stats_all, 'electricity', ['EU + UK', 'China', 'India', 'USMCA'], filepath)
+    steel_production_area_chart(production_emissions, filepath)
+    resource_line_charts(production_stats_all, 'electricity', ['EU + UK', 'China', 'India', 'USMCA'], filepath)
+
+    for scope in ['s1', 's2', 's3', 'combined']:
+        emissions_area_chart(production_emissions, filepath, scope)
 
     for resource in RESOURCE_COLS:
-        create_line_graph_1(df=production_stats_all, resource=resource, filepath=filepath)
+        resource_line_charts(df=production_stats_all, resource=resource, filepath=filepath)

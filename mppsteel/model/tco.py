@@ -5,7 +5,11 @@ import numpy as np
 import numpy_financial as npf
 
 from mppsteel.utility.utils import (
-    read_pickle_folder, get_logger
+    read_pickle_folder, get_logger,
+)
+
+from mppsteel.utility.transform_units import (
+    mwh_gj
 )
 
 from mppsteel.model_config import (
@@ -14,11 +18,16 @@ from mppsteel.model_config import (
     STEEL_PLANT_LIFETIME,
     TCO_RANK_1_SCALER, TCO_RANK_2_SCALER,
     ABATEMENT_RANK_2, ABATEMENT_RANK_3,
-    EUR_USD_CONVERSION
+    EUR_USD_CONVERSION, COST_SCENARIO_MAPPER, 
+    GRID_DECARBONISATION_SCENARIOS
 )
 
 from mppsteel.utility.reference_lists import (
     SWITCH_DICT
+)
+
+from mppsteel.data_loading.pe_model_formatter import (
+    power_data_getter, hydrogen_data_getter, RE_DICT
 )
 
 # Create logger
@@ -234,12 +243,12 @@ def compare_capex(
     )
     return df
 
-def carbon_tax_estimate(emission_dict_ref: dict, carbon_tax_df: pd.DataFrame, year: int):
+def carbon_tax_estimate(s3_emissions_ref: dict, scope2_emission_value: float, carbon_tax_df: pd.DataFrame, year: int):
     year_ref = year
     if year > 2050:
         year_ref = 2050
     carbon_tax = carbon_tax_df.set_index('year').loc[year_ref]['value']
-    return (emission_dict_ref['s2'].loc[year_ref] + emission_dict_ref['s3'].loc[year_ref]) * carbon_tax
+    return (scope2_emission_value + s3_emissions_ref.loc[year_ref]) * carbon_tax
 
 def get_steel_making_costs(steel_plant_df: pd.DataFrame, variable_cost_df, plant_name: str, technology: str):
     conversion = EUR_USD_CONVERSION
@@ -261,12 +270,11 @@ def get_opex_costs(
     year: int,
     variable_costs_df: pd.DataFrame,
     opex_df: pd.DataFrame,
-    emissions_dict_ref: dict,
+    s3_emissions_ref: dict,
     carbon_tax_timeseries: pd.DataFrame,
     green_premium_timeseries: pd.DataFrame,
     steel_plant_capacity: pd.DataFrame,
-    include_carbon_tax: bool,
-    green_premium_scenario: bool,
+    scope2_emission_value: float,
 ):
     # combined_row = str(plant.abundant_res) + str(plant.ccs_available) + str(plant.cheap_natural_gas)
     # variable_costs = variable_costs_df.loc[combined_row, year]
@@ -274,9 +282,7 @@ def get_opex_costs(
     opex_costs = opex_df.swaplevel().loc[year]
 
     # Carbon Tax Result
-    carbon_tax_result = 0
-    if include_carbon_tax:
-        carbon_tax_result = carbon_tax_estimate(emissions_dict_ref, carbon_tax_timeseries, year)
+    carbon_tax_result = carbon_tax_estimate(s3_emissions_ref, scope2_emission_value, carbon_tax_timeseries, year)
     # Include Green Premium
     steel_making_cost = get_steel_making_costs(steel_plant_capacity, variable_costs, plant.plant_name, plant.technology_in_2020)
     green_premium = green_premium_timeseries[green_premium_timeseries['year'] == year]['value'].values[0]
@@ -303,41 +309,74 @@ def calculate_capex(start_year):
     return full_df.set_index(['year', 'start_technology'])
 
 
-def create_emissions_dict():
-    calculated_s1_emissions = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'calculated_s1_emissions', 'df')
-    calculated_s2_emissions = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'calculated_s2_emissions', 'df')
-    calculated_s3_emissions = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'calculated_s3_emissions', 'df')
-    return {'s1': calculated_s1_emissions, 's2': calculated_s2_emissions, 's3': calculated_s3_emissions}
+def get_s2_emissions(power_model: dict, hydrogen_model: dict, year: int, country_code: str, technology: str, electricity_cost_scenario: str, grid_scenario: str, hydrogen_cost_scenario: str):
+    electricity_cost_scenario = COST_SCENARIO_MAPPER[electricity_cost_scenario]
+    grid_scenario = GRID_DECARBONISATION_SCENARIOS[grid_scenario]
+    hydrogen_cost_scenario = COST_SCENARIO_MAPPER[hydrogen_cost_scenario]
 
+    electricity_emissions = power_data_getter(
+        power_model,
+        'emissions',
+        year,
+        country_code,
+        grid_scenario=grid_scenario,
+        cost_scenario=electricity_cost_scenario)
+
+    h2_emissions = hydrogen_data_getter(
+        hydrogen_model,
+        'emissions',
+        year,
+        country_code,
+        cost_scenario=hydrogen_cost_scenario)
+
+    bcases = read_pickle_folder(
+        PKL_DATA_INTERMEDIATE, "standardised_business_cases", "df"
+    )
+    bcases = bcases.loc[bcases["technology"] == technology].copy().reset_index(drop=True)
+    hydrogen_consumption =  bcases[bcases['material_category'] == 'Hydrogen']['value'].values[0]
+    electricity_consumption =  bcases[bcases['material_category'] == 'Electricity']['value'].values[0]
+
+    total_s2_emission = ((h2_emissions / 1000) * hydrogen_consumption) + (mwh_gj(electricity_emissions, 'larger') * electricity_consumption)
+
+    return total_s2_emission
 
 def get_discounted_opex_values(
-    plant: tuple, year_start: int, carbon_tax_df: pd.DataFrame,
+    plant: tuple,
+    year_start: int,
+    carbon_tax_df: pd.DataFrame,
     steel_plant_df: pd.DataFrame,
     variable_cost_summary: pd.DataFrame,
     green_premium_timeseries: pd.DataFrame,
+    power_model: dict,
+    hydrogen_model: dict,
     other_opex_df: pd.DataFrame,
-    include_carbon_tax: bool,
-    green_premium_scenario: bool,
-    year_interval: int, int_rate: float):
+    year_interval: int,
+    int_rate: float,
+    electricity_cost_scenario: str,
+    grid_scenario: str,
+    hydrogen_cost_scenario: str,
+    plant_tech: str
+    ):
 
     year_range = range(year_start, year_start+year_interval+1)
     df_list = []
-    emissions_dict = create_emissions_dict()
+    calculated_s3_emissions = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'calculated_s3_emissions', 'df')
     for year in year_range:
         year_ref = year
         if year > 2050:
             year_ref = 2050
+
+        s2_value = get_s2_emissions(power_model, hydrogen_model, year, plant.country_code, plant_tech, electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario)
         df = get_opex_costs(
             plant,
             year_ref,
             variable_cost_summary,
             other_opex_df,
-            emissions_dict,
+            calculated_s3_emissions,
             carbon_tax_df,
             green_premium_timeseries,
             steel_plant_df,
-            include_carbon_tax=include_carbon_tax,
-            green_premium_scenario=green_premium_scenario
+            scope2_emission_value=s2_value,
         )
         df['year'] = year_ref
         df_list.append(df)
@@ -353,15 +392,17 @@ def get_discounted_opex_values(
 def tco_calc(
     plant, start_year: int, plant_tech: str, carbon_tax_df: pd.DataFrame,
     steel_plant_df: pd.DataFrame, variable_cost_summary: pd.DataFrame,
-    green_premium_timeseries: pd.DataFrame, other_opex_df: pd.DataFrame,
-    include_carbon_tax: bool, green_premium_scenario: bool,
-    investment_cycle: int
+    green_premium_timeseries: pd.DataFrame, power_model: dict, hydrogen_model: dict,
+    other_opex_df: pd.DataFrame,
+    investment_cycle: int, electricity_cost_scenario: str,
+    grid_scenario: str, hydrogen_cost_scenario: str
     ):
     opex_values = get_discounted_opex_values(
         plant, start_year, carbon_tax_df, steel_plant_df, variable_cost_summary,
-        green_premium_timeseries, other_opex_df,
-        include_carbon_tax=include_carbon_tax, green_premium_scenario=green_premium_scenario,
-        year_interval=investment_cycle, int_rate=DISCOUNT_RATE,
+        green_premium_timeseries, power_model, hydrogen_model, other_opex_df,
+        year_interval=investment_cycle, int_rate=DISCOUNT_RATE, 
+        electricity_cost_scenario=electricity_cost_scenario,
+        grid_scenario=grid_scenario, hydrogen_cost_scenario=hydrogen_cost_scenario, plant_tech=plant_tech,
         )
     capex_values = calculate_capex(start_year).swaplevel().loc[plant_tech].groupby('end_technology').sum()
     return capex_values + opex_values / investment_cycle

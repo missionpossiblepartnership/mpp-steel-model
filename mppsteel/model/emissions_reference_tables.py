@@ -3,6 +3,8 @@
 # For Data Manipulation
 import pandas as pd
 
+from tqdm import tqdm
+
 # For logger and units dict
 from mppsteel.utility.utils import (
     get_logger,
@@ -24,15 +26,7 @@ from mppsteel.data_loading.data_interface import (
 )
 
 # Create logger
-logger = get_logger("Prices and Emissions")
-
-
-def dynamic_energy_price_getter(df: pd.DataFrame, scenario: str, year: str) -> float:
-    df_c = df.copy()
-    df_c.set_index(["scenario", "year"], inplace=True)
-    value = df_c.loc[scenario, year]["value"]
-    return value
-
+logger = get_logger("Emissions")
 
 def apply_emissions(
     df: pd.DataFrame,
@@ -170,131 +164,6 @@ def full_emissions(df: pd.DataFrame, emissions_exceptions_dict: dict, tech_list:
             )
     return df_c
 
-
-def generate_variable_costs(
-    df: pd.DataFrame,
-    single_year: int = None,
-    year_end: int = 2021,
-    region: str = None,
-    feedstock_dict: dict = None,
-    static_energy_df: pd.DataFrame = None,
-    electricity_df: pd.DataFrame = None,
-    hydrogen_df: pd.DataFrame = None,
-    natural_gas_ref: pd.DataFrame = None,
-    solar_ref: pd.DataFrame = None,
-    wind_ref: pd.DataFrame = None,
-) -> pd.DataFrame:
-
-    # Create resources reference list
-    static_energy_list = static_energy_df["Metric"].unique().tolist()
-    feedstock_list = list(feedstock_dict.keys())
-
-    # Create a year range
-    year_range = range(MODEL_YEAR_START, tuple({year_end + 1 or 2021})[0])
-    if single_year:
-        year_range = [single_year]
-
-    df_list = []
-
-    # Set default region
-    selected_region = list({region or "USA"})[0]
-
-    for year in year_range:
-        logger.info(f"calculating year {year}")
-        df_c = df.copy()
-        df_c["Static"] = ""
-        df_c["Feedstock"] = ""
-        df_c["Electricity"] = ""
-        df_c["Hydrogen"] = ""
-        df_c["Natural gas"] = ""
-
-        if year > 2026:
-            static_year = 2026
-        else:
-            static_year = year
-
-        low_elec_price = dynamic_energy_price_getter(electricity_df, "favorable", year)
-        high_elec_price = dynamic_energy_price_getter(electricity_df, "average", year)
-        low_hyd_price = dynamic_energy_price_getter(hydrogen_df, "favorable", year)
-        high_hyd_price = dynamic_energy_price_getter(hydrogen_df, "average", year)
-        natural_gas_high = static_energy_prices_getter(
-            static_energy_df, "Natural gas - high", static_year
-        )
-        natural_gas_low = static_energy_prices_getter(
-            static_energy_df, "Natural gas - low", static_year
-        )
-
-        for row in df_c.itertuples():
-            resource = row.material_category
-            resource_consumed = row.value
-
-            if resource in static_energy_list:
-                price_unit_value = static_energy_prices_getter(
-                    static_energy_df, resource, static_year
-                )
-                df_c.loc[row.Index, "Static"] = resource_consumed * price_unit_value
-
-            if resource in feedstock_list:
-                price_unit_value = feedstock_dict[resource]
-                df_c.loc[row.Index, "Feedstock"] = resource_consumed * price_unit_value
-
-            if resource == "Natural gas":
-                scalar_calc = natural_gas_ref.loc[selected_region, MODEL_YEAR_START]["value"].max()
-                if scalar_calc == 1:
-                    price_unit_value = natural_gas_low
-                else:
-                    price_unit_value = natural_gas_low + (
-                        (natural_gas_high - natural_gas_low) * (1 - scalar_calc)
-                    )
-                df_c.loc[row.Index, "Natural gas"] = (
-                    resource_consumed * price_unit_value
-                )
-
-            if resource == "Electricity":
-                scalar_calc = solar_ref.loc[
-                    selected_region, "practical_potential"
-                ].value
-                if scalar_calc == 1:
-                    price_unit_value = low_elec_price
-                else:
-                    price_unit_value = low_elec_price + (
-                        (high_elec_price - low_elec_price) * (1 - scalar_calc)
-                    )
-                df_c.loc[row.Index, "Electricity"] = (
-                    resource_consumed * price_unit_value
-                )
-
-            if resource == "Hydrogen":
-                scalar_calc = solar_ref.loc[
-                    selected_region, "practical_potential"
-                ].value
-                if scalar_calc == 1:
-                    price_unit_value = low_hyd_price
-                else:
-                    price_unit_value = low_hyd_price + (
-                        (high_hyd_price - low_hyd_price) * (1 - scalar_calc)
-                    )
-                df_c.loc[row.Index, "Hydrogen"] = resource_consumed * price_unit_value
-
-        df_c["year"] = year
-        df_list.append(df_c)
-
-    combined_df = pd.concat(df_list)
-    return combined_df
-
-
-def create_total_opex(df: pd.DataFrame) -> pd.DataFrame:
-    capex_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "capex_dict", "df")
-    opex_df = capex_dict["other_opex"].reorder_levels(["Year", "Technology"])
-    df_c = df.copy()
-    for row in df_c.itertuples():
-        year = row.Index[0]
-        tech = row.Index[1]
-        df_c.loc[year, tech]["cost"] = row.cost + opex_df.loc[year, tech]["value"]
-    df_c.rename({"cost": "total_opex"}, axis=1, inplace=True)
-    return df_c
-
-
 def generate_emissions_dataframe(df: pd.DataFrame, year_end: int):
 
     # S1 emissions covers the Green House Gas (GHG) emissions that a company makes directly
@@ -308,9 +177,6 @@ def generate_emissions_dataframe(df: pd.DataFrame, year_end: int):
     # but that the organisation is indirectly responsible for, up and down its value chain.
     final_scope3_ef_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, "final_scope3_ef_df", "df")
 
-    # Carbon Taxes
-    carbon_tax = read_pickle_folder(PKL_DATA_INTERMEDIATE, "carbon_tax", "df")
-
     non_standard_dict_ref = create_emissions_ref_dict(df, TECH_REFERENCE_LIST)
 
     emissions, carbon = apply_emissions(
@@ -319,7 +185,6 @@ def generate_emissions_dataframe(df: pd.DataFrame, year_end: int):
         s1_emissions_df=s1_emissions,
         s2_emissions_df=grid_emissivity,
         s3_emissions_df=final_scope3_ef_df,
-        # carbon_tax_df=carbon_tax,
         non_standard_dict=non_standard_dict_ref,
         scope="1",
     )

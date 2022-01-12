@@ -19,9 +19,6 @@ from mppsteel.data_loading.data_interface import (
     commodity_data_getter, static_energy_prices_getter,
 )
 
-from mppsteel.model.emissions_reference_tables import dynamic_energy_price_getter
-
-
 from mppsteel.data_loading.pe_model_formatter import (
     power_data_getter, hydrogen_data_getter, ccus_data_getter, RE_DICT
 )

@@ -123,7 +123,6 @@ NON_END_STATE_TECH = [
 
 SWITCH_DICT = {
     "Avg BF-BOF": [
-        # "Close plant",
         "Avg BF-BOF",
         "BAT BF-BOF",
         "BAT BF-BOF_bio PCI",
@@ -146,7 +145,6 @@ SWITCH_DICT = {
         "Electrowinning-EAF",
     ],
     "BAT BF-BOF": [
-        # "Close plant",
         "BAT BF-BOF",
         "BAT BF-BOF_bio PCI",
         "BAT BF-BOF_H2 PCI",
@@ -168,7 +166,6 @@ SWITCH_DICT = {
         "Electrowinning-EAF",
     ],
     "BAT BF-BOF_bio PCI": [
-        # "Close plant",
         "BAT BF-BOF_bio PCI",
         "BAT BF-BOF+CCUS",
         "BAT BF-BOF+BECCUS",
@@ -183,7 +180,6 @@ SWITCH_DICT = {
         "Electrowinning-EAF",
     ],
     "BAT BF-BOF_H2 PCI": [
-        # "Close plant",
         "BAT BF-BOF_H2 PCI",
         "BAT BF-BOF+CCUS",
         "BAT BF-BOF+BECCUS",
@@ -198,13 +194,11 @@ SWITCH_DICT = {
         "Electrowinning-EAF",
     ],
     "DRI-Melt-BOF": [
-        # "Close plant",
         "DRI-Melt-BOF",
         "DRI-Melt-BOF_100% zero-C H2",
         "DRI-Melt-BOF+CCUS",
     ],
     "DRI-EAF": [
-        # "Close plant",
         "DRI-EAF",
         "DRI-EAF_50% bio-CH4",
         "DRI-EAF_50% green H2",
@@ -216,7 +210,6 @@ SWITCH_DICT = {
         "Electrowinning-EAF",
     ],
     "DRI-EAF_50% bio-CH4": [
-        # "Close plant",
         "DRI-EAF_50% bio-CH4",
         "Smelting Reduction+CCUS",
         "Electrolyzer-EAF",
@@ -224,7 +217,6 @@ SWITCH_DICT = {
         "DRI-EAF_100% green H2",
     ],
     "DRI-EAF_50% green H2": [
-        # "Close plant",
         "DRI-EAF_50% green H2",
         "Smelting Reduction+CCUS",
         "Electrolyzer-EAF",
@@ -232,7 +224,6 @@ SWITCH_DICT = {
         "DRI-EAF_100% green H2",
     ],
     "Smelting Reduction": [
-        # "Close plant",
         "Smelting Reduction",
         "Smelting Reduction+CCUS",
     ],

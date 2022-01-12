@@ -111,7 +111,6 @@ def calculate_emissions(
         "comp_tech_values",
     ]
     s1_emissions = read_pickle_folder(PKL_DATA_INTERMEDIATE, "calculated_s1_emissions", "df")
-    s2_emissions = read_pickle_folder(PKL_DATA_INTERMEDIATE, "calculated_s2_emissions", "df")
     s3_emissions = read_pickle_folder(PKL_DATA_INTERMEDIATE, "calculated_s3_emissions", "df")
     year_range = range(MODEL_YEAR_START, year_end + 1)
     for year in tqdm(year_range, total=len(year_range), desc='Emissions'):
@@ -124,7 +123,6 @@ def calculate_emissions(
                     df_cols = {}
                     emission_dict = {
                         "s1": s1_emissions,
-                        "s2": s2_emissions,
                         "s3": s3_emissions,
                     }
                     for item in emission_dict.items():
@@ -150,7 +148,6 @@ def calculate_emissions(
         "start_technology",
         "end_technology",
         "abated_s1_emissions",
-        "abated_s2_emissions",
         "abated_s3_emissions",
     ]
     full_summary_df = (
@@ -162,7 +159,6 @@ def calculate_emissions(
     if serialize_only:
         serialize_file(full_summary_df, PKL_DATA_INTERMEDIATE, "emissions_switching_df_summary")
         serialize_file(full_df, PKL_DATA_INTERMEDIATE, "emissions_switching_df_full")
-        return
 
     if output_type == "summary":
         return full_summary_df

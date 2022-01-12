@@ -172,7 +172,6 @@ def power_data_getter(
 
     # subset the dict_object
     df_c = df_dict[data_type_mapper[data_type]].copy()
-
     # define country list based on the data_type
     country_list = get_unique_countries(df_c['country_code'].values)
 
@@ -196,7 +195,10 @@ def power_data_getter(
     else:
         df_c = df_c[df_c['country_code'].str.contains(default_country, regex=False)]
     # Return the value figure
-    return df_c.value.values[0]
+    try:
+        return df_c.value.values[0]
+    except IndexError:
+        raise IndexError(f'Error with -> sheet:{data_type}, year:{year}, country_code:{country_code}, cost_scenario:{cost_scenario}, grid_scenario:{grid_scenario}')
 
 def hydrogen_data_getter(
     df_dict: dict, data_type: str, year: int, country_code: str,
@@ -227,8 +229,6 @@ def hydrogen_data_getter(
     # Cost scenarios: Baseline, Min, Max, All
     df_c = df_c[
         (df_c['Cost scenario'] == cost_scenario) & (df_c['Production scenario'] == prod_scenario)]
-    
-    
     if (data_type=='prices') and variable:
         df_c = df_c[(df_c['Variable'] == variable)]
     elif (data_type=='prices') and not variable:

@@ -19,7 +19,7 @@ from mppsteel.results.production import production_results_flow
 
 from mppsteel.data_loading.steel_plant_formatter import steel_plant_processor
 
-from mppsteel.utility.utils import pickle_to_csv, TIME_CONTAINER, read_pickle_folder
+from mppsteel.utility.utils import TIME_CONTAINER, read_pickle_folder
 
 from mppsteel.data_loading.reg_steel_demand_formatter import get_steel_demand, steel_demand_getter
 
@@ -41,7 +41,5 @@ power_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'power_model_formatted', 
 hydrogen_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'hydrogen_model_formatted', 'df')
 ccus_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'ccus_model_formatted', 'df')
 
-print(power_data_getter(power_dict, 'renewable', 2020, 'IND', RE_DICT, 'wind_and_solar'))
+print(power_data_getter(power_dict, 'emissions', 2020, 'ARE'))
 print(hydrogen_data_getter(hydrogen_dict, 'emissions', 2020, 'IND'))
-print(ccus_data_getter(ccus_dict, 'storage', 'IND'))
-print(ccus_data_getter(ccus_dict, 'transport', 'IND'))

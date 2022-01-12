@@ -5,13 +5,13 @@ from tqdm import tqdm
 
 from mppsteel.utility.utils import (
     read_pickle_folder, serialize_file,
-    get_logger, return_furnace_group, 
+    get_logger, return_furnace_group,
     timer_func, add_scenarios
 )
 
 from mppsteel.model_config import (
     MODEL_YEAR_START, PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE,
-    GREEN_PREMIUM_SCENARIOS, MODEL_YEAR_END, INVESTMENT_CYCLE_LENGTH
+    MODEL_YEAR_END, INVESTMENT_CYCLE_LENGTH
 )
 
 from mppsteel.utility.reference_lists import (
@@ -46,10 +46,11 @@ def read_and_format_tech_availability():
 
     Returns:
         [type]: [description]
-    """    
-    tech_availability = read_pickle_folder(PKL_DATA_IMPORTS, 'tech_availability', 'df')
-    tech_availability.columns = [col.lower().replace(' ', '_') for col in tech_availability.columns]
-    return tech_availability[['technology', 'main_technology_type', 'technology_phase', 'year_available_from', 'year_available_until']].set_index('technology')
+    """
+    df = read_pickle_folder(PKL_DATA_IMPORTS, 'tech_availability', 'df')
+    df = df[df['Technology'] != 'Close plant']
+    df.columns = [col.lower().replace(' ', '_') for col in df.columns]
+    return df[['technology', 'main_technology_type', 'technology_phase', 'year_available_from', 'year_available_until']].set_index('technology')
 
 def tech_availability_check(tech_df: pd.DataFrame, technology: str, year: int, tech_moratorium: bool = False) -> bool:
     """[summary]
@@ -92,7 +93,7 @@ def plant_closure_check(utilization_rate: float, cutoff: float, current_tech: st
         [type]: [description]
     """    
     if utilization_rate < cutoff:
-        return 'Close Plant'
+        return 'Close plant'
     return current_tech
 
 
@@ -240,8 +241,6 @@ def plant_tech_resource_checker(
     """
 
     tech_list = SWITCH_DICT[base_tech].copy()
-    if 'Close plant' in tech_list:
-        tech_list.remove('Close plant')
 
     tech_approved_list = []
 
@@ -427,10 +426,11 @@ def choose_technology(
     year_end: int, rank_only: bool = False, 
     tech_moratorium: bool = False,
     error_plant: str = '',
-    carbon_tax_scenario: bool = False, 
-    green_premium_scenario: float = 0,
     steel_demand_scenario: str = 'bau',
     tech_switch_scenario: dict = {'tco': 0.6, 'emissions': 0.4},
+    electricity_cost_scenario: str = 'average',
+    grid_scenario: str = 'low',
+    hydrogen_cost_scenario: str = 'average',
     ):
     """[summary]
 
@@ -460,6 +460,8 @@ def choose_technology(
     biomass_availability = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'biomass_availability', 'df')
     ccs_co2 = read_pickle_folder(PKL_DATA_IMPORTS, 'ccs_co2', 'df')
     green_premium_timeseries = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'green_premium_timeseries', 'df')
+    power_model = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'power_model_formatted', 'df')
+    hydrogen_model = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'hydrogen_model_formatted', 'df')
     emissions_switching_df_summary = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'emissions_switching_df_summary', 'df')
     materials = load_materials()
     opex_values_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'capex_dict', 'df')
@@ -527,8 +529,9 @@ def choose_technology(
                 tco = tco_calc(
                     plant, year, current_tech, carbon_tax_df, plant_df,
                     all_plant_variable_costs_summary, green_premium_timeseries,
-                    opex_values_dict['other_opex'],carbon_tax_scenario, green_premium_scenario,
-                    INVESTMENT_CYCLE_LENGTH)
+                    power_model, hydrogen_model,
+                    opex_values_dict['other_opex'], INVESTMENT_CYCLE_LENGTH,
+                    electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario)
 
                 tco_switching_df_summary_final_rank = tco_min_ranker(tco, ['value'], rank_only)
                 emissions_switching_df_summary_final_rank = abatement_min_ranker(emissions_switching_df_summary, current_tech, year, ['abated_s1_emissions'], rank_only)
@@ -705,10 +708,11 @@ def solver_flow(scenario_dict: dict, year_end: int, serialize_only: bool = False
         rank_only=True,
         tech_moratorium=scenario_dict['tech_moratorium'],
         error_plant='SSAB Americas Alabama steel plant',
-        carbon_tax_scenario=scenario_dict['carbon_tax'],
-        green_premium_scenario=scenario_dict['green_premium_scenario'],
         steel_demand_scenario=scenario_dict['steel_demand_scenario'],
-        tech_switch_scenario=scenario_dict['tech_switch_scenario']
+        tech_switch_scenario=scenario_dict['tech_switch_scenario'],
+        electricity_cost_scenario=scenario_dict['electricity_cost_scenario'],
+        grid_scenario=scenario_dict['grid_scenario'],
+        hydrogen_cost_scenario=scenario_dict['hydrogen_cost_scenario']
         )
 
     if serialize_only:
