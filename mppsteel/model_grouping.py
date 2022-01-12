@@ -28,9 +28,25 @@ from mppsteel.results.production import production_results_flow
 from mppsteel.results.investments import investment_results
 from mppsteel.results.graph_production import create_graphs
 
-from mppsteel.model_config import MODEL_YEAR_END, OUTPUT_FOLDER
+from mppsteel.model_config import MODEL_YEAR_END, OUTPUT_FOLDER, PKL_DATA_FINAL, PKL_DATA_INTERMEDIATE
 
 logger = get_logger("Main Model Code")
+
+def stdout_question(count_iter: int, scenario_type: str, scenario_options: dict, default_dict: dict):
+    query = f'''
+    Scenario Option {count_iter+1}/{len(scenario_options)}: {scenario_type}
+    Default value: {default_dict[scenario_type]}.
+    To keep default, leave blank and press ENTER, else enter a different value from the options presented.
+    ---> Options {scenario_options[scenario_type]}
+    '''
+    return query
+
+def get_inputted_scenarios(scenario_options: dict, default_scenario: dict):
+    inputted_scenario_args = {}
+    for count, scenario in enumerate(scenario_options.keys()):
+        question = stdout_question(count, scenario, scenario_options, default_scenario)
+        inputted_scenario_args[scenario] = stdout_query(question, default_scenario[scenario], scenario_options[scenario])
+    return inputted_scenario_args
 
 # Model phasing
 def data_import_stage():
@@ -66,9 +82,10 @@ def model_outputs_phase(new_folder: bool = False, timestamp: str = ''):
         save_path = folder_filepath
     pkl_files = [
         'production_stats_all', 'production_emissions',
-        'global_metaresults', 'investment_results_df']
+        'global_metaresults', 'investment_results']
     for pkl_file in pkl_files:
-        pickle_to_csv(save_path, pkl_file)
+        pickle_to_csv(save_path, PKL_DATA_FINAL, pkl_file)
+    pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'emissions_switching_df_full')
 
 def model_graphs_phase(new_folder: bool = False, timestamp: str = ''):
     save_path = OUTPUT_FOLDER
@@ -117,18 +134,5 @@ def business_case_flow():
 def generate_minimodels(scenario_dict: dict):
     generate_timeseries(serialize_only=True, scenario_dict=scenario_dict)
 
-def stdout_question(count_iter: int, scenario_type: str, scenario_options: dict, default_dict: dict):
-    query = f'''
-    Scenario Option {count_iter+1}/{len(scenario_options)}: {scenario_type}
-    Default value: {default_dict[scenario_type]}.
-    To keep default, leave blank and press ENTER, else enter a different value from the options presented.
-    ---> Options {scenario_options[scenario_type]}
-    '''
-    return query
-
-def get_inputted_scenarios(scenario_options: dict, default_scenario: dict):
-    inputted_scenario_args = {}
-    for count, scenario in enumerate(scenario_options.keys()):
-        question = stdout_question(count, scenario, scenario_options, default_scenario)
-        inputted_scenario_args[scenario] = stdout_query(question, default_scenario[scenario], scenario_options[scenario])
-    return inputted_scenario_args
+def investment_flow(scenario_dict: dict):
+    investment_results(scenario_dict, serialize_only=True)
