@@ -10,8 +10,6 @@ from mppsteel.utility.utils import get_logger, serialize_file, timer_func
 from mppsteel.model_config import (
     PKL_DATA_INTERMEDIATE,
     BIOMASS_AV_TS_END_VALUE,
-    BIOMASS_AV_TS_END_YEAR,
-    BIOMASS_AV_TS_START_YEAR,
     MODEL_YEAR_END,
     MODEL_YEAR_START,
     ELECTRICITY_PRICE_MID_YEAR,
@@ -136,8 +134,8 @@ def generate_timeseries(serialize_only: bool = False, scenario_dict: dict = None
     # Create Biomass timeseries
     biomass_availability = timeseries_generator(
         "biomass",
-        BIOMASS_AV_TS_START_YEAR,
-        BIOMASS_AV_TS_END_YEAR,
+        MODEL_YEAR_START,
+        MODEL_YEAR_END,
         BIOMASS_AV_TS_END_VALUE,
     )
 
@@ -149,8 +147,6 @@ def generate_timeseries(serialize_only: bool = False, scenario_dict: dict = None
         carbon_tax_scenario_values[1],
         carbon_tax_scenario_values[0],
     )
-    print(carbon_tax_scenario_values)
-    print(green_premium_scenario_values)
     green_premium_timeseries = timeseries_generator(
         'green_premium',
         MODEL_YEAR_START,

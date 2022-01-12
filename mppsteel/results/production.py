@@ -78,7 +78,7 @@ def tech_capacity_splits():
     for year in tqdm(year_range, total=len(year_range), desc='Tech Capacity Splits'):
         df = pd.DataFrame({'year': year, 'steel_plant': steel_plants, 'technology': '', 'capacity': 0})
         df['technology'] = df['steel_plant'].apply(lambda plant: get_tech_choice(tech_choices_dict, year, plant))
-        
+
         for row in df.itertuples():
             df.loc[row.Index, 'capacity'] = calculate_primary_and_secondary(tech_capacities_dict, row.steel_plant, row.technology) / 1000
         df = df[df['technology'] != 'Not operating']

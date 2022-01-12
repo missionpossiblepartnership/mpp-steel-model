@@ -211,10 +211,10 @@ def generate_variable_plant_summary(scenario_dict: dict, serialize_only: bool = 
         [type]: [description]
     """
     electricity_cost_scenario = scenario_dict['electricity_cost_scenario']
-    grid_decarb_scenario = scenario_dict['grid_decarb_scenario']
+    grid_scenario = scenario_dict['grid_scenario']
     hydrogen_cost_scenario = scenario_dict['hydrogen_cost_scenario']
 
-    all_plant_variable_costs = plant_variable_costs(MODEL_YEAR_END, electricity_cost_scenario, grid_decarb_scenario, hydrogen_cost_scenario)
+    all_plant_variable_costs = plant_variable_costs(MODEL_YEAR_END, electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario)
     all_plant_variable_costs_summary = format_variable_costs(all_plant_variable_costs)
 
     if serialize_only:
