@@ -109,7 +109,7 @@ CARBON_TAX_START_VALUE = 0
 CARBON_TAX_END_VALUE = 210
 
 GRID_DECARBONISATION_SCENARIOS = {
-    'high': 'Accelerated',
+    'high': 'Accelerated ',
     'low': 'Central',
 }
 
