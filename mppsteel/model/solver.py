@@ -11,16 +11,12 @@ from mppsteel.utility.utils import (
 
 from mppsteel.model_config import (
     MODEL_YEAR_START, PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE,
-    MODEL_YEAR_END, INVESTMENT_CYCLE_LENGTH
+    MODEL_YEAR_END, INVESTMENT_CYCLE_LENGTH, TECH_SWITCH_SCENARIOS
 )
 
 from mppsteel.utility.reference_lists import (
     SWITCH_DICT, TECHNOLOGY_STATES, FURNACE_GROUP_DICT,
     TECH_MATERIAL_CHECK_DICT, RESOURCE_CONTAINER_REF,
-)
-
-from mppsteel.minimodels.timeseries_generator import (
-    timeseries_generator,
 )
 
 from mppsteel.data_loading.data_interface import (
@@ -41,16 +37,16 @@ from mppsteel.model.tco import (
 logger = get_logger("Solver")
 
 
-def read_and_format_tech_availability():
+def read_and_format_tech_availability(df: pd.DataFrame):
     """[summary]
 
     Returns:
         [type]: [description]
     """
-    df = read_pickle_folder(PKL_DATA_IMPORTS, 'tech_availability', 'df')
-    df = df[df['Technology'] != 'Close plant']
-    df.columns = [col.lower().replace(' ', '_') for col in df.columns]
-    return df[['technology', 'main_technology_type', 'technology_phase', 'year_available_from', 'year_available_until']].set_index('technology')
+    df_c = df.copy()
+    df_c.columns = [col.lower().replace(' ', '_') for col in df_c.columns]
+    df_c = df_c[df_c['technology'] != 'Close plant']
+    return df_c[['technology', 'main_technology_type', 'technology_phase', 'year_available_from', 'year_available_until']].set_index('technology')
 
 def tech_availability_check(tech_df: pd.DataFrame, technology: str, year: int, tech_moratorium: bool = False) -> bool:
     """[summary]
@@ -63,20 +59,20 @@ def tech_availability_check(tech_df: pd.DataFrame, technology: str, year: int, t
 
     Returns:
         bool: [description]
-    """    
+    """
     row = tech_df.loc[technology].copy()
     year_available = row.loc['year_available_from']
     year_unavailable = row.loc['year_available_until']
     if tech_moratorium:
         if row.loc['technology_phase'] == 'Initial':
             year_unavailable = 2030
-    if year_available < year < year_unavailable:
+    if int(year_available) < int(year) < int(year_unavailable):
         # print(f'{technology} will be available in {year}')
         return True
-    if year < year_available:
+    if int(year) < int(year_available):
         # print(f'{technology} will not be ready yet in {year}')
         return False
-    if year > year_unavailable:
+    if int(year) > int(year_unavailable):
         # print(f'{technology} will become unavailable in {year}')
         return False
 
@@ -169,8 +165,8 @@ def total_plant_capacity(plant_cap_dict: dict):
     return sum(all_capacities)
 
 
-def material_usage(
-    plant_capacities: dict, steel_plant_df: pd.DataFrame, business_cases: pd.DataFrame,
+def material_usage_calc(
+    plant_capacities: dict, steel_plant_df: pd.DataFrame, steel_demand_df: pd.DataFrame, business_cases: pd.DataFrame,
     materials_list: list, plant_name: str, year: float, tech: str, material: str,
     steel_demand_scenario: str
     ):
@@ -192,7 +188,7 @@ def material_usage(
 
     plant_capacity = calculate_primary_and_secondary(plant_capacities, plant_name, tech) / 1000
     plant_country = steel_plant_df[steel_plant_df['plant_name'] == plant_name]['country_code'].values[0]
-    steel_demand = steel_demand_getter(steel_plant_df, year, steel_demand_scenario, 'crude', plant_country)
+    steel_demand = steel_demand_getter(steel_demand_df, year, steel_demand_scenario, 'crude', plant_country)
     capacity_sum = total_plant_capacity(plant_capacities)
     projected_production = (plant_capacity / capacity_sum) * steel_demand
     material_list = []
@@ -269,7 +265,7 @@ def plant_tech_resource_checker(
                 material_ref = 'Scrap'
                 # material_capacity = steel_demand_value_selector(steel_demand_df, 'Scrap', year, 'bau')
                 plant_country = steel_plant_df[steel_plant_df['plant_name'] == plant_name]['country_code'].values[0]
-                material_capacity = steel_demand_getter(steel_plant_df, year, steel_demand_scenario, 'Crude', plant_country)
+                material_capacity = steel_demand_getter(steel_demand_df, year, steel_demand_scenario, 'crude', plant_country)
                 materials_to_check = ['Scrap']
 
             # Checking for zero
@@ -284,21 +280,21 @@ def plant_tech_resource_checker(
                     if current_usage == 0:
                         logger.info('First usage for {material_check}')
                     resource_remaining = material_capacity - current_usage
-                    plant_usage = material_usage(plant_capacities, steel_demand_df, business_cases, materials_list, plant_name, year, tech, materials_to_check, steel_demand_scenario)
+                    plant_usage = material_usage_calc(plant_capacities, steel_plant_df, steel_demand_df, business_cases, materials_list, plant_name, year, tech, materials_to_check, steel_demand_scenario)
                     if plant_usage > resource_remaining:
-                        print(f'{year} -> {plant_name} cannot adopt {tech} because usage of {material_check} exceeds capacity | uses {plant_usage} of remaining {resource_remaining}')
+                        # print(f'{year} -> {plant_name} cannot adopt {tech} because usage of {material_check} exceeds capacity | uses {plant_usage} of remaining {resource_remaining}')
                         material_check_container.append(False)
                     else:
-                        print(f'{year} -> {plant_name} can adopt {tech} because usage of {material_check} does not exceed capacity | uses {plant_usage} of remaining {resource_remaining}')
+                        # print(f'{year} -> {plant_name} can adopt {tech} because usage of {material_check} does not exceed capacity | uses {plant_usage} of remaining {resource_remaining}')
                         material_check_container.append(True)
                         material_container.append(plant_usage)
 
                 if material_check in ['Scrap EAF']:
                     if material_capacity > 1.5:
-                        print(f'Sufficient enough scrap for {tech} -> {material_capacity}')
+                        # print(f'Sufficient enough scrap for {tech} -> {material_capacity}')
                         material_check_container.append(True)
                     else:
-                        print(f'Not enough scrap for {tech}')
+                        # print(f'Not enough scrap for {tech}')
                         material_check_container.append(False)
 
         if all(material_check_container):
@@ -340,6 +336,7 @@ def overall_scores(
     business_cases: pd.DataFrame,
     biomass_df: pd.DataFrame,
     ccs_co2_df: pd.DataFrame,
+    tech_availability_df: pd.DataFrame,
     plant_capacities: dict,
     materials_list: list,
     year: int,
@@ -348,7 +345,7 @@ def overall_scores(
     base_tech: str = '',
     tech_moratorium: bool = False,
     transitional_switch_only: bool = False,
-    material_usage_dict_container: dict = {},
+    material_usage_dict_container: dict = None,
     return_container: bool = True,
 ):
     """[summary]
@@ -381,7 +378,7 @@ def overall_scores(
     new_df = tco_df_c.copy()
     new_df['combined_score'] = ( proportions_dict['tco'] * tco_df_c['rank_score'] ) + ( proportions_dict['emissions'] * emissions_df_c['rank_score'] )
 
-    tech_availability = read_and_format_tech_availability()
+    tech_availability = read_and_format_tech_availability(tech_availability_df)
     # Availability checks
     unavailable_techs = [tech for tech in tco_df.index if not tech_availability_check(tech_availability, tech, year, tech_moratorium=tech_moratorium)]
 
@@ -393,10 +390,8 @@ def overall_scores(
     constraints_check = plant_tech_resource_checker(
         plant_name, base_tech, year, steel_demand_df,
         steel_plant_df, steel_demand_scenario,
-        business_cases, materials_list, biomass_df,
-        ccs_co2_df, TECH_MATERIAL_CHECK_DICT,
-        RESOURCE_CONTAINER_REF, material_usage_dict_container,
-        plant_capacities, 'excluded'
+        business_cases, biomass_df, ccs_co2_df, materials_list, TECH_MATERIAL_CHECK_DICT,
+        RESOURCE_CONTAINER_REF, plant_capacities, material_usage_dict_container, 'excluded'
         )
 
     # Non_switches
@@ -431,6 +426,7 @@ def choose_technology(
     electricity_cost_scenario: str = 'average',
     grid_scenario: str = 'low',
     hydrogen_cost_scenario: str = 'average',
+    eur_usd_rate: float = 0.877
     ):
     """[summary]
 
@@ -466,8 +462,10 @@ def choose_technology(
     materials = load_materials()
     opex_values_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'capex_dict', 'df')
     business_cases = load_business_cases()
+    tech_availability_df = read_pickle_folder(PKL_DATA_IMPORTS, 'tech_availability', 'df')
+    calculated_s3_emissions = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'calculated_s3_emissions', 'df')
     plant_capacities_dict = create_plant_capacities_dict()
-
+    capex_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, "capex_switching_df", "df")
     all_plant_names = plant_df['plant_name'].copy()
 
     year_range = range(MODEL_YEAR_START, year_end+1)
@@ -518,20 +516,20 @@ def choose_technology(
                 # plant_name_check(plant_name, error_plant, 'Switch Year Non-2020')
                 current_tech = current_plant_choices[str(year-1)][plant_name]
 
-            if current_tech == 'Not operating' or 'Close plant':
+            if (current_tech == 'Not operating') or (current_tech == 'Close plant'):
                 # plant_name_check(plant_name, error_plant, 'Closed')
                 current_plant_choices[str(year)][plant_name] = 'Close plant'
 
             else:
-
                 switch_type = investment_year_ref.reset_index().set_index(['year', 'plant_name']).loc[year, plant_name].values[0]
 
                 tco = tco_calc(
-                    plant, year, current_tech, carbon_tax_df, plant_df,
+                    plant, year, current_tech, carbon_tax_df, plant_df, business_cases,
                     all_plant_variable_costs_summary, green_premium_timeseries,
-                    power_model, hydrogen_model,
-                    opex_values_dict['other_opex'], INVESTMENT_CYCLE_LENGTH,
-                    electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario)
+                    power_model, hydrogen_model, opex_values_dict['other_opex'],
+                    calculated_s3_emissions, capex_df, INVESTMENT_CYCLE_LENGTH,
+                    electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario,
+                    eur_usd_rate)
 
                 tco_switching_df_summary_final_rank = tco_min_ranker(tco, ['value'], rank_only)
                 emissions_switching_df_summary_final_rank = abatement_min_ranker(emissions_switching_df_summary, current_tech, year, ['abated_s1_emissions'], rank_only)
@@ -548,6 +546,7 @@ def choose_technology(
                         business_cases,
                         biomass_availability,
                         ccs_co2,
+                        tech_availability_df,
                         plant_capacities_dict,
                         materials,
                         year,
@@ -579,9 +578,11 @@ def choose_technology(
                         emissions_switching_df_summary_final_rank,
                         tech_switch_scenario,
                         steel_demand_df,
+                        plant_df,
                         business_cases,
                         biomass_availability,
                         ccs_co2,
+                        tech_availability_df,
                         plant_capacities_dict,
                         materials,
                         year,
@@ -589,7 +590,6 @@ def choose_technology(
                         steel_demand_scenario,
                         current_tech,
                         tech_moratorium=tech_moratorium,
-                        transitional_switch_only=True,
                         material_usage_dict_container=material_usage_dict,
                         return_container=True
                     )
@@ -634,7 +634,6 @@ def material_usage_per_plant(
     """    
     df_list = []
     zipped_data = zip(plant_list, technology_list)
-    # steel_demand = steel_demand_value_selector(steel_demand_df, 'Crude', year, 'bau')
     capacity_sum = total_plant_capacity(plant_capacities)
     for plant_name, tech in zipped_data:
         plant_capacity = calculate_primary_and_secondary(plant_capacities, plant_name, tech) / 1000
@@ -709,10 +708,11 @@ def solver_flow(scenario_dict: dict, year_end: int, serialize_only: bool = False
         tech_moratorium=scenario_dict['tech_moratorium'],
         error_plant='SSAB Americas Alabama steel plant',
         steel_demand_scenario=scenario_dict['steel_demand_scenario'],
-        tech_switch_scenario=scenario_dict['tech_switch_scenario'],
+        tech_switch_scenario=TECH_SWITCH_SCENARIOS[scenario_dict['tech_switch_scenario']],
         electricity_cost_scenario=scenario_dict['electricity_cost_scenario'],
         grid_scenario=scenario_dict['grid_scenario'],
-        hydrogen_cost_scenario=scenario_dict['hydrogen_cost_scenario']
+        hydrogen_cost_scenario=scenario_dict['hydrogen_cost_scenario'],
+        eur_usd_rate=scenario_dict['eur_usd']
         )
 
     if serialize_only:

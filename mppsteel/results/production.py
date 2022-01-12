@@ -20,6 +20,10 @@ from mppsteel.data_loading.reg_steel_demand_formatter import (
     steel_demand_getter
 )
 
+from mppsteel.data_loading.data_interface import (
+    load_business_cases
+)
+
 from mppsteel.model.tco import get_s2_emissions
 
 from mppsteel.utility.utils import (
@@ -132,7 +136,11 @@ def production_stats_generator(production_df: pd.DataFrame, as_summary: bool = F
     return df_c
 
 def generate_production_emission_stats(
-    production_df: pd.DataFrame, as_summary: bool = False,
+    production_df: pd.DataFrame, 
+    power_model: pd.DataFrame,
+    hydrogen_model: pd.DataFrame,
+    business_cases: pd.DataFrame,
+    as_summary: bool = False,
     electricity_cost_scenario: str = 'average',
     grid_scenario: str = 'low',
     hydrogen_cost_scenario: str =  'average'):
@@ -169,9 +177,13 @@ def generate_production_emission_stats(
         else:
             for colname in emissions_name_ref:
                 if colname in ['s1', 's3']:
-                    df_c.loc[row.Index, f'{colname}_emissions'] = row.production * emissions_getter(emissions_dict, colname, row.technology, row.year)
+                    df_c.loc[row.Index, f'{colname}_emissions'] = row.production * emissions_getter(
+                        emissions_dict, colname, row.technology, row.year)
                 elif colname == 's2':
-                    df_c.loc[row.Index, f'{colname}_emissions'] = row.production * get_s2_emissions(row.year, row.country_code, row.technology, electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario)
+                    df_c.loc[row.Index, f'{colname}_emissions'] = row.production * get_s2_emissions(
+                        power_model, hydrogen_model, business_cases,
+                        row.year, row.country_code, row.technology,
+                        electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario)
 
     if as_summary:
         return df_c.groupby(['year', 'technology']).sum()
@@ -295,6 +307,9 @@ def production_results_flow(scenario_dict: dict, serialize_only: bool = False):
     """    
     logger.info(f'- Starting Production Results Model Flow')
     steel_demand_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'regional_steel_demand_formatted', 'df')
+    business_cases = load_business_cases()
+    power_model = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'power_model_formatted', 'df')
+    hydrogen_model = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'hydrogen_model_formatted', 'df')
     tech_capacity_df, max_solver_year = tech_capacity_splits()
     steel_demand_scenario = scenario_dict['steel_demand_scenario']
     electricity_cost_scenario=scenario_dict['electricity_cost_scenario']
@@ -303,7 +318,7 @@ def production_results_flow(scenario_dict: dict, serialize_only: bool = False):
     production_results = generate_production_stats(tech_capacity_df, steel_demand_df, steel_demand_scenario, max_solver_year)
     production_results_all = production_stats_generator(production_results)
     production_emissions = generate_production_emission_stats(
-        production_results,
+        production_results, power_model, hydrogen_model, business_cases,
         electricity_cost_scenario=electricity_cost_scenario,
         grid_scenario=grid_scenario,
         hydrogen_cost_scenario=hydrogen_cost_scenario)
