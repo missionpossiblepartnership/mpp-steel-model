@@ -1,8 +1,9 @@
 '''Model flow functions for the main script'''
+import argparse
 
 from mppsteel.utility.utils import (
     get_logger, pickle_to_csv, stdout_query,
-    create_folder_if_nonexist
+    create_folder_if_nonexist, get_currency_rate
     )
 
 from mppsteel.data_loading.data_import import load_data
@@ -47,6 +48,12 @@ def get_inputted_scenarios(scenario_options: dict, default_scenario: dict):
         question = stdout_question(count, scenario, scenario_options, default_scenario)
         inputted_scenario_args[scenario] = stdout_query(question, default_scenario[scenario], scenario_options[scenario])
     return inputted_scenario_args
+
+def add_currency_rates_to_scenarios(scenario_dict: dict):
+    scenario_dict['eur_usd'] = get_currency_rate('eur')
+    scenario_dict['usd_eur'] = get_currency_rate('usd')
+    return scenario_dict
+
 
 # Model phasing
 def data_import_stage():
@@ -136,3 +143,37 @@ def generate_minimodels(scenario_dict: dict):
 
 def investment_flow(scenario_dict: dict):
     investment_results(scenario_dict, serialize_only=True)
+
+parser = argparse.ArgumentParser(description='The MPP Python Steel Model Command Line Interface')
+parser.add_argument(
+    "--f", action="store_true", help="Runs the complete model flow")
+parser.add_argument(
+    "--s", action="store_true", help="Runs the solver scripts directly")
+parser.add_argument(
+    "--p", action="store_true", help="Runs the preprocessing scripts directly")
+parser.add_argument(
+    "--m", action="store_true", help="Runs the production and investment scripts")
+parser.add_argument(
+    "--o", action="store_true", help="Runs the output scripts directly")
+parser.add_argument(
+    "--h", action="store_true", help="Runs the half model sctips scripts directly")
+parser.add_argument(
+    "--i", action="store_true", help="Runs the data import scripts scripts directly")
+parser.add_argument(
+    "--d", action="store_true", help="Runs the data refresh scripts directly")
+parser.add_argument(
+    "--r", action="store_true", help="Runs the model results scripts directly")
+parser.add_argument(
+    "--b", action="store_true", help="Runs the business cases script directly")
+parser.add_argument(
+    "--v", action="store_true", help="Runs the variable costs sumary script directly")
+parser.add_argument(
+    "--q", action="store_true", help="Adds custom scenario inputs to the model")
+parser.add_argument(
+    "--t", action="store_true", help="Runs the results and output scripts directly")
+parser.add_argument(
+    "--g", action="store_true", help="Runs the graph output script directly")
+parser.add_argument(
+    "--n", action="store_true", help="Runs the minimodels script directly")
+parser.add_argument(
+    "--e", action="store_true", help="Runs the investments script directly")

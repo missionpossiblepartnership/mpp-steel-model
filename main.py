@@ -1,59 +1,26 @@
 """Runs the data loading scripts"""
 
-import argparse
-
 from datetime import datetime
 
-from mppsteel.utility.utils import get_logger, TIME_CONTAINER
+from mppsteel.utility.utils import get_logger, create_folders_if_nonexistant, TIME_CONTAINER
 
-from mppsteel.model_config import DEFAULT_SCENARIO, SCENARIO_OPTIONS
+from mppsteel.model_config import DEFAULT_SCENARIO, SCENARIO_OPTIONS, FOLDERS_TO_CHECK_IN_ORDER
 
 from mppsteel.model_grouping import *
 
 logger = get_logger("Main Model Code")
-
-parser = argparse.ArgumentParser(description='The MPP Python Steel Model Command Line Interface')
-parser.add_argument(
-    "--f", action="store_true", help="Runs the complete model flow")
-parser.add_argument(
-    "--s", action="store_true", help="Runs the solver scripts directly")
-parser.add_argument(
-    "--p", action="store_true", help="Runs the preprocessing scripts directly")
-parser.add_argument(
-    "--m", action="store_true", help="Runs the production and investment scripts")
-parser.add_argument(
-    "--o", action="store_true", help="Runs the output scripts directly")
-parser.add_argument(
-    "--h", action="store_true", help="Runs the half model sctips scripts directly")
-parser.add_argument(
-    "--i", action="store_true", help="Runs the data import scripts scripts directly")
-parser.add_argument(
-    "--d", action="store_true", help="Runs the data refresh scripts directly")
-parser.add_argument(
-    "--r", action="store_true", help="Runs the model results scripts directly")
-parser.add_argument(
-    "--b", action="store_true", help="Runs the business cases script directly")
-parser.add_argument(
-    "--v", action="store_true", help="Runs the variable costs sumary script directly")
-parser.add_argument(
-    "--q", action="store_true", help="Adds custom scenario inputs to the model")
-parser.add_argument(
-    "--t", action="store_true", help="Runs the results and output scripts directly")
-parser.add_argument(
-    "--g", action="store_true", help="Runs the graph output script directly")
-parser.add_argument(
-    "--n", action="store_true", help="Runs the minimodels script directly")
-parser.add_argument(
-    "--e", action="store_true", help="Runs the investments script directly")
 
 if __name__ == "__main__":
 
     args = parser.parse_args()
 
     scenario_args = DEFAULT_SCENARIO
+    scenario_args = add_currency_rates_to_scenarios(scenario_args)
 
     timestamp = datetime.today().strftime('%d-%m-%y %H-%M')
     logger.info(f'Model running at {timestamp}')
+
+    create_folders_if_nonexistant(FOLDERS_TO_CHECK_IN_ORDER)
 
     if args.q:
         logger.info(f'Including custom parameter inputs')
