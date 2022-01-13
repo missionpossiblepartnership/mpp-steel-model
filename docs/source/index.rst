@@ -11,4 +11,9 @@ Welcome to MPP Steel Decarbonization's documentation!
    :caption: Contents:
 
    intro.md
+   import_data.md
+   data_preprocessing.md
+   model_calculation.md
+   model_results.md
+   model_outputs.md
    mppsteel.md
