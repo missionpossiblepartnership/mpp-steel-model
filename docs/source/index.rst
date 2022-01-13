@@ -12,4 +12,3 @@ Welcome to MPP Steel Decarbonization's documentation!
 
    intro.md
    mppsteel.md
-   configuration.md

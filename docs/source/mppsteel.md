@@ -9,3 +9,15 @@ This is the full documentation for the functions inside the `mppsteel` library. 
 - Results, functions to calculate the results and outputs of the model.
 - Utilities, set of utility functions that are used along all the library, such as handling the logs.
 
+```{eval-rst}
+.. toctree::
+   :maxdepth: 2
+   :caption: mppsteel library modules:
+
+   configuration.md
+   utilities.md
+   data_loading.md
+   minimodels.md
+   model.md
+   results.md
+```
