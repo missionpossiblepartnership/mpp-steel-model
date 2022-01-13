@@ -1,1 +1,1 @@
-from . import investments, production
+from . import graph_production, investments, production, plotly_graphs

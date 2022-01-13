@@ -130,3 +130,12 @@ dmypy.json
 
 # Vscode
 .vscode/
+
+# logs
+/logs
+
+# output folder
+mppsteel/data/output_data
+
+# random file
+experimental.py

@@ -50,7 +50,6 @@ def create_region_dict_generator(
         region_list = extract_unique_attrs("wsa_region")
     if region_type == "region":
         region_list = extract_unique_attrs("region")
-    print(region_list)
     if split_list:
         logger.info(f"-- Using a predefined distributional split")
         return dict(zip(region_list, split_list))
@@ -98,7 +97,7 @@ def split_regions(
     return pd.concat([df_c, new_dfs]).reset_index(drop=True)
 
 
-def create_regional_split(df: pd.DatFrame, region_type: str, split_type: str):
+def create_regional_split(df: pd.DataFrame, region_type: str, split_type: str):
     country_ref_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "country_reference_dict", "df")
     region_split_dict = create_region_dict_generator(
         country_ref_dict, region_type=region_type, split_type=split_type

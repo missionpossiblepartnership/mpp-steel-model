@@ -1,8 +1,6 @@
 """Function to create a steel plant class."""
 import pandas as pd
 
-from mppsteel.data_loading.country_reference import match_country
-
 # For logger and units dict
 from mppsteel.utility.utils import (
     get_logger,
@@ -10,7 +8,9 @@ from mppsteel.utility.utils import (
     read_pickle_folder,
     serialize_file,
     country_mapping_fixer,
-    country_matcher
+    country_matcher,
+    match_country,
+    get_region_from_country_code
 )
 
 from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
@@ -90,6 +90,14 @@ def extract_steel_plant_capacity(df: pd.DataFrame):
     df_c['secondary_capacity_2020'] = df_c['EAF_capacity'].apply(lambda x: convert_to_float(x)) - df_c['DRIEAF_capacity'].apply(lambda x: convert_to_float(x)) 
     return df_c
 
+def get_countries_from_group(country_ref: pd.DataFrame, grouping: str, group: str, exc_list: list = None):
+    df_c = country_ref[['ISO-alpha3 code', grouping]].copy()
+    code_list = df_c.set_index([grouping, 'ISO-alpha3 code']).sort_index().loc[group].index.unique().to_list()
+    if exc_list:
+        exc_codes = [match_country(country) for country in exc_list]
+        return list(set(code_list).difference(exc_codes))
+    return code_list
+
 def apply_countries_to_steel_plants(steel_plant_formatted: pd.DataFrame):
     logger.info("Applying Country Data to Steel Plants")
     df_c = steel_plant_formatted.copy()
@@ -108,7 +116,7 @@ def apply_countries_to_steel_plants(steel_plant_formatted: pd.DataFrame):
 
     country_reference_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'country_reference_dict', 'df')
 
-    steel_plants['region'] = steel_plants['country_code'].apply(lambda x: match_country(x, country_reference_dict))
+    steel_plants['region'] = steel_plants['country_code'].apply(lambda x: get_region_from_country_code(x, 'wsa_region', country_reference_dict))
 
     return steel_plants
 

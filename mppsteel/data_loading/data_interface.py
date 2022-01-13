@@ -25,10 +25,6 @@ from mppsteel.utility.timeseries_extender import (
     full_model_flow
 )
 
-from mppsteel.data_loading.country_reference import (
-    match_country
-)
-
 # Create logger
 logger = get_logger("Data Interface")
 
@@ -147,32 +143,6 @@ def capex_dictionary_generator(
         ),
     }
 
-
-def steel_demand_getter(
-    df: pd.DataFrame, steel_type: str, scenario: str, year: str
-) -> float:
-    df_c = df.copy()
-    metric_names = df_c["Steel Type"].unique()
-    scenarios = df_c["Scenario"].unique()
-    # logger.info(f'''Creating scope 1 emissions getter with the following metrics: {metric_names} and scenarios: {scenarios}''')
-    df_c.set_index(["Steel Type", "Scenario", "Year"], inplace=True)
-    # logger.info(f'Getting Steel Demand value for: {steel_type} - {scenario} - {year}')
-    value = df_c.loc[steel_type, scenario, year]["Value"]
-    return value
-
-def steel_demand_value_selector(df: pd.DataFrame, steel_type: str, year: int, output_type: str = ''):
-    df_c = df.copy()
-    def steel_demand_getter(df, steel_type, scenario, year):
-        return df[ (df['Year'] == year) & (df['Steel Type'] == steel_type) & (df['Scenario'] == scenario) ]['Value'].values[0]
-    bau = steel_demand_getter(df_c, steel_type, 'BAU', year)
-    circ = steel_demand_getter(df_c, steel_type, 'Circular', year)
-    if output_type == 'bau':
-        return bau
-    if output_type == 'circular':
-        return circ
-    if output_type == 'combined':
-        return bau + circ / 2
-
 def carbon_tax_getter(df: pd.DataFrame, year: str) -> float:
     df_c = df.copy()
     df_c.columns = [col.lower() for col in df_c.columns]
@@ -195,7 +165,6 @@ def ccs_co2_getter(df: pd.DataFrame, metric: str, year: str) -> float:
         year = 2050
     df_c = df.copy()
     metric_names = df_c["Metric"].unique()
-    # logger.info(f'Creating CCS CO2 getter with the following metrics: {metric_names}')
     df_c.set_index(["Metric", "Year"], inplace=True)
     # logger.info(f'Getting {metric} value for: {year}')
     value = df_c.loc[metric, year]["Value"]
