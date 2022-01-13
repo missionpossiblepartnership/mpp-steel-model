@@ -196,7 +196,7 @@ def get_capex_values(
                         technology in FURNACE_GROUP_DICT["dri-bof"]
                         and new_technology in FURNACE_GROUP_DICT["dri-bof"]
                     ):
-                        if new_technology == "DRI-Melt BOF 100% zero CH2":
+                        if new_technology == "DRI-Melt-BOF_100% zero-C H2":
                             switch_capex_value = capex_generator(
                                 capex_dict_ref, technology, year
                             )["brownfield"]
@@ -206,7 +206,7 @@ def get_capex_values(
                                 "value",
                             ] = switch_capex_value
 
-                        else:  # 'DRI-Melt BOF + CCUS'
+                        else:  # 'DRI-Melt-BOF + CCUS'
                             switch_capex_value = (
                                 capex_generator(capex_dict_ref, technology, year)[
                                     "brownfield"
@@ -224,9 +224,9 @@ def get_capex_values(
                         and new_technology in FURNACE_GROUP_DICT["dri-eaf"]
                     ):
                         if (
-                            new_technology == "DRI-EAF 50% bio-CH4"
-                            or new_technology == "DRI-EAF 50% green H2"
-                            or new_technology == "DRI-EAF 100% green H2"
+                            new_technology == "DRI-EAF_50% bio-CH4"
+                            or new_technology == "DRI-EAF_50% green H2"
+                            or new_technology == "DRI-EAF_100% green H2"
                         ):
                             switch_capex_value = capex_generator(
                                 capex_dict_ref, technology, year

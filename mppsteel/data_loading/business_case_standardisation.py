@@ -172,6 +172,13 @@ def create_hardcoded_exceptions(hard_coded_dict: dict, furnace_group_dict: dict)
         hard_coded_factor_list.extend(furnace_group_dict[furnace_group])
     return hard_coded_factor_list
 
+def furnace_group_from_tech(furnace_group_dict: dict):
+    tech_container = {}
+    for group in furnace_group_dict.keys():
+        tech_list = furnace_group_dict[group]
+        for tech in tech_list:
+            tech_container[tech] = group
+    return tech_container
 
 def sum_product_ef(df: pd.DataFrame, ef_dict: dict, materials_to_exclude: list = None):
     logger.info("--- Summing the Emissions Factors")
@@ -198,18 +205,15 @@ def sum_product_ef(df: pd.DataFrame, ef_dict: dict, materials_to_exclude: list =
     return df_c["material_emissions"].sum()
 
 
-def get_all_steam_values(
-    df: pd.DataFrame, technology: str, process_list: list, factor_mapper: dict
-):
-    logger.info(f"--- Getting all steam values for {technology}")
+def get_all_steam_values(df: pd.DataFrame, technology: str, process_list: list, factor_dict: dict): 
     steam_value_list = []
-    df_c = df.loc[df["technology"] == technology].copy()
+    business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
+    bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
+    df_c = df.loc[df['technology'] == technology].copy()
     for process in process_list:
-        if "Steam" in df_c["material_category"].unique():
-            steam_value = tech_process_getter(
-                bc_processes, technology, process=process, material="Steam"
-            )
-            factor = factor_mapper[process]
+        if 'Steam' in df_c[df_c['process'] == process]['material_category'].unique(): # changed
+            factor = factor_dict[process] # changed
+            steam_value = tech_process_getter(bc_processes, technology, process=process, material='Steam')
             steam_value_list.append(steam_value * factor)
     return steam_value_list
 
@@ -584,18 +588,15 @@ def create_production_factors(
     processes = bc_processes["process"].unique()
     # Overwrite dictionary values
     process_factor_mapper = dict(zip(processes, factor_list))
+    furnace_group = furnace_group_from_tech(furnace_group_dict)[technology]
     # Overwrite processes
-    if technology in hard_coded_factors:
-        for furnace_group in hard_coded_factors:
-            for tech_list in furnace_group_dict[furnace_group]:
-                if technology in tech_list:
-                    for process in hard_coded_factors[furnace_group]:
-                        process_factor_mapper[process] = hard_coded_factors[
-                            furnace_group
-                        ][process]
+    if technology in create_hardcoded_exceptions(hard_coded_factors, furnace_group_dict):
+        if furnace_group in hard_coded_factors.keys():
+            for process in hard_coded_factors[furnace_group]:
+                process_factor_mapper[process] = hard_coded_factors[furnace_group][process]
     # Replace None values with 0
-    for key in process_factor_mapper.keys():
-        process_factor_mapper[key] = list({process_factor_mapper[key] or 0})[0]
+    for process in process_factor_mapper.keys():
+        process_factor_mapper[process] = list({process_factor_mapper[process] or 0})[0]
 
     return process_factor_mapper
 
@@ -641,9 +642,9 @@ def limestone_df_editor(
             limestone_df.loc[limestone_df["step"] == "BOF lime", "value"] = bof_lime
             blast_furnace_lime = tech_process_getter(
                 bc_processes, technology, "Limestone", step="Blast furnace lime"
-            )
+            ) * factor_dict["Blast Furnace"]
             limestone_df.loc[limestone_df["step"] == "Blast furnace lime", "value"] = (
-                blast_furnace_lime * factor_dict["Blast Furnace"]
+                blast_furnace_lime
             )
 
             new_row = {
@@ -954,72 +955,35 @@ def self_gen_df_editor(
     )
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
+
     df_dict_c = df_dict.copy()
+
     if technology in electricity_self_gen_group:
-        self_gen_name = "Self-Generation Of Electricity"
+        self_gen_name = 'Self-Generation Of Electricity'
         self_gen_df = df_dict_c[self_gen_name].copy()
-        electricity_share_factor = tech_parameter_getter(
-            bc_parameters, technology, "Share of electricity purchased in total demand"
-        )
-        if technology in furnace_group_dict["smelting_reduction"]:
-            bof_gas = tech_process_getter(
-                bc_processes, technology, process=self_gen_name, material="BOF gas"
-            )
-            all_electricity_values = get_all_electricity_values(
-                bc_processes, technology, tech_processes_dict[technology], factor_dict
-            )
-            self_gen_df.loc[
-                (self_gen_df["material_category"] == "BOF gas"), "value"
-            ] = (sum(all_electricity_values) * (1 - electricity_share_factor) * bof_gas)
-            thermal_coal = tech_process_getter(
-                bc_processes, technology, process=self_gen_name, material="Thermal coal"
-            )
-            all_steam_values = get_all_steam_values(
-                self_gen_df, technology, tech_processes_dict[technology], factor_dict
-            )
-            self_gen_df.loc[
-                (self_gen_df["material_category"] == "Thermal coal"), "value"
-            ] = (sum(all_steam_values) * thermal_coal)
 
-        if technology in furnace_group_dict["blast_furnace"]:
-            all_electricity_values = get_all_electricity_values(
-                bc_processes, technology, tech_processes_dict[technology], factor_dict
-            )
-            cog = tech_process_getter(
-                bc_processes, technology, process=self_gen_name, material="COG"
-            )
-            self_gen_df.loc[(self_gen_df["material_category"] == "COG"), "value"] = (
-                sum(all_electricity_values) * (1 - electricity_share_factor) * cog
-            )
-            bf_gas = tech_process_getter(
-                bc_processes, technology, process=self_gen_name, material="BF gas"
-            )
-            self_gen_df.loc[(self_gen_df["material_category"] == "BF gas"), "value"] = (
-                sum(all_electricity_values) * (1 - electricity_share_factor) * bf_gas
-            )
+        all_electricity_values = get_all_electricity_values(bc_processes, technology, tech_processes_dict[technology], factor_mapper=factor_dict)
+        electricity_share_factor = tech_parameter_getter(bc_parameters, technology, 'Share of electricity purchased in total demand')
 
-            if technology in [
-                "BAT BF-BOF_bio PCI",
-                "BAT BF-BOF_H2 PCI",
-                "BAT BF-BOF+CCUS",
-                "BAT BF-BOF+BECCUS",
-                "BAT BF-BOF+CCU",
-            ]:
-                thermal_coal = tech_process_getter(
-                    bc_processes,
-                    technology,
-                    process=self_gen_name,
-                    material="Thermal coal",
-                )
-                all_steam_values = get_all_steam_values(
-                    self_gen_df,
-                    technology,
-                    tech_processes_dict[technology],
-                    factor_dict,
-                )
-                self_gen_df.loc[
-                    (self_gen_df["material_category"] == "Thermal coal"), "value"
-                ] = (sum(all_steam_values) * thermal_coal)
+        if technology in furnace_group_dict['smelting_reduction']:
+            bof_gas = tech_process_getter(bc_processes, technology, process=self_gen_name, material='BOF gas')
+            self_gen_df.loc[(self_gen_df['material_category'] == 'BOF gas'), 'value'] = sum(all_electricity_values) * (1 - electricity_share_factor) * bof_gas
+            thermal_coal = tech_process_getter(bc_processes, technology, process=self_gen_name, material='Thermal coal') # changed
+            all_steam_values = get_all_steam_values(bc_processes, technology, tech_processes_dict[technology], factor_dict) # changed
+            self_gen_df.loc[(self_gen_df['material_category'] == 'Thermal coal'), 'value'] = sum(all_steam_values) * thermal_coal
+
+        if technology in furnace_group_dict['blast_furnace']:
+            cog = tech_process_getter(bc_processes, technology, process=self_gen_name, material='COG')
+            cog_val = sum(all_electricity_values) * (1 - electricity_share_factor) * cog
+            self_gen_df.loc[(self_gen_df['material_category'] == 'COG'), 'value'] = cog_val
+            bf_gas = tech_process_getter(bc_processes, technology, process=self_gen_name, material='BF gas')
+            bf_gas_val = sum(all_electricity_values) * (1 - electricity_share_factor) * bf_gas
+            self_gen_df.loc[(self_gen_df['material_category'] == 'BF gas'), 'value'] = bf_gas_val
+
+            if technology in ['BAT BF-BOF_bio PCI', 'BAT BF-BOF_H2 PCI', 'BAT BF-BOF+CCUS', 'BAT BF-BOF+BECCUS', 'BAT BF-BOF+CCU']:
+                thermal_coal = tech_process_getter(bc_processes, technology, process=self_gen_name, material='Thermal coal')
+                all_steam_values = get_all_steam_values(bc_processes, technology, tech_processes_dict[technology], factor_dict) # changed
+                self_gen_df.loc[(self_gen_df['material_category'] == 'Thermal coal'), 'value'] = sum(all_steam_values) * thermal_coal
 
         df_dict_c[self_gen_name] = self_gen_df
 
@@ -1031,7 +995,6 @@ def full_model_flow(tech_name: str):
     EF_DICT = dict(zip(s1_emissions_factors["Metric"], s1_emissions_factors["Value"]))
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
-    processes = bc_processes["process"].unique()
     logger.info(f"- Running the model flow for {tech_name}")
     process_prod_factor_mapper = create_production_factors(
         tech_name, FURNACE_GROUP_DICT, HARD_CODED_FACTORS
@@ -1146,21 +1109,15 @@ def fix_exceptions(
         for process in elec_values_dict.keys():
             elec_values_dict[process] = elec_values_dict[process] * electricity_share
         for process in df_dict_c.keys():
-            temp_process_df = df_dict_c[process]
-            if "Electricity" in temp_process_df["material_category"].unique():
-                if process == "Basic Oxygen Steelmaking + Casting":
-                    temp_process_df.loc[
-                        (temp_process_df["process_detail"] == "Energy-oxygen furnace") & ( temp_process_df["material_category"] == 'Electricity'), "value"
-                    ] = elec_values_dict["Basic Oxygen Steelmaking + Casting - Oxygen"]
-                    temp_process_df.loc[
-                        (temp_process_df["process_detail"] == "Energy-casting") & ( temp_process_df["material_category"] == 'Electricity'), "value"
-                    ] = elec_values_dict["Basic Oxygen Steelmaking + Casting - Casting"]
-                    df_dict_c[process] = temp_process_df
+            t_df = df_dict_c[process]
+            if 'Electricity' in t_df['material_category'].unique():
+                if process == 'Basic Oxygen Steelmaking + Casting':
+                    t_df.loc[t_df['process_detail'].eq('Energy-oxygen furnace') & t_df['material_category'].eq('Electricity'), 'value'] = elec_values_dict['Basic Oxygen Steelmaking + Casting - Oxygen']
+                    t_df.loc[t_df['process_detail'].eq('Energy-casting') & t_df['material_category'].eq('Electricity'), 'value'] = elec_values_dict['Basic Oxygen Steelmaking + Casting - Casting']
+                    df_dict_c[process] = t_df
                 else:
-                    temp_process_df.loc[
-                        temp_process_df["material_category"] == "Electricity", "value"
-                    ] = elec_values_dict[process]
-                    df_dict_c[process] = temp_process_df
+                    t_df.loc[t_df['process_detail'].eq(process) & t_df['material_category'].eq('Electricity'), 'value'] = elec_values_dict[process]
+                    df_dict_c[process] = t_df
 
         # Coke
         blast_furnace_df = df_dict_c["Blast Furnace"].copy()
