@@ -17,6 +17,7 @@ from mppsteel.model_config import (
 from mppsteel.utility.reference_lists import (
     TECH_REFERENCE_LIST,
     FURNACE_GROUP_DICT,
+    TECHNOLOGY_PROCESSES,
     PER_T_STEEL_DICT_UNITS,
     bosc_factor_group,
     eaf_factor_group,
@@ -30,9 +31,6 @@ logger = get_logger("Business Case Standarisation")
 
 
 def business_case_formatter_splitter(df: pd.DataFrame):
-    logger.info(
-        "Splitting the business cases into two DataFrames: Parameters and Processes"
-    )
     df_c = df.copy()
     df_c = df_c.melt(
         id_vars=[
@@ -150,7 +148,6 @@ def create_mini_process_dfs(
     process_mapper: dict,
     factor_value_dict: dict,
 ):
-    logger.info(f"-- Creating process dictionary for {technology_name}")
     df_c = df.copy()
     df_dict = {}
     for process in process_mapper[technology_name]:
@@ -161,7 +158,6 @@ def create_mini_process_dfs(
 
 
 def format_combined_df(df: pd.DataFrame, units_dict: dict):
-    logger.info("-- Mapping units to DataFrame")
     df_c = df.copy()
     df_c = replace_units(df_c, units_dict)
     df_c_grouped = df_c.groupby(by=["technology", "material_category", "unit"]).sum()
@@ -169,7 +165,6 @@ def format_combined_df(df: pd.DataFrame, units_dict: dict):
 
 
 def create_hardcoded_exceptions(hard_coded_dict: dict, furnace_group_dict: dict):
-    logger.info("-- Creating the hard coded exceptions for the process factors")
     hard_coded_factor_list = []
     for furnace_group in hard_coded_dict:
         hard_coded_factor_list.extend(furnace_group_dict[furnace_group])
@@ -184,7 +179,6 @@ def furnace_group_from_tech(furnace_group_dict: dict):
     return tech_container
 
 def sum_product_ef(df: pd.DataFrame, ef_dict: dict, materials_to_exclude: list = None):
-    logger.info("--- Summing the Emissions Factors")
     df_c = df.copy()
     df_c["material_emissions"] = ""
     for row in df_c.itertuples():
@@ -228,7 +222,6 @@ def get_all_electricity_values(
     factor_mapper: dict = [],
     as_dict: bool = False,
 ):
-    logger.info(f"--- Getting all electricity values for {technology}")
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
 
@@ -272,7 +265,6 @@ def get_all_electricity_values(
 
 
 def create_tech_processes_list():
-    logger.info(f"- Creating the process dictionary for each technology")
     basic_bof_processes = [
         "Coke Production",
         "Sintering",
@@ -376,7 +368,6 @@ def create_production_factors(
 ):
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
-    logger.info(f"-- Creating the production factors for {technology}")
     # Instantiate factors
     COKE_PRODUCTION_FACTOR = None
     SINTERING_FACTOR = None
@@ -945,89 +936,6 @@ def self_gen_df_editor(
 
     return df_dict_c
 
-def switch_ironore_and_pellets(df_dict: dict):
-    
-    df_dict_c = df_dict.copy()
-    if 'Shaft Furnace' in df_dict_c.keys():
-        sf_df = df_dict_c['Shaft Furnace'].copy()
-        iron_ore_val = sf_df.loc[sf_df['material_category'].eq('Iron ore'), 'value']
-        pellets_val = sf_df.loc[sf_df['material_category'].eq('Pellets'), 'value']
-        sf_df.loc[sf_df['material_category'].eq('Iron ore'), 'value'] = pellets_val
-        sf_df.loc[sf_df['material_category'].eq('Pellets'), 'value'] = iron_ore_val
-        df_dict_c['Shaft Furnace'] = sf_df
-    
-    return df_dict_c
-
-def full_model_flow(tech_name: str):
-    s1_emissions_factors = read_pickle_folder(PKL_DATA_IMPORTS, "s1_emissions_factors")
-    EF_DICT = dict(zip(s1_emissions_factors["Metric"], s1_emissions_factors["Value"]))
-    business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
-    bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
-    logger.info(f"- Running the model flow for {tech_name}")
-    process_prod_factor_mapper = create_production_factors(
-        tech_name, FURNACE_GROUP_DICT, HARD_CODED_FACTORS
-    )
-    TECHNOLOGY_PROCESSES = create_tech_processes_list()
-    reformated_dict = create_mini_process_dfs(
-        bc_processes, tech_name, TECHNOLOGY_PROCESSES, process_prod_factor_mapper
-    )
-    reformated_dict_c = reformated_dict.copy()
-    reformated_dict_c = switch_ironore_and_pellets(reformated_dict_c) # delete this line once fixed!!!!!
-    reformated_dict_c = limestone_df_editor(
-        reformated_dict_c, tech_name, FURNACE_GROUP_DICT, process_prod_factor_mapper
-    )
-    process_prod_factor_mapper = fix_ccs_factors(
-        reformated_dict_c, process_prod_factor_mapper, tech_name, FURNACE_GROUP_DICT, EF_DICT
-    )
-    reformated_dict_c = fix_exceptions(
-        reformated_dict_c, tech_name, FURNACE_GROUP_DICT, process_prod_factor_mapper, TECHNOLOGY_PROCESSES
-    )
-    process_prod_factor_mapper = fix_ccs_bat_ccus_factors(
-        reformated_dict_c, process_prod_factor_mapper, tech_name, FURNACE_GROUP_DICT, EF_DICT
-    )
-    process_prod_factor_mapper = fix_ccu_factors(
-        reformated_dict_c, process_prod_factor_mapper, tech_name, FURNACE_GROUP_DICT, EF_DICT
-    )
-    reformated_dict_c = ccs_df_editor(
-        reformated_dict_c,
-        tech_name,
-        FURNACE_GROUP_DICT,
-        process_prod_factor_mapper,
-        EF_DICT,
-    )
-    reformated_dict_c = ccu_df_editor(
-        reformated_dict_c, tech_name, FURNACE_GROUP_DICT, process_prod_factor_mapper, EF_DICT
-    )
-    reformated_dict_c = self_gen_df_editor(
-        reformated_dict_c,
-        tech_name,
-        FURNACE_GROUP_DICT,
-        process_prod_factor_mapper,
-        TECHNOLOGY_PROCESSES,
-    )
-    combined_df = pd.concat(reformated_dict_c.values()).reset_index(drop=True)
-    combined_df = format_combined_df(combined_df, PER_T_STEEL_DICT_UNITS)
-    return combined_df
-
-
-def generate_full_consumption_table(technology_list: list):
-    logger.info("- Generating the full resource consumption table")
-    summary_df_list = []
-    for technology in technology_list:
-        logger.info(f"*** Starting standardisation flow for {technology} ***")
-        summary_df_list.append(full_model_flow(technology))
-    return pd.concat(summary_df_list)
-
-
-def concat_process_dfs(df_dict: pd.DataFrame, process_list: list):
-    logger.info("- Concatenating all of the resource consumption tables")
-    df_list = []
-    for process in process_list:
-        df_list.append(df_dict[process])
-    concat_df = pd.concat(df_list)
-    return concat_df
-
-
 def fix_exceptions(
     df_dict: dict,
     technology: str,
@@ -1307,6 +1215,114 @@ def fix_exceptions(
 
     return df_dict_c
 
+def switch_ironore_and_pellets(df_dict: dict):
+    
+    df_dict_c = df_dict.copy()
+    if 'Shaft Furnace' in df_dict_c.keys():
+        sf_df = df_dict_c['Shaft Furnace'].copy()
+        iron_ore_val = sf_df.loc[sf_df['material_category'].eq('Iron ore'), 'value']
+        pellets_val = sf_df.loc[sf_df['material_category'].eq('Pellets'), 'value']
+        sf_df.loc[sf_df['material_category'].eq('Iron ore'), 'value'] = pellets_val
+        sf_df.loc[sf_df['material_category'].eq('Pellets'), 'value'] = iron_ore_val
+        df_dict_c['Shaft Furnace'] = sf_df
+    
+    return df_dict_c
+
+def get_material_values(values_dict: dict, tech_processes: dict, technology: str, material: str, stage: str, factor_map: dict):
+    cols_ref = ['technology', 'process', 'material', 'stage', 'value', 'process_factor_value']
+    container = []
+    for process in tech_processes[technology]:
+        process_factor = factor_map[process]
+        if material in values_dict[process]['material_category'].unique():
+            df = values_dict[process].copy()
+            value = df[df['material_category'] == material]['value'].values.sum()
+            container.append([technology, process, material, stage, value, process_factor])
+    row_container = []
+    for row in container:
+        if row:
+            row_dict = dict(zip(cols_ref, row))
+            row_container.append(row_dict)
+    return pd.DataFrame(data=row_container)
+
+def full_model_flow(technology: str, material: str = None):
+    
+    s1_emissions_factors = read_pickle_folder(PKL_DATA_IMPORTS, "s1_emissions_factors")
+    EF_DICT = dict(zip(s1_emissions_factors["Metric"], s1_emissions_factors["Value"]))
+    business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
+    bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
+    
+    if material:
+        logger.info(f"- Running the full model and material flow for {technology}")
+        df_container = []
+        
+        process_prod_factor_mapper = create_production_factors(technology, FURNACE_GROUP_DICT, HARD_CODED_FACTORS)
+        reformated_dict = create_mini_process_dfs(bc_processes, technology, TECHNOLOGY_PROCESSES, process_prod_factor_mapper)
+        df_container.append(get_material_values(reformated_dict, TECHNOLOGY_PROCESSES, technology, material, 'Initial Creation', process_prod_factor_mapper))
+        
+        reformated_dict_c = reformated_dict.copy()
+        
+        reformated_dict_c = switch_ironore_and_pellets(reformated_dict_c) # delete this line once fixed!!!!!
+        
+        reformated_dict_c = limestone_df_editor(reformated_dict_c, technology, FURNACE_GROUP_DICT, process_prod_factor_mapper)
+        df_container.append(get_material_values(reformated_dict_c, TECHNOLOGY_PROCESSES, technology, material, 'Limestone Editor', process_prod_factor_mapper))
+        
+        process_prod_factor_mapper = fix_ccs_factors(reformated_dict_c, process_prod_factor_mapper, technology, FURNACE_GROUP_DICT, EF_DICT)
+        
+        reformated_dict_c = fix_exceptions(reformated_dict_c, technology, FURNACE_GROUP_DICT, process_prod_factor_mapper, TECHNOLOGY_PROCESSES)
+        df_container.append(get_material_values(reformated_dict_c, TECHNOLOGY_PROCESSES, technology, material, 'Fix Exceptions', process_prod_factor_mapper))
+        
+        process_prod_factor_mapper = fix_ccs_bat_ccus_factors(reformated_dict_c, process_prod_factor_mapper, technology, FURNACE_GROUP_DICT, EF_DICT)
+        process_prod_factor_mapper = fix_ccu_factors(reformated_dict_c, process_prod_factor_mapper, technology, FURNACE_GROUP_DICT, EF_DICT)
+        reformated_dict_c = ccs_df_editor(reformated_dict_c, technology, FURNACE_GROUP_DICT, process_prod_factor_mapper, EF_DICT)
+        df_container.append(get_material_values(reformated_dict_c, TECHNOLOGY_PROCESSES, technology, material, 'CCS', process_prod_factor_mapper))
+        
+        reformated_dict_c = ccu_df_editor(reformated_dict_c, technology, FURNACE_GROUP_DICT, process_prod_factor_mapper, EF_DICT)
+        df_container.append(get_material_values(reformated_dict_c, TECHNOLOGY_PROCESSES, technology, material, 'CCU', process_prod_factor_mapper))
+        
+        reformated_dict_c = self_gen_df_editor(reformated_dict_c, technology, FURNACE_GROUP_DICT, process_prod_factor_mapper, TECHNOLOGY_PROCESSES)
+        df_container.append(get_material_values(reformated_dict_c, TECHNOLOGY_PROCESSES, technology, material, 'Self Gen', process_prod_factor_mapper))
+        
+        combined_df = pd.concat(reformated_dict_c.values()).reset_index(drop=True)
+        combined_df = format_combined_df(combined_df, PER_T_STEEL_DICT_UNITS)
+        
+        material_df = pd.concat(df_container)
+        return combined_df, material_df
+    
+    else:
+        logger.info(f"- Running the single model flow for {technology}")
+        
+        process_prod_factor_mapper = create_production_factors(technology, FURNACE_GROUP_DICT, HARD_CODED_FACTORS)
+        reformated_dict = create_mini_process_dfs(bc_processes, technology, TECHNOLOGY_PROCESSES, process_prod_factor_mapper)
+        reformated_dict_c = reformated_dict.copy()
+        reformated_dict_c = switch_ironore_and_pellets(reformated_dict_c) # delete this line once fixed!!!!!
+        reformated_dict_c = limestone_df_editor(reformated_dict_c, technology, FURNACE_GROUP_DICT, process_prod_factor_mapper)
+        process_prod_factor_mapper = fix_ccs_factors(reformated_dict_c, process_prod_factor_mapper, technology, FURNACE_GROUP_DICT, EF_DICT)
+        reformated_dict_c = fix_exceptions(reformated_dict_c, technology, FURNACE_GROUP_DICT, process_prod_factor_mapper, TECHNOLOGY_PROCESSES)
+        process_prod_factor_mapper = fix_ccs_bat_ccus_factors(reformated_dict_c, process_prod_factor_mapper, technology, FURNACE_GROUP_DICT, EF_DICT)
+        process_prod_factor_mapper = fix_ccu_factors(reformated_dict_c, process_prod_factor_mapper, technology, FURNACE_GROUP_DICT, EF_DICT)
+        reformated_dict_c = ccs_df_editor(reformated_dict_c, technology, FURNACE_GROUP_DICT, process_prod_factor_mapper, EF_DICT)
+        reformated_dict_c = ccu_df_editor(reformated_dict_c, technology, FURNACE_GROUP_DICT, process_prod_factor_mapper, EF_DICT)
+        reformated_dict_c = self_gen_df_editor(reformated_dict_c, technology, FURNACE_GROUP_DICT, process_prod_factor_mapper, TECHNOLOGY_PROCESSES)
+        combined_df = pd.concat(reformated_dict_c.values()).reset_index(drop=True)
+        return format_combined_df(combined_df, PER_T_STEEL_DICT_UNITS)
+
+def generate_full_consumption_table(technology_list: list):
+    logger.info("- Generating the full resource consumption table")
+    summary_df_list = []
+    for technology in technology_list:
+        logger.info(f"*** Starting standardisation flow for {technology} ***")
+        summary_df_list.append(full_model_flow(technology))
+    return pd.concat(summary_df_list)
+
+
+def concat_process_dfs(df_dict: pd.DataFrame, process_list: list):
+    df_list = []
+    for process in process_list:
+        df_list.append(df_dict[process])
+    concat_df = pd.concat(df_list)
+    return concat_df
+
+
 @timer_func
 def standardise_business_cases(serialize_only: bool = False) -> pd.DataFrame:
     """Standardises the business cases for each technology into per t steel.
@@ -1320,5 +1336,4 @@ def standardise_business_cases(serialize_only: bool = False) -> pd.DataFrame:
     full_summary_df = generate_full_consumption_table(TECH_REFERENCE_LIST)
     if serialize_only:
         serialize_file(full_summary_df, PKL_DATA_INTERMEDIATE, "standardised_business_cases")
-        return
     return full_summary_df

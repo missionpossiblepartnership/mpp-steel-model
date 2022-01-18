@@ -57,6 +57,7 @@ if __name__ == "__main__":
 
     if args.b:
         standardise_business_cases(serialize_only=True)
+        business_case_tests(new_folder=True, timestamp=timestamp, create_test_df=False)
 
     if args.v:
         generate_variable_plant_summary(scenario_dict=scenario_args, serialize_only=True)

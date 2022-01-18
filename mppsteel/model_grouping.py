@@ -10,7 +10,10 @@ from mppsteel.data_loading.data_import import load_data
 from mppsteel.data_loading.reg_steel_demand_formatter import get_steel_demand
 from mppsteel.minimodels.timeseries_generator import generate_timeseries
 from mppsteel.data_loading.business_case_standardisation import (
-    standardise_business_cases,
+    standardise_business_cases
+)
+from mppsteel.data_loading.business_case_tests import (
+    create_bc_test_df, test_all_technology_business_cases
 )
 from mppsteel.data_loading.pe_model_formatter import format_pe_data
 from mppsteel.data_loading.steel_plant_formatter import steel_plant_processor
@@ -29,7 +32,7 @@ from mppsteel.results.production import production_results_flow
 from mppsteel.results.investments import investment_results
 from mppsteel.results.graph_production import create_graphs
 
-from mppsteel.model_config import MODEL_YEAR_END, OUTPUT_FOLDER, PKL_DATA_FINAL, PKL_DATA_INTERMEDIATE
+from mppsteel.model_config import MODEL_YEAR_END, OUTPUT_FOLDER, PKL_DATA_FINAL, PKL_DATA_INTERMEDIATE, BC_TEST_FOLDER
 
 logger = get_logger("Main Model Code")
 
@@ -135,8 +138,15 @@ def full_flow(scenario_dict: dict, dated_output_folder: bool, timestamp: str):
     data_import_and_preprocessing_refresh(scenario_dict)
     half_model_run(scenario_dict, dated_output_folder, timestamp)
 
-def business_case_flow():
-    standardise_business_cases(serialize_only=True)
+def business_case_tests(new_folder: bool = False, timestamp: str = '', create_test_df: bool = True):
+    save_path = BC_TEST_FOLDER
+    if new_folder:
+        folder_filepath = f'{BC_TEST_FOLDER}/{timestamp}'
+        create_folder_if_nonexist(folder_filepath)
+        save_path = folder_filepath
+    if create_test_df:
+        create_bc_test_df(serialize_only=True)
+    test_all_technology_business_cases(save_path)
 
 def generate_minimodels(scenario_dict: dict):
     generate_timeseries(serialize_only=True, scenario_dict=scenario_dict)
