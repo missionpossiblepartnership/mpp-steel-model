@@ -3,18 +3,20 @@
 # Define Data Path
 CORE_DATA_PATH = "mppsteel/data"
 LOG_PATH = "logs/"
+TEST_FOLDER = "tests/"
 IMPORT_DATA_PATH = f"{CORE_DATA_PATH}/import_data"
 OUTPUT_FOLDER = f"{CORE_DATA_PATH}/output_data"
 PKL_FOLDER = f"{CORE_DATA_PATH}/pkl_data"
 PKL_DATA_IMPORTS = f"{PKL_FOLDER}/imported_data"
 PKL_DATA_INTERMEDIATE = f"{PKL_FOLDER}/intermediate_data"
 PKL_DATA_FINAL = f"{PKL_FOLDER}/final_data"
+BC_TEST_FOLDER = f"{TEST_FOLDER}/business_case_tests"
 
 FOLDERS_TO_CHECK_IN_ORDER = [
     # Top level folders
-    CORE_DATA_PATH, LOG_PATH, 
+    CORE_DATA_PATH, LOG_PATH, TEST_FOLDER,
     # Second level folders
-    IMPORT_DATA_PATH, PKL_FOLDER, OUTPUT_FOLDER, 
+    IMPORT_DATA_PATH, PKL_FOLDER, OUTPUT_FOLDER, BC_TEST_FOLDER,
     # Third level folders
     PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE, PKL_DATA_FINAL
     ]

@@ -81,7 +81,7 @@ def get_logger(logger_name, create_logfile: bool = True):
 logger = get_logger("Utils")
 
 
-def read_pickle_folder(data_path: str, pkl_file: str = "", mode: str = "dict"):
+def read_pickle_folder(data_path: str, pkl_file: str = "", mode: str = "dict", log: bool = False):
     """Reads a path where pickle files are stores and saves them to a dictionary
 
     Args:
@@ -94,15 +94,18 @@ def read_pickle_folder(data_path: str, pkl_file: str = "", mode: str = "dict"):
         mode = "df"
 
     if mode == "df":
-        logger.info(f"||| Loading pickle file {pkl_file} from path {data_path}")
+        if log:
+            logger.info(f"||| Loading pickle file {pkl_file} from path {data_path}")
         with open(fr"{data_path}/{pkl_file}.pickle", "rb") as f:
             return pickle.load(f)
 
     if mode == "dict":
-        logger.info(f"||| Loading pickle files from path {data_path}")
+        if log:
+            logger.info(f"||| Loading pickle files from path {data_path}")
         new_data_dict = {}
         for pkl_file in os.listdir(data_path):
-            logger.info(f"|||| Loading {pkl_file}")
+            if log:
+                logger.info(f"|||| Loading {pkl_file}")
             with open(fr"{data_path}/{pkl_file}", "rb") as f:
                 new_data_dict[pkl_file.split(".")[0]] = pickle.load(f)
         return new_data_dict
