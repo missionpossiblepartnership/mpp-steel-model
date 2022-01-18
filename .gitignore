@@ -134,6 +134,9 @@ dmypy.json
 # logs
 /logs
 
+# tests
+/tests
+
 # output folder
 mppsteel/data/output_data
 
