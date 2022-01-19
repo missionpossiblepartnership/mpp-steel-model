@@ -1,0 +1,99 @@
+# Model configuration
+
+The model configurations and constans are saved in `mppsteel.config` where the default values are stored. To modify the defaults it is possible to load them and change the values such as:
+
+```python
+import mppsteel
+
+# mppsteel.model_config.{parameter_to_change} = {new_value}
+# For example, to change the core data path:
+mppsteel.model_config.CORE_DATA_PATH = "this/new/path"
+```
+
+The full list of constants and hard coded values are as follows:
+
+## Folders
+
+Default location for the data used by the model and the outputs of the model.
+
+```python
+CORE_DTA_PATH = "mppsteel/data"
+IMPORT_DATA_PATH = f"{CORE_DATA_PATH}/import_data"
+OUTPUT_FOLDER = f"{CORE_DATA_PATH}/output_data"
+PKL_FOLDER = f"{CORE_DATA_PATH}/pkl_data"
+PKL_DATA_IMPORTS = f"{PKL_FOLDER}/imported_data"
+PKL_DATA_INTERMEDIATE = f"{PKL_FOLDER}/intermediate_data"
+PKL_DATA_FINAL = f"{PKL_FOLDER}/final_data"
+```
+
+## Years
+
+Years that the model will considere when running
+
+```python
+MODEL_YEAR_START = 2020
+MODEL_YEAR_END = 2050
+```
+
+## Prices
+
+Constants for the prices, and years considere for Biomass, carbon tax, electricity, and hysdrogen. 
+
+```python
+BIOMASS_AV_TS_START_YEAR = 2020
+BIOMASS_AV_TS_END_YEAR = 2050
+BIOMASS_AV_TS_END_VALUE = 2000
+
+CARBON_TAX_START_YEAR = 2020
+CARBON_TAX_END_YEAR = 2050
+CARBON_TAX_START_VALUE = 0
+CARBON_TAX_END_VALUE = 210
+
+ELECTRICITY_PRICE_START_YEAR = 2020
+ELECTRICITY_PRICE_MID_YEAR = 2035
+ELECTRICITY_PRICE_END_YEAR = 2050
+
+HYDROGEN_PRICE_START_YEAR = 2020
+HYDROGEN_PRICE_END_YEAR = 2050
+```
+
+## Factors
+
+```python
+
+EMISSIONS_FACTOR_SLAG = 0.55
+ENERGY_DENSITY_MET_COAL = 28  # [MJ/kg]
+
+DISCOUNT_RATE = 0.07
+EUR_USD_CONVERSION = 0.877
+INVESTMENT_CYCLE_LENGTH = 20  # years
+INVESTMENT_CYCLE_VARIANCE = 3 # years
+INVESTMENT_OFFCYCLE_BUFFER_TOP = 3
+INVESTMENT_OFFCYCLE_BUFFER_TAIL = 8
+NET_ZERO_TARGET = 2050
+NET_ZERO_VARIANCE = 3 # years
+```
+
+## Hard coded factors
+
+```python
+SWITCH_CAPEX_DATA_POINTS = {
+    "2020": 319.249187119815,
+    "2030": 319.249187119815,
+    "2050": 286.218839300307,
+}
+
+CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION = 0.95
+CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION = 0.6
+SCRAP_OVERSUPPLY_CUTOFF_FOR_NEW_EAF_PLANT_DECISION = 0.15
+AVERAGE_LEVEL_OF_CAPACITY = 0.95
+
+TCO_RANK_2_SCALER = 1.3
+TCO_RANK_1_SCALER = 1.1
+ABATEMENT_RANK_2 = 2.37656461606311 # Switching from Avg BF-BOF to BAT BF-BOF+CCUS
+ABATEMENT_RANK_3 = 0.932690243851946 # Switching from Avg BF-BOF to BAT BF-BOF_bio PCI
+
+GREEN_PREMIUM_MIN_PCT = 0.01
+GREEN_PREMIUM_MAX_PCT = 0.05
+SWITCH_RANK_PROPORTIONS = {'tco': 0.6, 'emissions': 0.4}
+```
