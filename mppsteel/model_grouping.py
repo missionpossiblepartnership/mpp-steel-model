@@ -116,6 +116,12 @@ def data_import_and_preprocessing_refresh(scenario_dict: dict):
     data_import_stage()
     data_preprocessing_phase(scenario_dict)
 
+def scenario_batch_run(scenario_dict: dict, dated_output_folder: bool, timestamp: str):
+    data_preprocessing_phase(scenario_dict)
+    model_calculation_phase(scenario_dict)
+    model_results_phase(scenario_dict)
+    model_outputs_phase(dated_output_folder, timestamp)
+
 def half_model_run(scenario_dict: dict, dated_output_folder: bool, timestamp: str):
     model_calculation_phase(scenario_dict)
     model_results_phase(scenario_dict)
@@ -154,36 +160,40 @@ def generate_minimodels(scenario_dict: dict):
 def investment_flow(scenario_dict: dict):
     investment_results(scenario_dict, serialize_only=True)
 
-parser = argparse.ArgumentParser(description='The MPP Python Steel Model Command Line Interface')
+parser = argparse.ArgumentParser(description='The MPP Python Steel Model Command Line Interface', add_help=False)
 parser.add_argument(
-    "--f", action="store_true", help="Runs the complete model flow")
+    "-f", "--full_model", action="store_true", help="Runs the complete model flow")
 parser.add_argument(
-    "--s", action="store_true", help="Runs the solver scripts directly")
+    "-s", "--solver", action="store_true", help="Runs the solver scripts directly")
 parser.add_argument(
-    "--p", action="store_true", help="Runs the preprocessing scripts directly")
+    "-p", "--preprocessing", action="store_true", help="Runs the preprocessing scripts directly")
 parser.add_argument(
-    "--m", action="store_true", help="Runs the production and investment scripts")
+    "-m", "--production_and_investment", action="store_true", help="Runs the production and investment scripts")
 parser.add_argument(
-    "--o", action="store_true", help="Runs the output scripts directly")
+    "-o", "--output", action="store_true", help="Runs the output scripts directly")
 parser.add_argument(
-    "--h", action="store_true", help="Runs the half model sctips scripts directly")
+    "-h", "--half_model", action="store_true", help="Runs the half model sctips scripts directly")
 parser.add_argument(
-    "--i", action="store_true", help="Runs the data import scripts scripts directly")
+    "-i", "--data_import", action="store_true", help="Runs the data import scripts scripts directly")
 parser.add_argument(
-    "--d", action="store_true", help="Runs the data refresh scripts directly")
+    "-d", "--data_refresh", action="store_true", help="Runs the data refresh scripts directly")
 parser.add_argument(
-    "--r", action="store_true", help="Runs the model results scripts directly")
+    "-r", "--results", action="store_true", help="Runs the model results scripts directly")
 parser.add_argument(
-    "--b", action="store_true", help="Runs the business cases script directly")
+    "-b", "--business_cases", action="store_true", help="Runs the business cases script directly")
 parser.add_argument(
-    "--v", action="store_true", help="Runs the variable costs sumary script directly")
+    "-v", "--variable_costs", action="store_true", help="Runs the variable costs sumary script directly")
 parser.add_argument(
-    "--q", action="store_true", help="Adds custom scenario inputs to the model")
+    "-q", "--custom_scenario", action="store_true", help="Adds custom scenario inputs to the model")
 parser.add_argument(
-    "--t", action="store_true", help="Runs the results and output scripts directly")
+    "-c", "--choose_scenario", action="store", help="Runs a single fixed scenario to the model that you can specify by name")
 parser.add_argument(
-    "--g", action="store_true", help="Runs the graph output script directly")
+    "-a", "--all_scenarios", action="store_true", help="Runs all fixed scenarios in the model")
 parser.add_argument(
-    "--n", action="store_true", help="Runs the minimodels script directly")
+    "-t", "--results_and_output", action="store_true", help="Runs the results and output scripts directly")
 parser.add_argument(
-    "--e", action="store_true", help="Runs the investments script directly")
+    "-g", "--graphs", action="store_true", help="Runs the graph output script directly")
+parser.add_argument(
+    "-n", "--minimodels", action="store_true", help="Runs the minimodels script directly")
+parser.add_argument(
+    "-e", "--investment", action="store_true", help="Runs the investments script directly")
