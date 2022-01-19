@@ -11,12 +11,13 @@ from mppsteel.utility.utils import (
 
 from mppsteel.model_config import (
     MODEL_YEAR_START, PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE,
-    MODEL_YEAR_END, INVESTMENT_CYCLE_LENGTH, TECH_SWITCH_SCENARIOS
+    INVESTMENT_CYCLE_LENGTH, TECH_SWITCH_SCENARIOS, TECH_MORATORIUM_DATE
 )
 
 from mppsteel.utility.reference_lists import (
     SWITCH_DICT, TECHNOLOGY_STATES, FURNACE_GROUP_DICT,
     TECH_MATERIAL_CHECK_DICT, RESOURCE_CONTAINER_REF,
+    TECH_REFERENCE_LIST
 )
 
 from mppsteel.data_loading.data_interface import (
@@ -36,6 +37,10 @@ from mppsteel.model.tco import (
 # Create logger
 logger = get_logger("Solver")
 
+def map_technology_state(tech: str):
+    for tech_state in TECHNOLOGY_STATES.keys():
+        if tech in TECHNOLOGY_STATES[tech_state]:
+            return tech_state
 
 def read_and_format_tech_availability(df: pd.DataFrame):
     """[summary]
@@ -45,10 +50,13 @@ def read_and_format_tech_availability(df: pd.DataFrame):
     """
     df_c = df.copy()
     df_c.columns = [col.lower().replace(' ', '_') for col in df_c.columns]
-    df_c = df_c[df_c['technology'] != 'Close plant']
+    df_c = df_c[~df_c['technology'].isin(['Close plant', 'Charcoal mini furnace', 'New capacity'])]
+    df_c['technology_phase'] = df_c['technology'].apply(lambda x: map_technology_state(x))
     return df_c[['technology', 'main_technology_type', 'technology_phase', 'year_available_from', 'year_available_until']].set_index('technology')
 
-def tech_availability_check(tech_df: pd.DataFrame, technology: str, year: int, tech_moratorium: bool = False) -> bool:
+def tech_availability_check(
+    tech_df: pd.DataFrame, technology: str, year: int,
+    tech_moratorium: bool = False, default_year_unavailable: int = 2200) -> bool:
     """[summary]
 
     Args:
@@ -60,19 +68,20 @@ def tech_availability_check(tech_df: pd.DataFrame, technology: str, year: int, t
     Returns:
         bool: [description]
     """
-    row = tech_df.loc[technology].copy()
-    year_available = row.loc['year_available_from']
-    year_unavailable = row.loc['year_available_until']
-    if tech_moratorium:
-        if row.loc['technology_phase'] == 'Initial':
-            year_unavailable = 2030
-    if int(year_available) < int(year) < int(year_unavailable):
+    row = tech_df.loc[technology]
+    year_available_from = row.loc['year_available_from']
+    technology_phase = row.loc['technology_phase']
+    year_available_until = default_year_unavailable
+
+    if tech_moratorium and (technology_phase == 'current'):
+        year_available_until = TECH_MORATORIUM_DATE
+    if int(year_available_from) <= int(year) < int(year_available_until):
         # print(f'{technology} will be available in {year}')
         return True
-    if int(year) < int(year_available):
+    if int(year) <= int(year_available_from):
         # print(f'{technology} will not be ready yet in {year}')
         return False
-    if int(year) > int(year_unavailable):
+    if int(year) > int(year_available_until):
         # print(f'{technology} will become unavailable in {year}')
         return False
 
@@ -681,7 +690,7 @@ def load_resource_usage_dict(yearly_usage_df: pd.DataFrame):
 
     Returns:
         [type]: [description]
-    """    
+    """
     resource_usage_dict = create_new_material_usage_dict(RESOURCE_CONTAINER_REF)
     resource_usage_dict['biomass'] = list({yearly_usage_df.loc['Biomass']['value'] or 0})
     resource_usage_dict['scrap'] = list({yearly_usage_df.loc['Scrap']['value'] or 0})

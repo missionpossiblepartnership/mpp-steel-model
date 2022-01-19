@@ -36,6 +36,8 @@ PE_MODEL_SHEETNAME_DICT = {
 MODEL_YEAR_START = 2020
 MODEL_YEAR_END = 2050
 
+TECH_MORATORIUM_DATE = 2030
+
 BIOMASS_AV_TS_END_VALUE = 2000
 
 ELECTRICITY_PRICE_MID_YEAR = 2035
@@ -108,7 +110,7 @@ GRID_DECARBONISATION_SCENARIOS = {
     'low': 'Central',
 }
 
-SCENARIO_OPTIONS = {
+SCENARIO_SETTINGS = {
     'tech_moratorium': [True, False],
     'carbon_tax': CARBON_TAX_SCENARIOS.keys(),
     'green_premium_scenario': GREEN_PREMIUM_SCENARIOS.keys(),
@@ -128,4 +130,8 @@ DEFAULT_SCENARIO = {
     'hydrogen_cost_scenario': 'average', # low / average / high
     'steel_demand_scenario': 'average', # bau / average / high
     'tech_switch_scenario': 'equal_weight', # max_abatement / lowest_cost / equal_weight
+}
+
+SCENARIO_OPTIONS = {
+    'default': DEFAULT_SCENARIO,
 }
