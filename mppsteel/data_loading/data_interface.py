@@ -10,7 +10,8 @@ from mppsteel.utility.utils import (
     read_pickle_folder,
     serialize_file,
     serialize_file,
-    create_list_permutations
+    create_list_permutations,
+    enumerate_columns
 )
 
 # Get model parameters

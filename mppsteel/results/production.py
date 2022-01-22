@@ -27,7 +27,8 @@ from mppsteel.data_loading.data_interface import (
 from mppsteel.model.tco import get_s2_emissions
 
 from mppsteel.utility.utils import (
-    read_pickle_folder, get_logger, serialize_file, timer_func, add_results_metadata,
+    read_pickle_folder, get_logger, serialize_file, timer_func,
+    add_results_metadata, enumerate_columns
 )
 
 # Create logger
@@ -79,12 +80,17 @@ def tech_capacity_splits():
     year_range = range(MODEL_YEAR_START, max_year+1)
     df_list = []
 
+    def value_mapper(row, enum_dict):
+        row[enum_dict['capacity']] = calculate_primary_and_secondary(tech_capacities_dict, row[enum_dict['steel_plant']], row[enum_dict['technology']]) / 1000
+        return row
+
     for year in tqdm(year_range, total=len(year_range), desc='Tech Capacity Splits'):
         df = pd.DataFrame({'year': year, 'steel_plant': steel_plants, 'technology': '', 'capacity': 0})
         df['technology'] = df['steel_plant'].apply(lambda plant: get_tech_choice(tech_choices_dict, year, plant))
 
-        for row in df.itertuples():
-            df.loc[row.Index, 'capacity'] = calculate_primary_and_secondary(tech_capacities_dict, row.steel_plant, row.technology) / 1000
+        enumerated_cols = enumerate_columns(df_c.columns)
+        df_c = df_c.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
+        
         df = df[df['technology'] != 'Not operating']
         df_list.append(df)
 
@@ -102,7 +108,7 @@ def production_stats_generator(production_df: pd.DataFrame, as_summary: bool = F
 
     Returns:
         [type]: [description]
-    """    
+    """
     logger.info(f'- Generating Material Usage stats')
     df_c = production_df.copy()
     material_dict_mapper = load_materials_mapper()
@@ -114,23 +120,27 @@ def production_stats_generator(production_df: pd.DataFrame, as_summary: bool = F
     df_c['power'] = 0
 
     # Create values
-    for row in tqdm(df_c.itertuples(), total=df_c.shape[0], desc='Production Stats Generator'):     
+    def value_mapper(row, enum_dict):
         for item in material_dict_mapper.items():
             material_category = item[0]
             new_colname = item[1]
             if material_category == 'BF slag':
-                df_c.loc[row.Index, new_colname] = row.production * business_case_getter(standardised_business_cases, row.technology, material_category) / 1000
+                row[enum_dict[new_colname]] = row[enum_dict['production']] * business_case_getter(standardised_business_cases, row[enum_dict['technology']], material_category) / 1000
             elif material_category == 'Met coal':
-                df_c.loc[row.Index, new_colname] = row.production * business_case_getter(standardised_business_cases, row.technology, material_category) * 28
+                row[enum_dict[new_colname]] = row[enum_dict['production']] * business_case_getter(standardised_business_cases, row[enum_dict['technology']], material_category) * 28
             elif material_category == 'Hydrogen':
-                df_c.loc[row.Index, new_colname] = row.production * business_case_getter(standardised_business_cases, row.technology, material_category) / 3.6
+                row[enum_dict[new_colname]] = row[enum_dict['production']] * business_case_getter(standardised_business_cases, row[enum_dict['technology']], material_category) / 3.6
             else:
-                df_c.loc[row.Index, new_colname] = row.production * business_case_getter(standardised_business_cases, row.technology, material_category)
+                row[enum_dict[new_colname]] = row[enum_dict['production']] * business_case_getter(standardised_business_cases, row[enum_dict['technology']], material_category)
         # Create power column
         electricity_value = business_case_getter(standardised_business_cases, row.technology, 'Electricity')
-        df_c.loc[row.Index, 'power'] = row.production * electricity_value / 3.6
+        row[enum_dict['power']] = row[enum_dict['production']] * electricity_value / 3.6
+        return row
 
+    enumerated_cols = enumerate_columns(df_c.columns)
+    df_c = df_c.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     df_c['bioenergy'] = df_c['biomass'] + df_c['biomethane']
+
     if as_summary:
         return df_c.groupby(['year', 'technology']).sum()
     return df_c
@@ -165,25 +175,29 @@ def generate_production_emission_stats(
 
     df_c = production_df.copy()
 
-    # Create columns
-    for colname in emissions_name_ref:
-        df_c[f'{colname}_emissions'] = 0
-
-        # Create values
-    for row in tqdm(df_c.itertuples(), total=df_c.shape[0], desc='Production Emissions'):
-        if row.technology == 'Close plant':
+    def value_mapper(row, enum_dict):
+        if row[enum_dict['technology']] == 'Close plant':
             for colname in emissions_name_ref:
-                df_c.loc[row.Index, f'{colname}_emissions'] = 0
+                row[enum_dict[df_colname]] = 0
         else:
             for colname in emissions_name_ref:
                 if colname in ['s1', 's3']:
-                    df_c.loc[row.Index, f'{colname}_emissions'] = row.production * emissions_getter(
-                        emissions_dict, colname, row.technology, row.year)
+                    row[enum_dict[df_colname]] = row[enum_dict['production']] * emissions_getter(
+                        emissions_dict, colname, row[enum_dict['technology']], row[enum_dict['year']])
                 elif colname == 's2':
-                    df_c.loc[row.Index, f'{colname}_emissions'] = row.production * get_s2_emissions(
+                    row[enum_dict[df_colname]] = row[enum_dict['production']] * get_s2_emissions(
                         power_model, hydrogen_model, business_cases,
-                        row.year, row.country_code, row.technology,
+                        row[enum_dict['year']], row[enum_dict['country_code']], row[enum_dict['technology']],
                         electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario)
+        return row
+    # Create columns
+    for colname in emissions_name_ref:
+        df_colname = f'{colname}_emissions'
+        df_c[df_colname] = 0
+
+    # Create values
+    enumerated_cols = enumerate_columns(df_c.columns)
+    df_c = df_c.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
 
     if as_summary:
         return df_c.groupby(['year', 'technology']).sum()
@@ -206,10 +220,10 @@ def global_metaresults_calculator(
 
     Returns:
         [type]: [description]
-    """    
+    """
     # Initial Steel capacity values
     logger.info(f'- Generating Global Metaresults')
-    
+
     steel_capacity_years = {'2020': 2362.5}
     steel_capacity_years['2022'] = steel_capacity_years['2020'] * 1.03
     steel_capacity_years['2021'] = (steel_capacity_years['2020'] + steel_capacity_years['2022']) / 2
@@ -267,9 +281,9 @@ def business_case_getter(df: pd.DataFrame, tech: str, material: str):
 
     Returns:
         [type]: [description]
-    """    
+    """
     if material in df[(df['technology'] == tech)]['material_category'].unique():
-        return df[(df['technology'] == tech) & (df['material_category'] == material)]['value'].values[0]
+        return df[(df['technology'] == tech) & (df['material_category'] == material)]['value'].values
     return 0
 
 def get_tech_choice(tc_dict: dict, year: int, plant_name: str):

@@ -77,7 +77,7 @@ if __name__ == "__main__":
 
     if args.business_cases:
         standardise_business_cases(serialize_only=True)
-        business_case_tests(new_folder=True, timestamp=timestamp, create_test_df=False)
+        #business_case_tests(new_folder=True, timestamp=timestamp, create_test_df=True)
 
     if args.variable_costs:
         generate_variable_plant_summary(scenario_dict=scenario_args, serialize_only=True)
@@ -93,5 +93,11 @@ if __name__ == "__main__":
 
     if args.investment:
         investment_flow(scenario_dict=scenario_args)
+
+    if args.tco:
+        tco_switch_reference(scenario_dict=scenario_args)
+
+    if args.abatement:
+        abatement_switch_reference(scenario_dict=scenario_args)
 
     TIME_CONTAINER.return_time_container()

@@ -1,6 +1,7 @@
 """Script to determine the variable plant cost types dependent on regions."""
 
 import pandas as pd
+#import modin.pandas as pd
 from tqdm import tqdm
 
 from mppsteel.model_config import (
@@ -12,7 +13,8 @@ from mppsteel.model.solver import load_business_cases
 
 
 from mppsteel.utility.utils import (
-    serialize_file, get_logger, read_pickle_folder, timer_func
+    serialize_file, get_logger, read_pickle_folder, timer_func,
+    enumerate_columns
 )
 
 from mppsteel.data_loading.data_interface import (
@@ -31,7 +33,7 @@ def generate_feedstock_dict():
 
     Returns:
         [type]: [description]
-    """    
+    """
     commodities_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'commodities_df', 'df')
     feedstock_prices = read_pickle_folder(PKL_DATA_IMPORTS, 'feedstock_prices', 'df')
     commodities_dict = commodity_data_getter(commodities_df)
@@ -49,17 +51,15 @@ def plant_variable_costs(year_end: int, electricity_cost_scenario: str, grid_dec
 
     Returns:
         [type]: [description]
-    """    
+    """
     df_list = []
 
     steel_plants = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'steel_plants_processed', 'df')
     steel_plant_country_codes = list(steel_plants['country_code'].unique())
     steel_plant_region_ng_dict = steel_plants[['country_code', 'cheap_natural_gas']].set_index('country_code').to_dict()['cheap_natural_gas']
-
     power_model_formatted = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'power_model_formatted', 'df')
     hydrogen_model_formatted = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'hydrogen_model_formatted', 'df')
     ccus_model_formatted = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'ccus_model_formatted', 'df')
-
     static_energy_prices = read_pickle_folder(PKL_DATA_IMPORTS, 'static_energy_prices', 'df')[['Metric', 'Year', 'Value']]
     feedstock_dict = generate_feedstock_dict()
     business_cases = load_business_cases()
@@ -120,12 +120,32 @@ def generate_variable_costs(
     static_energy_list = static_energy_df['Metric'].unique().tolist()
     feedstock_list = list(feedstock_dict.keys())
 
+    def value_mapper(row, enum_dict):
+        resource = row[enum_dict['material_category']]
+        if resource in static_energy_list:
+            row[enum_dict['Static']] = row[enum_dict['value']] * static_energy_prices_getter(static_energy_df, resource, static_year)
+
+        if resource in feedstock_list:
+            row[enum_dict['Feedstock']] = row[enum_dict['value']] * feedstock_dict[resource]
+
+        if resource == 'Natural gas':
+            if ng_flag == 1:
+                row[enum_dict['Natural gas']] = row[enum_dict['value']] * natural_gas_low
+            elif ng_flag == 0:
+                row[enum_dict['Natural gas']] = row[enum_dict['value']] * natural_gas_high
+
+        if resource == 'Electricity':
+            row[enum_dict['Electricity']] = row[enum_dict['value']] * electricity_price
+
+        if resource == 'Hydrogen':
+            row[enum_dict['Hydrogen']] = row[enum_dict['value']] * hydrogen_price
+
+        return row
+    
     # Create a year range
     year_range = range(MODEL_YEAR_START, tuple({year_end+1 or 2021})[0])
-
     for year in tqdm(year_range, desc='Variable years'):
         df_c = business_cases_df.copy()
-
         df_c['Static'] = ''
         df_c['Feedstock'] = ''
         df_c['Electricity'] = ''
@@ -138,12 +158,10 @@ def generate_variable_costs(
         dynamic_year = year
         if year > 2050:
             dynamic_year = 2050
-        
         electricity_price = power_data_getter(
             power_df, 'grid', dynamic_year, plant_country_ref, RE_DICT,
             default_country='USA', grid_scenario=GRID_DECARBONISATION_SCENARIOS[grid_decarb_scenario],
             cost_scenario=COST_SCENARIO_MAPPER[electricity_cost_scenario])
-        
         hydrogen_price = hydrogen_data_getter(
             hydrogen_df, 'prices', dynamic_year, plant_country_ref,
             default_country='USA', variable='Total price premium ',
@@ -153,30 +171,8 @@ def generate_variable_costs(
         natural_gas_high = static_energy_prices_getter(static_energy_df, 'Natural gas - high', static_year)
         natural_gas_low = static_energy_prices_getter(static_energy_df, 'Natural gas - low', static_year)
 
-        for row in df_c.itertuples():
-            resource = row.material_category
-            resource_consumed = row.value
-
-            if resource in static_energy_list:
-                price_unit_value = static_energy_prices_getter(static_energy_df, resource, static_year)
-                df_c.loc[row.Index, 'Static'] = resource_consumed * price_unit_value
-
-            if resource in feedstock_list:
-                price_unit_value = feedstock_dict[resource]
-                df_c.loc[row.Index, 'Feedstock'] = resource_consumed * price_unit_value
-
-            if resource == 'Natural gas':
-                if ng_flag == 1:
-                    df_c.loc[row.Index, 'Natural gas'] = resource_consumed * natural_gas_low
-                elif ng_flag == 0:
-                    df_c.loc[row.Index, 'Natural gas'] = resource_consumed * natural_gas_high
-
-            if resource == 'Electricity':
-                df_c.loc[row.Index, 'Electricity'] = resource_consumed * electricity_price
-
-            if resource == 'Hydrogen':
-                df_c.loc[row.Index, 'Hydrogen'] = resource_consumed * hydrogen_price
-
+        enumerated_cols = enumerate_columns(df_c.columns)
+        df_c = df_c.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
         df_c['year'] = year
         df_list.append(df_c)
 
@@ -194,11 +190,10 @@ def format_variable_costs(variable_cost_df: pd.DataFrame):
     """    
 
     df_c = variable_cost_df.copy()
-    df_c.drop(labels=['value'], axis=1, inplace=True)
-    df_c = df_c.melt(id_vars=['plant_country_ref', 'technology', 'year', 'material_category', 'unit'],var_name=['cost_type'], value_name='cost')
+    print(df_c.columns)
+    df_c = df_c.melt(id_vars=['plant_country_ref', 'technology', 'year', 'material_category', 'unit', 'value'],var_name=['cost_type'], value_name='cost')
     df_c['cost'] = df_c['cost'].replace('', 0)
     return df_c.groupby(by=['plant_country_ref', 'year', 'technology']).sum().sort_values(by=['plant_country_ref', 'year', 'technology'])
-
 
 @timer_func
 def generate_variable_plant_summary(scenario_dict: dict, serialize_only: bool = False):

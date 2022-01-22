@@ -9,7 +9,7 @@ from mppsteel.utility.utils import (
 from mppsteel.data_loading.data_import import load_data
 from mppsteel.data_loading.reg_steel_demand_formatter import get_steel_demand
 from mppsteel.minimodels.timeseries_generator import generate_timeseries
-from mppsteel.data_loading.business_case_standardisation import (
+from mppsteel.data_loading.standardise_business_cases import (
     standardise_business_cases
 )
 from mppsteel.data_loading.business_case_tests import (
@@ -28,6 +28,7 @@ from mppsteel.model.emissions import calculate_emissions
 from mppsteel.model.investment_cycles import investment_cycle_flow
 from mppsteel.model.variable_plant_cost_archetypes import generate_variable_plant_summary
 from mppsteel.model.solver import solver_flow
+from mppsteel.model.tco_abatement_switch import run_tco_tests, run_abatement_tests
 from mppsteel.results.production import production_results_flow
 from mppsteel.results.investments import investment_results
 from mppsteel.results.graph_production import create_graphs
@@ -90,12 +91,18 @@ def model_outputs_phase(new_folder: bool = False, timestamp: str = ''):
         folder_filepath = f'{OUTPUT_FOLDER}/{timestamp}'
         create_folder_if_nonexist(folder_filepath)
         save_path = folder_filepath
+
+    # Save Intermediate Pickle Files
+    pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'capex_switching_data')
+    pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'steel_plant_abatement_switches')
+    pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'tco_reference_data')
+
+    # Save Final Pickle Files
     pkl_files = [
         'production_stats_all', 'production_emissions',
         'global_metaresults', 'investment_results']
     for pkl_file in pkl_files:
         pickle_to_csv(save_path, PKL_DATA_FINAL, pkl_file)
-    pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'emissions_switching_df_full')
 
 def model_graphs_phase(new_folder: bool = False, timestamp: str = ''):
     save_path = OUTPUT_FOLDER
@@ -157,6 +164,12 @@ def business_case_tests(new_folder: bool = False, timestamp: str = '', create_te
 def generate_minimodels(scenario_dict: dict):
     generate_timeseries(serialize_only=True, scenario_dict=scenario_dict)
 
+def tco_switch_reference(scenario_dict: dict):
+    run_tco_tests(scenario_dict, serialize_only=True)
+
+def abatement_switch_reference(scenario_dict: dict):
+    run_abatement_tests(scenario_dict, serialize_only=True)
+
 def investment_flow(scenario_dict: dict):
     investment_results(scenario_dict, serialize_only=True)
 
@@ -197,3 +210,7 @@ parser.add_argument(
     "-n", "--minimodels", action="store_true", help="Runs the minimodels script directly")
 parser.add_argument(
     "-e", "--investment", action="store_true", help="Runs the investments script directly")
+parser.add_argument(
+    "-y", "--tco", action="store_true", help="Runs the tco script only")
+parser.add_argument(
+    "-z", "--abatement", action="store_true", help="Runs the abatament script only")

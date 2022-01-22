@@ -7,7 +7,10 @@ from copy import deepcopy
 import pandas as pd
 
 # For logger
-from mppsteel.utility.utils import get_logger, read_pickle_folder, serialize_file, timer_func
+from mppsteel.utility.utils import (
+    get_logger, read_pickle_folder, serialize_file, 
+    timer_func, enumerate_columns
+    )
 
 from mppsteel.model_config import (
     PKL_DATA_IMPORTS,
@@ -33,9 +36,6 @@ logger = get_logger("Business Case Standarisation")
 # For Data Manipulation
 import pprint
 from copy import deepcopy
-
-import pandas as pd
-import numpy as np
 
 from tqdm import tqdm
 
@@ -171,11 +171,14 @@ def tech_parameter_getter(df, technology, parameter):
 
 def replace_units(df: pd.DataFrame, units_dict: dict):
     df_c = df.copy()
-    for row in df_c.itertuples():
-        if row.material_category in units_dict.keys():
-            df_c.loc[row.Index, 'unit'] = units_dict[row.material_category]
+    def value_mapper(row, enum_dict):
+        if row[enum_dict['material_category']] in units_dict.keys():
+            row[enum_dict['unit']] = units_dict[row[enum_dict['material_category']]]
         else:
-            df_c.loc[row.Index, 'unit'] = ''
+            row[enum_dict['unit']] = ''
+        return row
+    enumerated_cols = enumerate_columns(df_c.columns)
+    df_c = df_c.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     return df_c
 
 def create_mini_process_dfs(df: pd.DataFrame, technology_name: str, process_mapper: dict, factor_value_dict: dict):
@@ -197,18 +200,20 @@ def format_combined_df(df: pd.DataFrame, units_dict: dict):
 def sum_product_ef(df: pd.DataFrame, ef_dict: dict, materials_to_exclude: list = None):
     df_c = df.copy()
     df_c['material_emissions'] = ''
-    for row in df_c.itertuples():
+    def value_mapper(row, enum_dict):
         if materials_to_exclude:
-            if (row.material_category in ef_dict.keys()) & (row.material_category not in materials_to_exclude):
-                df_c.loc[row.Index, 'material_emissions'] = row.value * ef_dict[row.material_category]
+            if (row[enum_dict['material_category']] in ef_dict.keys()) & (row[enum_dict['material_category']] not in materials_to_exclude):
+                row[enum_dict['material_emissions']] = row[enum_dict['value']] * ef_dict[row[enum_dict['material_category']]]
             else:
-                df_c.loc[row.Index, 'material_emissions'] = 0
+                row[enum_dict['material_emissions']] = 0
         else:
-            if row.material_category in ef_dict.keys():
-                df_c.loc[row.Index, 'material_emissions'] = row.value * ef_dict[row.material_category]
+            if row[enum_dict['material_category']] in ef_dict.keys():
+                row[enum_dict['material_emissions']] = row[enum_dict['value']] * ef_dict[row[enum_dict['material_category']]]
             else:
-                df_c.loc[row.Index, 'material_emissions'] = 0
-            
+                row[enum_dict['material_emissions']] = 0
+        return row
+    enumerated_cols = enumerate_columns(df_c.columns)
+    df_c = df_c.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     return df_c['material_emissions'].sum()
 
 def get_all_steam_values(df: pd.DataFrame, technology: str, process_list: list, factor_dict: dict):
@@ -700,14 +705,6 @@ def self_gen_df_editor(
     return df_dict_c
 
 
-
-def generate_full_consumption_table(technology_list: list):
-    summary_df_list = []
-    for technology in technology_list:
-        summary_df_list.append(full_model_flow(technology))
-    return pd.concat(summary_df_list)
-
-
 def concat_process_dfs(df_dict: pd.DataFrame, process_list: list):
     df_list = []
     for process in process_list:
@@ -1001,7 +998,9 @@ def generate_full_consumption_table(technology_list: list):
     for technology in technology_list:
         logger.info(f"*** Starting standardisation flow for {technology} ***")
         summary_df_list.append(full_model_flow(technology))
-    return pd.concat(summary_df_list)
+    df = pd.concat(summary_df_list)
+    df.drop(labels=['process', 'process_detail', 'step'], axis=1, inplace=True)
+    return df.groupby(['material_category', 'technology', 'unit']).sum().reset_index()
 
 
 def concat_process_dfs(df_dict: pd.DataFrame, process_list: list):

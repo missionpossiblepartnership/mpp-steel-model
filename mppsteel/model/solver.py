@@ -152,7 +152,7 @@ def material_usage_summary(business_case_df: pd.DataFrame, material: str, techno
 
     Returns:
         [type]: [description]
-    """    
+    """
     if technology:
         try:
             return business_case_df.groupby(['material_category', 'technology']).sum().loc[material, technology].values[0]
@@ -279,7 +279,7 @@ def plant_tech_resource_checker(
 
             # Checking for zero
             if material_capacity <= 0:
-                logger.info(f'{year} -> Material {material_check} is not available, capacity = 0')
+                #logger.info(f'{year} -> Material {material_check} is not available, capacity = 0')
                 material_check_container.append(False)
             else:
                 # Core logic
@@ -287,7 +287,8 @@ def plant_tech_resource_checker(
                 if material_check in ['Bioenergy', 'Used CO2', 'Captured CO2', 'Scrap']:
                     current_usage = sum(material_container)
                     if current_usage == 0:
-                        logger.info('First usage for {material_check}')
+                        #logger.info('First usage for {material_check}')
+                        pass
                     resource_remaining = material_capacity - current_usage
                     plant_usage = material_usage_calc(plant_capacities, steel_plant_df, steel_demand_df, business_cases, materials_list, plant_name, year, tech, materials_to_check, steel_demand_scenario)
                     if plant_usage > resource_remaining:
@@ -307,15 +308,16 @@ def plant_tech_resource_checker(
                         material_check_container.append(False)
 
         if all(material_check_container):
-            logger.info(f'PASSED: {tech} has passed availability checks for {plant_name}')
+            #logger.info(f'PASSED: {tech} has passed availability checks for {plant_name}')
             tech_approved_list.append(tech)
         else:
             if tech == base_tech:
-                logger.info(f'PASSED: {tech} is the same as based tech, but would have failed otherwise')
+                #logger.info(f'PASSED: {tech} is the same as based tech, but would have failed otherwise')
                 tech_approved_list.append(tech)
                 # material_container.append(plant_usage)
             else:
-                logger.info(f'FAILED: {tech} has NOT passed availability checks for {plant_name}')
+                pass
+                #logger.info(f'FAILED: {tech} has NOT passed availability checks for {plant_name}')
 
     unavailable_techs = list(set(tech_list).difference(set(tech_approved_list)))
     # Final check and return
@@ -392,7 +394,7 @@ def overall_scores(
     unavailable_techs = [tech for tech in tco_df.index if not tech_availability_check(tech_availability, tech, year, tech_moratorium=tech_moratorium)]
 
     if base_tech in unavailable_techs:
-        print(f'Current tech {base_tech} is unavailable in {year}, but including anyway')
+        #print(f'Current tech {base_tech} is unavailable in {year}, but including anyway')
         unavailable_techs.remove(base_tech)
 
     # Constraints checks
@@ -540,7 +542,7 @@ def choose_technology(
                     electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario,
                     eur_usd_rate)
 
-                tco_switching_df_summary_final_rank = tco_min_ranker(tco, ['value'], rank_only)
+                tco_switching_df_summary_final_rank = tco_min_ranker(tco, ['tco'], rank_only)
                 emissions_switching_df_summary_final_rank = abatement_min_ranker(emissions_switching_df_summary, current_tech, year, ['abated_s1_emissions'], rank_only)
 
                 if switch_type == 'main cycle':
@@ -570,13 +572,14 @@ def choose_technology(
                         # Improve this!!!
                         best_score_tech = scores.index[0]
                         if best_score_tech == current_tech:
-                            print(f'No change in main investment cycle in {year} for {plant_name} | {year} -> {current_tech} to {best_score_tech}')
-
+                            #print(f'No change in main investment cycle in {year} for {plant_name} | {year} -> {current_tech} to {best_score_tech}')
+                            pass
                         else:
-                            print(f'Regular change in main investment cycle in {year} for {plant_name} | {year} -> {current_tech} to {best_score_tech}')
+                            #print(f'Regular change in main investment cycle in {year} for {plant_name} | {year} -> {current_tech} to {best_score_tech}')
+                            pass
                         current_plant_choices[str(year)][plant_name] = best_score_tech
                     except:
-                        print(f'Error in ranking in {year} for {plant_name} with {current_tech}')
+                        #print(f'Error in ranking in {year} for {plant_name} with {current_tech}')
                         current_plant_choices[str(year)][plant_name] = current_tech
 
                 if switch_type == 'trans switch':
@@ -606,14 +609,16 @@ def choose_technology(
                         # Change this!!
                         best_score_tech = scores.index[0]
                         if best_score_tech != current_tech:
-                            print(f'Transistional switch flipped for {plant_name} in {year} -> {current_tech} to {best_score_tech}')
+                            #print(f'Transistional switch flipped for {plant_name} in {year} -> {current_tech} to {best_score_tech}')
+                            pass
                         else:
-                            print(f'{plant_name} kept its current tech {current_tech} in transitional year {year}')
+                            #print(f'{plant_name} kept its current tech {current_tech} in transitional year {year}')
+                            pass
 
                         current_plant_choices[str(year)][plant_name] = best_score_tech
 
                     except:
-                        print(f'Error in ranking in {year} for {plant_name} with {current_tech}')
+                        #print(f'Error in ranking in {year} for {plant_name} with {current_tech}')
                         current_plant_choices[str(year)][plant_name] = current_tech
 
     return current_plant_choices
@@ -715,7 +720,6 @@ def solver_flow(scenario_dict: dict, year_end: int, serialize_only: bool = False
         year_end=year_end,
         rank_only=True,
         tech_moratorium=scenario_dict['tech_moratorium'],
-        error_plant='SSAB Americas Alabama steel plant',
         steel_demand_scenario=scenario_dict['steel_demand_scenario'],
         tech_switch_scenario=TECH_SWITCH_SCENARIOS[scenario_dict['tech_switch_scenario']],
         electricity_cost_scenario=scenario_dict['electricity_cost_scenario'],

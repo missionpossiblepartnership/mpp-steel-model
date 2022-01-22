@@ -11,7 +11,7 @@ from mppsteel.model_config import (
 
 from mppsteel.utility.utils import (
     read_pickle_folder, get_logger, serialize_file,
-    timer_func, add_scenarios, add_results_metadata
+    timer_func, add_results_metadata
 )
 
 # Create logger
@@ -29,7 +29,7 @@ def create_capex_dict():
     capex_c.columns = [col.lower().replace(' ', '_') for col in capex_c.columns]
     return capex_c.set_index(['year', 'start_technology']).sort_index()
 
-def get_capex_ref(capex_df: pd.DataFrame, year: int, start_tech: str, new_tech: str):
+def get_capex_ref(capex_df: pd.DataFrame, year: int, start_tech: str, new_tech: str, switch_type: str):
     """[summary]
 
     Args:
@@ -45,6 +45,8 @@ def get_capex_ref(capex_df: pd.DataFrame, year: int, start_tech: str, new_tech: 
     if year > 2050:
         capex_year = 2050
     if new_tech == 'Close plant':
+        return 0
+    if switch_type == 'no switch':
         return 0
     capex_ref = capex_df.loc[capex_year, start_tech]
     return capex_ref.loc[capex_ref['new_technology'] == new_tech]['value'].values[0]
@@ -99,10 +101,10 @@ def investment_row_calculator(inv_df: pd.DataFrame, capex_df: pd.DataFrame, tech
         start_tech = get_tech_choice(tech_choices, year-1, plant_name)
 
     new_tech = get_tech_choice(tech_choices, year, plant_name)
-    capex_ref = get_capex_ref(capex_df, year, start_tech, new_tech)
+    capex_ref = get_capex_ref(capex_df, year, start_tech, new_tech, switch_type)
     actual_capex = capex_ref * capacity_value
     new_row = {
-        'plant' : plant_name,
+        'steel_plant' : plant_name,
         'country_code': country_code,
         'year': year,
         'start_tech': start_tech,

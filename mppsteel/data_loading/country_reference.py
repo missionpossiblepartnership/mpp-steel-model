@@ -14,6 +14,7 @@ from mppsteel.utility.utils import (
     serialize_file,
     CountryMetadata,
     timer_func,
+    enumerate_columns,
 )
 
 from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
@@ -50,19 +51,20 @@ def create_country_ref_dict(df: pd.DataFrame, country_metadata_nt: namedtuple) -
     """
     logger.info("Creating Country Reference dictionary")
     country_ref_dict = {}
-    for row in df.itertuples():
-        country_ref_dict[row.country_code] = country_metadata_nt(
-            row.country_code,
-            row.country,
-            row.official_name,
-            row.m49_code,
-            row.region,
-            row.continent,
-            row.wsa_region,
-            row.rmi_region,
+    def value_mapper(row, enum_dict):
+        country_ref_dict[row[enum_dict['country_code']]] = country_metadata_nt(
+            row[enum_dict['country_code']],
+            row[enum_dict['country']],
+            row[enum_dict['official_name']],
+            row[enum_dict['m49_code']],
+            row[enum_dict['region']],
+            row[enum_dict['continent']],
+            row[enum_dict['wsa_region']],
+            row[enum_dict['rmi_region']]
         )
+    enumerated_cols = enumerate_columns(df.columns)
+    df.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     return country_ref_dict
-
 
 def country_df_formatter(df: pd.DataFrame) -> pd.DataFrame:
     """Formats a country metadata DataFrame.

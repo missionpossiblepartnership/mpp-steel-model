@@ -11,6 +11,7 @@ from mppsteel.utility.utils import (
     read_pickle_folder,
     serialize_file,
     timer_func,
+    enumerate_columns
 )
 
 from mppsteel.model_config import MODEL_YEAR_END, MODEL_YEAR_START, PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
@@ -52,6 +53,38 @@ def apply_emissions(
 
     logger.info(f"calculating emissions reference tables")
 
+    def value_mapper(row, enum_dict):
+        resource = row[enum_dict['material_category']]
+        resource_consumed = row[enum_dict['value']]
+
+        if resource in s1_emissions_resources:
+            emission_unit_value = scope1_emissions_getter(s1_emissions_df, resource)
+            # S1 emissions without process emissions or CCS/CCU
+            row[enum_dict['S1']] = resource_consumed * emission_unit_value / 1000
+        else:
+            row[enum_dict['S1']] = 0
+
+        if resource in s3_emissions_resources:
+            emission_unit_value = scope3_ef_getter(s3_emissions_df, resource, year)
+            row[enum_dict['S3']] = resource_consumed * emission_unit_value
+        else:
+            row[enum_dict['S3']] = 0
+
+        if carbon_tax_df is not None:
+            carbon_tax_unit = carbon_tax_getter(carbon_tax_df, year)
+        else:
+            carbon_tax_unit = 0
+
+        if scope == "1":
+            S1_value = row[enum_dict['S1']]
+            row[enum_dict['carbon_cost']] = S1_value * carbon_tax_unit
+        elif scope == "2&3":
+            S2_value = row[enum_dict['S2']]
+            S3_value = row[enum_dict['S3']]
+            row[enum_dict['carbon_cost']] = (S2_value + S3_value) * carbon_tax_unit
+
+        return row
+
     for year in tqdm(year_range, total=len(year_range), desc='Emissions Reference Table'):
         
         df_c = df.copy()
@@ -60,40 +93,9 @@ def apply_emissions(
         df_c["S2"] = ""
         df_c["S3"] = ""
         df_c["carbon_cost"] = ""
-
-        for row in df_c.itertuples():
-            resource = row.material_category
-            resource_consumed = row.value
-
-            if resource in s1_emissions_resources:
-                emission_unit_value = scope1_emissions_getter(s1_emissions_df, resource)
-                # S1 emissions without process emissions or CCS/CCU
-                df_c.loc[row.Index, "S1"] = (
-                    resource_consumed * emission_unit_value / 1000
-                )
-            else:
-                df_c.loc[row.Index, "S1"] = 0
-
-            if resource in s3_emissions_resources:
-                emission_unit_value = scope3_ef_getter(s3_emissions_df, resource, year)
-                df_c.loc[row.Index, "S3"] = resource_consumed * emission_unit_value
-            else:
-                df_c.loc[row.Index, "S3"] = 0
-
-            if carbon_tax_df is not None:
-                carbon_tax_unit = carbon_tax_getter(carbon_tax_df, year)
-            else:
-                carbon_tax_unit = 0
-
-            if scope == "1":
-                S1_value = df_c.at[row.Index, "S1"]
-                df_c.loc[row.Index, "carbon_cost"] = S1_value * carbon_tax_unit
-            elif scope == "2&3":
-                S2_value = df_c.at[row.Index, "S2"]
-                S3_value = df_c.at[row.Index, "S3"]
-                df_c.loc[row.Index, "carbon_cost"] = (
-                    S2_value + S3_value
-                ) * carbon_tax_unit
+        
+        enumerated_cols = enumerate_columns(df_c.columns)
+        df_c = df_c.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
 
         df_list.append(df_c)
 

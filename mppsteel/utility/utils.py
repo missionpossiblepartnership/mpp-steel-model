@@ -404,3 +404,10 @@ def create_folders_if_nonexistant(folder_list: list):
         else:
             logger.info(f'{folder_path} does not exist yet. Creating folder.')
             Path(folder_path).mkdir(parents=True, exist_ok=True)
+
+def enumerate_columns(colnames : list):
+    return dict(zip(colnames, range(len(colnames))))
+
+def move_cols_to_front(df: pd.DataFrame, cols_at_front: list):
+    non_abatement_columns = list(set(df.columns).difference(set(cols_at_front)))
+    return cols_at_front + non_abatement_columns
