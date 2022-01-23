@@ -91,6 +91,9 @@ if __name__ == "__main__":
     if args.minimodels:
         generate_minimodels(scenario_dict=scenario_args)
 
+    if args.production:
+        production_flow(scenario_dict=scenario_args)
+
     if args.investment:
         investment_flow(scenario_dict=scenario_args)
 

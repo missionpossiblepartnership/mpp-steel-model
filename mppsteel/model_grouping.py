@@ -178,6 +178,9 @@ def tco_switch_reference(scenario_dict: dict):
 def abatement_switch_reference(scenario_dict: dict):
     abatement_presolver_reference(scenario_dict, serialize_only=True)
 
+def production_flow(scenario_dict: dict):
+    production_results_flow(scenario_dict, serialize_only=True)
+
 def investment_flow(scenario_dict: dict):
     investment_results(scenario_dict, serialize_only=True)
 
@@ -216,6 +219,8 @@ parser.add_argument(
     "-g", "--graphs", action="store_true", help="Runs the graph output script directly")
 parser.add_argument(
     "-n", "--minimodels", action="store_true", help="Runs the minimodels script directly")
+parser.add_argument(
+    "-w", "--production", action="store_true", help="Runs the production script directly")
 parser.add_argument(
     "-e", "--investment", action="store_true", help="Runs the investments script directly")
 parser.add_argument(

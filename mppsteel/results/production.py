@@ -103,15 +103,13 @@ def tech_capacity_splits():
 
 def production_stats_generator(production_df: pd.DataFrame, as_summary: bool = False):
     """[summary]
-
     Args:
         production_df (pd.DataFrame): [description]
         as_summary (bool, optional): [description]. Defaults to False.
-
     Returns:
         [type]: [description]
-    """
-    logger.info(f'- Producing Productions Stats')
+    """    
+    logger.info(f'- Generating Material Usage stats')
     df_c = production_df.copy()
     material_dict_mapper = load_materials_mapper()
     standardised_business_cases = load_business_cases()
@@ -122,28 +120,23 @@ def production_stats_generator(production_df: pd.DataFrame, as_summary: bool = F
     df_c['power'] = 0
 
     # Create values
-    def value_mapper(row, enum_dict):
+    for row in tqdm(df_c.itertuples(), total=df_c.shape[0], desc='Production Stats Generator'):     
         for item in material_dict_mapper.items():
             material_category = item[0]
             new_colname = item[1]
             if material_category == 'BF slag':
-                row[enum_dict[new_colname]] = row[enum_dict['production']] * business_case_getter(standardised_business_cases, row[enum_dict['technology']], material_category) / 1000
+                df_c.loc[row.Index, new_colname] = row.production * business_case_getter(standardised_business_cases, row.technology, material_category) / 1000
             elif material_category == 'Met coal':
-                row[enum_dict[new_colname]] = row[enum_dict['production']] * business_case_getter(standardised_business_cases, row[enum_dict['technology']], material_category) * 28
+                df_c.loc[row.Index, new_colname] = row.production * business_case_getter(standardised_business_cases, row.technology, material_category) * 28
             elif material_category == 'Hydrogen':
-                row[enum_dict[new_colname]] = row[enum_dict['production']] * business_case_getter(standardised_business_cases, row[enum_dict['technology']], material_category) / 3.6
+                df_c.loc[row.Index, new_colname] = row.production * business_case_getter(standardised_business_cases, row.technology, material_category) / 3.6
             else:
-                row[enum_dict[new_colname]] = row[enum_dict['production']] * business_case_getter(standardised_business_cases, row[enum_dict['technology']], material_category)
+                df_c.loc[row.Index, new_colname] = row.production * business_case_getter(standardised_business_cases, row.technology, material_category)
         # Create power column
-        electricity_value = business_case_getter(standardised_business_cases, row[enum_dict['technology']], 'Electricity')
-        row[enum_dict['power']] = row[enum_dict['production']] * electricity_value / 3.6
-        return row
+        electricity_value = business_case_getter(standardised_business_cases, row.technology, 'Electricity')
+        df_c.loc[row.Index, 'power'] = row.production * electricity_value / 3.6
 
-    tqdma.pandas(desc="Production Stats Generator")
-    enumerated_cols = enumerate_columns(df_c.columns)
-    df_c = df_c.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     df_c['bioenergy'] = df_c['biomass'] + df_c['biomethane']
-
     if as_summary:
         return df_c.groupby(['year', 'technology']).sum()
     return df_c
