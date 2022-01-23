@@ -28,7 +28,7 @@ from mppsteel.model.emissions import calculate_emissions
 from mppsteel.model.investment_cycles import investment_cycle_flow
 from mppsteel.model.variable_plant_cost_archetypes import generate_variable_plant_summary
 from mppsteel.model.solver import solver_flow
-from mppsteel.model.tco_abatement_switch import run_tco_tests, run_abatement_tests
+from mppsteel.model.tco_abatement_switch import tco_presolver_reference, abatement_presolver_reference
 from mppsteel.results.production import production_results_flow
 from mppsteel.results.investments import investment_results
 from mppsteel.results.graph_production import create_graphs
@@ -78,6 +78,10 @@ def data_preprocessing_phase(scenario_dict: dict):
     investment_cycle_flow(serialize_only=True)
     generate_variable_plant_summary(scenario_dict, serialize_only=True)
 
+def model_presolver(scenario_dict: dict):
+    tco_presolver_reference(scenario_dict, serialize_only=True)
+    abatement_presolver_reference(scenario_dict, serialize_only=True)
+
 def model_calculation_phase(scenario_dict: dict):
     solver_flow(scenario_dict, year_end=MODEL_YEAR_END, serialize_only=True)
 
@@ -123,8 +127,12 @@ def data_import_and_preprocessing_refresh(scenario_dict: dict):
     data_import_stage()
     data_preprocessing_phase(scenario_dict)
 
+def tco_and_abatement_calculations(scenario_dict: dict):
+    model_presolver(scenario_dict)
+
 def scenario_batch_run(scenario_dict: dict, dated_output_folder: bool, timestamp: str):
     data_preprocessing_phase(scenario_dict)
+    model_presolver(scenario_dict)
     model_calculation_phase(scenario_dict)
     model_results_phase(scenario_dict)
     model_outputs_phase(dated_output_folder, timestamp)
@@ -165,10 +173,10 @@ def generate_minimodels(scenario_dict: dict):
     generate_timeseries(serialize_only=True, scenario_dict=scenario_dict)
 
 def tco_switch_reference(scenario_dict: dict):
-    run_tco_tests(scenario_dict, serialize_only=True)
+    tco_presolver_reference(scenario_dict, serialize_only=True)
 
 def abatement_switch_reference(scenario_dict: dict):
-    run_abatement_tests(scenario_dict, serialize_only=True)
+    abatement_presolver_reference(scenario_dict, serialize_only=True)
 
 def investment_flow(scenario_dict: dict):
     investment_results(scenario_dict, serialize_only=True)
@@ -210,6 +218,8 @@ parser.add_argument(
     "-n", "--minimodels", action="store_true", help="Runs the minimodels script directly")
 parser.add_argument(
     "-e", "--investment", action="store_true", help="Runs the investments script directly")
+parser.add_argument(
+    "-x", "--ta", action="store_true", help="Runs the tco and abatement scripts only")
 parser.add_argument(
     "-y", "--tco", action="store_true", help="Runs the tco script only")
 parser.add_argument(

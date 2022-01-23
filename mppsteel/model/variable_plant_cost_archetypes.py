@@ -5,7 +5,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from mppsteel.model_config import (
-    MODEL_YEAR_END, PKL_DATA_IMPORTS, MODEL_YEAR_START, PKL_DATA_INTERMEDIATE, 
+    BIOMASS_SCENARIOS, MODEL_YEAR_END, PKL_DATA_IMPORTS, MODEL_YEAR_START, PKL_DATA_INTERMEDIATE, 
     COST_SCENARIO_MAPPER, GRID_DECARBONISATION_SCENARIOS,
 )
 
@@ -162,6 +162,8 @@ def generate_variable_costs(
         df_c['Electricity'] = ''
         df_c['Hydrogen'] = ''
         df_c['Natural gas'] = ''
+        df_c['Biomass'] = ''
+        df_c['Biomethane'] = ''
 
         static_year = year
         if year > 2026:
@@ -181,7 +183,7 @@ def generate_variable_costs(
         bio_price = bio_price_getter(
             bio_df, dynamic_year, plant_country_ref,
             default_country='USA', feedstock_type='Weighted average',
-            cost_scenario=COST_SCENARIO_MAPPER[biomass_cost_scenario],
+            cost_scenario=BIOMASS_SCENARIOS[biomass_cost_scenario],
         )
 
         natural_gas_high = static_energy_prices_getter(static_energy_df, 'Natural gas - high', static_year)

@@ -15,11 +15,9 @@ from mppsteel.utility.transform_units import (
 )
 
 from mppsteel.model_config import (
-    MODEL_YEAR_START, PKL_DATA_INTERMEDIATE, 
+    PKL_DATA_INTERMEDIATE, 
     DISCOUNT_RATE, INVESTMENT_CYCLE_LENGTH,
     STEEL_PLANT_LIFETIME,
-    TCO_RANK_1_SCALER, TCO_RANK_2_SCALER,
-    ABATEMENT_RANK_2, ABATEMENT_RANK_3,
     COST_SCENARIO_MAPPER, GRID_DECARBONISATION_SCENARIOS
 )
 
@@ -30,7 +28,7 @@ from mppsteel.utility.reference_lists import (
 from mppsteel.model.financial_functions import generate_capex_financial_summary
 
 from mppsteel.data_loading.pe_model_formatter import (
-    power_data_getter, hydrogen_data_getter, RE_DICT
+    RE_DICT, power_data_getter, hydrogen_data_getter,
 )
 
 # Create logger
@@ -115,6 +113,7 @@ def get_s2_emissions(power_model: dict, hydrogen_model: dict, business_cases: pd
         'emissions',
         year,
         country_code,
+        re_dict=RE_DICT,
         grid_scenario=grid_scenario,
         cost_scenario=electricity_cost_scenario)
 
@@ -244,48 +243,3 @@ def levelised_steelmaking_cost(year: pd.DataFrame, include_greenfield: bool = Fa
         df_list.append(combined_df)
     df = pd.concat(df_list)
     return df.reset_index().rename(mapper={'index': 'technology'},axis=1).set_index(['plant_country_ref', 'technology'])
-
-def normalise_data(data):
-    return (data - np.min(data)) / (np.max(data) - np.min(data))
-
-def scale_data(df: pd.DataFrame, cols = list):
-    df_c = df.copy()[cols]
-    df_c[cols] = 1 - normalise_data(df_c[cols].values)
-    return df_c
-
-def tco_ranker_logic(x: float, min_value: float):
-    if min_value is None: # check for this
-        # print('NoneType value')
-        return 1
-    if x > min_value * TCO_RANK_2_SCALER:
-        return 3
-    elif x > min_value * TCO_RANK_1_SCALER:
-        return 2
-    else:
-        return 1
-
-def abatement_ranker_logic(x: float):
-    if x < ABATEMENT_RANK_3:
-        return 3
-    elif x < ABATEMENT_RANK_2:
-        return 2
-    else:
-        return 1
-
-def tco_min_ranker(df: pd.DataFrame, value_col: list, rank_only: bool = False):
-    df_c = df.copy().sort_values(value_col, ascending=False).copy()
-    min_value = df_c.min().values[0]
-    if rank_only:
-        df_c['rank_score'] = df_c[value_col[0]].apply(lambda x: tco_ranker_logic(x, min_value))
-        df_c.drop(value_col, axis=1, inplace=True)
-        return df_c
-    return df_c
-
-def abatement_min_ranker(df: pd.DataFrame, start_tech: str, year: int, cols: list, rank_only: bool = False):
-    df_c = df.copy()
-    df_subset = df_c.loc[year, start_tech][cols].sort_values(cols, ascending=False).copy()
-    if rank_only:
-        df_subset['rank_score'] = df_subset[cols[0]].apply(lambda x: abatement_ranker_logic(x)) # get fix for list subset
-        df_subset.drop(cols, axis=1, inplace=True)
-        return df_subset
-    return df_subset

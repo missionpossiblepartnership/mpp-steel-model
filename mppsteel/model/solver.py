@@ -6,7 +6,7 @@ from tqdm import tqdm
 from mppsteel.utility.utils import (
     read_pickle_folder, serialize_file,
     get_logger, return_furnace_group,
-    timer_func, add_scenarios
+    timer_func, add_results_metadata
 )
 
 from mppsteel.model_config import (
@@ -17,7 +17,6 @@ from mppsteel.model_config import (
 from mppsteel.utility.reference_lists import (
     SWITCH_DICT, TECHNOLOGY_STATES, FURNACE_GROUP_DICT,
     TECH_MATERIAL_CHECK_DICT, RESOURCE_CONTAINER_REF,
-    TECH_REFERENCE_LIST
 )
 
 from mppsteel.data_loading.data_interface import (
@@ -29,7 +28,7 @@ from mppsteel.data_loading.reg_steel_demand_formatter import (
     steel_demand_getter
 )
 
-from mppsteel.model.tco import (
+from mppsteel.model.tco_and_abatement_optimizer import (
     tco_calc, tco_min_ranker,
     abatement_min_ranker
 )

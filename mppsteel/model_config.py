@@ -114,7 +114,7 @@ GRID_DECARBONISATION_SCENARIOS = {
 }
 
 BIOMASS_SCENARIOS = {
-    'average': 'Medium ',
+    'average': 'Medium',
 }
 
 SCENARIO_SETTINGS = {

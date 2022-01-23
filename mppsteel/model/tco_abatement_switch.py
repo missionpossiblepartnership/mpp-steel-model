@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import numpy_financial as npf
 
-from mppsteel.model.tco import tco_calc, get_s2_emissions, calculate_green_premium
+from mppsteel.model.tco_calculation_functions import tco_calc, get_s2_emissions, calculate_green_premium
 from mppsteel.data_loading.data_interface import load_business_cases, load_materials
 from mppsteel.model.solver import create_plant_capacities_dict
 from mppsteel.utility.utils import timer_func, read_pickle_folder, get_logger, serialize_file, add_results_metadata, move_cols_to_front, enumerate_columns
@@ -110,7 +110,7 @@ def map_region_tco_to_plants(steel_plant_ref: pd.DataFrame, opex_capex_ref: pd.D
 
 
 @timer_func
-def run_tco_tests(scenario_dict, serialize_only: bool = False):
+def tco_presolver_reference(scenario_dict, serialize_only: bool = False):
     electricity_cost_scenario=scenario_dict['electricity_cost_scenario']
     grid_scenario=scenario_dict['grid_scenario']
     hydrogen_cost_scenario=scenario_dict['hydrogen_cost_scenario']
@@ -210,7 +210,7 @@ def map_region_emissions_to_plants(ab_switches: pd.DataFrame):
     return combined_df[new_col_order]
 
 @timer_func
-def run_abatement_tests(scenario_dict, serialize_only: bool = False):
+def abatement_presolver_reference(scenario_dict, serialize_only: bool = False):
     logger.info('Running Abatement Tests')
     electricity_cost_scenario=scenario_dict['electricity_cost_scenario']
     grid_scenario=scenario_dict['grid_scenario']

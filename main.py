@@ -94,6 +94,9 @@ if __name__ == "__main__":
     if args.investment:
         investment_flow(scenario_dict=scenario_args)
 
+    if args.ta:
+        tco_switch_reference(scenario_dict=scenario_args)
+
     if args.tco:
         tco_switch_reference(scenario_dict=scenario_args)
 
