@@ -1,9 +1,10 @@
 """Main solving script for deciding investment decisions."""
 
-import math
 import pandas as pd
-import numpy as np
 import numpy_financial as npf
+
+from tqdm import tqdm
+from tqdm.auto import tqdm as tqdma
 
 from mppsteel.utility.utils import (
     read_pickle_folder, get_logger,
@@ -99,8 +100,9 @@ def calculate_capex(capex_df: pd.DataFrame, start_year: int, base_tech: str):
     def value_mapper(row, enum_dict):
         row[enum_dict['capex_value']] = capex_getter(capex_df, SWITCH_DICT, start_year, base_tech, row[enum_dict['end_technology']])
         return row
+    tqdma.pandas(desc="Calculate Capex")
     enumerated_cols = enumerate_columns(df.columns)
-    df = df.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
+    df = df.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     return df.set_index(['year', 'start_technology'])
 
 def get_s2_emissions(power_model: dict, hydrogen_model: dict, business_cases: pd.DataFrame, year: int, country_code: str, technology: str, electricity_cost_scenario: str, grid_scenario: str, hydrogen_cost_scenario: str):
@@ -218,8 +220,9 @@ def capex_values_for_levelised_steelmaking(capex_df: pd.DataFrame, int_rate: flo
     def value_mapper(row, enum_dict):
         capex_value = - generate_capex_financial_summary(row[enum_dict['value']], int_rate, payments)['total_interest']
         value_list.append(capex_value)
+    tqdma.pandas(desc="Capex Values for Levelised Steel")
     enumerated_cols = enumerate_columns(df_temp.columns)
-    df_temp.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
+    df_temp.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     df_temp.drop(['value'], axis=1, inplace=True)
     df_temp['value'] = value_list
     return df_temp

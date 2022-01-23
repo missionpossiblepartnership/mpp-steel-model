@@ -1,10 +1,12 @@
 """Script to test the business cases"""
 
+from itertools import groupby
+
 import pandas as pd
 import numpy as np
 
-from itertools import groupby
 from tqdm import tqdm
+from tqdm.auto import tqdm as tqdma
 
 # For logger
 from mppsteel.utility.utils import (
@@ -69,9 +71,9 @@ def process_inspector(df: pd.DataFrame, excel_bc_summary: pd.DataFrame, rounding
         else:
             row[enum_dict['matches_ref']] = 0
         row[enum_dict['ref_value']] = ref_value
-
+    tqdma.pandas(desc="Prrocess Inspector")
     enumerated_cols = enumerate_columns(df_c.columns)
-    df_c = df_c.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
+    df_c = df_c.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     return df_c
 
 

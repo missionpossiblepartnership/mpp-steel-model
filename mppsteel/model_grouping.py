@@ -97,7 +97,7 @@ def model_outputs_phase(new_folder: bool = False, timestamp: str = ''):
         save_path = folder_filepath
 
     # Save Intermediate Pickle Files
-    pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'capex_switching_data')
+    pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'capex_switching_df')
     pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'steel_plant_abatement_switches')
     pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'tco_reference_data')
 

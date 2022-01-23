@@ -1,6 +1,8 @@
 """Function to create a steel plant class."""
 import pandas as pd
 
+from tqdm.auto import tqdm as tqdma
+
 # For logger and units dict
 from mppsteel.utility.utils import (
     get_logger,
@@ -84,8 +86,9 @@ def extract_steel_plant_capacity(df: pd.DataFrame):
             else:
                 row[enum_dict['primary_capacity_2020']] = 0
         return row
+    tqdma.pandas(desc="Extract Steel Plant Capacity")
     enumerated_cols = enumerate_columns(df_c.columns)
-    df_c = df_c.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
+    df_c = df_c.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     df_c['secondary_capacity_2020'] = df_c['EAF_capacity'].apply(lambda x: convert_to_float(x)) - df_c['DRIEAF_capacity'].apply(lambda x: convert_to_float(x)) 
     return df_c
 
@@ -108,9 +111,10 @@ def adjust_capacity_values(df: pd.DataFrame):
             row[enum_dict['secondary_capacity_2020']] = row[enum_dict['DRIEAF_capacity']]
             row[enum_dict['primary_capacity_2020']] = row[enum_dict['DRI_capacity']] - row[enum_dict['DRIEAF_capacity']]
         return row
-    
+
+    tqdma.pandas(desc="Adjust Capacity Values")
     enumerated_cols = enumerate_columns(df_c.columns)
-    df_c = df_c.apply(value_mapper, enum_dict=enumerated_cols, avg_eaf_value=average_eaf_secondary_capacity, axis=1, raw=True)
+    df_c = df_c.progress_apply(value_mapper, enum_dict=enumerated_cols, avg_eaf_value=average_eaf_secondary_capacity, axis=1, raw=True)
     df_c['combined_capacity'] = df_c['primary_capacity_2020'] + df_c['secondary_capacity_2020']
     return df_c
 

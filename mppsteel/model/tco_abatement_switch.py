@@ -4,13 +4,15 @@ import pandas as pd
 import numpy as np
 import numpy_financial as npf
 
+from tqdm import tqdm
+from tqdm.auto import tqdm as tqdma
+
 from mppsteel.model.tco_calculation_functions import tco_calc, get_s2_emissions, calculate_green_premium
-from mppsteel.data_loading.data_interface import load_business_cases, load_materials
-from mppsteel.model.solver import create_plant_capacities_dict
+from mppsteel.data_loading.data_interface import load_business_cases 
 from mppsteel.utility.utils import timer_func, read_pickle_folder, get_logger, serialize_file, add_results_metadata, move_cols_to_front, enumerate_columns
 from mppsteel.utility.reference_lists import SWITCH_DICT
 from mppsteel.model_config import DISCOUNT_RATE, MODEL_YEAR_END, MODEL_YEAR_START, PKL_DATA_INTERMEDIATE, PKL_DATA_IMPORTS, INVESTMENT_CYCLE_LENGTH
-from tqdm.auto import tqdm
+
 
 logger = get_logger("TCO & Abatement switches")
 
@@ -77,7 +79,7 @@ def create_full_steel_plant_ref(eur_usd_rate: float):
         row[enum_dict['discounted_green_premium']] = discounted_gp_arr
         return row
     logger.info('Calculating green premium values')
-    tqdm.pandas(desc="Apply Green Premium Values")
+    tqdma.pandas(desc="Apply Green Premium Values")
     enumerated_cols = enumerate_columns(steel_plant_ref.columns)
     steel_plant_ref = steel_plant_ref.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     pair_list = []

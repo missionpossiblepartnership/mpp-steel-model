@@ -2,6 +2,7 @@
 
 import pandas as pd
 from tqdm import tqdm
+from tqdm.auto import tqdm as tqdma
 
 from mppsteel.model_config import (
     AVERAGE_LEVEL_OF_CAPACITY,
@@ -90,11 +91,9 @@ def tech_capacity_splits():
     for year in tqdm(year_range, total=len(year_range), desc='Tech Capacity Splits'):
         df = pd.DataFrame({'year': year, 'steel_plant': steel_plants, 'technology': '', 'capacity': 0})
         df['technology'] = df['steel_plant'].apply(lambda plant: get_tech_choice(tech_choices_dict, year, plant))
-
-        enumerated_cols = enumerate_columns(df_c.columns)
-        df_c = df_c.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
-        
-        df = df[df['technology'] != 'Not operating']
+        tqdma.pandas(desc="Technology Capacity  Splits")
+        enumerated_cols = enumerate_columns(df.columns)
+        df = df.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
         df_list.append(df)
 
     df_combined = pd.concat(df_list)
@@ -112,7 +111,7 @@ def production_stats_generator(production_df: pd.DataFrame, as_summary: bool = F
     Returns:
         [type]: [description]
     """
-    logger.info(f'- Generating Material Usage stats')
+    logger.info(f'- Producing Productions Stats')
     df_c = production_df.copy()
     material_dict_mapper = load_materials_mapper()
     standardised_business_cases = load_business_cases()
@@ -136,12 +135,13 @@ def production_stats_generator(production_df: pd.DataFrame, as_summary: bool = F
             else:
                 row[enum_dict[new_colname]] = row[enum_dict['production']] * business_case_getter(standardised_business_cases, row[enum_dict['technology']], material_category)
         # Create power column
-        electricity_value = business_case_getter(standardised_business_cases, row.technology, 'Electricity')
+        electricity_value = business_case_getter(standardised_business_cases, row[enum_dict['technology']], 'Electricity')
         row[enum_dict['power']] = row[enum_dict['production']] * electricity_value / 3.6
         return row
 
+    tqdma.pandas(desc="Production Stats Generator")
     enumerated_cols = enumerate_columns(df_c.columns)
-    df_c = df_c.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
+    df_c = df_c.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     df_c['bioenergy'] = df_c['biomass'] + df_c['biomethane']
 
     if as_summary:
@@ -166,8 +166,8 @@ def generate_production_emission_stats(
 
     Returns:
         [type]: [description]
-    """    
-    logger.info(f'- Generating Material Usage stats')
+    """
+    logger.info(f'- Producing Production Emission Stats')
     emissions_dict = create_emissions_dict()
     emissions_name_ref = ['s1', 's2', 's3']
 
@@ -200,8 +200,9 @@ def generate_production_emission_stats(
         df_c[df_colname] = 0
 
     # Create values
+    tqdma.pandas(desc="Generate Production Emission Stats")
     enumerated_cols = enumerate_columns(df_c.columns)
-    df_c = df_c.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
+    df_c = df_c.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
 
     if as_summary:
         return df_c.groupby(['year', 'technology']).sum()
@@ -333,7 +334,6 @@ def production_results_flow(scenario_dict: dict, serialize_only: bool = False):
     electricity_cost_scenario=scenario_dict['electricity_cost_scenario']
     grid_scenario=scenario_dict['grid_scenario']
     hydrogen_cost_scenario=scenario_dict['hydrogen_cost_scenario']
-    biomass_cost_scenario=scenario_dict['biomass_cost_scenario']
 
     production_results = generate_production_stats(tech_capacity_df, steel_demand_df, steel_demand_scenario, max_solver_year)
     production_results_all = production_stats_generator(production_results)

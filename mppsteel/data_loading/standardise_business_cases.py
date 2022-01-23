@@ -6,6 +6,8 @@ from copy import deepcopy
 # For Data Manipulation
 import pandas as pd
 
+from tqdm.auto import tqdm as tqdma
+
 # For logger
 from mppsteel.utility.utils import (
     get_logger, read_pickle_folder, serialize_file, 
@@ -177,8 +179,9 @@ def replace_units(df: pd.DataFrame, units_dict: dict):
         else:
             row[enum_dict['unit']] = ''
         return row
+    tqdma.pandas(desc="Replace Units")
     enumerated_cols = enumerate_columns(df_c.columns)
-    df_c = df_c.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
+    df_c = df_c.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     return df_c
 
 def create_mini_process_dfs(df: pd.DataFrame, technology_name: str, process_mapper: dict, factor_value_dict: dict):
@@ -212,8 +215,9 @@ def sum_product_ef(df: pd.DataFrame, ef_dict: dict, materials_to_exclude: list =
             else:
                 row[enum_dict['material_emissions']] = 0
         return row
+    tqdma.pandas(desc="Sum Product Emissions Factors")
     enumerated_cols = enumerate_columns(df_c.columns)
-    df_c = df_c.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
+    df_c = df_c.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     return df_c['material_emissions'].sum()
 
 def get_all_steam_values(df: pd.DataFrame, technology: str, process_list: list, factor_dict: dict):

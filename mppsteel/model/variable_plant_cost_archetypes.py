@@ -1,8 +1,8 @@
 """Script to determine the variable plant cost types dependent on regions."""
 
 import pandas as pd
-#import modin.pandas as pd
 from tqdm import tqdm
+from tqdm.auto import tqdm as tqdma
 
 from mppsteel.model_config import (
     BIOMASS_SCENARIOS, MODEL_YEAR_END, PKL_DATA_IMPORTS, MODEL_YEAR_START, PKL_DATA_INTERMEDIATE, 
@@ -189,8 +189,9 @@ def generate_variable_costs(
         natural_gas_high = static_energy_prices_getter(static_energy_df, 'Natural gas - high', static_year)
         natural_gas_low = static_energy_prices_getter(static_energy_df, 'Natural gas - low', static_year)
 
+        tqdma.pandas(desc="Generate Variable Costs")
         enumerated_cols = enumerate_columns(df_c.columns)
-        df_c = df_c.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
+        df_c = df_c.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
         df_c['year'] = year
         df_list.append(df_c)
 

@@ -4,6 +4,7 @@
 import pandas as pd
 
 from tqdm import tqdm
+from tqdm.auto import tqdm as tqdma
 
 # For logger and units dict
 from mppsteel.utility.utils import (
@@ -92,9 +93,10 @@ def apply_emissions(
         df_c["S2"] = ""
         df_c["S3"] = ""
         df_c["carbon_cost"] = ""
-        
+
+        tqdma.pandas(desc="Apply Emissions")
         enumerated_cols = enumerate_columns(df_c.columns)
-        df_c = df_c.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
+        df_c = df_c.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
 
         df_list.append(df_c)
 

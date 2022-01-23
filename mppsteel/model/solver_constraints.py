@@ -1,7 +1,6 @@
 """Script with functions for implementing solver constraints."""
 
 import pandas as pd
-from tqdm import tqdm
 
 from mppsteel.utility.utils import (
     read_pickle_folder, get_logger
@@ -96,7 +95,7 @@ def plant_closure_check(utilization_rate: float, cutoff: float, current_tech: st
     return current_tech
 
 
-def create_plant_capacities_dict(steel_plant_df):
+def create_plant_capacities_dict():
     """[summary]
 
     Returns:

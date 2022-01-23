@@ -22,7 +22,7 @@ def create_capex_dict():
 
     Returns:
         [type]: [description]
-    """    
+    """
     capex = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'capex_switching_df', 'df')
     capex_c = capex.copy()
     capex_c.reset_index(inplace=True)
@@ -139,7 +139,7 @@ def investment_results(scenario_dict: dict, serialize_only: bool = False):
     max_year = max([int(year) for year in tech_choice_dict.keys()])
     year_range = range(MODEL_YEAR_START, max_year+1)
     data_container = []
-    for plant_name, country_code in tqdm(plant_names_and_country_codes, desc='Steel Plant Investments'):
+    for plant_name, country_code in tqdm(plant_names_and_country_codes, total=len(steel_plant_df), desc='Steel Plant Investments'):
         for year in year_range:
             capacity_value = production_stats_getter(production_stats_all, year, plant_name, 'capacity')
             data_container.append(

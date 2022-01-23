@@ -6,6 +6,7 @@ from collections import namedtuple
 import pandas as pd
 import pycountry
 
+from tqdm.auto import tqdm as tqdma
 
 # For logger and units dict
 from mppsteel.utility.utils import (
@@ -62,8 +63,9 @@ def create_country_ref_dict(df: pd.DataFrame, country_metadata_nt: namedtuple) -
             row[enum_dict['wsa_region']],
             row[enum_dict['rmi_region']]
         )
+    tqdma.pandas(desc="Create County Ref Dict")
     enumerated_cols = enumerate_columns(df.columns)
-    df.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
+    df.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     return country_ref_dict
 
 def country_df_formatter(df: pd.DataFrame) -> pd.DataFrame:
