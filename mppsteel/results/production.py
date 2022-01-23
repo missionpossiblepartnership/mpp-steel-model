@@ -12,8 +12,11 @@ from mppsteel.model_config import (
 from mppsteel.utility.reference_lists import LOW_CARBON_TECHS
 
 from mppsteel.model.solver import (
-    calculate_primary_and_secondary, load_materials,
-    load_business_cases, create_plant_capacities_dict,
+    load_materials, load_business_cases, create_plant_capacities_dict,
+)
+
+from mppsteel.model.solver_constraints import (
+    calculate_primary_and_secondary
 )
 
 from mppsteel.data_loading.reg_steel_demand_formatter import (
@@ -24,7 +27,7 @@ from mppsteel.data_loading.data_interface import (
     load_business_cases
 )
 
-from mppsteel.model.tco import get_s2_emissions
+from mppsteel.model.tco_calculation_functions import get_s2_emissions
 
 from mppsteel.utility.utils import (
     read_pickle_folder, get_logger, serialize_file, timer_func,

@@ -117,6 +117,11 @@ BIOMASS_SCENARIOS = {
     'average': 'Medium',
 }
 
+SOLVER_LOGICS = {
+    'rank': 'ranked',
+    'scale': 'scaled'
+}
+
 SCENARIO_SETTINGS = {
     'tech_moratorium': [True, False],
     'carbon_tax': CARBON_TAX_SCENARIOS.keys(),
@@ -126,7 +131,8 @@ SCENARIO_SETTINGS = {
     'hydrogen_cost_scenario': COST_SCENARIO_MAPPER.keys(),
     'biomass_cost_scenario': BIOMASS_SCENARIOS.keys(),
     'steel_demand_scenario': STEEL_DEMAND_SCENARIO_MAPPER.keys(),
-    'tech_switch_scenario': TECH_SWITCH_SCENARIOS.keys()
+    'tech_switch_scenario': TECH_SWITCH_SCENARIOS.keys(),
+    'solver_logic': SOLVER_LOGICS.keys()
 }
 
 DEFAULT_SCENARIO = {
@@ -139,6 +145,7 @@ DEFAULT_SCENARIO = {
     'biomass_cost_scenario': 'average', # average
     'steel_demand_scenario': 'average', # bau / average / high
     'tech_switch_scenario': 'equal_weight', # max_abatement / lowest_cost / equal_weight
+    'solver_logic': 'scale' # scale / rank
 }
 
 SCENARIO_OPTIONS = {

@@ -50,7 +50,13 @@ def abatement_ranker_logic(x: float):
 def min_ranker(df: pd.DataFrame, value_col: str, data_type: str, year: int, plant_name: str, start_tech: str, rank: bool = False):
     df_subset = df.loc[year, plant_name, start_tech].copy()
     if len(df_subset) == 1:
-        return df_subset.reset_index().set_index('switch_tech')[value_col]
+        df_subset = df_subset.reset_index().set_index('switch_tech')
+        if rank:
+            if data_type == 'tco':
+                df_subset['tco_rank_score'] = 1
+            if data_type == 'abatement':
+                df_subset['abatement_rank_score'] = 1
+        return df_subset
     df_subset = df_subset.reset_index().set_index('switch_tech')
     df_subset.sort_values(value_col, ascending=True, inplace=True)
     if rank:
@@ -63,8 +69,12 @@ def min_ranker(df: pd.DataFrame, value_col: str, data_type: str, year: int, plan
     return df_subset
 
 def get_best_choice(tco_df: pd.DataFrame, emissions_df: pd.DataFrame, plant_name: str, year: int, start_tech: str, solver_logic: str, weighting_dict: dict, technology_list: list):
-    # Choose Scaling algorithm
+    # Simply return current technology if no other options
+    if len(technology_list) < 2:
+        return start_tech
+    # Scaling algorithm
     if solver_logic == 'scaled':
+        # Calculate minimum scaled values
         tco_values = min_ranker(
             df=tco_df,
             data_type='tco',
@@ -81,18 +91,21 @@ def get_best_choice(tco_df: pd.DataFrame, emissions_df: pd.DataFrame, plant_name
             plant_name=plant_name,
             start_tech=start_tech,
             rank=False)
+        # Remove unavailable techs
         tco_values = tco_values.filter(items=technology_list, axis=0)
         abatement_values = abatement_values.filter(items=technology_list, axis=0)
+        # Scale the data
         tco_values['tco_scaled'] = scale_data(tco_values['tco'])
         tco_values.drop(tco_values.columns.difference(['tco_scaled']), 1, inplace=True)
         abatement_values['abatement_scaled'] = scale_data(abatement_values['abated_emissions_combined'], reverse=True)
         abatement_values.drop(abatement_values.columns.difference(['abatement_scaled']), 1, inplace=True)
+        # Join the abatement and tco data and calculate an overall score using the weightings
         combined_scales = tco_values.join(abatement_values)
         combined_scales['overall_score'] = (combined_scales['tco_scaled'] * weighting_dict['tco'])+ (combined_scales['abatement_scaled'] * weighting_dict['emissions'])
         combined_scales.sort_values('overall_score', axis=0, inplace=True)
         return combined_scales.idxmin()['overall_score']
-    
-    # Choose ranking algorithm
+
+    # Ranking algorithm
     if solver_logic == 'ranked':
         tco_values = min_ranker(
             df=tco_df,
