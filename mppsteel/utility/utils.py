@@ -411,3 +411,14 @@ def enumerate_columns(colnames : list):
 def move_cols_to_front(df: pd.DataFrame, cols_at_front: list):
     non_abatement_columns = list(set(df.columns).difference(set(cols_at_front)))
     return cols_at_front + non_abatement_columns
+
+def expand_dataset_years(df: pd.DataFrame, year_pairs: list):
+    df_c = df.copy()
+    for year_pair in year_pairs:
+        start_year, end_year = year_pair
+        year_range = range(start_year+1, end_year)
+        ticker = 1
+        for year in year_range:
+            df_c[year] = df_c[year-1] + ((df_c[end_year] / len(year_range)) * (ticker/len(year_range)))
+            ticker += 1
+    return df_c

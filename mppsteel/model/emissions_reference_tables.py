@@ -21,7 +21,6 @@ from mppsteel.data_loading.data_interface import (
     commodity_data_getter,
     static_energy_prices_getter,
     scope1_emissions_getter,
-    grid_emissivity_getter,
     scope3_ef_getter,
     carbon_tax_getter,
 )
@@ -165,7 +164,6 @@ def generate_emissions_dataframe(df: pd.DataFrame, year_end: int):
 
     # Scope 2 Emissions: These are the emissions it makes indirectly
     # like when the electricity or energy it buys for heating and cooling buildings
-    grid_emissivity = read_pickle_folder(PKL_DATA_IMPORTS, "grid_emissivity", "df")
 
     # S3 emissions: all the emissions associated, not with the company itself,
     # but that the organisation is indirectly responsible for, up and down its value chain.

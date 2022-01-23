@@ -195,13 +195,6 @@ def technology_availability_getter(df: pd.DataFrame, technology: str) -> tuple:
     year_available_until = df_c.loc[technology]["Year available until"]
     return year_available_from, year_available_until
 
-def grid_emissivity_getter(df: pd.DataFrame, year: str) -> float:
-    df_c = df.copy()
-    df_c.set_index(["Year"], inplace=True)
-    # logger.info(f'Getting Grid Emissivity value for: {year}')
-    value = df_c.loc[year]["Value"]
-    return value
-
 def format_commodities_data(df: pd.DataFrame, material_mapper: dict) -> pd.DataFrame:
     df_c = df.copy()
     logger.info(f"Formatting the ethanol_plastics_charcoal data")

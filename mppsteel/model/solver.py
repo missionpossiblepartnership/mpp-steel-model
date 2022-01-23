@@ -437,6 +437,7 @@ def choose_technology(
     electricity_cost_scenario: str = 'average',
     grid_scenario: str = 'low',
     hydrogen_cost_scenario: str = 'average',
+    biomass_cost_scenario: str = 'average',
     eur_usd_rate: float = 0.877
     ):
     """[summary]
@@ -469,6 +470,8 @@ def choose_technology(
     green_premium_timeseries = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'green_premium_timeseries', 'df')
     power_model = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'power_model_formatted', 'df')
     hydrogen_model = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'hydrogen_model_formatted', 'df')
+    bio_price_model = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'bio_price_model_formatted', 'df')
+    bio_constraint_model = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'bio_constraint_model_formatted', 'df')
     emissions_switching_df_summary = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'emissions_switching_df_summary', 'df')
     materials = load_materials()
     opex_values_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'capex_dict', 'df')
@@ -537,10 +540,10 @@ def choose_technology(
                 tco = tco_calc(
                     plant, year, current_tech, carbon_tax_df, plant_df, business_cases,
                     all_plant_variable_costs_summary, green_premium_timeseries,
-                    power_model, hydrogen_model, opex_values_dict['other_opex'],
+                    power_model, hydrogen_model, bio_price_model, opex_values_dict['other_opex'],
                     calculated_s3_emissions, capex_df, INVESTMENT_CYCLE_LENGTH,
                     electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario,
-                    eur_usd_rate)
+                    biomass_cost_scenario, eur_usd_rate)
 
                 tco_switching_df_summary_final_rank = tco_min_ranker(tco, ['tco'], rank_only)
                 emissions_switching_df_summary_final_rank = abatement_min_ranker(emissions_switching_df_summary, current_tech, year, ['abated_s1_emissions'], rank_only)
@@ -725,6 +728,7 @@ def solver_flow(scenario_dict: dict, year_end: int, serialize_only: bool = False
         electricity_cost_scenario=scenario_dict['electricity_cost_scenario'],
         grid_scenario=scenario_dict['grid_scenario'],
         hydrogen_cost_scenario=scenario_dict['hydrogen_cost_scenario'],
+        biomass_cost_scenario=scenario_dict['biomass_cost_scenario'],
         eur_usd_rate=scenario_dict['eur_usd']
         )
 

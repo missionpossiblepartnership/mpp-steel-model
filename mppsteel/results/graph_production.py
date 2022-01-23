@@ -31,7 +31,7 @@ REGION_COLS = ['region_wsa_region', 'region_continent', 'region_region']
 
 SCENARIO_COLS = ['scenario_tech_moratorium', 'scenario_carbon_tax',
     'scenario_green_premium', 'scenario_electricity_cost_scenario',
-    'scenario_hydrogen_cost_scenario', 'scenario_steel_demand_scenario']
+    'scenario_hydrogen_cost_scenario', 'scenario_biomass_cost_scenario', 'scenario_steel_demand_scenario']
 
 CAPACITY_PRODUCTION_COLS = ['capacity', 'production']
 

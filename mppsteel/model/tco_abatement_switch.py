@@ -14,11 +14,12 @@ from tqdm.auto import tqdm
 
 logger = get_logger("TCO & Abatement switches")
 
-def tco_regions_ref_generator(electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario, eur_usd_rate, technology: str = None):
+def tco_regions_ref_generator(electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario, biomass_cost_scenario, eur_usd_rate, technology: str = None):
     carbon_tax_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'carbon_tax_timeseries', 'df')
     all_plant_variable_costs_summary = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'all_plant_variable_costs_summary', 'df')
     power_model = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'power_model_formatted', 'df')
     hydrogen_model = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'hydrogen_model_formatted', 'df')
+    bio_price_model = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'bio_price_model_formatted', 'df')
     opex_values_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'capex_dict', 'df')
     business_cases = load_business_cases()
     calculated_s3_emissions = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'calculated_s3_emissions', 'df')
@@ -35,10 +36,10 @@ def tco_regions_ref_generator(electricity_cost_scenario, grid_scenario, hydrogen
                 tco_df = tco_calc(
                     country_code, year, tech, carbon_tax_df,
                     business_cases, all_plant_variable_costs_summary,
-                    power_model, hydrogen_model,
+                    power_model, hydrogen_model, bio_price_model,
                     opex_values_dict['other_opex'], calculated_s3_emissions,
                     capex_df, INVESTMENT_CYCLE_LENGTH, electricity_cost_scenario,
-                    grid_scenario, hydrogen_cost_scenario)
+                    grid_scenario, hydrogen_cost_scenario, biomass_cost_scenario)
                 df_list.append(tco_df)
     combined_df = pd.concat(df_list).reset_index(drop=True)
     return combined_df
@@ -113,8 +114,9 @@ def run_tco_tests(scenario_dict, serialize_only: bool = False):
     electricity_cost_scenario=scenario_dict['electricity_cost_scenario']
     grid_scenario=scenario_dict['grid_scenario']
     hydrogen_cost_scenario=scenario_dict['hydrogen_cost_scenario']
+    biomass_cost_scenario=scenario_dict['biomass_cost_scenario']
     eur_usd_rate=scenario_dict['eur_usd']
-    opex_capex_reference_data = tco_regions_ref_generator(electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario, eur_usd_rate)
+    opex_capex_reference_data = tco_regions_ref_generator(electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario, biomass_cost_scenario, eur_usd_rate)
     steel_plant_ref = create_full_steel_plant_ref(eur_usd_rate)
     tco_reference_data = map_region_tco_to_plants(steel_plant_ref, opex_capex_reference_data)
     tco_reference_data = add_results_metadata(tco_reference_data, scenario_dict)

@@ -73,9 +73,6 @@ def load_data(serialize_only: bool = False) -> dict:
         f"{IMPORT_DATA_PATH}/Scope 3 Emissions Factors.xlsx", sheet_name=1, skiprows=1
     )
 
-    # Import grid emissivity
-    grid_emissivity = extract_data(IMPORT_DATA_PATH, "Grid Emissivity", "xlsx")
-
     # Import static energy prices
     static_energy_prices = extract_data(
         IMPORT_DATA_PATH, "Energy Prices - Static", "xlsx"
@@ -90,25 +87,10 @@ def load_data(serialize_only: bool = False) -> dict:
     # Import technology availability
     tech_availability = extract_data(IMPORT_DATA_PATH, "Technology Availability", "csv")
 
-    # Import power grid assumptions
-    power_grid_assumptions = extract_data(
-        IMPORT_DATA_PATH, "Power Grid Assumptions", "xlsx"
-    )
-
-    # Import technology availability
-    carbon_tax_assumptions = extract_data(
-        IMPORT_DATA_PATH, "Carbon Tax Assumptions", "csv"
-    )
-
     # Import Technology Business Cases
     business_cases = replace_rows(
         extract_data(IMPORT_DATA_PATH, "Business Cases One Table", "xlsx"), 0
     ).fillna(0)
-
-    # Import Hydrogen Electrolyzer Capex Data
-    hydrogen_electrolyzer_capex = extract_data(
-        IMPORT_DATA_PATH, "Hydrogen Electrolyzer Capex", "xlsx"
-    )
 
     # Import Commodities Data
     ethanol_plastic_charcoal = extract_data(
@@ -123,6 +105,7 @@ def load_data(serialize_only: bool = False) -> dict:
     # Import Price and Emissions Models
     power_model = get_pe_model_data('power')
     hydrogen_model = get_pe_model_data('hydrogen')
+    bio_model = get_pe_model_data('bio')
     ccus_model = get_pe_model_data('ccus')
 
     # Define a data dictionary
@@ -135,19 +118,16 @@ def load_data(serialize_only: bool = False) -> dict:
         "s1_emissions_factors": s1_emissions_factors,
         "static_energy_prices": static_energy_prices,
         "feedstock_prices": feedstock_prices,
-        "grid_emissivity": grid_emissivity,
         "regional_steel_demand": regional_steel_demand,
         "steel_plants": steel_plants,
         "tech_availability": tech_availability,
         "s3_emissions_factors_1": s3_emissions_factors_1,
         "s3_emissions_factors_2": s3_emissions_factors_2,
         "business_cases": business_cases,
-        "power_grid_assumptions": power_grid_assumptions,
-        "hydrogen_electrolyzer_capex": hydrogen_electrolyzer_capex,
-        "carbon_tax_assumptions": carbon_tax_assumptions,
         "ethanol_plastic_charcoal": ethanol_plastic_charcoal,
         "power_model": power_model,
         "hydrogen_model": hydrogen_model,
+        "bio_model": bio_model,
         "ccus_model": ccus_model,
     }
 

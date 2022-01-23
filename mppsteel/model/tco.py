@@ -145,6 +145,7 @@ def get_discounted_opex_values(
     variable_cost_summary: pd.DataFrame,
     power_model: dict,
     hydrogen_model: dict,
+    bio_price_model: dict,
     other_opex_df: pd.DataFrame,
     s3_emissions_df: pd.DataFrame,
     year_interval: int,
@@ -152,6 +153,7 @@ def get_discounted_opex_values(
     electricity_cost_scenario: str,
     grid_scenario: str,
     hydrogen_cost_scenario: str,
+    biomass_cost_scenario: str,
     base_tech: str,
     ):
 
@@ -186,18 +188,19 @@ def get_discounted_opex_values(
 def tco_calc(
     country_code, start_year: int, base_tech: str, carbon_tax_df: pd.DataFrame,
     business_cases: pd.DataFrame, variable_cost_summary: pd.DataFrame,
-    power_model: dict, hydrogen_model: dict,
+    power_model: dict, hydrogen_model: dict, bio_price_model: dict,
     other_opex_df: pd.DataFrame, s3_emissions_df: pd.DataFrame, capex_df: pd.DataFrame,
     investment_cycle: int, electricity_cost_scenario: str,
-    grid_scenario: str, hydrogen_cost_scenario: str,
+    grid_scenario: str, hydrogen_cost_scenario: str, biomass_cost_scenario: str,
     ):
     opex_values = get_discounted_opex_values(
         country_code, start_year, carbon_tax_df, business_cases,
         variable_cost_summary, power_model,
-        hydrogen_model, other_opex_df, s3_emissions_df,
+        hydrogen_model, bio_price_model, other_opex_df, s3_emissions_df,
         year_interval=investment_cycle, int_rate=DISCOUNT_RATE,
         electricity_cost_scenario=electricity_cost_scenario,
         grid_scenario=grid_scenario, hydrogen_cost_scenario=hydrogen_cost_scenario,
+        biomass_cost_scenario=biomass_cost_scenario,
         base_tech=base_tech,
         )
     capex_values = calculate_capex(capex_df, start_year, base_tech).swaplevel().loc[base_tech].groupby('end_technology').sum()

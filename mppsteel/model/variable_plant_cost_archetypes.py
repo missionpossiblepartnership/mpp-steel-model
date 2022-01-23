@@ -22,7 +22,7 @@ from mppsteel.data_loading.data_interface import (
 )
 
 from mppsteel.data_loading.pe_model_formatter import (
-    power_data_getter, hydrogen_data_getter, ccus_data_getter, RE_DICT
+    power_data_getter, hydrogen_data_getter, bio_price_getter, ccus_data_getter, RE_DICT
 )
 
 # Create logger
@@ -43,7 +43,7 @@ def generate_feedstock_dict():
     return {**commodities_dict, **dict(zip(feedstock_prices['Metric'], feedstock_prices['Value']))}
 
 
-def plant_variable_costs(year_end: int, electricity_cost_scenario: str, grid_decarb_scenario: str, hydrogen_cost_scenario: str):
+def plant_variable_costs(year_end: int, electricity_cost_scenario: str, grid_decarb_scenario: str, hydrogen_cost_scenario: str, biomass_cost_scenario: str):
     """[summary]
 
     Args:
@@ -59,6 +59,7 @@ def plant_variable_costs(year_end: int, electricity_cost_scenario: str, grid_dec
     steel_plant_region_ng_dict = steel_plants[['country_code', 'cheap_natural_gas']].set_index('country_code').to_dict()['cheap_natural_gas']
     power_model_formatted = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'power_model_formatted', 'df')
     hydrogen_model_formatted = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'hydrogen_model_formatted', 'df')
+    bio_price_model_formatted = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'bio_price_model_formatted', 'df')
     ccus_model_formatted = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'ccus_model_formatted', 'df')
     static_energy_prices = read_pickle_folder(PKL_DATA_IMPORTS, 'static_energy_prices', 'df')[['Metric', 'Year', 'Value']]
     feedstock_dict = generate_feedstock_dict()
@@ -75,10 +76,12 @@ def plant_variable_costs(year_end: int, electricity_cost_scenario: str, grid_dec
             static_energy_df=static_energy_prices,
             power_df=power_model_formatted,
             hydrogen_df=hydrogen_model_formatted,
+            bio_df=bio_price_model_formatted,
             ccus_df=ccus_model_formatted,
             electricity_cost_scenario=electricity_cost_scenario,
             grid_decarb_scenario=grid_decarb_scenario,
             hydrogen_cost_scenario=hydrogen_cost_scenario,
+            biomass_cost_scenario=biomass_cost_scenario,
         )
         df['plant_country_ref'] = country_code
         df_list.append(df)
@@ -94,10 +97,12 @@ def generate_variable_costs(
     static_energy_df: pd.DataFrame = None,
     power_df: pd.DataFrame = None,
     hydrogen_df: pd.DataFrame = None,
+    bio_df: pd.DataFrame = None,
     ccus_df: pd.DataFrame = None,
     electricity_cost_scenario: str = '',
     grid_decarb_scenario: str = '',
     hydrogen_cost_scenario: str = '',
+    biomass_cost_scenario: str = '',
 ) -> pd.DataFrame:
     """[summary]
 
@@ -130,15 +135,21 @@ def generate_variable_costs(
 
         if resource == 'Natural gas':
             if ng_flag == 1:
-                row[enum_dict['Natural gas']] = row[enum_dict['value']] * natural_gas_low
+                row[enum_dict[resource]] = row[enum_dict['value']] * natural_gas_low
             elif ng_flag == 0:
-                row[enum_dict['Natural gas']] = row[enum_dict['value']] * natural_gas_high
+                row[enum_dict[resource]] = row[enum_dict['value']] * natural_gas_high
 
         if resource == 'Electricity':
-            row[enum_dict['Electricity']] = row[enum_dict['value']] * electricity_price
+            row[enum_dict[resource]] = row[enum_dict['value']] * electricity_price
 
         if resource == 'Hydrogen':
-            row[enum_dict['Hydrogen']] = row[enum_dict['value']] * hydrogen_price
+            row[enum_dict[resource]] = row[enum_dict['value']] * hydrogen_price
+
+        if resource == 'Biomass':
+            row[enum_dict[resource]] = row[enum_dict['value']] * bio_price
+
+        if resource == 'Biomethane':
+            row[enum_dict[resource]] = row[enum_dict['value']] * bio_price
 
         return row
     
@@ -166,6 +177,11 @@ def generate_variable_costs(
             hydrogen_df, 'prices', dynamic_year, plant_country_ref,
             default_country='USA', variable='Total price premium ',
             cost_scenario=COST_SCENARIO_MAPPER[hydrogen_cost_scenario],
+        )
+        bio_price = bio_price_getter(
+            bio_df, dynamic_year, plant_country_ref,
+            default_country='USA', feedstock_type='Weighted average',
+            cost_scenario=COST_SCENARIO_MAPPER[biomass_cost_scenario],
         )
 
         natural_gas_high = static_energy_prices_getter(static_energy_df, 'Natural gas - high', static_year)
@@ -208,8 +224,8 @@ def generate_variable_plant_summary(scenario_dict: dict, serialize_only: bool = 
     electricity_cost_scenario = scenario_dict['electricity_cost_scenario']
     grid_scenario = scenario_dict['grid_scenario']
     hydrogen_cost_scenario = scenario_dict['hydrogen_cost_scenario']
-
-    all_plant_variable_costs = plant_variable_costs(MODEL_YEAR_END, electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario)
+    biomass_cost_scenario = scenario_dict['biomass_cost_scenario']
+    all_plant_variable_costs = plant_variable_costs(MODEL_YEAR_END, electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario, biomass_cost_scenario)
     all_plant_variable_costs_summary = format_variable_costs(all_plant_variable_costs)
 
     if serialize_only:

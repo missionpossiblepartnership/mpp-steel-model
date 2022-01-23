@@ -153,7 +153,8 @@ def generate_production_emission_stats(
     as_summary: bool = False,
     electricity_cost_scenario: str = 'average',
     grid_scenario: str = 'low',
-    hydrogen_cost_scenario: str =  'average'):
+    hydrogen_cost_scenario: str =  'average',
+    ):
     """[summary]
 
     Args:
@@ -329,6 +330,8 @@ def production_results_flow(scenario_dict: dict, serialize_only: bool = False):
     electricity_cost_scenario=scenario_dict['electricity_cost_scenario']
     grid_scenario=scenario_dict['grid_scenario']
     hydrogen_cost_scenario=scenario_dict['hydrogen_cost_scenario']
+    biomass_cost_scenario=scenario_dict['biomass_cost_scenario']
+
     production_results = generate_production_stats(tech_capacity_df, steel_demand_df, steel_demand_scenario, max_solver_year)
     production_results_all = production_stats_generator(production_results)
     production_emissions = generate_production_emission_stats(
