@@ -109,7 +109,7 @@ def production_stats_generator(production_df: pd.DataFrame, as_summary: bool = F
     Returns:
         [type]: [description]
     """    
-    logger.info(f'- Generating Material Usage stats')
+    logger.info(f'- Generating Production Stats')
     df_c = production_df.copy()
     material_dict_mapper = load_materials_mapper()
     standardised_business_cases = load_business_cases()
@@ -149,18 +149,15 @@ def generate_production_emission_stats(
     as_summary: bool = False,
     electricity_cost_scenario: str = 'average',
     grid_scenario: str = 'low',
-    hydrogen_cost_scenario: str =  'average',
-    ):
+    hydrogen_cost_scenario: str =  'average'):
     """[summary]
-
     Args:
         production_df (pd.DataFrame): [description]
         as_summary (bool, optional): [description]. Defaults to False.
-
     Returns:
         [type]: [description]
-    """
-    logger.info(f'- Producing Production Emission Stats')
+    """    
+    logger.info(f'- Generating Production Emission Stats')
     emissions_dict = create_emissions_dict()
     emissions_name_ref = ['s1', 's2', 's3']
 
@@ -172,30 +169,25 @@ def generate_production_emission_stats(
 
     df_c = production_df.copy()
 
-    def value_mapper(row, enum_dict):
-        if row[enum_dict['technology']] == 'Close plant':
+    # Create columns
+    for colname in emissions_name_ref:
+        df_c[f'{colname}_emissions'] = 0
+
+        # Create values
+    for row in tqdm(df_c.itertuples(), total=df_c.shape[0], desc='Production Emissions'):
+        if row.technology == 'Close plant':
             for colname in emissions_name_ref:
-                row[enum_dict[df_colname]] = 0
+                df_c.loc[row.Index, f'{colname}_emissions'] = 0
         else:
             for colname in emissions_name_ref:
                 if colname in ['s1', 's3']:
-                    row[enum_dict[df_colname]] = row[enum_dict['production']] * emissions_getter(
-                        emissions_dict, colname, row[enum_dict['technology']], row[enum_dict['year']])
+                    df_c.loc[row.Index, f'{colname}_emissions'] = row.production * emissions_getter(
+                        emissions_dict, colname, row.technology, row.year)
                 elif colname == 's2':
-                    row[enum_dict[df_colname]] = row[enum_dict['production']] * get_s2_emissions(
+                    df_c.loc[row.Index, f'{colname}_emissions'] = row.production * get_s2_emissions(
                         power_model, hydrogen_model, business_cases,
-                        row[enum_dict['year']], row[enum_dict['country_code']], row[enum_dict['technology']],
+                        row.year, row.country_code, row.technology,
                         electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario)
-        return row
-    # Create columns
-    for colname in emissions_name_ref:
-        df_colname = f'{colname}_emissions'
-        df_c[df_colname] = 0
-
-    # Create values
-    tqdma.pandas(desc="Generate Production Emission Stats")
-    enumerated_cols = enumerate_columns(df_c.columns)
-    df_c = df_c.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
 
     if as_summary:
         return df_c.groupby(['year', 'technology']).sum()

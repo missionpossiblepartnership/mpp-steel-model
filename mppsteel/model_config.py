@@ -145,7 +145,7 @@ DEFAULT_SCENARIO = {
     'biomass_cost_scenario': 'average', # average
     'steel_demand_scenario': 'average', # bau / average / high
     'tech_switch_scenario': 'equal_weight', # max_abatement / lowest_cost / equal_weight
-    'solver_logic': 'scale' # scale / rank
+    'solver_logic': 'rank' # scale / rank
 }
 
 SCENARIO_OPTIONS = {

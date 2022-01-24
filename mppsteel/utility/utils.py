@@ -292,8 +292,6 @@ def return_furnace_group(furnace_dict: dict, tech:str):
         if tech in furnace_dict[key]:
             return furnace_dict[key]
 
-pd.DataFrame().to_csv()
-
 def pickle_to_csv(folder_path: str, pkl_folder: str, pickle_filename: str, csv_filename: str = ''):
     df = read_pickle_folder(pkl_folder, pickle_filename)
     logger.info(f'||| Saving {pickle_filename} pickle file as {csv_filename or pickle_filename}.csv')
