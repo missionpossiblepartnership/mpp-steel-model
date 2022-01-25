@@ -133,9 +133,14 @@ dmypy.json
 
 # logs
 /logs
+*.log
 
 # tests
 /tests
+
+# pickle files
+mppsteel/data/pkl_data
+*.pickle
 
 # output folder
 mppsteel/data/output_data

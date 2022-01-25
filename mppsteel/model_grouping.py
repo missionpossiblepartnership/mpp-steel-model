@@ -9,7 +9,7 @@ from mppsteel.utility.utils import (
 from mppsteel.data_loading.data_import import load_data
 from mppsteel.data_loading.reg_steel_demand_formatter import get_steel_demand
 from mppsteel.minimodels.timeseries_generator import generate_timeseries
-from mppsteel.data_loading.business_case_standardisation import (
+from mppsteel.data_loading.standardise_business_cases import (
     standardise_business_cases
 )
 from mppsteel.data_loading.business_case_tests import (
@@ -28,6 +28,7 @@ from mppsteel.model.emissions import calculate_emissions
 from mppsteel.model.investment_cycles import investment_cycle_flow
 from mppsteel.model.variable_plant_cost_archetypes import generate_variable_plant_summary
 from mppsteel.model.solver import solver_flow
+from mppsteel.model.tco_abatement_switch import tco_presolver_reference, abatement_presolver_reference
 from mppsteel.results.production import production_results_flow
 from mppsteel.results.investments import investment_results
 from mppsteel.results.graph_production import create_graphs
@@ -77,6 +78,10 @@ def data_preprocessing_phase(scenario_dict: dict):
     investment_cycle_flow(serialize_only=True)
     generate_variable_plant_summary(scenario_dict, serialize_only=True)
 
+def model_presolver(scenario_dict: dict):
+    tco_presolver_reference(scenario_dict, serialize_only=True)
+    abatement_presolver_reference(scenario_dict, serialize_only=True)
+
 def model_calculation_phase(scenario_dict: dict):
     solver_flow(scenario_dict, year_end=MODEL_YEAR_END, serialize_only=True)
 
@@ -90,12 +95,18 @@ def model_outputs_phase(new_folder: bool = False, timestamp: str = ''):
         folder_filepath = f'{OUTPUT_FOLDER}/{timestamp}'
         create_folder_if_nonexist(folder_filepath)
         save_path = folder_filepath
+
+    # Save Intermediate Pickle Files
+    pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'capex_switching_df')
+    pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'steel_plant_abatement_switches')
+    pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'tco_reference_data')
+
+    # Save Final Pickle Files
     pkl_files = [
         'production_stats_all', 'production_emissions',
         'global_metaresults', 'investment_results']
     for pkl_file in pkl_files:
         pickle_to_csv(save_path, PKL_DATA_FINAL, pkl_file)
-    pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'emissions_switching_df_full')
 
 def model_graphs_phase(new_folder: bool = False, timestamp: str = ''):
     save_path = OUTPUT_FOLDER
@@ -115,6 +126,16 @@ def data_preprocessing_refresh(scenario_dict: dict):
 def data_import_and_preprocessing_refresh(scenario_dict: dict):
     data_import_stage()
     data_preprocessing_phase(scenario_dict)
+
+def tco_and_abatement_calculations(scenario_dict: dict):
+    model_presolver(scenario_dict)
+
+def scenario_batch_run(scenario_dict: dict, dated_output_folder: bool, timestamp: str):
+    data_preprocessing_phase(scenario_dict)
+    model_presolver(scenario_dict)
+    model_calculation_phase(scenario_dict)
+    model_results_phase(scenario_dict)
+    model_outputs_phase(dated_output_folder, timestamp)
 
 def half_model_run(scenario_dict: dict, dated_output_folder: bool, timestamp: str):
     model_calculation_phase(scenario_dict)
@@ -151,39 +172,60 @@ def business_case_tests(new_folder: bool = False, timestamp: str = '', create_te
 def generate_minimodels(scenario_dict: dict):
     generate_timeseries(serialize_only=True, scenario_dict=scenario_dict)
 
+def tco_switch_reference(scenario_dict: dict):
+    tco_presolver_reference(scenario_dict, serialize_only=True)
+
+def abatement_switch_reference(scenario_dict: dict):
+    abatement_presolver_reference(scenario_dict, serialize_only=True)
+
+def production_flow(scenario_dict: dict):
+    production_results_flow(scenario_dict, serialize_only=True)
+
 def investment_flow(scenario_dict: dict):
     investment_results(scenario_dict, serialize_only=True)
 
-parser = argparse.ArgumentParser(description='The MPP Python Steel Model Command Line Interface')
+parser = argparse.ArgumentParser(description='The MPP Python Steel Model Command Line Interface', add_help=False)
 parser.add_argument(
-    "--f", action="store_true", help="Runs the complete model flow")
+    "-f", "--full_model", action="store_true", help="Runs the complete model flow")
 parser.add_argument(
-    "--s", action="store_true", help="Runs the solver scripts directly")
+    "-s", "--solver", action="store_true", help="Runs the solver scripts directly")
 parser.add_argument(
-    "--p", action="store_true", help="Runs the preprocessing scripts directly")
+    "-p", "--preprocessing", action="store_true", help="Runs the preprocessing scripts directly")
 parser.add_argument(
-    "--m", action="store_true", help="Runs the production and investment scripts")
+    "-m", "--production_and_investment", action="store_true", help="Runs the production and investment scripts")
 parser.add_argument(
-    "--o", action="store_true", help="Runs the output scripts directly")
+    "-o", "--output", action="store_true", help="Runs the output scripts directly")
 parser.add_argument(
-    "--h", action="store_true", help="Runs the half model sctips scripts directly")
+    "-h", "--half_model", action="store_true", help="Runs the half model sctips scripts directly")
 parser.add_argument(
-    "--i", action="store_true", help="Runs the data import scripts scripts directly")
+    "-i", "--data_import", action="store_true", help="Runs the data import scripts scripts directly")
 parser.add_argument(
-    "--d", action="store_true", help="Runs the data refresh scripts directly")
+    "-d", "--data_refresh", action="store_true", help="Runs the data refresh scripts directly")
 parser.add_argument(
-    "--r", action="store_true", help="Runs the model results scripts directly")
+    "-r", "--results", action="store_true", help="Runs the model results scripts directly")
 parser.add_argument(
-    "--b", action="store_true", help="Runs the business cases script directly")
+    "-b", "--business_cases", action="store_true", help="Runs the business cases script directly")
 parser.add_argument(
-    "--v", action="store_true", help="Runs the variable costs sumary script directly")
+    "-v", "--variable_costs", action="store_true", help="Runs the variable costs sumary script directly")
 parser.add_argument(
-    "--q", action="store_true", help="Adds custom scenario inputs to the model")
+    "-q", "--custom_scenario", action="store_true", help="Adds custom scenario inputs to the model")
 parser.add_argument(
-    "--t", action="store_true", help="Runs the results and output scripts directly")
+    "-c", "--choose_scenario", action="store", help="Runs a single fixed scenario to the model that you can specify by name")
 parser.add_argument(
-    "--g", action="store_true", help="Runs the graph output script directly")
+    "-a", "--all_scenarios", action="store_true", help="Runs all fixed scenarios in the model")
 parser.add_argument(
-    "--n", action="store_true", help="Runs the minimodels script directly")
+    "-t", "--results_and_output", action="store_true", help="Runs the results and output scripts directly")
 parser.add_argument(
-    "--e", action="store_true", help="Runs the investments script directly")
+    "-g", "--graphs", action="store_true", help="Runs the graph output script directly")
+parser.add_argument(
+    "-n", "--minimodels", action="store_true", help="Runs the minimodels script directly")
+parser.add_argument(
+    "-w", "--production", action="store_true", help="Runs the production script directly")
+parser.add_argument(
+    "-e", "--investment", action="store_true", help="Runs the investments script directly")
+parser.add_argument(
+    "-x", "--ta", action="store_true", help="Runs the tco and abatement scripts only")
+parser.add_argument(
+    "-y", "--tco", action="store_true", help="Runs the tco script only")
+parser.add_argument(
+    "-z", "--abatement", action="store_true", help="Runs the abatament script only")

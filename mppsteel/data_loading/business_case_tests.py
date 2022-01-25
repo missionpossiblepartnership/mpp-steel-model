@@ -1,15 +1,17 @@
 """Script to test the business cases"""
 
+from itertools import groupby
+
 import pandas as pd
 import numpy as np
 
-from itertools import groupby
 from tqdm import tqdm
+from tqdm.auto import tqdm as tqdma
 
 # For logger
 from mppsteel.utility.utils import (
     get_logger, serialize_file, extract_data,
-    read_pickle_folder, timer_func
+    read_pickle_folder, timer_func, enumerate_columns
 )
 
 from mppsteel.model_config import (
@@ -29,11 +31,10 @@ from mppsteel.utility.reference_lists import (
     HARD_CODED_FACTORS,
 )
 
-from mppsteel.data_loading.business_case_standardisation import (
+from mppsteel.data_loading.standardise_business_cases import (
     full_model_flow, create_hardcoded_exceptions,
     business_case_formatter_splitter,
-    create_production_factors, furnace_group_from_tech,
-
+    create_production_factors, furnace_group_from_tech
 )
 
 # Create logger
@@ -61,16 +62,20 @@ def process_inspector(df: pd.DataFrame, excel_bc_summary: pd.DataFrame, rounding
     df_c['ref_value'] = ''
     df_c['matches_ref'] = ''
     materials_ref = excel_bc_summary.index.get_level_values(1).unique()
-    
-    for row in df_c.itertuples():
-        ref_value = master_getter(excel_bc_summary, materials_ref, row.technology, row.material, rounding)
-        calculated_value = round(row.value, rounding)
+
+    def value_mapper(row, enum_dict):
+        ref_value = master_getter(excel_bc_summary, materials_ref, row[enum_dict['technology']], row[enum_dict['material']], rounding)
+        calculated_value = round(row[enum_dict['value']], rounding)
         if calculated_value == ref_value:
-            df_c.loc[row.Index, 'matches_ref'] = 1
+            row[enum_dict['matches_ref']] = 1
         else:
-            df_c.loc[row.Index, 'matches_ref'] = 0
-        df_c.loc[row.Index, 'ref_value'] = ref_value
+            row[enum_dict['matches_ref']] = 0
+        row[enum_dict['ref_value']] = ref_value
+    tqdma.pandas(desc="Prrocess Inspector")
+    enumerated_cols = enumerate_columns(df_c.columns)
+    df_c = df_c.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     return df_c
+
 
 def inspector_getter(df, technology, material=None, process=None):
     row_order = ['process_factor_value', 'value', 'ref_value', 'matches_ref']

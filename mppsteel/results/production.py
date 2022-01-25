@@ -2,6 +2,7 @@
 
 import pandas as pd
 from tqdm import tqdm
+from tqdm.auto import tqdm as tqdma
 
 from mppsteel.model_config import (
     AVERAGE_LEVEL_OF_CAPACITY,
@@ -12,8 +13,11 @@ from mppsteel.model_config import (
 from mppsteel.utility.reference_lists import LOW_CARBON_TECHS
 
 from mppsteel.model.solver import (
-    calculate_primary_and_secondary, load_materials,
-    load_business_cases, create_plant_capacities_dict,
+    load_materials, load_business_cases, create_plant_capacities_dict,
+)
+
+from mppsteel.model.solver_constraints import (
+    calculate_primary_and_secondary
 )
 
 from mppsteel.data_loading.reg_steel_demand_formatter import (
@@ -24,10 +28,11 @@ from mppsteel.data_loading.data_interface import (
     load_business_cases
 )
 
-from mppsteel.model.tco import get_s2_emissions
+from mppsteel.model.tco_calculation_functions import get_s2_emissions
 
 from mppsteel.utility.utils import (
-    read_pickle_folder, get_logger, serialize_file, timer_func, add_results_metadata,
+    read_pickle_folder, get_logger, serialize_file, timer_func,
+    add_results_metadata, enumerate_columns
 )
 
 # Create logger
@@ -79,13 +84,16 @@ def tech_capacity_splits():
     year_range = range(MODEL_YEAR_START, max_year+1)
     df_list = []
 
+    def value_mapper(row, enum_dict):
+        row[enum_dict['capacity']] = calculate_primary_and_secondary(tech_capacities_dict, row[enum_dict['steel_plant']], row[enum_dict['technology']]) / 1000
+        return row
+
     for year in tqdm(year_range, total=len(year_range), desc='Tech Capacity Splits'):
         df = pd.DataFrame({'year': year, 'steel_plant': steel_plants, 'technology': '', 'capacity': 0})
         df['technology'] = df['steel_plant'].apply(lambda plant: get_tech_choice(tech_choices_dict, year, plant))
-
-        for row in df.itertuples():
-            df.loc[row.Index, 'capacity'] = calculate_primary_and_secondary(tech_capacities_dict, row.steel_plant, row.technology) / 1000
-        df = df[df['technology'] != 'Not operating']
+        tqdma.pandas(desc="Technology Capacity  Splits")
+        enumerated_cols = enumerate_columns(df.columns)
+        df = df.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
         df_list.append(df)
 
     df_combined = pd.concat(df_list)
@@ -95,15 +103,13 @@ def tech_capacity_splits():
 
 def production_stats_generator(production_df: pd.DataFrame, as_summary: bool = False):
     """[summary]
-
     Args:
         production_df (pd.DataFrame): [description]
         as_summary (bool, optional): [description]. Defaults to False.
-
     Returns:
         [type]: [description]
     """    
-    logger.info(f'- Generating Material Usage stats')
+    logger.info(f'- Generating Production Stats')
     df_c = production_df.copy()
     material_dict_mapper = load_materials_mapper()
     standardised_business_cases = load_business_cases()
@@ -145,15 +151,13 @@ def generate_production_emission_stats(
     grid_scenario: str = 'low',
     hydrogen_cost_scenario: str =  'average'):
     """[summary]
-
     Args:
         production_df (pd.DataFrame): [description]
         as_summary (bool, optional): [description]. Defaults to False.
-
     Returns:
         [type]: [description]
     """    
-    logger.info(f'- Generating Material Usage stats')
+    logger.info(f'- Generating Production Emission Stats')
     emissions_dict = create_emissions_dict()
     emissions_name_ref = ['s1', 's2', 's3']
 
@@ -206,10 +210,10 @@ def global_metaresults_calculator(
 
     Returns:
         [type]: [description]
-    """    
+    """
     # Initial Steel capacity values
     logger.info(f'- Generating Global Metaresults')
-    
+
     steel_capacity_years = {'2020': 2362.5}
     steel_capacity_years['2022'] = steel_capacity_years['2020'] * 1.03
     steel_capacity_years['2021'] = (steel_capacity_years['2020'] + steel_capacity_years['2022']) / 2
@@ -267,9 +271,9 @@ def business_case_getter(df: pd.DataFrame, tech: str, material: str):
 
     Returns:
         [type]: [description]
-    """    
+    """
     if material in df[(df['technology'] == tech)]['material_category'].unique():
-        return df[(df['technology'] == tech) & (df['material_category'] == material)]['value'].values[0]
+        return df[(df['technology'] == tech) & (df['material_category'] == material)]['value'].values
     return 0
 
 def get_tech_choice(tc_dict: dict, year: int, plant_name: str):
@@ -315,6 +319,7 @@ def production_results_flow(scenario_dict: dict, serialize_only: bool = False):
     electricity_cost_scenario=scenario_dict['electricity_cost_scenario']
     grid_scenario=scenario_dict['grid_scenario']
     hydrogen_cost_scenario=scenario_dict['hydrogen_cost_scenario']
+
     production_results = generate_production_stats(tech_capacity_df, steel_demand_df, steel_demand_scenario, max_solver_year)
     production_results_all = production_stats_generator(production_results)
     production_emissions = generate_production_emission_stats(

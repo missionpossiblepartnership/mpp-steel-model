@@ -1,5 +1,5 @@
 from mppsteel.data_loading import pe_model_formatter
-from mppsteel.data_loading.business_case_standardisation import (
+from mppsteel.data_loading.standardise_business_cases import (
     standardise_business_cases,
 )
 
@@ -11,7 +11,7 @@ from mppsteel.model.investment_cycles import investment_cycle_flow
 
 from mppsteel.model.variable_plant_cost_archetypes import generate_variable_plant_summary
 
-from mppsteel.model_config import MODEL_YEAR_END, PKL_DATA_INTERMEDIATE
+from mppsteel.model_config import MODEL_YEAR_END, PKL_DATA_INTERMEDIATE, PKL_DATA_IMPORTS, INVESTMENT_CYCLE_LENGTH
 
 from mppsteel.results.investments import investment_results
 
@@ -36,10 +36,3 @@ from mppsteel.data_loading.pe_model_formatter import format_pe_data, power_data_
 # print(steel_demand_getter(steel_demand_f, 2020, 'BAU', 'crude', 'TWN'))
 
 #data_dict = format_pe_data(serialize_only=True)
-
-power_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'power_model_formatted', 'df')
-hydrogen_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'hydrogen_model_formatted', 'df')
-ccus_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'ccus_model_formatted', 'df')
-
-print(power_data_getter(power_dict, 'emissions', 2020, 'ARE'))
-print(hydrogen_data_getter(hydrogen_dict, 'emissions', 2020, 'IND'))

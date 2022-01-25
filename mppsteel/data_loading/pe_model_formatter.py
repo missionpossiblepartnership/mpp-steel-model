@@ -9,7 +9,8 @@ from mppsteel.utility.utils import (
     timer_func,
     read_pickle_folder,
     serialize_file,
-    match_country
+    match_country,
+    expand_dataset_years,
 )
 
 from mppsteel.utility.reference_lists import EU_COUNTRIES
@@ -21,21 +22,23 @@ logger = get_logger("Price & Emissions Formatter")
 
 LATEST_FILES = {
     'power': 'Power model.xlsx',
-    'ccus': 'CCUS Model.xlsx',
     'hydrogen': 'H2 Model.xlsx',
+    'bio': 'Bio Model.xlsx',
+    'ccus': 'CCUS Model.xlsx'
 }
 
 OUTPUT_SHEETS = {
     'power': ['GridPrice', 'RESPrice', 'GridEmissions'],
-    'ccus': ['Transport', 'Storage'],
-    'hydrogen': ['Prices', 'Emissions']
+    'hydrogen': ['Prices', 'Emissions'],
+    'bio': ['Feedstock_Prices'],
+    'ccus': ['Transport', 'Storage']
 }
 
 INDEX_DICT = {
     'power': ['Region', 'year', 'Customer'],
     'hydrogen': ['Region', 'year'],
     'bio': ['Region', 'year'],
-    'ccus': ['Region']   
+    'ccus': ['Region', 'year']
 }
 
 RE_DICT = {
@@ -45,7 +48,7 @@ RE_DICT = {
     'gas': 'Price of onsite gas + ccs'
 }
 
-def get_ccus_country_groups(country_ref: pd.DataFrame):
+def get_model_country_groups(country_ref: pd.DataFrame):
     
     other_eurasia_ref = [
         'Afghanistan',
@@ -79,6 +82,7 @@ def get_ccus_country_groups(country_ref: pd.DataFrame):
     other_asia = list(set(get_countries_from_group(country_ref, 'Continent', 'Asia')).difference(set(not_other_asia)))
     central_and_south_americas = get_countries_from_group(country_ref, 'WSA Group Region', 'Central and South America')
     europe = get_countries_from_group(country_ref, 'Continent', 'Europe')
+    southeast_asia = get_countries_from_group(country_ref, 'RMI Model Region', 'Southeast Asia')
 
     group_dict = {
         'Middle East': middle_east,
@@ -87,9 +91,12 @@ def get_ccus_country_groups(country_ref: pd.DataFrame):
         'Other Eurasia ': other_eurasia,
         'Dynamic Asia': dynamic_asia,
         'Other East Asia': other_asia,
+        'Southeast Asia': southeast_asia,
         'South and Central Americas': central_and_south_americas,
+        'South and central Americas': central_and_south_americas,
         'Europe': europe,
         'EU': EU_COUNTRIES,
+        'Japan, South Korea, Taiwan': ['JPN', 'KOR', 'TWN']
     }
 
     return group_dict
@@ -120,17 +127,29 @@ def country_match_ref(df: pd.DataFrame, country_group_dict: dict, default_countr
     df_c['country_code'] = df_c['Region'].apply(lambda x: country_dict[x])
     return df_c
 
+def expand_melt_and_sort_years(df: pd.DataFrame, year_pairs):
+    df_c = df.copy()
+    df_c = expand_dataset_years(df_c, year_pairs)
+    years = [year_col for year_col in df_c.columns if isinstance(year_col, int)]
+    df_c = df_c.melt(id_vars=set(df_c.columns).difference(set(years)), var_name='year')
+    df_c.sort_values(by=['year'], axis=0, inplace=True)
+    return df_c
+
 def format_model_data(model_name: str, data_dict: dict, sheet_dict: dict, index_dict: dict, country_ref: pd.DataFrame):
     logger.info(f'Formatting the {model_name} model')
     dict_obj = {}
-    country_group_dict = get_ccus_country_groups(country_ref)
+    country_group_dict = get_model_country_groups(country_ref)
     for sheet in sheet_dict[model_name]:
         temp_df = data_dict[sheet].copy()
         temp_df.columns = [col.strip() if isinstance(col, str) else col for col in temp_df.columns ]
         temp_df = country_match_ref(temp_df, country_group_dict)
-        if model_name in ['power', 'hydrogen', 'bio']:
+        if model_name in ['power', 'hydrogen']:
             years = [year_col for year_col in temp_df.columns if isinstance(year_col, int)]
             temp_df = temp_df.melt(id_vars=set(temp_df.columns).difference(set(years)), var_name='year')
+        if model_name in ['bio']:
+            year_pairs = [(2020, 2030), (2030, 2040), (2040, 2050)]
+            temp_df = expand_melt_and_sort_years(temp_df, year_pairs)
+            print(temp_df)
         temp_df.set_index(index_dict[model_name], inplace=True)
         dict_obj[sheet] = temp_df
     return dict_obj
@@ -141,23 +160,37 @@ def full_model_getter_flow(model_name: str, country_ref: pd.DataFrame):
     data_dict = read_pickle_folder(PKL_DATA_IMPORTS, model_pickle_file, 'df')
     return format_model_data(model_name, data_dict, OUTPUT_SHEETS, INDEX_DICT, country_ref)
 
+def format_biomass_constraint_data():
+    logger.info(f'Formatting Biomass Price Data')
+    biomass_constraint_data = read_pickle_folder(PKL_DATA_IMPORTS, 'bio_model', 'df')
+    biomass_year_pairs = [(2020, 2030), (2030, 2040), (2040, 2050)]
+    biomass_constraint_formatted = expand_melt_and_sort_years(biomass_constraint_data['Biomass_constraint'], biomass_year_pairs)
+    return biomass_constraint_formatted
+
 @timer_func
 def format_pe_data(serialize_only: bool = False):
     logger.info(f'Initiating fulll format flow for all models')
     country_ref = read_pickle_folder(PKL_DATA_IMPORTS, 'country_ref', 'df')
     power = full_model_getter_flow('power', country_ref)
     hydrogen = full_model_getter_flow('hydrogen', country_ref)
-    ccus = full_model_getter_flow('ccus', country_ref)
+    bio_price = full_model_getter_flow('bio', country_ref)
+    bio_constraint = format_biomass_constraint_data()
+    #ccus = full_model_getter_flow('ccus', country_ref)
+
 
     data_dict = {
         'power': power,
         'hydrogen': hydrogen,
-        'ccus': ccus
+        'bio_price': bio_price,
+        'bio_constraint': bio_constraint,
+        #'ccus': ccus
     }
     if serialize_only:
         serialize_file(power, PKL_DATA_INTERMEDIATE, "power_model_formatted")
         serialize_file(hydrogen, PKL_DATA_INTERMEDIATE, "hydrogen_model_formatted")
-        serialize_file(ccus, PKL_DATA_INTERMEDIATE, "ccus_model_formatted")
+        serialize_file(bio_price, PKL_DATA_INTERMEDIATE, "bio_price_model_formatted")
+        serialize_file(bio_constraint, PKL_DATA_INTERMEDIATE, "bio_constraint_model_formatted")
+        #serialize_file(ccus, PKL_DATA_INTERMEDIATE, "ccus_model_formatted")
 
     return data_dict
 
@@ -241,6 +274,42 @@ def hydrogen_data_getter(
         df_c = df_c[df_c['country_code'].str.contains(default_country, regex=False)]
     # Return the value figure
     return df_c.value.values[0]
+
+def bio_price_getter(df_dict: dict, year: int, country_code: str, default_country: str = 'USA', feedstock_type: str = 'Weighted average', cost_scenario: str = 'Medium'):
+
+    # subset the dict_object
+    df_c = df_dict['Feedstock_Prices'].copy()
+
+    # define country list based on the data_type
+    country_list = get_unique_countries(df_c['country_code'].values)
+
+    # Cap year at 2050
+    if year > 2050:
+        year = 2050
+    
+    # Apply subsets
+    df_c = df_c.xs(year, level='year')
+    df_c.reset_index(drop=True, inplace=True)
+    # Feedstock type: Many options but assumption is steel plant can take any type
+    # Cost scenarios: Medium
+    df_c = df_c[(df_c['Price scenario'] == cost_scenario) & (df_c['Feedstock type'] == feedstock_type)]
+
+    # Apply country check and use default
+    if country_code in country_list:
+        df_c = df_c[df_c['country_code'].str.contains(country_code, regex=False)]
+    else:
+        df_c = df_c[df_c['country_code'].str.contains(default_country, regex=False)]
+    # Return the value figure
+    return df_c.value.values[0]
+
+def bio_constraint_getter(df: pd.DataFrame, year: int, sector: str = 'Steel', const_scenario: str = 'Prudent'):
+    # Cap year at 2050
+    if year > 2050:
+        year = 2050
+    # Scenario options: Prudent, MaxPotential
+    # Sector assumptions: Always choose Steel
+    # Return the value figure
+    return df[(df['year'] == year) & (df['Sector'] == sector) & (df['Scenario'] == const_scenario)].value.values[0]
 
 def ccus_data_getter(
     df_dict: dict, data_type: str, country_code: str,

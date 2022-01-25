@@ -1,6 +1,8 @@
 """Function to create a steel plant class."""
 import pandas as pd
 
+from tqdm.auto import tqdm as tqdma
+
 # For logger and units dict
 from mppsteel.utility.utils import (
     get_logger,
@@ -10,7 +12,8 @@ from mppsteel.utility.utils import (
     country_mapping_fixer,
     country_matcher,
     match_country,
-    get_region_from_country_code
+    get_region_from_country_code,
+    enumerate_columns
 )
 
 from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
@@ -48,6 +51,7 @@ def steel_plant_formatter(df: pd.DataFrame, remove_non_operating_plants: bool = 
     df_c["country_code"] = ""
 
     df_c = extract_steel_plant_capacity(df_c)
+    df_c = adjust_capacity_values(df_c)
 
     if remove_non_operating_plants:
         df_c = df_c[df_c['technology_in_2020'] != 'Not operating'].reset_index(drop=True)
@@ -65,29 +69,53 @@ def extract_steel_plant_capacity(df: pd.DataFrame):
                 return val
         return 0
     df_c = df.copy()
+    df_c['primary_capacity_2020'] = 0
     capacity_cols = ['BFBOF_capacity', 'EAF_capacity', 'DRI_capacity', 'DRIEAF_capacity']
-    for row in df_c.itertuples():
-        tech = row.technology_in_2020
+
+    def value_mapper(row, enum_dict):
+        tech = row[enum_dict['technology_in_2020']]
         for col in capacity_cols:
-            if col == 'EAF_capacity':
-                if tech == 'EAF':
-                    value = convert_to_float(row.EAF_capacity)
-                    df_c.loc[row.Index, 'primary_capacity_2020'] = 0
-            elif col == 'BFBOF_capacity':
-                if tech in ['Avg BF-BOF', 'BAT BF-BOF']:
-                    value = convert_to_float(row.BFBOF_capacity)
-                    df_c.loc[row.Index, 'primary_capacity_2020'] = value
-            elif col == 'DRIEAF_capacity':
-                if tech in ['DRI-EAF', 'DRI-EAF+CCUS']:
-                    value = convert_to_float(row.DRIEAF_capacity)
-                    df_c.loc[row.Index, 'primary_capacity_2020'] = value
-            elif col == 'DRI_capacity':
-                if tech == 'DRI':
-                    value = convert_to_float(row.DRI_capacity)
-                    df_c.loc[row.Index, 'primary_capacity_2020'] = value
+            if (col == 'EAF_capacity') & (tech == 'EAF'):
+                row[enum_dict['primary_capacity_2020']] = 0
+            elif (col == 'BFBOF_capacity') & (tech in ['Avg BF-BOF', 'BAT BF-BOF']):
+                row[enum_dict['primary_capacity_2020']] = convert_to_float(row[enum_dict['BFBOF_capacity']])
+            elif (col == 'DRIEAF_capacity') & (tech in ['DRI-EAF', 'DRI-EAF+CCUS']):
+                row[enum_dict['primary_capacity_2020']] = convert_to_float(row[enum_dict['DRIEAF_capacity']])
+            elif (col == 'DRI_capacity') & (tech == 'DRI'):
+                row[enum_dict['primary_capacity_2020']] = convert_to_float(row[enum_dict['DRI_capacity']])
             else:
-                df_c.loc[row.Index, 'primary_capacity_2020'] = 0
+                row[enum_dict['primary_capacity_2020']] = 0
+        return row
+    tqdma.pandas(desc="Extract Steel Plant Capacity")
+    enumerated_cols = enumerate_columns(df_c.columns)
+    df_c = df_c.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     df_c['secondary_capacity_2020'] = df_c['EAF_capacity'].apply(lambda x: convert_to_float(x)) - df_c['DRIEAF_capacity'].apply(lambda x: convert_to_float(x)) 
+    return df_c
+
+
+def adjust_capacity_values(df: pd.DataFrame):
+    df_c = df.copy()
+    average_eaf_secondary_capacity = df_c[(df_c['secondary_capacity_2020'] != 0) & (df_c['technology_in_2020'] == 'EAF')]['secondary_capacity_2020'].mean()
+    def value_mapper(row, enum_dict, avg_eaf_value):
+        # use average bfof values for primary if technology is BOF but primary capapcity is 0
+        if (row[enum_dict['BFBOF_capacity']] != 0) & (row[enum_dict['technology_in_2020']] in ['Avg BF-BOF', 'BAT BF-BOF']):
+            row[enum_dict['primary_capacity_2020']] = row[enum_dict['BFBOF_capacity']]
+        # use bfbof values for primary capacity if technology is eaf
+        if (row[enum_dict['BFBOF_capacity']] != 0) & (row[enum_dict['technology_in_2020']] == 'EAF'):
+            row[enum_dict['primary_capacity_2020']] = row[enum_dict['BFBOF_capacity']]
+        # use average eaf values for secondary capacity if technology is eaf but secondary capapcity is currently unknown
+        if (row[enum_dict['technology_in_2020']] == 'EAF') & (row[enum_dict['secondary_capacity_2020']] == 0):
+            row[enum_dict['secondary_capacity_2020']] = avg_eaf_value
+        # if plant has DRI capacity and DRI-EAF capacity, make primary capacity the residue
+        if (abs(row[enum_dict['primary_capacity_2020']]) > 0) & (abs(row[enum_dict['secondary_capacity_2020']]) > 0) & (row[enum_dict['primary_capacity_2020']] + row[enum_dict['secondary_capacity_2020']] == 0):
+            row[enum_dict['secondary_capacity_2020']] = row[enum_dict['DRIEAF_capacity']]
+            row[enum_dict['primary_capacity_2020']] = row[enum_dict['DRI_capacity']] - row[enum_dict['DRIEAF_capacity']]
+        return row
+
+    tqdma.pandas(desc="Adjust Capacity Values")
+    enumerated_cols = enumerate_columns(df_c.columns)
+    df_c = df_c.progress_apply(value_mapper, enum_dict=enumerated_cols, avg_eaf_value=average_eaf_secondary_capacity, axis=1, raw=True)
+    df_c['combined_capacity'] = df_c['primary_capacity_2020'] + df_c['secondary_capacity_2020']
     return df_c
 
 def get_countries_from_group(country_ref: pd.DataFrame, grouping: str, group: str, exc_list: list = None):

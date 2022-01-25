@@ -23,18 +23,23 @@ FOLDERS_TO_CHECK_IN_ORDER = [
 
 PE_MODEL_FILENAME_DICT = {
     'power': 'Power Model.xlsx',
-    'ccus': 'CCUS Model.xlsx',
     'hydrogen': 'H2 Model.xlsx',
+    'bio': 'Bio Model.xlsx',
+    'ccus': 'CCUS Model.xlsx',
+
 }
 
 PE_MODEL_SHEETNAME_DICT = {
     'power': ['GridPrice', 'GridEmissions', 'RESPrice'],
-    'ccus': ['Transport', 'Storage'],
-    'hydrogen': ['Prices', 'Emissions']
+    'hydrogen': ['Prices', 'Emissions'],
+    'bio': ['Feedstock_Prices', 'Biomass_constraint'],
+    'ccus': ['Transport', 'Storage']
 }
 
 MODEL_YEAR_START = 2020
 MODEL_YEAR_END = 2050
+
+TECH_MORATORIUM_DATE = 2030
 
 BIOMASS_AV_TS_END_VALUE = 2000
 
@@ -108,15 +113,26 @@ GRID_DECARBONISATION_SCENARIOS = {
     'low': 'Central',
 }
 
-SCENARIO_OPTIONS = {
+BIOMASS_SCENARIOS = {
+    'average': 'Medium',
+}
+
+SOLVER_LOGICS = {
+    'rank': 'ranked',
+    'scale': 'scaled'
+}
+
+SCENARIO_SETTINGS = {
     'tech_moratorium': [True, False],
     'carbon_tax': CARBON_TAX_SCENARIOS.keys(),
     'green_premium_scenario': GREEN_PREMIUM_SCENARIOS.keys(),
     'electricity_cost_scenario': COST_SCENARIO_MAPPER.keys(),
     'grid_scenario': GRID_DECARBONISATION_SCENARIOS.keys(),
     'hydrogen_cost_scenario': COST_SCENARIO_MAPPER.keys(),
+    'biomass_cost_scenario': BIOMASS_SCENARIOS.keys(),
     'steel_demand_scenario': STEEL_DEMAND_SCENARIO_MAPPER.keys(),
-    'tech_switch_scenario': TECH_SWITCH_SCENARIOS.keys()
+    'tech_switch_scenario': TECH_SWITCH_SCENARIOS.keys(),
+    'solver_logic': SOLVER_LOGICS.keys()
 }
 
 DEFAULT_SCENARIO = {
@@ -126,6 +142,12 @@ DEFAULT_SCENARIO = {
     'electricity_cost_scenario': 'average', # low / average / high
     'grid_scenario': 'high', # low / high
     'hydrogen_cost_scenario': 'average', # low / average / high
+    'biomass_cost_scenario': 'average', # average
     'steel_demand_scenario': 'average', # bau / average / high
     'tech_switch_scenario': 'equal_weight', # max_abatement / lowest_cost / equal_weight
+    'solver_logic': 'rank' # scale / rank
+}
+
+SCENARIO_OPTIONS = {
+    'default': DEFAULT_SCENARIO,
 }

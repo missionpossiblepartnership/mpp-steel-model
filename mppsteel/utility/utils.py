@@ -292,8 +292,6 @@ def return_furnace_group(furnace_dict: dict, tech:str):
         if tech in furnace_dict[key]:
             return furnace_dict[key]
 
-pd.DataFrame().to_csv()
-
 def pickle_to_csv(folder_path: str, pkl_folder: str, pickle_filename: str, csv_filename: str = ''):
     df = read_pickle_folder(pkl_folder, pickle_filename)
     logger.info(f'||| Saving {pickle_filename} pickle file as {csv_filename or pickle_filename}.csv')
@@ -404,3 +402,21 @@ def create_folders_if_nonexistant(folder_list: list):
         else:
             logger.info(f'{folder_path} does not exist yet. Creating folder.')
             Path(folder_path).mkdir(parents=True, exist_ok=True)
+
+def enumerate_columns(colnames : list):
+    return dict(zip(colnames, range(len(colnames))))
+
+def move_cols_to_front(df: pd.DataFrame, cols_at_front: list):
+    non_abatement_columns = list(set(df.columns).difference(set(cols_at_front)))
+    return cols_at_front + non_abatement_columns
+
+def expand_dataset_years(df: pd.DataFrame, year_pairs: list):
+    df_c = df.copy()
+    for year_pair in year_pairs:
+        start_year, end_year = year_pair
+        year_range = range(start_year+1, end_year)
+        ticker = 1
+        for year in year_range:
+            df_c[year] = df_c[year-1] + ((df_c[end_year] / len(year_range)) * (ticker/len(year_range)))
+            ticker += 1
+    return df_c
