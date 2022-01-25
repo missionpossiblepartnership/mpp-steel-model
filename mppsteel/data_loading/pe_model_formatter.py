@@ -11,6 +11,7 @@ from mppsteel.utility.utils import (
     serialize_file,
     match_country,
     expand_dataset_years,
+    get_region_from_country_code
 )
 
 from mppsteel.utility.reference_lists import EU_COUNTRIES
@@ -48,8 +49,44 @@ RE_DICT = {
     'gas': 'Price of onsite gas + ccs'
 }
 
+POWER_HYDROGEN_COUNTRY_MAPPER = {
+    'China': 'China',
+    'Europe': 'EU',
+    'NAFTA': 'US',
+    'India': 'India',
+    'Japan, South Korea, Taiwan': 'China',
+    'Japan. South Korea, and Taiwan': 'China',
+    'South and central Americas': 'India',
+    'South and Central America': 'India',
+    'Middle East ': 'India',
+    'Middle East': 'India',
+    'Africa': 'India',
+    'CIS': 'EU',
+    'Southeast Asia': 'China',
+    'Other Asia': 'China',
+    'RoW': 'India'
+}
+
+BIO_COUNTRY_MAPPER = {
+    'China': 'China',
+    'Europe': 'Europe',
+    'NAFTA': 'US',
+    'India': 'India',
+    'Japan, South Korea, Taiwan': 'China',
+    'Japan. South Korea, and Taiwan': 'China',
+    'South and central Americas': 'US',
+    'South and Central America': 'US',
+    'Middle East ': 'India',
+    'Middle East': 'India',
+    'Africa': 'US',
+    'CIS': 'Europe',
+    'Southeast Asia': 'China',
+    'RoW': 'Avg'
+}
+
+
 def get_model_country_groups(country_ref: pd.DataFrame):
-    
+
     other_eurasia_ref = [
         'Afghanistan',
         'Armenia',
@@ -91,6 +128,7 @@ def get_model_country_groups(country_ref: pd.DataFrame):
         'Other Eurasia ': other_eurasia,
         'Dynamic Asia': dynamic_asia,
         'Other East Asia': other_asia,
+        'Other Asia': other_asia,
         'Southeast Asia': southeast_asia,
         'South and Central Americas': central_and_south_americas,
         'South and central Americas': central_and_south_americas,
@@ -101,7 +139,7 @@ def get_model_country_groups(country_ref: pd.DataFrame):
 
     return group_dict
 
-def country_match_ref(df: pd.DataFrame, country_group_dict: dict, default_country: str = None):
+def country_match_ref(model_name: str, df: pd.DataFrame, country_group_dict: dict, default_country: str = None):
     df_c = df.copy()
     countries = df_c['Region'].unique()
     country_dict = {}
@@ -142,14 +180,13 @@ def format_model_data(model_name: str, data_dict: dict, sheet_dict: dict, index_
     for sheet in sheet_dict[model_name]:
         temp_df = data_dict[sheet].copy()
         temp_df.columns = [col.strip() if isinstance(col, str) else col for col in temp_df.columns ]
-        temp_df = country_match_ref(temp_df, country_group_dict)
+        temp_df = country_match_ref(model_name, temp_df, country_group_dict)
         if model_name in ['power', 'hydrogen']:
             years = [year_col for year_col in temp_df.columns if isinstance(year_col, int)]
             temp_df = temp_df.melt(id_vars=set(temp_df.columns).difference(set(years)), var_name='year')
         if model_name in ['bio']:
             year_pairs = [(2020, 2030), (2030, 2040), (2040, 2050)]
             temp_df = expand_melt_and_sort_years(temp_df, year_pairs)
-            print(temp_df)
         temp_df.set_index(index_dict[model_name], inplace=True)
         dict_obj[sheet] = temp_df
     return dict_obj
@@ -194,11 +231,17 @@ def format_pe_data(serialize_only: bool = False):
 
     return data_dict
 
+def remapping_country_code_to_mapped_countries(df, country_code, country_ref_dict, mapper):
+    country_code_region = get_region_from_country_code(country_code, 'rmi_region', country_ref_dict)
+    mapped_region = mapper[country_code_region]
+    return df[df['Region'] == mapped_region].copy()
+
 def power_data_getter(
-    df_dict: dict, data_type: str, year: int, country_code: str,
+    df_dict: dict, data_type: str, year: int, country_code: str, country_ref_dict: dict,
     re_dict: dict = None, re_type: str = '',
     default_country: str = 'USA', grid_scenario: str = 'Central',
-    cost_scenario: str = 'Baseline', customer: str = 'Industry'
+    cost_scenario: str = 'Baseline', customer: str = 'Industry',
+    
     ):
     # map data_type to df_dict keys
     data_type_mapper = dict(zip(['grid', 'renewable', 'emissions'], OUTPUT_SHEETS['power']))
@@ -207,14 +250,14 @@ def power_data_getter(
     df_c = df_dict[data_type_mapper[data_type]].copy()
     # define country list based on the data_type
     country_list = get_unique_countries(df_c['country_code'].values)
-
     # Cap year at 2050
     if year > 2050:
         year = 2050
 
     # Apply subsets
     df_c = df_c.xs((year, customer), level=['year', 'Customer'])
-    df_c.reset_index(drop=True, inplace=True)
+    df_c.reset_index(drop=False, inplace=True)
+
     # Grid scenarios: Central, Accelerated, All
     # Cost scenarios: Baseline, Min, Max, All
     df_c = df_c[(df_c['Grid scenario'] == grid_scenario) & (df_c['Cost scenario'] == cost_scenario)]
@@ -226,7 +269,8 @@ def power_data_getter(
     if country_code in country_list:
         df_c = df_c[df_c['country_code'].str.contains(country_code, regex=False)]
     else:
-        df_c = df_c[df_c['country_code'].str.contains(default_country, regex=False)]
+
+        df_c = remapping_country_code_to_mapped_countries(df_c, country_code, country_ref_dict, POWER_HYDROGEN_COUNTRY_MAPPER)
     # Return the value figure
     try:
         return df_c.value.values[0]
@@ -234,7 +278,7 @@ def power_data_getter(
         raise IndexError(f'Error with -> sheet:{data_type}, year:{year}, country_code:{country_code}, cost_scenario:{cost_scenario}, grid_scenario:{grid_scenario}')
 
 def hydrogen_data_getter(
-    df_dict: dict, data_type: str, year: int, country_code: str,
+    df_dict: dict, data_type: str, year: int, country_code: str, country_ref_dict: dict,
     default_country: str = 'USA', variable: str = 'H2 price',
     cost_scenario: str = 'Baseline', prod_scenario: str = 'On-site, dedicated VREs'
     ):
@@ -256,7 +300,7 @@ def hydrogen_data_getter(
 
     # Apply subsets
     df_c = df_c.xs(year, level='year')
-    df_c.reset_index(drop=True, inplace=True)
+    df_c.reset_index(drop=False, inplace=True)
     # Variables: 'H2 price', 'Electrolyser-related H2 cost component', 'Cost of energy ', 'Total Other costs', 'Total price premium '
     # Production: 'Utility plant, dedicated VREs', 'On-site, dedicated VREs', 'On-site, grid', 'Utility plant, grid'
     # Cost scenarios: Baseline, Min, Max, All
@@ -271,11 +315,13 @@ def hydrogen_data_getter(
     if country_code in country_list:
         df_c = df_c[df_c['country_code'].str.contains(country_code, regex=False)]
     else:
-        df_c = df_c[df_c['country_code'].str.contains(default_country, regex=False)]
+        df_c = remapping_country_code_to_mapped_countries(df_c, country_code, country_ref_dict, POWER_HYDROGEN_COUNTRY_MAPPER)
     # Return the value figure
     return df_c.value.values[0]
 
-def bio_price_getter(df_dict: dict, year: int, country_code: str, default_country: str = 'USA', feedstock_type: str = 'Weighted average', cost_scenario: str = 'Medium'):
+def bio_price_getter(
+    df_dict: dict, year: int, country_code: str, country_ref_dict: dict,
+    default_country: str = 'USA', feedstock_type: str = 'Weighted average', cost_scenario: str = 'Medium'):
 
     # subset the dict_object
     df_c = df_dict['Feedstock_Prices'].copy()
@@ -289,7 +335,7 @@ def bio_price_getter(df_dict: dict, year: int, country_code: str, default_countr
     
     # Apply subsets
     df_c = df_c.xs(year, level='year')
-    df_c.reset_index(drop=True, inplace=True)
+    df_c.reset_index(drop=False, inplace=True)
     # Feedstock type: Many options but assumption is steel plant can take any type
     # Cost scenarios: Medium
     df_c = df_c[(df_c['Price scenario'] == cost_scenario) & (df_c['Feedstock type'] == feedstock_type)]
@@ -298,7 +344,7 @@ def bio_price_getter(df_dict: dict, year: int, country_code: str, default_countr
     if country_code in country_list:
         df_c = df_c[df_c['country_code'].str.contains(country_code, regex=False)]
     else:
-        df_c = df_c[df_c['country_code'].str.contains(default_country, regex=False)]
+        df_c = remapping_country_code_to_mapped_countries(df_c, country_code, country_ref_dict, BIO_COUNTRY_MAPPER)
     # Return the value figure
     return df_c.value.values[0]
 
@@ -355,7 +401,7 @@ def ccus_data_getter(
 
     if data_type == 'storage':
         # Apply subsets
-        df_c.reset_index(drop=True, inplace=True)
+        df_c.reset_index(drop=False, inplace=True)
         # Storage Location: 'Onshore' 'Offshore'
         # Storage type: 'Depleted O&G field', 'Saline aquifers'
         # reusable_lw: Yes or No

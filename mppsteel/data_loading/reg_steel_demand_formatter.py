@@ -1,6 +1,7 @@
 """Formats Regional Steel Demand and defines getter function"""
 
 import itertools
+
 import pandas as pd
 
 from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE, STEEL_DEMAND_SCENARIO_MAPPER
@@ -10,7 +11,7 @@ from mppsteel.utility.utils import (
     timer_func,
     read_pickle_folder,
     serialize_file,
-    match_country
+    match_country,
 )
 
 # Create logger
@@ -55,7 +56,6 @@ def get_steel_demand(serialize_only: bool = False):
     if serialize_only:
         serialize_file(steel_demand_f, PKL_DATA_INTERMEDIATE, "regional_steel_demand_formatted")
     return steel_demand_f
-
 
 def steel_demand_getter(
     df: pd.DataFrame, year: int, scenario: str, metric: str, country_code: str, default_country: str = 'GBL'):

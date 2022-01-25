@@ -124,6 +124,7 @@ def generate_variable_costs(
     # Create resources reference list
     static_energy_list = static_energy_df['Metric'].unique().tolist()
     feedstock_list = list(feedstock_dict.keys())
+    country_ref_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "country_reference_dict", "df")
 
     def value_mapper(row, enum_dict):
         resource = row[enum_dict['material_category']]
@@ -172,16 +173,16 @@ def generate_variable_costs(
         if year > 2050:
             dynamic_year = 2050
         electricity_price = power_data_getter(
-            power_df, 'grid', dynamic_year, plant_country_ref, RE_DICT,
+            power_df, 'grid', dynamic_year, plant_country_ref, country_ref_dict, RE_DICT,
             default_country='USA', grid_scenario=GRID_DECARBONISATION_SCENARIOS[grid_decarb_scenario],
             cost_scenario=COST_SCENARIO_MAPPER[electricity_cost_scenario])
         hydrogen_price = hydrogen_data_getter(
-            hydrogen_df, 'prices', dynamic_year, plant_country_ref,
+            hydrogen_df, 'prices', dynamic_year, plant_country_ref, country_ref_dict,
             default_country='USA', variable='Total price premium ',
             cost_scenario=COST_SCENARIO_MAPPER[hydrogen_cost_scenario],
         )
         bio_price = bio_price_getter(
-            bio_df, dynamic_year, plant_country_ref,
+            bio_df, dynamic_year, plant_country_ref, country_ref_dict,
             default_country='USA', feedstock_type='Weighted average',
             cost_scenario=BIOMASS_SCENARIOS[biomass_cost_scenario],
         )

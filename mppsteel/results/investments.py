@@ -11,7 +11,7 @@ from mppsteel.model_config import (
 
 from mppsteel.utility.utils import (
     read_pickle_folder, get_logger, serialize_file,
-    timer_func, add_results_metadata
+    timer_func, add_results_metadata,
 )
 
 # Create logger
@@ -92,7 +92,7 @@ def investment_row_calculator(inv_df: pd.DataFrame, capex_df: pd.DataFrame, tech
 
     Returns:
         [type]: [description]
-    """    
+    """
     switch_type = investment_switch_getter(inv_df, year, plant_name)
 
     if year == 2020:
@@ -144,8 +144,7 @@ def investment_results(scenario_dict: dict, serialize_only: bool = False):
             capacity_value = production_stats_getter(production_stats_all, year, plant_name, 'capacity')
             data_container.append(
                 investment_row_calculator(
-                    plant_investment_cycles, capex_df,
-                    tech_choice_dict, plant_name, country_code, year, capacity_value))
+                    plant_investment_cycles, capex_df, tech_choice_dict, plant_name, country_code, year, capacity_value))
 
     investment_results = pd.DataFrame(data_container).set_index(['year']).sort_values('year')
     investment_results.reset_index(inplace=True)

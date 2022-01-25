@@ -26,6 +26,7 @@ def tco_regions_ref_generator(electricity_cost_scenario, grid_scenario, hydrogen
     business_cases = load_business_cases()
     calculated_s3_emissions = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'calculated_s3_emissions', 'df')
     capex_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, "capex_switching_df", "df")
+    country_ref_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "country_reference_dict", "df")
 
     steel_plants = read_pickle_folder(PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df")
     steel_plant_country_codes = list(steel_plants['country_code'].unique())
@@ -40,8 +41,9 @@ def tco_regions_ref_generator(electricity_cost_scenario, grid_scenario, hydrogen
                     business_cases, all_plant_variable_costs_summary,
                     power_model, hydrogen_model, bio_price_model,
                     opex_values_dict['other_opex'], calculated_s3_emissions,
-                    capex_df, INVESTMENT_CYCLE_LENGTH, electricity_cost_scenario,
-                    grid_scenario, hydrogen_cost_scenario, biomass_cost_scenario)
+                    country_ref_dict, capex_df, INVESTMENT_CYCLE_LENGTH, 
+                    electricity_cost_scenario, grid_scenario, 
+                    hydrogen_cost_scenario, biomass_cost_scenario)
                 df_list.append(tco_df)
     combined_df = pd.concat(df_list).reset_index(drop=True)
     return combined_df
@@ -136,12 +138,13 @@ def all_plant_s2_emissions(electricity_cost_scenario, grid_scenario, hydrogen_co
     hydrogen_model_formatted = read_pickle_folder(PKL_DATA_INTERMEDIATE, "hydrogen_model_formatted", "df")
     steel_plants = read_pickle_folder(PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df")
     steel_plant_country_codes = list(steel_plants['country_code'].unique())
+    country_ref_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "country_reference_dict", "df")
     df_list = []
     year_range = range(MODEL_YEAR_START, MODEL_YEAR_END+1)
     for year in tqdm(year_range, total=len(year_range), desc='All Country Code S2 Emission: Year Loop'):
         for country_code in steel_plant_country_codes:
             for technology in SWITCH_DICT.keys():
-                value = get_s2_emissions(power_model_formatted, hydrogen_model_formatted, b_df, year, country_code, technology, electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario)
+                value = get_s2_emissions(power_model_formatted, hydrogen_model_formatted, b_df, country_ref_dict, year, country_code, technology, electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario)
                 entry = {'year': year, 'country_code': country_code, 'technology': technology, 's2_emissions': value}
                 df_list.append(entry)
     combined_df = pd.DataFrame(df_list)

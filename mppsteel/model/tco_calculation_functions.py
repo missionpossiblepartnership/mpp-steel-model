@@ -5,6 +5,7 @@ import numpy_financial as npf
 
 from tqdm import tqdm
 from tqdm.auto import tqdm as tqdma
+from mppsteel.data_loading.country_reference import country_ref_getter
 
 from mppsteel.utility.utils import (
     read_pickle_folder, get_logger,
@@ -105,7 +106,7 @@ def calculate_capex(capex_df: pd.DataFrame, start_year: int, base_tech: str):
     df = df.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     return df.set_index(['year', 'start_technology'])
 
-def get_s2_emissions(power_model: dict, hydrogen_model: dict, business_cases: pd.DataFrame, year: int, country_code: str, technology: str, electricity_cost_scenario: str, grid_scenario: str, hydrogen_cost_scenario: str):
+def get_s2_emissions(power_model: dict, hydrogen_model: dict, business_cases: pd.DataFrame, country_ref_dict: dict, year: int, country_code: str, technology: str, electricity_cost_scenario: str, grid_scenario: str, hydrogen_cost_scenario: str):
     electricity_cost_scenario = COST_SCENARIO_MAPPER[electricity_cost_scenario]
     grid_scenario = GRID_DECARBONISATION_SCENARIOS[grid_scenario]
     hydrogen_cost_scenario = COST_SCENARIO_MAPPER[hydrogen_cost_scenario]
@@ -115,6 +116,7 @@ def get_s2_emissions(power_model: dict, hydrogen_model: dict, business_cases: pd
         'emissions',
         year,
         country_code,
+        country_ref_dict,
         re_dict=RE_DICT,
         grid_scenario=grid_scenario,
         cost_scenario=electricity_cost_scenario)
@@ -124,6 +126,7 @@ def get_s2_emissions(power_model: dict, hydrogen_model: dict, business_cases: pd
         'emissions',
         year,
         country_code,
+        country_ref_dict,
         cost_scenario=hydrogen_cost_scenario)
 
     bcases = business_cases.loc[business_cases["technology"] == technology].copy().reset_index(drop=True)
@@ -149,6 +152,7 @@ def get_discounted_opex_values(
     bio_price_model: dict,
     other_opex_df: pd.DataFrame,
     s3_emissions_df: pd.DataFrame,
+    country_ref_dict: pd.DataFrame,
     year_interval: int,
     int_rate: float,
     electricity_cost_scenario: str,
@@ -166,7 +170,7 @@ def get_discounted_opex_values(
         if year > 2050:
             year_ref = 2050
         s2_value = get_s2_emissions(
-            power_model, hydrogen_model, business_cases, year_ref,
+            power_model, hydrogen_model, business_cases, country_ref_dict, year_ref,
             country_code, base_tech, electricity_cost_scenario,
             grid_scenario, hydrogen_cost_scenario)
         df = get_opex_costs(
@@ -190,7 +194,7 @@ def tco_calc(
     country_code, start_year: int, base_tech: str, carbon_tax_df: pd.DataFrame,
     business_cases: pd.DataFrame, variable_cost_summary: pd.DataFrame,
     power_model: dict, hydrogen_model: dict, bio_price_model: dict,
-    other_opex_df: pd.DataFrame, s3_emissions_df: pd.DataFrame, capex_df: pd.DataFrame,
+    other_opex_df: pd.DataFrame, s3_emissions_df: pd.DataFrame, country_ref_dict: pd.DataFrame, capex_df: pd.DataFrame,
     investment_cycle: int, electricity_cost_scenario: str,
     grid_scenario: str, hydrogen_cost_scenario: str, biomass_cost_scenario: str,
     ):
@@ -198,6 +202,7 @@ def tco_calc(
         country_code, start_year, carbon_tax_df, business_cases,
         variable_cost_summary, power_model,
         hydrogen_model, bio_price_model, other_opex_df, s3_emissions_df,
+        country_ref_dict=country_ref_dict,
         year_interval=investment_cycle, int_rate=DISCOUNT_RATE,
         electricity_cost_scenario=electricity_cost_scenario,
         grid_scenario=grid_scenario, hydrogen_cost_scenario=hydrogen_cost_scenario,

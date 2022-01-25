@@ -159,6 +159,7 @@ def generate_production_emission_stats(
     """    
     logger.info(f'- Generating Production Emission Stats')
     emissions_dict = create_emissions_dict()
+    country_ref_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "country_reference_dict", "df") 
     emissions_name_ref = ['s1', 's2', 's3']
 
     def emissions_getter(
@@ -185,7 +186,7 @@ def generate_production_emission_stats(
                         emissions_dict, colname, row.technology, row.year)
                 elif colname == 's2':
                     df_c.loc[row.Index, f'{colname}_emissions'] = row.production * get_s2_emissions(
-                        power_model, hydrogen_model, business_cases,
+                        power_model, hydrogen_model, business_cases, country_ref_dict,
                         row.year, row.country_code, row.technology,
                         electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario)
 
