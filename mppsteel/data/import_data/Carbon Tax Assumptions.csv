@@ -1,3 +1,32 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:efbd1e8efdd0e931a123ec2c47d1e38905573bcd56d74cdbe5ace901108a3f51
-size 1785
+﻿Category,Metric,Year,Unit,Value,Source
+Carbon Price,carbon price,2020,EUR / t CO2,0,ETC
+Carbon Price,carbon price,2021,EUR / t CO2,0,ETC
+Carbon Price,carbon price,2022,EUR / t CO2,0,ETC
+Carbon Price,carbon price,2023,EUR / t CO2,7.830357,ETC
+Carbon Price,carbon price,2024,EUR / t CO2,15.66071,ETC
+Carbon Price,carbon price,2025,EUR / t CO2,23.49107,ETC
+Carbon Price,carbon price,2026,EUR / t CO2,31.32143,ETC
+Carbon Price,carbon price,2027,EUR / t CO2,39.15179,ETC
+Carbon Price,carbon price,2028,EUR / t CO2,46.98214,ETC
+Carbon Price,carbon price,2029,EUR / t CO2,54.8125,ETC
+Carbon Price,carbon price,2030,EUR / t CO2,62.64286,ETC
+Carbon Price,carbon price,2031,EUR / t CO2,70.47321,ETC
+Carbon Price,carbon price,2032,EUR / t CO2,78.30357,ETC
+Carbon Price,carbon price,2033,EUR / t CO2,86.13393,ETC
+Carbon Price,carbon price,2034,EUR / t CO2,93.96429,ETC
+Carbon Price,carbon price,2035,EUR / t CO2,101.7946,ETC
+Carbon Price,carbon price,2036,EUR / t CO2,109.625,ETC
+Carbon Price,carbon price,2037,EUR / t CO2,117.4554,ETC
+Carbon Price,carbon price,2038,EUR / t CO2,125.2857,ETC
+Carbon Price,carbon price,2039,EUR / t CO2,133.1161,ETC
+Carbon Price,carbon price,2040,EUR / t CO2,140.9464,ETC
+Carbon Price,carbon price,2041,EUR / t CO2,148.7768,ETC
+Carbon Price,carbon price,2042,EUR / t CO2,156.6071,ETC
+Carbon Price,carbon price,2043,EUR / t CO2,164.4375,ETC
+Carbon Price,carbon price,2044,EUR / t CO2,172.2679,ETC
+Carbon Price,carbon price,2045,EUR / t CO2,180.0982,ETC
+Carbon Price,carbon price,2046,EUR / t CO2,187.9286,ETC
+Carbon Price,carbon price,2047,EUR / t CO2,195.7589,ETC
+Carbon Price,carbon price,2048,EUR / t CO2,203.5893,ETC
+Carbon Price,carbon price,2049,EUR / t CO2,211.4196,ETC
+Carbon Price,carbon price,2050,EUR / t CO2,219.25,ETC
