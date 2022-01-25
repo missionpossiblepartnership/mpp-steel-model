@@ -106,4 +106,7 @@ if __name__ == "__main__":
     if args.abatement:
         abatement_switch_reference(scenario_dict=scenario_args)
 
+    if args.emissivity:
+        abatement_switch_reference(scenario_dict=scenario_args)
+
     TIME_CONTAINER.return_time_container()

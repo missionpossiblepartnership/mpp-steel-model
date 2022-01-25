@@ -97,6 +97,8 @@ def model_outputs_phase(new_folder: bool = False, timestamp: str = ''):
         save_path = folder_filepath
 
     # Save Intermediate Pickle Files
+    pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'calculated_s1_emissions')
+    pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'calculated_s3_emissions')
     pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'capex_switching_df')
     pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'steel_plant_abatement_switches')
     pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'tco_reference_data')
@@ -184,6 +186,9 @@ def production_flow(scenario_dict: dict):
 def investment_flow(scenario_dict: dict):
     investment_results(scenario_dict, serialize_only=True)
 
+def get_emissivity():
+    generate_emissions_flow(False)
+
 parser = argparse.ArgumentParser(description='The MPP Python Steel Model Command Line Interface', add_help=False)
 parser.add_argument(
     "-f", "--full_model", action="store_true", help="Runs the complete model flow")
@@ -229,3 +234,5 @@ parser.add_argument(
     "-y", "--tco", action="store_true", help="Runs the tco script only")
 parser.add_argument(
     "-z", "--abatement", action="store_true", help="Runs the abatament script only")
+parser.add_argument(
+    "-j", "--emissivity", action="store_true", help="Runs the emissivity script only")
