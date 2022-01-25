@@ -36,10 +36,10 @@ from mppsteel.data_loading.pe_model_formatter import (
 # Create logger
 logger = get_logger("TCO")
 
-
-def carbon_tax_estimate(s3_emissions_ref: dict, scope2_emission_value: float, carbon_tax_df: pd.DataFrame, year: int):
+# CHANGE THIS!
+def carbon_tax_estimate(s1_emissions_ref: dict, scope2_emission_value: float, carbon_tax_df: pd.DataFrame, year: int):
     carbon_tax = carbon_tax_df.set_index('year').loc[year]['value']
-    return (scope2_emission_value + s3_emissions_ref.loc[year]) * carbon_tax
+    return (scope2_emission_value + s1_emissions_ref.loc[year]) * carbon_tax
 
 def get_steel_making_cost(steel_plant_df: pd.DataFrame, variable_cost_df, plant_name: str, technology: str, eur_usd_rate: float):
     steel_plant_df_c = steel_plant_df.loc[steel_plant_df['plant_name'] == plant_name].copy()
@@ -67,7 +67,7 @@ def get_opex_costs(
     year: int,
     variable_costs_df: pd.DataFrame,
     opex_df: pd.DataFrame,
-    s3_emissions_ref: dict,
+    s1_emissions_ref: dict,
     carbon_tax_timeseries: pd.DataFrame,
     scope2_emission_value: float,
 ):
@@ -75,7 +75,7 @@ def get_opex_costs(
     opex_costs = opex_df.swaplevel().loc[year]
 
     # Carbon Tax Result
-    carbon_tax_result = carbon_tax_estimate(s3_emissions_ref, scope2_emission_value, carbon_tax_timeseries, year)
+    carbon_tax_result = carbon_tax_estimate(s1_emissions_ref, scope2_emission_value, carbon_tax_timeseries, year)
 
     variable_costs.rename(mapper={'cost': 'value'},axis=1, inplace=True)
     carbon_tax_result.rename(mapper={'emissions': 'value'},axis=1, inplace=True)
@@ -101,9 +101,8 @@ def calculate_capex(capex_df: pd.DataFrame, start_year: int, base_tech: str):
     def value_mapper(row, enum_dict):
         row[enum_dict['capex_value']] = capex_getter(capex_df, SWITCH_DICT, start_year, base_tech, row[enum_dict['end_technology']])
         return row
-    tqdma.pandas(desc="Calculate Capex")
     enumerated_cols = enumerate_columns(df.columns)
-    df = df.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
+    df = df.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     return df.set_index(['year', 'start_technology'])
 
 def get_s2_emissions(power_model: dict, hydrogen_model: dict, business_cases: pd.DataFrame, country_ref_dict: dict, year: int, country_code: str, technology: str, electricity_cost_scenario: str, grid_scenario: str, hydrogen_cost_scenario: str):
@@ -151,7 +150,7 @@ def get_discounted_opex_values(
     hydrogen_model: dict,
     bio_price_model: dict,
     other_opex_df: pd.DataFrame,
-    s3_emissions_df: pd.DataFrame,
+    s1_emissions_df: pd.DataFrame,
     country_ref_dict: pd.DataFrame,
     year_interval: int,
     int_rate: float,
@@ -163,7 +162,6 @@ def get_discounted_opex_values(
     ):
 
     year_range = range(year_start, year_start+year_interval+1)
-    pd.DataFrame()
     df_list = []
     for year in year_range:
         year_ref = year
@@ -178,7 +176,7 @@ def get_discounted_opex_values(
             year_ref,
             variable_cost_summary,
             other_opex_df,
-            s3_emissions_df,
+            s1_emissions_df,
             carbon_tax_df,
             scope2_emission_value=s2_value,
         )
@@ -194,14 +192,14 @@ def tco_calc(
     country_code, start_year: int, base_tech: str, carbon_tax_df: pd.DataFrame,
     business_cases: pd.DataFrame, variable_cost_summary: pd.DataFrame,
     power_model: dict, hydrogen_model: dict, bio_price_model: dict,
-    other_opex_df: pd.DataFrame, s3_emissions_df: pd.DataFrame, country_ref_dict: pd.DataFrame, capex_df: pd.DataFrame,
+    other_opex_df: pd.DataFrame, s1_emissions_df: pd.DataFrame, country_ref_dict: pd.DataFrame, capex_df: pd.DataFrame,
     investment_cycle: int, electricity_cost_scenario: str,
     grid_scenario: str, hydrogen_cost_scenario: str, biomass_cost_scenario: str,
     ):
     opex_values = get_discounted_opex_values(
         country_code, start_year, carbon_tax_df, business_cases,
         variable_cost_summary, power_model,
-        hydrogen_model, bio_price_model, other_opex_df, s3_emissions_df,
+        hydrogen_model, bio_price_model, other_opex_df, s1_emissions_df,
         country_ref_dict=country_ref_dict,
         year_interval=investment_cycle, int_rate=DISCOUNT_RATE,
         electricity_cost_scenario=electricity_cost_scenario,

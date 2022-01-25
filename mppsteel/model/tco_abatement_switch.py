@@ -24,10 +24,9 @@ def tco_regions_ref_generator(electricity_cost_scenario, grid_scenario, hydrogen
     bio_price_model = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'bio_price_model_formatted', 'df')
     opex_values_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'capex_dict', 'df')
     business_cases = load_business_cases()
-    calculated_s3_emissions = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'calculated_s3_emissions', 'df')
+    calculated_s1_emissions = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'calculated_s1_emissions', 'df')
     capex_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, "capex_switching_df", "df")
     country_ref_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "country_reference_dict", "df")
-
     steel_plants = read_pickle_folder(PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df")
     steel_plant_country_codes = list(steel_plants['country_code'].unique())
     technologies = SWITCH_DICT.keys()
@@ -40,7 +39,7 @@ def tco_regions_ref_generator(electricity_cost_scenario, grid_scenario, hydrogen
                     country_code, year, tech, carbon_tax_df,
                     business_cases, all_plant_variable_costs_summary,
                     power_model, hydrogen_model, bio_price_model,
-                    opex_values_dict['other_opex'], calculated_s3_emissions,
+                    opex_values_dict['other_opex'], calculated_s1_emissions,
                     country_ref_dict, capex_df, INVESTMENT_CYCLE_LENGTH, 
                     electricity_cost_scenario, grid_scenario, 
                     hydrogen_cost_scenario, biomass_cost_scenario)
