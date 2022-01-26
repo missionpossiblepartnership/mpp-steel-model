@@ -485,3 +485,15 @@ TECHNOLOGY_PROCESSES = {
     'Self-Generation Of Electricity',
     'CCS']
     }
+
+GRAPH_CAPEX_OPEX_DICT_SPLIT = {
+    'Feedstock': ['Iron Ore', 'Scrap', 'DRI'],
+    'Fossil Fuels': ['Met coal', 'Coke', 'Thermal coal', 'BF gas', 'BOF gas', 'Natural gas', 'Plastic waste'],
+    'Bio Fuels': ['Biomass', 'Biomethane'],
+    'Hydrogen': ['Hydrogen'],
+    'Electricity': ['Electricity'],
+    'CCS': ['CCS'],
+    'Other OPEX': [['Other OPEX'], ['Steam', 'BF slag']], # attention! BF slag is a co product that is sold of to other industry sectors and produces revenue (so its negative costs added to the OPEX sum which reduces the actual result of other OPEX)
+    'BF Capex': ['BF Capex'], # with WACC over 20 years
+    'GF Capex': ['GF Capex'], # with WACC over 20 years
+}
