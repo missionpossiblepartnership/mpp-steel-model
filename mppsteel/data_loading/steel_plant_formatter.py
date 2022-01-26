@@ -39,11 +39,11 @@ def steel_plant_formatter(df: pd.DataFrame, remove_non_operating_plants: bool = 
         'Estimated EAF capacity (kt steel/y)',
         'Estimated DRI capacity (kt sponge iron/y)',
         'Estimated DRI-EAF capacity (kt steel/y)',
-        'Source', 'Excel Tab'
+        'Source',
     ]
     df_c.drop(steel_plant_cols_to_remove, axis=1, inplace = True)
     new_steel_plant_cols = [
-        'plant_name', 'parent', 'country', 'region', 'coordinates', 'status', 'start_of_operation',
+        'plant_id', 'plant_name', 'parent', 'country', 'region', 'coordinates', 'status', 'start_of_operation',
         'BFBOF_capacity', 'EAF_capacity', 'DRI_capacity', 'DRIEAF_capacity', 'abundant_res',
         'ccs_available', 'cheap_natural_gas', 'industrial_cluster', 'technology_in_2020']
     df_c = df_c.rename(mapper=dict(zip(df_c.columns, new_steel_plant_cols)), axis=1)
