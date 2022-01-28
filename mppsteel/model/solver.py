@@ -134,8 +134,8 @@ def choose_technology(
     # TCO & Abatement Data
     tco_reference_data = read_pickle_folder(PKL_DATA_INTERMEDIATE, "tco_reference_data", "df")
     tco_slim = tco_reference_data[['year','plant_name', 'base_tech', 'switch_tech', 'country_code', 'tco', 'capex_value']].set_index(['year','plant_name', 'base_tech']).copy()
-    steel_plant_abatement_switches = read_pickle_folder(PKL_DATA_INTERMEDIATE, "steel_plant_abatement_switches", "df")
-    abatement_slim = steel_plant_abatement_switches[['year','plant_name', 'base_tech', 'switch_tech', 'country_code', 'abated_emissions_combined']].set_index(['year','plant_name', 'base_tech']).copy()
+    steel_plant_abatement_switches = read_pickle_folder(PKL_DATA_INTERMEDIATE, "emissivity_abatement_switches", "df")
+    abatement_slim = steel_plant_abatement_switches[['year','plant_name', 'base_tech', 'switch_tech', 'country_code', 'abated_combined_emissivity']].set_index(['year','plant_name', 'base_tech']).copy()
 
     # General Reference data
     business_cases = load_business_cases()

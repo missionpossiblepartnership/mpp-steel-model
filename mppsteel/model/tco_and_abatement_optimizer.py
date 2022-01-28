@@ -87,7 +87,7 @@ def get_best_choice(
         abatement_values = min_ranker(
             df=emissions_df,
             data_type='abatement',
-            value_col='abated_emissions_combined',
+            value_col='abated_combined_emissivity',
             year=year,
             country_code=country_code,
             start_tech=start_tech,
@@ -98,7 +98,7 @@ def get_best_choice(
         # Scale the data
         tco_values['tco_scaled'] = scale_data(tco_values['tco'])
         tco_values.drop(tco_values.columns.difference(['tco_scaled']), 1, inplace=True)
-        abatement_values['abatement_scaled'] = scale_data(abatement_values['abated_emissions_combined'], reverse=True)
+        abatement_values['abatement_scaled'] = scale_data(abatement_values['abated_combined_emissivity'], reverse=True)
         abatement_values.drop(abatement_values.columns.difference(['abatement_scaled']), 1, inplace=True)
         # Join the abatement and tco data and calculate an overall score using the weightings
         combined_scales = tco_values.join(abatement_values)
@@ -119,7 +119,7 @@ def get_best_choice(
         abatement_values = min_ranker(
             df=emissions_df,
             data_type='abatement',
-            value_col='abated_emissions_combined',
+            value_col='abated_combined_emissivity',
             year=year,
             country_code=country_code,
             start_tech=start_tech,

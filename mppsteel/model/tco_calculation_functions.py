@@ -1,38 +1,26 @@
 """Main solving script for deciding investment decisions."""
 
+from functools import lru_cache
+
 import pandas as pd
 import numpy_financial as npf
 
 from tqdm import tqdm
 from tqdm.auto import tqdm as tqdma
-from mppsteel.data_loading.country_reference import country_ref_getter
 
-from functools import lru_cache
+from mppsteel.model.emissions_reference_tables import get_s2_emissions
+from mppsteel.model.financial_functions import generate_capex_financial_summary
 
 from mppsteel.utility.utils import (
     read_pickle_folder, get_logger,
     enumerate_columns,
 )
-
-from mppsteel.utility.transform_units import (
-    mwh_gj
-)
-
 from mppsteel.model_config import (
     PKL_DATA_INTERMEDIATE, DISCOUNT_RATE,
     INVESTMENT_CYCLE_LENGTH, STEEL_PLANT_LIFETIME
 )
-
-from mppsteel.model_scenarios import COST_SCENARIO_MAPPER, GRID_DECARBONISATION_SCENARIOS
-
 from mppsteel.utility.reference_lists import (
     SWITCH_DICT
-)
-
-from mppsteel.model.financial_functions import generate_capex_financial_summary
-
-from mppsteel.data_loading.pe_model_formatter import (
-    RE_DICT, power_data_getter, hydrogen_data_getter,
 )
 
 # Create logger
@@ -100,41 +88,6 @@ def calculate_capex(capex_df: pd.DataFrame, start_year: int, base_tech: str):
     enumerated_cols = enumerate_columns(df.columns)
     df = df.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     return df.set_index(['year', 'start_technology'])
-
-def get_s2_emissions(power_model: dict, hydrogen_model: dict, business_cases: pd.DataFrame, country_ref_dict: dict, year: int, country_code: str, technology: str, electricity_cost_scenario: str, grid_scenario: str, hydrogen_cost_scenario: str):
-    electricity_cost_scenario = COST_SCENARIO_MAPPER[electricity_cost_scenario]
-    grid_scenario = GRID_DECARBONISATION_SCENARIOS[grid_scenario]
-    hydrogen_cost_scenario = COST_SCENARIO_MAPPER[hydrogen_cost_scenario]
-
-    electricity_emissions = power_data_getter(
-        power_model,
-        'emissions',
-        year,
-        country_code,
-        country_ref_dict,
-        re_dict=RE_DICT,
-        grid_scenario=grid_scenario,
-        cost_scenario=electricity_cost_scenario)
-
-    h2_emissions = hydrogen_data_getter(
-        hydrogen_model,
-        'emissions',
-        year,
-        country_code,
-        country_ref_dict,
-        cost_scenario=hydrogen_cost_scenario)
-
-    bcases = business_cases.loc[business_cases["technology"] == technology].copy().reset_index(drop=True)
-    hydrogen_consumption = 0
-    electricity_consumption = 0
-    if 'Hydrogen' in bcases['material_category'].unique():
-        hydrogen_consumption =  bcases[bcases['material_category'] == 'Hydrogen']['value'].values[0]
-    if 'Electricity' in bcases['material_category'].unique():
-        electricity_consumption =  bcases[bcases['material_category'] == 'Electricity']['value'].values[0]
-
-    total_s2_emission = ((h2_emissions / 1000) * hydrogen_consumption) + (mwh_gj(electricity_emissions, 'larger') * electricity_consumption)
-
-    return total_s2_emission
 
 def get_discounted_opex_values(
     country_code: tuple,
