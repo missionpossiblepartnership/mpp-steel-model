@@ -1,7 +1,4 @@
 """Graph fpr the OPEX CAPEX split"""
-
-from multiprocessing.context import _default_context
-from argon2 import DEFAULT_MEMORY_COST
 import pandas as pd
 import plotly.express as px
 import numpy as np
@@ -91,7 +88,7 @@ def assign_country_deltas(df: pd.DataFrame, delta_dict: dict):
 
 def create_capex_opex_split_data():
     capex_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "capex_dict", "df")
-    vcsmb = read_pickle_folder(PKL_DATA_INTERMEDIATE, "variable_costs_summary_material_breakdown", "df")
+    vcsmb = read_pickle_folder(PKL_DATA_INTERMEDIATE, "variable_costs_regional_material_breakdown", "df")
     vcsmb_c = vcsmb.copy()
     index_sort = ['technology', 'cost_type', 'country_code']
     # Eletricity PJ to Twh
