@@ -38,11 +38,11 @@ def tco_regions_ref_generator(electricity_cost_scenario, grid_scenario, hydrogen
                 tco_df = tco_calc(
                     country_code, year, tech, carbon_tax_df,
                     business_cases, all_plant_variable_costs_summary,
-                    power_model, hydrogen_model, bio_price_model,
+                    power_model, hydrogen_model,
                     opex_values_dict['other_opex'], calculated_s1_emissions,
-                    country_ref_dict, capex_df, INVESTMENT_CYCLE_LENGTH, 
-                    electricity_cost_scenario, grid_scenario, 
-                    hydrogen_cost_scenario, biomass_cost_scenario)
+                    country_ref_dict, capex_df, INVESTMENT_CYCLE_LENGTH,
+                    electricity_cost_scenario, grid_scenario,
+                    hydrogen_cost_scenario)
                 df_list.append(tco_df)
     combined_df = pd.concat(df_list).reset_index(drop=True)
     return combined_df
@@ -72,7 +72,7 @@ def create_full_steel_plant_ref(eur_usd_rate: float):
             green_premium_value = calculate_green_premium(
                 all_plant_variable_costs_summary, steel_plants,
                 green_premium_timeseries, row[enum_dict['country_code']],
-                row[enum_dict['plant_name']],
+                row[enum_dict['plant_name']], # remove ref to region
                 row[enum_dict['technology_in_2020']],
                 year_loop_val, eur_usd_rate)
             gp_arr = np.append(gp_arr, green_premium_value)
@@ -122,11 +122,9 @@ def tco_presolver_reference(scenario_dict, serialize_only: bool = False):
     opex_capex_reference_data = tco_regions_ref_generator(electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario, biomass_cost_scenario, eur_usd_rate)
     steel_plant_ref = create_full_steel_plant_ref(eur_usd_rate)
     tco_reference_data = map_region_tco_to_plants(steel_plant_ref, opex_capex_reference_data)
-    tco_reference_data = add_results_metadata(tco_reference_data, scenario_dict)
+    tco_reference_data = add_results_metadata(tco_reference_data, scenario_dict, single_line=True)
     if serialize_only:
         logger.info(f'-- Serializing dataframe')
-        serialize_file(opex_capex_reference_data, PKL_DATA_INTERMEDIATE, "opex_capex_reference_data")
-        serialize_file(steel_plant_ref, PKL_DATA_INTERMEDIATE, "steel_plant_ref")
         serialize_file(tco_reference_data, PKL_DATA_INTERMEDIATE, "tco_reference_data")
     return tco_reference_data
 
@@ -221,10 +219,9 @@ def abatement_presolver_reference(scenario_dict, serialize_only: bool = False):
     hydrogen_cost_scenario=scenario_dict['hydrogen_cost_scenario']
     s2_emissions = all_plant_s2_emissions(electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario)
     s2_emission_switches = emission_abatement(s2_emissions)
-    combined_emissions = combine_emissions(s2_emission_switches)
-    steel_plant_abatement_switches = map_region_emissions_to_plants(combined_emissions)
-    steel_plant_abatement_switches = add_results_metadata(steel_plant_abatement_switches, scenario_dict)
+    regional_combined_emissions = combine_emissions(s2_emission_switches)
+    regional_combined_emissions_switches = add_results_metadata(regional_combined_emissions, scenario_dict, single_line=True)
     if serialize_only:
         logger.info(f'-- Serializing dataframe')
-        serialize_file(steel_plant_abatement_switches, PKL_DATA_INTERMEDIATE, "steel_plant_abatement_switches")
-    return steel_plant_abatement_switches
+        serialize_file(regional_combined_emissions_switches, PKL_DATA_INTERMEDIATE, "regional_combined_emissions_switches")
+    return regional_combined_emissions_switches
