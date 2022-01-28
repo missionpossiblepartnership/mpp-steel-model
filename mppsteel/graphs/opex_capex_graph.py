@@ -1,13 +1,17 @@
 """Graph fpr the OPEX CAPEX split"""
 
+from multiprocessing.context import _default_context
+from argon2 import DEFAULT_MEMORY_COST
 import pandas as pd
 import plotly.express as px
 import numpy as np
 import numpy_financial as npf
+from mppsteel.utility.reference_lists import TECH_REFERENCE_LIST
 
 from mppsteel.utility.utils import (
-    PKL_DATA_INTERMEDIATE, read_pickle_folder, 
-    get_region_from_country_code, column_sorter
+    PKL_DATA_INTERMEDIATE, read_pickle_folder,
+    get_region_from_country_code, column_sorter,
+    cast_to_float
 )
 
 BAR_CHART_ORDER = {
@@ -36,7 +40,7 @@ def return_capex_values(capex_dict: dict, year: str, investment_cycle: int, disc
     other_opex_values.rename(mapper={'value': 'other_opex'}, axis=1, inplace=True)
     combined_values = greenfield_values.join(brownfield_values) / investment_cycle
     combined_values = combined_values.join(other_opex_values)
-    combined_values['renovation_capex'] = (combined_values['greenfield_capex'] + combined_values['brownfield_capex'])
+    combined_values['renovation_capex'] = combined_values['greenfield_capex'] + combined_values['brownfield_capex']
     return combined_values
 
 def add_opex_values(vdf: pd.DataFrame, co_df: pd.DataFrame):
@@ -59,8 +63,10 @@ def add_capex_values(vdf: pd.DataFrame, co_df: pd.DataFrame):
     return vdf_c
 
 def get_country_deltas(df: pd.DataFrame):
+    df['cost'] = df['cost'].apply(lambda x: cast_to_float(x))
     df_s = df.reset_index()
     df_c = df.groupby(['technology', 'country_code']).sum()
+    df_c['cost'] = pd.to_numeric(df_c['cost'])
     technologies = df_c.index.get_level_values(0).unique()
     tech_delta_dict = {}
     tech_list = []
@@ -68,7 +74,7 @@ def get_country_deltas(df: pd.DataFrame):
         min_val = df_c.loc[technology]['cost'].min()
         max_val = df_c.loc[technology]['cost'].max()
         tech_delta_dict[technology] = max_val - min_val
-        min_country_code = df_c.loc[technology]['cost'].idxmin()
+        min_country_code = df_c.loc[technology].idxmin().values[0]
         df_subset = df_s[(df_s['technology'] == technology) & (df_s['country_code'] == min_country_code)].copy()
         tech_list.append(df_subset)
     df_combined = pd.concat(tech_list).reset_index(drop=True).set_index(['technology', 'cost_type', 'country_code'])
@@ -120,7 +126,6 @@ def bar_chart(data, x, y, color, color_discrete_map=None, array_order=None, titl
         xaxis_title=xaxis_title,
         yaxis_title=yaxis_title,
         legend_title_text=legend_text,
-        xaxis={'categoryorder':'array', 'categoryarray':array_order},
         showlegend=True,
         hovermode='x unified',
         plot_bgcolor="white",
@@ -146,6 +151,8 @@ def bar_chart(data, x, y, color, color_discrete_map=None, array_order=None, titl
         fixedrange=True,
         linewidth=1,
         linecolor='grey',
+        categoryorder='array',
+        categoryarray=array_order
     )
 
     fig_.update_yaxes(
@@ -177,6 +184,7 @@ def opex_capex_graph(save_filepath:str=None, ext:str='png'):
         y='cost',
         color='cost_type',
         color_discrete_map=BAR_CHART_ORDER,
+        array_order=TECH_REFERENCE_LIST,
         xaxis_title='Technology',
         yaxis_title='Cost',
         title_text='Capex / OPEX breakdown in 2050',

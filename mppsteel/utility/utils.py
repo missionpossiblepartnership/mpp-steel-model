@@ -7,6 +7,7 @@ import sys
 import os
 
 from collections import namedtuple
+from collections.abc import Iterable
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
@@ -428,3 +429,9 @@ def column_sorter(df: pd.DataFrame, col_to_sort: str, col_order: list):
         correspondence = {val: order for order, val in enumerate(col_order)}
         return column.map(correspondence)
     return df.copy().sort_values(by=col_to_sort, key=sorter)
+
+def cast_to_float(val):
+    if isinstance(val, float):
+        return val
+    elif isinstance(val, Iterable):
+        return float(val.sum())

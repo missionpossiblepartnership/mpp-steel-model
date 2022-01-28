@@ -129,7 +129,7 @@ def calculate_primary_and_secondary(tech_capacities: dict, plant: str, tech: str
 
     Returns:
         [type]: [description]
-    """    
+    """
     if tech == 'EAF':
         return tech_capacities[plant]['secondary_capacity'] + tech_capacities[plant]['primary_capacity']
     return tech_capacities[plant]['primary_capacity']
