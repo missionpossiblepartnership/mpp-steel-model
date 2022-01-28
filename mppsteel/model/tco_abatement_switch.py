@@ -18,7 +18,7 @@ logger = get_logger("TCO & Abatement switches")
 
 def tco_regions_ref_generator(electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario, biomass_cost_scenario, eur_usd_rate, technology: str = None):
     carbon_tax_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'carbon_tax_timeseries', 'df')
-    all_plant_variable_costs_summary = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'all_plant_variable_costs_summary', 'df')
+    variable_costs_regional = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'variable_costs_regional', 'df')
     power_model = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'power_model_formatted', 'df')
     hydrogen_model = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'hydrogen_model_formatted', 'df')
     opex_values_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'capex_dict', 'df')
@@ -36,7 +36,7 @@ def tco_regions_ref_generator(electricity_cost_scenario, grid_scenario, hydrogen
             for tech in technologies:
                 tco_df = tco_calc(
                     country_code, year, tech, carbon_tax_df,
-                    business_cases, all_plant_variable_costs_summary,
+                    business_cases, variable_costs_regional,
                     power_model, hydrogen_model,
                     opex_values_dict['other_opex'], calculated_s1_emissivity,
                     country_ref_dict, capex_df, INVESTMENT_CYCLE_LENGTH,
@@ -49,7 +49,7 @@ def tco_regions_ref_generator(electricity_cost_scenario, grid_scenario, hydrogen
 def create_full_steel_plant_ref(eur_usd_rate: float):
     logger.info('Adding Green Premium Values and year and technology index to steel plant data')
     green_premium_timeseries = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'green_premium_timeseries', 'df')
-    all_plant_variable_costs_summary = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'all_plant_variable_costs_summary', 'df')
+    variable_costs_regional = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'variable_costs_regional', 'df')
     steel_plants = read_pickle_folder(PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df")
     steel_plant_ref = steel_plants[['plant_name', 'country_code', 'technology_in_2020']].copy()
     year_range = range(MODEL_YEAR_START, MODEL_YEAR_END+1)
@@ -69,7 +69,7 @@ def create_full_steel_plant_ref(eur_usd_rate: float):
             if year > 2050:
                 year_loop_val = 2050
             green_premium_value = calculate_green_premium(
-                all_plant_variable_costs_summary, steel_plants,
+                variable_costs_regional, steel_plants,
                 green_premium_timeseries, row[enum_dict['country_code']],
                 row[enum_dict['plant_name']], # remove ref to region
                 row[enum_dict['technology_in_2020']],
@@ -135,7 +135,7 @@ def emissivity_abatement(combined_emissivity: pd.DataFrame, scope: str):
         's3': 's3_emissivity',
         'combined': 'combined_emissivity',
     }
-    combined_emissivity = combined_emissivity.reset_index().set_index(['year', 'country_code', 'technology']).copy()
+    combined_emissivity = combined_emissivity.reset_index(drop=True).set_index(['year', 'country_code', 'technology']).copy()
     country_codes = combined_emissivity.index.get_level_values(1).unique()
     technologies = combined_emissivity.index.get_level_values(2).unique()
     df_list = []

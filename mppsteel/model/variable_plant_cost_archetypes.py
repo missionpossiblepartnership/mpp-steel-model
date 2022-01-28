@@ -262,6 +262,6 @@ def generate_variable_plant_summary(scenario_dict: dict, serialize_only: bool = 
 
     if serialize_only:
         logger.info(f'-- Serializing dataframes')
-        serialize_file(variable_costs_summary, PKL_DATA_INTERMEDIATE, "all_plant_variable_costs_summary")
-        serialize_file(variable_costs_summary_material_breakdown, PKL_DATA_INTERMEDIATE, "variable_costs_summary_material_breakdown")
+        serialize_file(variable_costs_summary, PKL_DATA_INTERMEDIATE, "variable_costs_regional")
+        serialize_file(variable_costs_summary_material_breakdown, PKL_DATA_INTERMEDIATE, "variable_costs_regional_material_breakdown")
     return variable_costs_summary

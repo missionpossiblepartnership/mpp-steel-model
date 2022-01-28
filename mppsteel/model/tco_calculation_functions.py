@@ -179,10 +179,10 @@ def capex_values_for_levelised_steelmaking(capex_df: pd.DataFrame, int_rate: flo
 def levelised_steelmaking_cost(year: pd.DataFrame, include_greenfield: bool = False):
     # Levelised of cost of steelmaking = OtherOpex + VariableOpex + RenovationCapex w/ 7% over 20 years (+ GreenfieldCapex w/ 7% over 40 years)
     df_list = []
-    all_plant_variable_costs_summary = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'all_plant_variable_costs_summary', 'df')
+    variable_costs_regional = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'variable_costs_regional', 'df')
     opex_values_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'capex_dict', 'df')
-    for plant_country_ref in all_plant_variable_costs_summary.index.get_level_values(0).unique():
-        variable_costs = all_plant_variable_costs_summary.loc[plant_country_ref, year]
+    for plant_country_ref in variable_costs_regional.index.get_level_values(0).unique():
+        variable_costs = variable_costs_regional.loc[plant_country_ref, year]
         other_opex = opex_values_dict['other_opex'].swaplevel().loc[year]
         brownfield_capex = capex_values_for_levelised_steelmaking(opex_values_dict['brownfield'], DISCOUNT_RATE, year, INVESTMENT_CYCLE_LENGTH)
         variable_costs.rename(mapper={'cost': 'value'}, axis=1, inplace=True)

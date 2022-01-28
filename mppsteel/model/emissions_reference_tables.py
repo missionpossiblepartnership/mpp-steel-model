@@ -271,7 +271,7 @@ def combine_emissivity(s1_ref: pd.DataFrame, s2_ref: pd.DataFrame, s3_ref: pd.Da
     # change_column_order
     new_col_order = move_cols_to_front(
         total_emissivity, ['s1_emissivity', 's2_emissivity', 's3_emissivity', 'combined_emissivity'])
-    return total_emissivity[new_col_order]
+    return total_emissivity[new_col_order].reset_index()
 
 @timer_func
 def generate_emissions_flow(scenario_dict: dict, serialize_only: bool = False):
