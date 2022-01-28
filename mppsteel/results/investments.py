@@ -105,7 +105,7 @@ def investment_row_calculator(inv_df: pd.DataFrame, capex_df: pd.DataFrame, tech
     capex_ref = get_capex_ref(capex_df, year, start_tech, new_tech, switch_type)
     actual_capex = capex_ref * (capacity_value * 1000 * 1000) # convert from Mt to T
     new_row = {
-        'steel_plant' : plant_name,
+        'plant_name' : plant_name,
         'country_code': country_code,
         'year': year,
         'start_tech': start_tech,
@@ -117,8 +117,44 @@ def investment_row_calculator(inv_df: pd.DataFrame, capex_df: pd.DataFrame, tech
 
 def production_stats_getter(df: pd.DataFrame, year: int, plant_name, value_col: str):
     df_c = df.copy()
-    df_c.set_index(['year', 'steel_plant'], inplace=True)
+    df_c.set_index(['year', 'plant_name'], inplace=True)
     return df_c.xs((year, plant_name))[value_col]
+
+
+def create_inv_stats(df: pd.DataFrame, results: str = 'global', agg: bool = False, operation: str = 'sum'):
+
+    df_c = df[['year', 'steel_plant', 'country_code', 'start_tech', 
+        'end_tech','switch_type', 'capital_cost', 'region_wsa_region']].copy()
+    
+    def create_global_stats(df, operation: str = 'sum'):
+        calc = df_c.groupby(['year']).sum()
+        if operation == 'sum':
+            return calc
+        if operation == 'cumsum':
+            return calc.cumsum()
+    
+    if results == 'global':
+        return create_global_stats(df_c, operation).reset_index()
+    
+    if results == 'regional':
+        regions = df_c['region_wsa_region'].unique()
+        region_dict = {}
+        for region in regions:
+            calc = df_c[df_c['region_wsa_region'] == region].groupby(['year']).sum()
+            if operation == 'sum':
+                pass
+            if operation == 'cumsum':
+                calc = calc.cumsum()
+            region_dict[region] = calc
+        if agg:
+            df_list = []
+            for region_key in region_dict.keys():
+                df_r = region_dict[region_key]
+                df_r['region'] = region_key
+                df_list.append(df_r[['region', 'capital_cost']])
+            return pd.concat(df_list).reset_index()
+        return region_dict
+
 
 @timer_func
 def investment_results(scenario_dict: dict, serialize_only: bool = False):
@@ -151,8 +187,10 @@ def investment_results(scenario_dict: dict, serialize_only: bool = False):
     investment_results.reset_index(inplace=True)
     investment_results = map_plant_id_to_df(investment_results, 'plant_name')
     investment_results = add_results_metadata(investment_results, scenario_dict, single_line=True)
+    cumulative_investment_results = create_inv_stats(investment_results, results='regional', agg=True, operation='cumsum')
 
     if serialize_only:
         logger.info(f'-- Serializing dataframes')
         serialize_file(investment_results, PKL_DATA_FINAL, "investment_results")
+        serialize_file(cumulative_investment_results, PKL_DATA_FINAL, "cumulative_investment_results")
     return investment_results

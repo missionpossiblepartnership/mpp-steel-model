@@ -6,7 +6,7 @@ from mppsteel.utility.utils import (
 )
 
 from mppsteel.model_config import (
-    PKL_DATA_FINAL, OUTPUT_FOLDER
+    PKL_DATA_FINAL
 )
 
 from mppsteel.graphs.plotly_graphs import (
@@ -14,6 +14,8 @@ from mppsteel.graphs.plotly_graphs import (
 )
 
 from mppsteel.graphs.opex_capex_graph import opex_capex_graph
+from mppsteel.graphs.investment_graph import (
+    investment_line_chart, investment_per_tech)
 
 # Create logger
 logger = get_logger("Graph Production")
@@ -129,11 +131,25 @@ def create_opex_capex_graph(filepath: str = None):
         filename = f'{filepath}/{filename}'
     return opex_capex_graph(save_filepath=filename)
 
+def create_investment_line_graph(group: str, operation: str, filepath: str = None):
+    filename = f'investment_graph_{group}_{operation}'
+    logger.info(f'Regional Investment Graph Output: {filename}')
+    if filepath:
+        filename = f'{filepath}/{filename}'
+    return investment_line_chart(group=group, operation=operation, save_filepath=filename)
+
+def create_investment_per_tech_graph(filepath: str = None):
+    filename = f'investment_graph_per_technology'
+    logger.info(f'Technology Investment Output: {filename}')
+    if filepath:
+        filename = f'{filepath}/{filename}'
+    return investment_per_tech(save_filepath=filename)
+
+
 @timer_func
 def create_graphs(filepath: str, ):
     production_stats_all = read_pickle_folder(PKL_DATA_FINAL, 'production_stats_all', 'df')
     production_emissions = read_pickle_folder(PKL_DATA_FINAL, 'production_emissions', 'df')
-    #investment_results = read_pickle_folder(PKL_DATA_FINAL, 'investment_results', 'df')
 
     steel_production_area_chart(production_emissions, filepath)
     resource_line_charts(production_stats_all, 'electricity', ['EU + UK', 'China', 'India', 'USMCA'], filepath)
@@ -145,3 +161,7 @@ def create_graphs(filepath: str, ):
         resource_line_charts(df=production_stats_all, resource=resource, filepath=filepath)
 
     create_opex_capex_graph(filepath)
+
+    create_investment_line_graph(group='global', operation='cumsum', filepath=filepath)
+
+    create_investment_per_tech_graph(filepath=filepath)
