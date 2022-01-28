@@ -86,8 +86,15 @@ def assign_country_deltas(df: pd.DataFrame, delta_dict: dict):
 def create_capex_opex_split_data():
     capex_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "capex_dict", "df")
     vcsmb = read_pickle_folder(PKL_DATA_INTERMEDIATE, "variable_costs_summary_material_breakdown", "df")
+    vcsmb_c = vcsmb.copy()
     index_sort = ['technology', 'cost_type', 'country_code']
-    vcsmb_c = vcsmb.set_index('year').loc[2050].drop(['material_category', 'unit', 'value'], axis=1).set_index(index_sort).sort_values(index_sort)
+    # Eletricity PJ to Twh
+    def value_mapper(row):
+        if row['material_category'] == 'Electricity':
+            row['cost'] = row['cost'] / 3.6
+        return row
+    vcsmb_c = vcsmb_c.apply(value_mapper, axis=1)
+    vcsmb_c = vcsmb_c.set_index('year').loc[2050].drop(['material_category', 'unit', 'value'], axis=1).set_index(index_sort).sort_values(index_sort)
     capex_opex_df = return_capex_values(
         capex_dict=capex_dict,
         year=2050,
@@ -105,7 +112,7 @@ def create_capex_opex_split_data():
     return vcsmb_cocd.groupby(['technology', 'cost_type']).sum().groupby(['technology', 'cost_type']).mean().reset_index()
 
 def bar_chart(data, x, y, color, color_discrete_map=None, array_order=None, title_text='', xaxis_title='', yaxis_title='', legend_text=''):
-    
+
     fig_ = px.bar(data, x=x, y=y, title=title_text, color=color, color_discrete_map=color_discrete_map, text=y, width=1500, height=1000)
     fig_.update_layout(
         titlefont=dict(family='Arial', size=12, color='black'),

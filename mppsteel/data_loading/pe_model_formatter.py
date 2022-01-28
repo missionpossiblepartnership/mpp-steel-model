@@ -353,11 +353,7 @@ def bio_constraint_getter(df: pd.DataFrame, year: int, sector: str = 'Steel', co
 def ccus_data_getter(
     df_dict: dict, data_type: str, country_code: str,
     default_country: str = 'GBL',
-    transport_type: str = 'Onshore Pipeline',
     cost_scenario: str = 'BaseCase',
-    storage_location: str = 'Onshore',
-    storage_type: str = 'Saline aquifers',
-    reusable_lw = 'No'
     ):
     # map data_type to df_dict keys
     data_type_mapper = {
@@ -371,33 +367,58 @@ def ccus_data_getter(
     # define country list based on the data_type
     country_list = get_unique_countries(df_c['country_code'].values)
 
-    value_col = 'Costs -  capacity 5'
     # Apply country check and use default
     if country_code in country_list:
         df_c = df_c[df_c['country_code'].str.contains(country_code, regex=False)]
     else:
         df_c = df_c[df_c['country_code'].str.contains(default_country, regex=False)]
 
-    if data_type == 'capacity':
-        return df_c['Capacity'].values[0]
-
     if data_type == 'transport':
         # Apply subsets
         df_c.reset_index(drop=True, inplace=True)
         # Transport Type: 'Onshore Pipeline', 'Offshore Pipeline', 'Shipping'
         # Cost scenarios: 'BaseCase', 'Low'
+
+        if cost_scenario == 'low':
+            cost_scenario_input = 'BaseCase'
+            transport_type_input = 'Onshore Pipeline'
+            capacity_input = 5
+            t_node_input = ['Transport costs _Node 1']
+
+        if cost_scenario == 'high':
+            cost_scenario_input = 'BaseCase'
+            transport_type_input = 'Shipping'
+            capacity_input = 5
+            t_node_input = ['Transport costs _Node 2']
+
         df_c = df_c[
-            (df_c['Cost Estimate'] == cost_scenario) & (df_c['Transport Type'] == transport_type)]
+            (df_c['Cost Estimate'] == cost_scenario_input) & (df_c['Transport Type'] == transport_type_input) & (df_c['Capacity'] == capacity_input)]
 
         # Return the transport node costs
-        return tuple(df_c[['Transport costs _Node 1','Transport costs _Node 2', 'Transport costs _Node 3']].values[0])
+        return df_c[t_node_input].values[0]
 
     if data_type == 'storage':
         # Apply subsets
         df_c.reset_index(drop=False, inplace=True)
+
         # Storage Location: 'Onshore' 'Offshore'
         # Storage type: 'Depleted O&G field', 'Saline aquifers'
         # reusable_lw: Yes or No
-        df_c = df_c[(df_c['Storage location'] == storage_location) & (df_c['Storage type'] == storage_type) & (df_c['Reusable legacy wells'] == reusable_lw)]
 
-        return df_c[value_col].values[0]
+        if cost_scenario == 'low':
+            storage_location_input = 'Onshore'
+            storage_type_input = 'Depleted O&G field'
+            reusable_lw_input = 'Yes'
+            value_input = 'Medium'
+            cost_capacity_input = 'Costs -  capacity 5'
+
+        if cost_scenario == 'high':
+            storage_location_input = 'Offshore'
+            storage_type_input = 'Saline aquifers'
+            reusable_lw_input = 'No'
+            value_input = 'Medium'
+            cost_capacity_input = 'Costs -  capacity 5'
+
+        df_c = df_c[(df_c['Storage location'] == storage_location_input) & (df_c['Storage type'] == storage_type_input) & (df_c['Reusable legacy wells'] == reusable_lw_input) & (df_c['Value'] == value_input)]
+
+        return df_c[cost_capacity_input].values[0]

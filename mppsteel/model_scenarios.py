@@ -41,8 +41,8 @@ BIOMASS_SCENARIOS = {
 }
 
 CCUS_SCENARIOS = {
-    'average': 'BaseCase',
-    'low': 'Low'
+    'high': 'high',
+    'low': 'low'
 }
 
 SOLVER_LOGICS = {
@@ -72,7 +72,7 @@ DEFAULT_SCENARIO = {
     'grid_scenario': 'high', # low / high
     'hydrogen_cost_scenario': 'average', # low / average / high
     'biomass_cost_scenario': 'average', # average
-    'ccus_cost_scenario': 'average', # low / average
+    'ccus_cost_scenario': 'low', # low / average
     'steel_demand_scenario': 'average', # bau / average / high
     'tech_switch_scenario': 'equal_weight', # max_abatement / lowest_cost / equal_weight
     'solver_logic': 'rank' # scale / rank

@@ -207,7 +207,7 @@ def generate_variable_costs(
         ccus_transport_price = ccus_data_getter(
             ccus_df, 'transport', country_code, default_country='GBL',
             cost_scenario=CCUS_SCENARIOS[ccus_cost_scenario]
-        )[0]
+        )
         ccus_storage_price = ccus_data_getter(
             ccus_df, 'storage', country_code, default_country='GBL',
             cost_scenario=CCUS_SCENARIOS[ccus_cost_scenario]
