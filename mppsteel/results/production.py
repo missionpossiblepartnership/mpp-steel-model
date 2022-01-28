@@ -23,6 +23,7 @@ from mppsteel.model.solver_constraints import (
 from mppsteel.data_loading.reg_steel_demand_formatter import (
     steel_demand_getter
 )
+from mppsteel.data_loading.steel_plant_formatter import map_plant_id_to_df
 
 from mppsteel.data_loading.data_interface import (
     load_business_cases
@@ -91,13 +92,15 @@ def tech_capacity_splits():
     for year in tqdm(year_range, total=len(year_range), desc='Tech Capacity Splits'):
         df = pd.DataFrame({'year': year, 'steel_plant': steel_plants, 'technology': '', 'capacity': 0})
         df['technology'] = df['steel_plant'].apply(lambda plant: get_tech_choice(tech_choices_dict, year, plant))
-        tqdma.pandas(desc="Technology Capacity  Splits")
+        tqdma.pandas(desc="Technology Capacity Splits")
         enumerated_cols = enumerate_columns(df.columns)
         df = df.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
         df_list.append(df)
 
     df_combined = pd.concat(df_list)
+    df_combined = map_plant_id_to_df(df_combined, 'steel_plant')
     df_combined['country_code'] = df['steel_plant'].apply(lambda plant: steel_plant_dict[plant])
+
 
     return df_combined, max_year
 
@@ -141,7 +144,7 @@ def production_stats_generator(production_df: pd.DataFrame, as_summary: bool = F
         return df_c.groupby(['year', 'technology']).sum()
 
     # Convert Electricity from Twh to Pj
-    df_c['Electricity'] = df_c['Electricity'] * 3.6
+    df_c['Electricity'] = df_c['Electricity'] / 3.6
     return df_c
 
 def generate_production_emission_stats(

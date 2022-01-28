@@ -14,6 +14,8 @@ from mppsteel.utility.utils import (
     timer_func, add_results_metadata,
 )
 
+from mppsteel.data_loading.steel_plant_formatter import map_plant_id_to_df
+
 # Create logger
 logger = get_logger("Investment Results")
 
@@ -148,6 +150,7 @@ def investment_results(scenario_dict: dict, serialize_only: bool = False):
 
     investment_results = pd.DataFrame(data_container).set_index(['year']).sort_values('year')
     investment_results.reset_index(inplace=True)
+    investment_results = map_plant_id_to_df(investment_results, 'plant_name')
     investment_results = add_results_metadata(investment_results, scenario_dict, single_line=True)
 
     if serialize_only:

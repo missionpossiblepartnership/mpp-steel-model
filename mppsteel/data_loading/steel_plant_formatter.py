@@ -126,6 +126,16 @@ def get_countries_from_group(country_ref: pd.DataFrame, grouping: str, group: st
         return list(set(code_list).difference(exc_codes))
     return code_list
 
+def map_plant_id_to_df(df: pd.DataFrame, plant_identifier: str, reverse: bool = False):
+    steel_plants = read_pickle_folder(PKL_DATA_IMPORTS, "steel_plants")
+    plant_id_dict = dict(zip(steel_plants['Plant name (English)'], steel_plants['Plant ID']))
+    df_c = df.copy()
+    if reverse:
+        id_plant_dict = {v: k for k, v in plant_id_dict.items()}
+        df_c['plant_name'] = df_c[plant_identifier].apply(lambda x: id_plant_dict[x])
+    df_c['plant_id'] = df_c[plant_identifier].apply(lambda x: plant_id_dict[x])
+    return df_c
+
 def apply_countries_to_steel_plants(steel_plant_formatted: pd.DataFrame):
     logger.info("Applying Country Data to Steel Plants")
     df_c = steel_plant_formatted.copy()

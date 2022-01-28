@@ -108,7 +108,7 @@ def map_region_tco_to_plants(steel_plant_ref: pd.DataFrame, opex_capex_ref: pd.D
     logger.info('Joining tco values on steel plant df')
     combined_df = steel_plant_ref.join(opex_capex_ref_c, how='left').reset_index()
     combined_df['tco'] = combined_df.apply(lambda x: (x['capex_value'] + x['discounted_opex'] - x['discounted_green_premium']) / INVESTMENT_CYCLE_LENGTH, axis=1)
-    new_col_order = ['year', 'plant_name', 'country_code', 'base_tech', 'switch_tech', 'capex_value', 'discounted_opex', 'discounted_green_premium', 'tco']
+    new_col_order = ['year', 'plant_id', 'plant_name', 'country_code', 'base_tech', 'switch_tech', 'capex_value', 'discounted_opex', 'discounted_green_premium', 'tco']
     return combined_df[new_col_order]
 
 
@@ -208,7 +208,7 @@ def map_region_emissions_to_plants(ab_switches: pd.DataFrame):
     combined_df.set_index(['year', 'country_code', 'base_tech', 'switch_tech'], inplace=True)
     combined_df = combined_df.join(ab_switches_c, how='left').reset_index()
     combined_df['abated_emissions_combined'] = combined_df.apply(lambda x: x['abated_s1_emissions'] + x['abated_s2_emissions'] + x['abated_s3_emissions'], axis=1)
-    new_col_order = ['year', 'plant_name', 'country_code', 'base_tech', 'switch_tech', 'abated_s1_emissions', 'abated_s2_emissions', 'abated_s3_emissions', 'abated_emissions_combined']
+    new_col_order = ['year', 'plant_id', 'plant_name', 'country_code', 'base_tech', 'switch_tech', 'abated_s1_emissions', 'abated_s2_emissions', 'abated_s3_emissions', 'abated_emissions_combined']
     return combined_df[new_col_order]
 
 @timer_func
