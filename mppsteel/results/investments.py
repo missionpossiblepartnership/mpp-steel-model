@@ -104,7 +104,7 @@ def investment_row_calculator(inv_df: pd.DataFrame, capex_df: pd.DataFrame, tech
 
     new_tech = get_tech_choice(tech_choices, year, plant_name)
     capex_ref = get_capex_ref(capex_df, year, start_tech, new_tech, switch_type)
-    actual_capex = capex_ref * capacity_value
+    actual_capex = capex_ref * (capacity_value * 1000 * 1000) # convert from Mt to T
     new_row = {
         'steel_plant' : plant_name,
         'country_code': country_code,
