@@ -96,7 +96,7 @@ def create_capex_opex_split_data():
     index_sort = ['technology', 'cost_type', 'country_code']
     # Eletricity PJ to Twh
     def value_mapper(row):
-        if row['material_category'] == 'Electricity':
+        if row['material_category'] in ['Electricity', 'Hydrogen']:
             row['cost'] = row['cost'] / 3.6
         return row
     vcsmb_c = vcsmb_c.apply(value_mapper, axis=1)

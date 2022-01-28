@@ -143,8 +143,10 @@ def production_stats_generator(production_df: pd.DataFrame, as_summary: bool = F
     if as_summary:
         return df_c.groupby(['year', 'technology']).sum()
 
-    # Convert Electricity from Twh to Pj
-    df_c['Electricity'] = df_c['Electricity'] / 3.6
+    # Convert Electricity & Hydrogen from Twh to Pj
+    for material in ['Electricity', 'Hydrogen']:
+        df_c[material] = df_c[material] / 3.6
+
     return df_c
 
 def generate_production_emission_stats(
