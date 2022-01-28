@@ -9,9 +9,11 @@ from mppsteel.model_config import (
     PKL_DATA_FINAL, OUTPUT_FOLDER
 )
 
-from mppsteel.results.plotly_graphs import (
+from mppsteel.graphs.plotly_graphs import (
     line_chart, area_chart, bar_chart, bar_chart_vertical, line_graph, ARCHETYPE_COLORS
 )
+
+from mppsteel.graphs.opex_capex_graph import opex_capex_graph
 
 # Create logger
 logger = get_logger("Graph Production")
@@ -120,11 +122,18 @@ def resource_line_charts(df: pd.DataFrame, resource: str, regions: list = None, 
         save_filepath=filename
     )
 
+def create_opex_capex_graph(filepath: str = None):
+    filename = f'opex_capex_graph_2050'
+    logger.info(f'Creating Opex Capex Graph Output: {filename}')
+    if filepath:
+        filename = f'{filepath}/{filename}'
+    return opex_capex_graph(save_filepath=filename)
+
 @timer_func
 def create_graphs(filepath: str, ):
     production_stats_all = read_pickle_folder(PKL_DATA_FINAL, 'production_stats_all', 'df')
     production_emissions = read_pickle_folder(PKL_DATA_FINAL, 'production_emissions', 'df')
-    investment_results = read_pickle_folder(PKL_DATA_FINAL, 'investment_results', 'df')
+    #investment_results = read_pickle_folder(PKL_DATA_FINAL, 'investment_results', 'df')
 
     steel_production_area_chart(production_emissions, filepath)
     resource_line_charts(production_stats_all, 'electricity', ['EU + UK', 'China', 'India', 'USMCA'], filepath)
@@ -134,3 +143,5 @@ def create_graphs(filepath: str, ):
 
     for resource in RESOURCE_COLS:
         resource_line_charts(df=production_stats_all, resource=resource, filepath=filepath)
+
+    create_opex_capex_graph(filepath)

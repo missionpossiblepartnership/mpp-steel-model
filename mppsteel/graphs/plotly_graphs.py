@@ -98,7 +98,7 @@ def line_chart(data, x, y, color, name, x_axis, y_axis, text=None, color_discret
     return fig_
 
 def area_chart(data, x, y, color, name, x_axis, y_axis, hoverdata, save_filepath: str=None, ext: str='png'):
-    fig_ = px.area(data, x=x, y=y, color=color, color_discrete_map=ARCHETYPE_COLORS, hover_data=hoverdata)  # , line_group="Metric")
+    fig_ = px.area(data, x=x, y=y, color=color, color_discrete_map=ARCHETYPE_COLORS, hover_data=hoverdata)
     fig_.update_layout(
         legend_title_text='',
         xaxis_title=None,
