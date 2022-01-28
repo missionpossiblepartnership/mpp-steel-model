@@ -148,7 +148,7 @@ def investment_results(scenario_dict: dict, serialize_only: bool = False):
 
     investment_results = pd.DataFrame(data_container).set_index(['year']).sort_values('year')
     investment_results.reset_index(inplace=True)
-    investment_results = add_results_metadata(investment_results, scenario_dict)
+    investment_results = add_results_metadata(investment_results, scenario_dict, single_line=True)
 
     if serialize_only:
         logger.info(f'-- Serializing dataframes')

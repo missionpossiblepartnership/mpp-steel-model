@@ -12,10 +12,10 @@ from mppsteel.model_config import (
     BIOMASS_AV_TS_END_VALUE,
     MODEL_YEAR_END,
     MODEL_YEAR_START,
-    ELECTRICITY_PRICE_MID_YEAR,
-    CARBON_TAX_SCENARIOS,
-    GREEN_PREMIUM_SCENARIOS
+    ELECTRICITY_PRICE_MID_YEAR
 )
+
+from mppsteel.model_scenarios import CARBON_TAX_SCENARIOS, GREEN_PREMIUM_SCENARIOS
 
 # Create logger
 logger = get_logger("Timeseries generator")

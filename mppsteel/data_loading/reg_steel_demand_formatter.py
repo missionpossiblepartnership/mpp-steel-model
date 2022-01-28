@@ -4,7 +4,9 @@ import itertools
 
 import pandas as pd
 
-from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE, STEEL_DEMAND_SCENARIO_MAPPER
+from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
+
+from mppsteel.model_scenarios import STEEL_DEMAND_SCENARIO_MAPPER
 
 from mppsteel.utility.utils import (
     get_logger,
@@ -67,13 +69,11 @@ def steel_demand_getter(
         'scrap': 'Scrap availability',
     }
 
-    
     # Apply country check and use default
     if country_code in country_list:
         df_c = df_c[df_c['country_code'].str.contains(country_code, regex=False)]
     else:
         df_c = df_c[df_c['country_code'].str.contains(default_country, regex=False)]
-    
     # Cap year at 2050
     if year > 2050:
         year = 2050

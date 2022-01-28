@@ -40,6 +40,11 @@ BIOMASS_SCENARIOS = {
     'average': 'Medium',
 }
 
+CCUS_SCENARIOS = {
+    'average': 'BaseCase',
+    'low': 'Low'
+}
+
 SOLVER_LOGICS = {
     'rank': 'ranked',
     'scale': 'scaled'
@@ -53,6 +58,7 @@ SCENARIO_SETTINGS = {
     'grid_scenario': GRID_DECARBONISATION_SCENARIOS.keys(),
     'hydrogen_cost_scenario': COST_SCENARIO_MAPPER.keys(),
     'biomass_cost_scenario': BIOMASS_SCENARIOS.keys(),
+    'ccus_cost_scenario': CCUS_SCENARIOS.keys(),
     'steel_demand_scenario': STEEL_DEMAND_SCENARIO_MAPPER.keys(),
     'tech_switch_scenario': TECH_SWITCH_SCENARIOS.keys(),
     'solver_logic': SOLVER_LOGICS.keys()
@@ -66,6 +72,7 @@ DEFAULT_SCENARIO = {
     'grid_scenario': 'high', # low / high
     'hydrogen_cost_scenario': 'average', # low / average / high
     'biomass_cost_scenario': 'average', # average
+    'ccus_cost_scenario': 'average', # low / average
     'steel_demand_scenario': 'average', # bau / average / high
     'tech_switch_scenario': 'equal_weight', # max_abatement / lowest_cost / equal_weight
     'solver_logic': 'rank' # scale / rank

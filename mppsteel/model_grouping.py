@@ -31,7 +31,7 @@ from mppsteel.model.solver import solver_flow
 from mppsteel.model.tco_abatement_switch import tco_presolver_reference, abatement_presolver_reference
 from mppsteel.results.production import production_results_flow
 from mppsteel.results.investments import investment_results
-from mppsteel.results.graph_production import create_graphs
+from mppsteel.graphs.graph_production import create_graphs
 
 from mppsteel.model_config import MODEL_YEAR_END, OUTPUT_FOLDER, PKL_DATA_FINAL, PKL_DATA_INTERMEDIATE, BC_TEST_FOLDER
 
