@@ -1,5 +1,7 @@
 """Script to run a full reference dataframe for tco switches and abatement switches"""
 import itertools
+from functools import lru_cache
+
 import pandas as pd
 import numpy as np
 import numpy_financial as npf
@@ -125,6 +127,28 @@ def tco_presolver_reference(scenario_dict, serialize_only: bool = False):
         serialize_file(tco_reference_data, PKL_DATA_INTERMEDIATE, "tco_reference_data")
     return tco_reference_data
 
+
+def get_abatement_difference(
+    df: pd.DataFrame, year: int, country_code: str,
+    base_tech: str, switch_tech: str, emission_type: str,
+    emissivity_mapper: dict, date_span: int
+):
+    @lru_cache(maxsize=200000)
+    def return_abatement_value(base_tech_sum, switch_tech_sum):
+        return float(base_tech_sum - switch_tech_sum)
+    
+    year_range = range(year, year + date_span)
+    emission_val = emissivity_mapper[emission_type]
+    base_tech_list = []
+    switch_tech_list = []
+    for eval_year in year_range:
+        year_loop_val = min(2050, eval_year)
+        base_tech_val = df.loc[year_loop_val, country_code, base_tech][emission_val]
+        switch_tech_val = df.loc[year_loop_val, country_code, switch_tech][emission_val]
+        base_tech_list.append(base_tech_val)
+        switch_tech_list.append(switch_tech_val)
+    return return_abatement_value(sum(base_tech_list), sum(switch_tech_list))
+
 def emissivity_abatement(combined_emissivity: pd.DataFrame, scope: str):
     logger.info('Getting all Emissivity Abatement combinations for all technology switches')
     emissivity_mapper = {
@@ -142,9 +166,7 @@ def emissivity_abatement(combined_emissivity: pd.DataFrame, scope: str):
         for country_code in country_codes:
             for base_tech in technologies:
                 for switch_tech in SWITCH_DICT[base_tech]:
-                    base_tech_value = combined_emissivity.loc[year, country_code, base_tech][emissivity_mapper[scope]]
-                    switch_tech_value = combined_emissivity.loc[year, country_code, switch_tech][emissivity_mapper[scope]]
-                    value_difference =  base_tech_value - switch_tech_value
+                    value_difference =  get_abatement_difference(combined_emissivity[['combined_emissivity']], year, country_code, base_tech, switch_tech, 'combined', emissivity_mapper, INVESTMENT_CYCLE_LENGTH)
                     entry = {'year': year, 'country_code': country_code, 'base_tech': base_tech, 'switch_tech': switch_tech, f'abated_{scope}_emissivity': value_difference}
                     df_list.append(entry)
     combined_df = pd.DataFrame(df_list)
