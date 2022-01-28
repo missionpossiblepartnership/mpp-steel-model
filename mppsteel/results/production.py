@@ -139,6 +139,9 @@ def production_stats_generator(production_df: pd.DataFrame, as_summary: bool = F
     df_c['bioenergy'] = df_c['biomass'] + df_c['biomethane']
     if as_summary:
         return df_c.groupby(['year', 'technology']).sum()
+
+    # Convert Electricity from Twh to Pj
+    df_c['Electricity'] = df_c['Electricity'] * 3.6
     return df_c
 
 def generate_production_emission_stats(
@@ -339,7 +342,7 @@ def production_results_flow(scenario_dict: dict, serialize_only: bool = False):
 
     for key in results_dict.keys():
         if key in ['production_results_all', 'production_emissions']:
-            results_dict[key] = add_results_metadata(results_dict[key], scenario_dict)
+            results_dict[key] = add_results_metadata(results_dict[key], scenario_dict, single_line=True)
 
     if serialize_only:
         logger.info(f'-- Serializing dataframes')
