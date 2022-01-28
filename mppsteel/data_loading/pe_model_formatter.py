@@ -234,7 +234,11 @@ def format_pe_data(serialize_only: bool = False):
 def remapping_country_code_to_mapped_countries(df, country_code, country_ref_dict, mapper):
     country_code_region = get_region_from_country_code(country_code, 'rmi_region', country_ref_dict)
     mapped_region = mapper[country_code_region]
-    return df[df['Region'] == mapped_region].copy()
+    # Managing Bio Average case: return average of all regions
+    if mapped_region == 'Avg':
+        return df['value'].mean()
+    # Normal case: return the specific region value
+    return df[df['Region'] == mapped_region]['value'].values[0]
 
 def power_data_getter(
     df_dict: dict, data_type: str, year: int, country_code: str, country_ref_dict: dict,
@@ -267,15 +271,8 @@ def power_data_getter(
 
     # Apply country check and use default
     if country_code in country_list:
-        df_c = df_c[df_c['country_code'].str.contains(country_code, regex=False)]
-    else:
-
-        df_c = remapping_country_code_to_mapped_countries(df_c, country_code, country_ref_dict, POWER_HYDROGEN_COUNTRY_MAPPER)
-    # Return the value figure
-    try:
-        return df_c.value.values[0]
-    except IndexError:
-        raise IndexError(f'Error with -> sheet:{data_type}, year:{year}, country_code:{country_code}, cost_scenario:{cost_scenario}, grid_scenario:{grid_scenario}')
+        return df_c[df_c['country_code'].str.contains(country_code, regex=False)]['value'].values[0]
+    return remapping_country_code_to_mapped_countries(df_c, country_code, country_ref_dict, POWER_HYDROGEN_COUNTRY_MAPPER)
 
 def hydrogen_data_getter(
     df_dict: dict, data_type: str, year: int, country_code: str, country_ref_dict: dict,
@@ -310,14 +307,12 @@ def hydrogen_data_getter(
         df_c = df_c[(df_c['Variable'] == variable)]
     elif (data_type=='prices') and not variable:
         df_c = df_c[(df_c['Variable'] == 'Total price premium ')]
-        
+
     # Apply country check and use default
     if country_code in country_list:
-        df_c = df_c[df_c['country_code'].str.contains(country_code, regex=False)]
+        return df_c[df_c['country_code'].str.contains(country_code, regex=False)]['value'].values[0]
     else:
-        df_c = remapping_country_code_to_mapped_countries(df_c, country_code, country_ref_dict, POWER_HYDROGEN_COUNTRY_MAPPER)
-    # Return the value figure
-    return df_c.value.values[0]
+        return remapping_country_code_to_mapped_countries(df_c, country_code, country_ref_dict, POWER_HYDROGEN_COUNTRY_MAPPER)
 
 def bio_price_getter(
     df_dict: dict, year: int, country_code: str, country_ref_dict: dict,
@@ -342,11 +337,9 @@ def bio_price_getter(
 
     # Apply country check and use default
     if country_code in country_list:
-        df_c = df_c[df_c['country_code'].str.contains(country_code, regex=False)]
+        return df_c[df_c['country_code'].str.contains(country_code, regex=False)]['value'].values[0]
     else:
-        df_c = remapping_country_code_to_mapped_countries(df_c, country_code, country_ref_dict, BIO_COUNTRY_MAPPER)
-    # Return the value figure
-    return df_c.value.values[0]
+        return remapping_country_code_to_mapped_countries(df_c, country_code, country_ref_dict, BIO_COUNTRY_MAPPER)
 
 def bio_constraint_getter(df: pd.DataFrame, year: int, sector: str = 'Steel', const_scenario: str = 'Prudent'):
     # Cap year at 2050
