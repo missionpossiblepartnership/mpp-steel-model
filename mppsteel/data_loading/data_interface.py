@@ -16,6 +16,7 @@ from mppsteel.utility.utils import (
 
 # Get model parameters
 from mppsteel.model_config import (
+    MODEL_YEAR_END,
     PKL_DATA_IMPORTS,
     PKL_DATA_INTERMEDIATE,
     EMISSIONS_FACTOR_SLAG,
@@ -162,8 +163,7 @@ def scope1_emissions_getter(df: pd.DataFrame, metric: str) -> float:
     return value
 
 def ccs_co2_getter(df: pd.DataFrame, metric: str, year: str) -> float:
-    if year > 2050:
-        year = 2050
+    year = min(MODEL_YEAR_END, year)
     df_c = df.copy()
     metric_names = df_c["Metric"].unique()
     df_c.set_index(["Metric", "Year"], inplace=True)
@@ -172,8 +172,7 @@ def ccs_co2_getter(df: pd.DataFrame, metric: str, year: str) -> float:
     return value
 
 def biomass_getter(biomass_df: pd.DataFrame, year: int):
-    if year > 2050:
-        year = 2050
+    year = min(MODEL_YEAR_END, year)
     return biomass_df.set_index('year').loc[year]['value']
 
 def static_energy_prices_getter(df: pd.DataFrame, metric: str, year: str) -> float:

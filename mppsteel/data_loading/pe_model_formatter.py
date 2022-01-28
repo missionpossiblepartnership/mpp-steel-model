@@ -2,7 +2,7 @@
 
 import pandas as pd
 
-from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
+from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE, MODEL_YEAR_END
 
 from mppsteel.utility.utils import (
     get_logger,
@@ -255,8 +255,7 @@ def power_data_getter(
     # define country list based on the data_type
     country_list = get_unique_countries(df_c['country_code'].values)
     # Cap year at 2050
-    if year > 2050:
-        year = 2050
+    year = min(MODEL_YEAR_END, year)
 
     # Apply subsets
     df_c = df_c.xs((year, customer), level=['year', 'Customer'])
@@ -292,8 +291,7 @@ def hydrogen_data_getter(
     country_list = get_unique_countries(df_c['country_code'].values)
 
     # Cap year at 2050
-    if year > 2050:
-        year = 2050
+    year = min(MODEL_YEAR_END, year)
 
     # Apply subsets
     df_c = df_c.xs(year, level='year')
@@ -325,8 +323,7 @@ def bio_price_getter(
     country_list = get_unique_countries(df_c['country_code'].values)
 
     # Cap year at 2050
-    if year > 2050:
-        year = 2050
+    year = min(MODEL_YEAR_END, year)
     
     # Apply subsets
     df_c = df_c.xs(year, level='year')
@@ -343,8 +340,7 @@ def bio_price_getter(
 
 def bio_constraint_getter(df: pd.DataFrame, year: int, sector: str = 'Steel', const_scenario: str = 'Prudent'):
     # Cap year at 2050
-    if year > 2050:
-        year = 2050
+    year = min(MODEL_YEAR_END, year)
     # Scenario options: Prudent, MaxPotential
     # Sector assumptions: Always choose Steel
     # Return the value figure

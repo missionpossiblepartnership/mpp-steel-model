@@ -172,8 +172,7 @@ def generate_production_emission_stats(
 
     def emissions_getter(
         emission_dict: dict, emission_type: str, tech: str, year: int):
-        if year > 2050:
-            year = 2050
+        year = min(MODEL_YEAR_END, year)
         return emission_dict[emission_type].loc[year, tech].values[0]
 
     df_c = production_df.copy()

@@ -171,7 +171,7 @@ def generate_variable_costs(
             row[enum_dict['CCS']] = row[enum_dict['value']] * (ccus_storage_price + ccus_transport_price)
 
         return row
-    
+
     # Create a year range
     year_range = range(MODEL_YEAR_START, tuple({year_end+1 or 2021})[0])
     for year in year_range:
@@ -184,12 +184,8 @@ def generate_variable_costs(
         df_c['Other Opex'] = ''
         df_c['CCS'] = ''
 
-        static_year = year
-        if year > 2026:
-            static_year = 2026
-        dynamic_year = year
-        if year > 2050:
-            dynamic_year = 2050
+        static_year = min(2026, year)
+        dynamic_year = min(MODEL_YEAR_END, year)
         electricity_price = power_data_getter(
             power_df, 'grid', dynamic_year, country_code, country_ref_dict, RE_DICT,
             default_country='USA', grid_scenario=GRID_DECARBONISATION_SCENARIOS[grid_decarb_scenario],
@@ -229,7 +225,7 @@ def format_variable_costs(variable_cost_df: pd.DataFrame, group_data: bool = Tru
 
     Returns:
         [type]: [description]
-    """    
+    """
 
     df_c = variable_cost_df.copy()
     df_c = df_c.melt(id_vars=['country_code', 'technology', 'year', 'material_category', 'unit', 'value'],var_name=['cost_type'], value_name='cost')
@@ -255,7 +251,7 @@ def generate_variable_plant_summary(scenario_dict: dict, serialize_only: bool = 
     biomass_cost_scenario = scenario_dict['biomass_cost_scenario']
     ccus_cost_scenario = scenario_dict['ccus_cost_scenario']
     variable_costs = plant_variable_costs(
-        MODEL_YEAR_END, electricity_cost_scenario, grid_scenario, 
+        MODEL_YEAR_END, electricity_cost_scenario, grid_scenario,
         hydrogen_cost_scenario, biomass_cost_scenario, ccus_cost_scenario)
     variable_costs_summary = format_variable_costs(variable_costs)
     variable_costs_summary_material_breakdown = format_variable_costs(variable_costs, group_data=False)

@@ -65,9 +65,7 @@ def create_full_steel_plant_ref(eur_usd_rate: float):
         gp_arr = np.array([])
         year_range = range(start_year, start_year+INVESTMENT_CYCLE_LENGTH+1)
         for year in year_range:
-            year_loop_val = year
-            if year > 2050:
-                year_loop_val = 2050
+            year_loop_val = min(MODEL_YEAR_END, year)
             green_premium_value = calculate_green_premium(
                 variable_costs_regional, steel_plants,
                 green_premium_timeseries, row[enum_dict['country_code']],

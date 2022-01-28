@@ -16,7 +16,7 @@ from mppsteel.utility.utils import (
     enumerate_columns,
 )
 from mppsteel.model_config import (
-    PKL_DATA_INTERMEDIATE, DISCOUNT_RATE,
+    MODEL_YEAR_END, PKL_DATA_INTERMEDIATE, DISCOUNT_RATE,
     INVESTMENT_CYCLE_LENGTH, STEEL_PLANT_LIFETIME
 )
 from mppsteel.utility.reference_lists import (
@@ -72,11 +72,9 @@ def get_opex_costs(
     return total_opex
 
 def capex_getter(capex_df, switch_dict, year, start_tech, end_tech):
-    req_year = year
-    if year > 2050:
-        req_year = 2050
+    year = min(MODEL_YEAR_END, year)
     if end_tech in switch_dict[start_tech]:
-        return capex_df.loc[req_year, start_tech, end_tech][0]
+        return capex_df.loc[year, start_tech, end_tech][0]
     return 0
 
 def calculate_capex(capex_df: pd.DataFrame, start_year: int, base_tech: str):
@@ -111,23 +109,21 @@ def get_discounted_opex_values(
     year_range = range(year_start, year_start+year_interval+1)
     df_list = []
     for year in year_range:
-        year_ref = year
-        if year > 2050:
-            year_ref = 2050
+        year = min(MODEL_YEAR_END, year)
         s2_value = get_s2_emissions(
-            power_model, hydrogen_model, business_cases, country_ref_dict, year_ref,
+            power_model, hydrogen_model, business_cases, country_ref_dict, year,
             country_code, base_tech, electricity_cost_scenario,
             grid_scenario, hydrogen_cost_scenario)
         df = get_opex_costs(
             country_code,
-            year_ref,
+            year,
             variable_cost_summary,
             other_opex_df,
             s1_emissions_df,
             carbon_tax_df,
             scope2_emission_value=s2_value,
         )
-        df['year'] = year_ref
+        df['year'] = year
         df_list.append(df)
     df_combined = pd.concat(df_list)
     new_df = pd.DataFrame(index=SWITCH_DICT[base_tech], columns=['discounted_opex'])

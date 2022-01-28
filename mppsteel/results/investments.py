@@ -5,6 +5,7 @@ from tqdm import tqdm
 
 from mppsteel.model_config import (
     MODEL_YEAR_START,
+    MODEL_YEAR_END,
     PKL_DATA_INTERMEDIATE,
     PKL_DATA_FINAL
 )
@@ -43,9 +44,7 @@ def get_capex_ref(capex_df: pd.DataFrame, year: int, start_tech: str, new_tech: 
     Returns:
         [type]: [description]
     """    
-    capex_year = year
-    if year > 2050:
-        capex_year = 2050
+    capex_year = min(MODEL_YEAR_END, year)
     if new_tech == 'Close plant':
         return 0
     if switch_type == 'no switch':

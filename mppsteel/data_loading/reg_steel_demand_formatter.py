@@ -4,7 +4,9 @@ import itertools
 
 import pandas as pd
 
-from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
+from mppsteel.model_config import (
+    PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE, MODEL_YEAR_END
+)
 
 from mppsteel.model_scenarios import STEEL_DEMAND_SCENARIO_MAPPER
 
@@ -75,9 +77,7 @@ def steel_demand_getter(
     else:
         df_c = df_c[df_c['country_code'].str.contains(default_country, regex=False)]
     # Cap year at 2050
-    if year > 2050:
-        year = 2050
-
+    year = min(MODEL_YEAR_END, year)
     # Apply subsets
     # Scenario: BAU, High Circ, average
     # Metric: crude, scrap
