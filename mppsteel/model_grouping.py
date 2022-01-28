@@ -73,8 +73,8 @@ def data_preprocessing_phase(scenario_dict: dict):
     generate_preprocessed_emissions_data(serialize_only=True)
     generate_emissions_flow(scenario_dict=scenario_dict, serialize_only=True)
     create_capex_timeseries(serialize_only=True)
-    #investment_cycle_flow(serialize_only=True)
-    #generate_variable_plant_summary(scenario_dict, serialize_only=True)
+    investment_cycle_flow(serialize_only=True)
+    generate_variable_plant_summary(scenario_dict, serialize_only=True)
 
 def model_presolver(scenario_dict: dict):
     tco_presolver_reference(scenario_dict, serialize_only=True)
@@ -96,13 +96,10 @@ def model_outputs_phase(new_folder: bool = False, timestamp: str = ''):
 
     # Save Intermediate Pickle Files
     pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'steel_plants_processed')
+    pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'capex_switching_df')
     pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'calculated_emissivity_combined')
     pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'emissivity_abatement_switches')
-    #pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'tco_reference_data')
-    #pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'capex_switching_df')
-    #pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'steel_plant_abatement_switches')
-    #pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'tco_reference_data')
-    
+    pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'tco_reference_data')
 
     # Save Final Pickle Files
     pkl_files = [
