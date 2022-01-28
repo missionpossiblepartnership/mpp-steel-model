@@ -211,8 +211,8 @@ def generate_emissions_flow(serialize_only: bool = False):
     )
 
     if serialize_only:
-        serialize_file(s1_summary_df, PKL_DATA_INTERMEDIATE, "calculated_s1_emissions")
-        serialize_file(emissions_s3_summary, PKL_DATA_INTERMEDIATE, "calculated_s3_emissions")
+        serialize_file(s1_summary_df, PKL_DATA_INTERMEDIATE, "calculated_s1_emissivity")
+        serialize_file(emissions_s3_summary, PKL_DATA_INTERMEDIATE, "calculated_s3_emissivity")
         return
     return {
         "s1_calculations": s1_summary_df,

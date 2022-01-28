@@ -110,8 +110,8 @@ def calculate_emissions(
         "start_tech_values",
         "comp_tech_values",
     ]
-    s1_emissions = read_pickle_folder(PKL_DATA_INTERMEDIATE, "calculated_s1_emissions", "df")
-    s3_emissions = read_pickle_folder(PKL_DATA_INTERMEDIATE, "calculated_s3_emissions", "df")
+    s1_emissions = read_pickle_folder(PKL_DATA_INTERMEDIATE, "calculated_s1_emissivity", "df")
+    s3_emissions = read_pickle_folder(PKL_DATA_INTERMEDIATE, "calculated_s3_emissivity", "df")
     year_range = range(MODEL_YEAR_START, year_end + 1)
     for year in tqdm(year_range, total=len(year_range), desc='Emissions'):
         logger.info(f"Calculating technology emissions for {year}")

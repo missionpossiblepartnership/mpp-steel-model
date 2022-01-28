@@ -40,9 +40,9 @@ from mppsteel.utility.utils import (
 logger = get_logger("Production Results")
 
 def create_emissions_dict():
-    calculated_s1_emissions = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'calculated_s1_emissions', 'df')
-    calculated_s3_emissions = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'calculated_s3_emissions', 'df')
-    return {'s1': calculated_s1_emissions, 's3': calculated_s3_emissions}
+    calculated_s1_emissivity = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'calculated_s1_emissivity', 'df')
+    calculated_s3_emissivity = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'calculated_s3_emissivity', 'df')
+    return {'s1': calculated_s1_emissivity, 's3': calculated_s3_emissivity}
 
 def generate_production_stats(
     tech_capacity_df: pd.DataFrame, steel_df: pd.DataFrame, steel_demand_scenario: str, year_end: int):
