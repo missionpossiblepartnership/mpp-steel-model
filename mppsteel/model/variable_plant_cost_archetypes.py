@@ -16,7 +16,7 @@ from mppsteel.model.solver import load_business_cases
 
 from mppsteel.utility.utils import (
     serialize_file, get_logger, read_pickle_folder, timer_func,
-    enumerate_columns
+    enumerate_columns, cast_to_float
 )
 
 from mppsteel.data_loading.data_interface import (
@@ -230,9 +230,12 @@ def format_variable_costs(variable_cost_df: pd.DataFrame, group_data: bool = Tru
     df_c = variable_cost_df.copy()
     df_c = df_c.melt(id_vars=['country_code', 'technology', 'year', 'material_category', 'unit', 'value'],var_name=['cost_type'], value_name='cost')
     df_c['cost'] = df_c['cost'].replace('', 0)
-    if group_data:
-        return df_c.groupby(by=['country_code', 'year', 'technology']).sum().sort_values(by=['country_code', 'year', 'technology'])
     df_c = df_c[(df_c['material_category'] != '0…') & (df_c['cost'] != 0)].reset_index(drop=True)
+    if group_data:
+        df_c.drop(['material_category', 'unit', 'cost_type', 'value'], axis=1, inplace=True)
+        df_c = df_c.groupby(by=['country_code', 'year', 'technology']).sum().sort_values(by=['country_code', 'year', 'technology'])
+        df_c['cost'] = df_c['cost'].apply(lambda x: cast_to_float(x))
+        return df_c
     return df_c
 
 @timer_func
