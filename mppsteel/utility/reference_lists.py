@@ -1,5 +1,11 @@
 """Reference Lists for the Application"""
 
+MPP_COLOR_LIST = [
+    '#A0522D','#7F6000','#1E3B63','#9DB1CF',
+    '#FFC000','#59A270','#BCDAC6','#E76B67',
+    '#A5A5A5','#F2F2F2'
+]
+
 NEW_COUNTRY_COL_LIST = [
     "country_code",
     "country",
