@@ -29,6 +29,7 @@ from mppsteel.model.variable_plant_cost_archetypes import generate_variable_plan
 from mppsteel.model.solver import solver_flow
 from mppsteel.model.tco_abatement_switch import tco_presolver_reference, abatement_presolver_reference
 from mppsteel.results.production import production_results_flow
+from mppsteel.results.global_metaresults import metaresults_flow
 from mppsteel.results.investments import investment_results
 from mppsteel.graphs.graph_production import create_graphs
 
@@ -85,6 +86,7 @@ def model_calculation_phase(scenario_dict: dict):
 
 def model_results_phase(scenario_dict: dict):
     production_results_flow(scenario_dict, serialize_only=True)
+    metaresults_flow(scenario_dict, serialize_only=True)
     investment_results(scenario_dict, serialize_only=True)
 
 def model_outputs_phase(new_folder: bool = False, timestamp: str = ''):
