@@ -102,22 +102,16 @@ def create_plant_capacities_dict():
         [type]: [description]
     """
     steel_plant_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'steel_plants_processed', 'df')
-    technologies = steel_plant_df['technology_in_2020']
-    plant_names = steel_plant_df['plant_name']
-    primary_capacities = steel_plant_df['primary_capacity_2020']
-    secondary_capacities = steel_plant_df['secondary_capacity_2020']
     plant_capacities = {}
-    ticker = 0
-    while ticker < len(plant_names):
-        plant_name = plant_names.iloc[ticker]
+    for row in steel_plant_df.itertuples():
+        plant_name = row.plant_name
         row = {
-            '2020_tech': technologies.iloc[ticker],
-            'primary_capacity': primary_capacities.iloc[ticker],
-            'secondary_capacity': secondary_capacities.iloc[ticker]}
+            '2020_tech': row.technology_in_2020,
+            'primary_capacity': row.primary_capacity_2020,
+            'secondary_capacity': row.secondary_capacity_2020
+        }
         plant_capacities[plant_name] = row
-        ticker += 1
     return plant_capacities
-
 
 def calculate_primary_and_secondary(tech_capacities: dict, plant: str, tech: str):
     """[summary]
