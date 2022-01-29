@@ -9,6 +9,7 @@ from mppsteel.utility.reference_lists import TECH_REFERENCE_LIST
 from mppsteel.utility.utils import (
     read_pickle_folder,
 )
+from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.graphs.plotly_graphs import bar_chart
 

@@ -10,16 +10,15 @@ from tqdm.auto import tqdm as tqdma
 
 from mppsteel.model.emissions_reference_tables import get_s2_emissions
 
-from mppsteel.utility.utils import (
-    get_logger, enumerate_columns,
-)
+from mppsteel.utility.utils import enumerate_columns
+
 from mppsteel.model_config import (
     MODEL_YEAR_END, DISCOUNT_RATE,
 )
 from mppsteel.utility.reference_lists import (
     SWITCH_DICT
 )
-
+from mppsteel.utility.log_utility import get_logger
 logger = get_logger("TCO Calculation Functions")
 
 def carbon_tax_estimate(s1_emissions_value: dict, scope2_emission_value: float, carbon_tax_value: pd.DataFrame):

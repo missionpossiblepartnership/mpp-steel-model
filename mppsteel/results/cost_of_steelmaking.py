@@ -11,10 +11,11 @@ from mppsteel.model.solver import create_plant_capacities_dict
 from mppsteel.data_loading.reg_steel_demand_formatter import steel_demand_getter
 
 from mppsteel.utility.utils import (
-    read_pickle_folder, get_logger,
+    read_pickle_folder,
     enumerate_columns, timer_func,
     serialize_file, add_results_metadata
 )
+from mppsteel.utility.log_utility import get_logger
 from mppsteel.model_config import (
     MODEL_YEAR_END, MODEL_YEAR_START, PKL_DATA_FINAL, PKL_DATA_INTERMEDIATE, DISCOUNT_RATE,
     INVESTMENT_CYCLE_LENGTH, STEEL_PLANT_LIFETIME

@@ -10,9 +10,10 @@ from tqdm.auto import tqdm as tqdma
 
 # For logger
 from mppsteel.utility.utils import (
-    get_logger, serialize_file, extract_data,
+    serialize_file, extract_data,
     read_pickle_folder, timer_func, enumerate_columns
 )
+from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.model_config import (
     IMPORT_DATA_PATH,

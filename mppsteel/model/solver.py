@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 from mppsteel.utility.utils import (
     read_pickle_folder, serialize_file,
-    get_logger, return_furnace_group,
+    return_furnace_group,
     timer_func, add_results_metadata
 )
 
@@ -33,7 +33,7 @@ from mppsteel.model.solver_constraints import (
 from mppsteel.model.tco_and_abatement_optimizer import (
     get_best_choice
 )
-
+from mppsteel.utility.log_utility import get_logger
 # Create logger
 logger = get_logger("Solver Logic")
 

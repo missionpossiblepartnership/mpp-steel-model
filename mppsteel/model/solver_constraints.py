@@ -3,7 +3,7 @@
 import pandas as pd
 
 from mppsteel.utility.utils import (
-    read_pickle_folder, get_logger
+    read_pickle_folder
 )
 
 from mppsteel.model_config import (
@@ -25,7 +25,7 @@ from mppsteel.data_loading.pe_model_formatter import (
 from mppsteel.data_loading.reg_steel_demand_formatter import (
     steel_demand_getter
 )
-
+from mppsteel.utility.log_utility import get_logger
 # Create logger
 logger = get_logger("Solver Constraints")
 

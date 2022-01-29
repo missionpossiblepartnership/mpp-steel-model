@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 
 # For logger and units dict
-from mppsteel.utility.utils import get_logger, serialize_file, timer_func
+from mppsteel.utility.utils import serialize_file, timer_func
 
 # Get model parameters
 from mppsteel.model_config import (
@@ -16,7 +16,7 @@ from mppsteel.model_config import (
 )
 
 from mppsteel.model_scenarios import CARBON_TAX_SCENARIOS, GREEN_PREMIUM_SCENARIOS
-
+from mppsteel.utility.log_utility import get_logger
 # Create logger
 logger = get_logger("Timeseries generator")
 

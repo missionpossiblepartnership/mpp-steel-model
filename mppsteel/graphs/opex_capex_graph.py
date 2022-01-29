@@ -10,7 +10,7 @@ from mppsteel.utility.utils import (
     get_region_from_country_code, column_sorter,
     cast_to_float
 )
-
+from mppsteel.utility.log_utility import get_logger
 from mppsteel.graphs.plotly_graphs import bar_chart
 
 BAR_CHART_ORDER = {

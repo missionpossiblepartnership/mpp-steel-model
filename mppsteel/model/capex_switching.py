@@ -6,12 +6,12 @@ from tqdm import tqdm
 
 # For logger
 from mppsteel.utility.utils import (
-    get_logger,
     read_pickle_folder,
     serialize_file,
     create_line_through_points,
     timer_func,
 )
+from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.model_config import (
     PKL_DATA_IMPORTS,

@@ -13,8 +13,10 @@ from mppsteel.model_config import (
 )
 
 from mppsteel.utility.utils import (
-    serialize_file, get_logger, read_pickle_folder, timer_func
+    serialize_file, read_pickle_folder, timer_func
 )
+from mppsteel.utility.log_utility import get_logger
+
 # Create logger
 logger = get_logger("Investment Cycles")
 

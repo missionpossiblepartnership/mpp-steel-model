@@ -2,8 +2,9 @@
 import pandas as pd
 
 from mppsteel.utility.utils import (
-    read_pickle_folder, get_logger, timer_func
+    read_pickle_folder, timer_func
 )
+from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.model_config import (
     PKL_DATA_FINAL

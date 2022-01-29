@@ -11,10 +11,10 @@ from mppsteel.model_config import (
 )
 
 from mppsteel.utility.utils import (
-    read_pickle_folder, get_logger, serialize_file,
+    read_pickle_folder, serialize_file,
     timer_func, add_results_metadata,
 )
-
+from mppsteel.utility.log_utility import get_logger
 from mppsteel.data_loading.steel_plant_formatter import map_plant_id_to_df
 
 # Create logger

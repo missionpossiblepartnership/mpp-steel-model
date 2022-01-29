@@ -11,12 +11,12 @@ from mppsteel.model_config import (
 from mppsteel.model_scenarios import STEEL_DEMAND_SCENARIO_MAPPER
 
 from mppsteel.utility.utils import (
-    get_logger,
     timer_func,
     read_pickle_folder,
     serialize_file,
     match_country,
 )
+from mppsteel.utility.log_utility import get_logger
 
 # Create logger
 logger = get_logger("Regional Steel Demand Formatter")

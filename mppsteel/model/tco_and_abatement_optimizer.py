@@ -3,9 +3,7 @@
 import pandas as pd
 import numpy as np
 
-from mppsteel.utility.utils import (
-    get_logger,
-)
+from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.model_config import (
     TCO_RANK_1_SCALER, TCO_RANK_2_SCALER,

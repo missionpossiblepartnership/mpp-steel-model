@@ -3,8 +3,7 @@
 import pandas as pd
 import numpy as np
 
-# Get model parameters
-from mppsteel.utility.utils import  get_logger
+from mppsteel.utility.log_utility import get_logger
 
 # Create logger
 logger = get_logger("Timeseries Extender")

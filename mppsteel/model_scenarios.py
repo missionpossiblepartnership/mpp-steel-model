@@ -1,4 +1,5 @@
 """Scenario refences for model runs"""
+
 COST_SCENARIO_MAPPER = {
     'low': 'Min',
     'average': 'Baseline',

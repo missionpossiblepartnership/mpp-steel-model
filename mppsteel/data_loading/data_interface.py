@@ -6,9 +6,7 @@ import numpy as np
 
 # For logger and units dict
 from mppsteel.utility.utils import (
-    get_logger,
     read_pickle_folder,
-    serialize_file,
     serialize_file,
     create_list_permutations,
     enumerate_columns
@@ -22,7 +20,7 @@ from mppsteel.model_config import (
     EMISSIONS_FACTOR_SLAG,
     ENERGY_DENSITY_MET_COAL,
 )
-
+from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.timeseries_extender import (
     full_model_flow
 )

@@ -15,9 +15,10 @@ from mppsteel.model.solver import load_business_cases
 
 
 from mppsteel.utility.utils import (
-    serialize_file, get_logger, read_pickle_folder, timer_func,
+    serialize_file, read_pickle_folder, timer_func,
     enumerate_columns, cast_to_float
 )
+from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.data_loading.data_interface import (
     commodity_data_getter, static_energy_prices_getter,

@@ -11,10 +11,11 @@ from tqdm.auto import tqdm as tqdma
 
 from mppsteel.data_loading.data_interface import load_business_cases
 from mppsteel.model.tco_calculation_functions import tco_calc, calculate_green_premium
-from mppsteel.utility.utils import timer_func, read_pickle_folder, get_logger, serialize_file, add_results_metadata, move_cols_to_front, enumerate_columns
+from mppsteel.utility.utils import timer_func, read_pickle_folder, serialize_file, add_results_metadata, move_cols_to_front, enumerate_columns
 from mppsteel.utility.reference_lists import SWITCH_DICT
 from mppsteel.model_config import DISCOUNT_RATE, MODEL_YEAR_END, MODEL_YEAR_START, PKL_DATA_INTERMEDIATE, PKL_DATA_IMPORTS, INVESTMENT_CYCLE_LENGTH
 
+from mppsteel.utility.log_utility import get_logger
 
 logger = get_logger("TCO & Abatement switches")
 

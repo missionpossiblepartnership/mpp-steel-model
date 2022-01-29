@@ -5,7 +5,6 @@ import pandas as pd
 from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE, MODEL_YEAR_END
 
 from mppsteel.utility.utils import (
-    get_logger,
     timer_func,
     read_pickle_folder,
     serialize_file,
@@ -14,6 +13,7 @@ from mppsteel.utility.utils import (
     get_region_from_country_code
 )
 
+from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.reference_lists import EU_COUNTRIES
 
 from mppsteel.data_loading.reg_steel_demand_formatter import get_countries_from_group, get_unique_countries

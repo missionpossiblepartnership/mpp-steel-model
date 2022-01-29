@@ -8,13 +8,14 @@ from tqdm.auto import tqdm as tqdma
 
 # For logger and units dict
 from mppsteel.utility.utils import (
-    get_logger,
     read_pickle_folder,
     serialize_file,
     timer_func,
     enumerate_columns,
     move_cols_to_front
 )
+
+from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.data_loading.pe_model_formatter import (
     RE_DICT, power_data_getter, hydrogen_data_getter,

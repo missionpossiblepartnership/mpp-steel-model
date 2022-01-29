@@ -32,9 +32,11 @@ from mppsteel.data_loading.data_interface import (
 from mppsteel.model.emissions_reference_tables import get_s2_emissions, emissivity_getter
 
 from mppsteel.utility.utils import (
-    read_pickle_folder, get_logger, serialize_file, timer_func,
+    read_pickle_folder, serialize_file, timer_func,
     add_results_metadata, enumerate_columns
 )
+
+from mppsteel.utility.log_utility import get_logger
 
 # Create logger
 logger = get_logger("Production Results")

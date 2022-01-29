@@ -2,7 +2,7 @@
 import pandas as pd
 import plotly.express as px
 
-from mppsteel.utility.utils import get_logger
+from mppsteel.utility.log_utility import get_logger
 
 logger = get_logger("Plotly graphs")
 
