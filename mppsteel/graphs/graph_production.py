@@ -14,6 +14,7 @@ from mppsteel.graphs.plotly_graphs import (
 )
 
 from mppsteel.graphs.opex_capex_graph import opex_capex_graph
+from mppsteel.graphs.consumption_over_time import consumption_over_time_graph
 from mppsteel.graphs.investment_graph import (
     investment_line_chart, investment_per_tech)
 
@@ -145,6 +146,17 @@ def create_investment_per_tech_graph(filepath: str = None):
         filename = f'{filepath}/{filename}'
     return investment_per_tech(save_filepath=filename)
 
+def create_cot_graph(regions: list = None, filepath: str = None):
+    region_ref = 'global'
+    filename = 'consumption_over_time'
+    if regions:
+        region_ref = ', '.join(regions)
+        filename = f'{filename}_for_{region_ref}'
+    logger.info(f'Technology Investment Output: {filename}')
+    if filepath:
+        filename = f'{filepath}/{filename}'
+    return consumption_over_time_graph(regions=regions, save_filepath=filename)
+
 
 @timer_func
 def create_graphs(filepath: str):
@@ -165,3 +177,5 @@ def create_graphs(filepath: str):
     create_investment_line_graph(group='global', operation='cumsum', filepath=filepath)
 
     create_investment_per_tech_graph(filepath=filepath)
+
+    create_cot_graph(filepath=filepath)

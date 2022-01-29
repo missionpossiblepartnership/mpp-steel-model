@@ -1,1 +1,1 @@
-from . import graph_production, plotly_graphs, opex_capex_graph
+from . import graph_production, plotly_graphs, opex_capex_graph, investment_graph, consumption_over_time
