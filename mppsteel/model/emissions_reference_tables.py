@@ -273,6 +273,18 @@ def combine_emissivity(s1_ref: pd.DataFrame, s2_ref: pd.DataFrame, s3_ref: pd.Da
         total_emissivity, ['s1_emissivity', 's2_emissivity', 's3_emissivity', 'combined_emissivity'])
     return total_emissivity[new_col_order].reset_index()
 
+def emissivity_getter(df_ref: pd.DataFrame, year: int, country_code: str, technology: str, scope: str):
+    year = min(2050, year)
+    emissivity_mapper = {
+        's1': 's1_emissivity',
+        's2': 's2_emissivity',
+        's3': 's3_emissivity'
+    }
+    if scope in ['s1', 's2', 's3']:
+        return df_ref.loc[year, country_code, technology][emissivity_mapper[scope]]
+    else:
+        return df_ref.loc[year, country_code, technology]['combined_emissivity']
+
 @timer_func
 def generate_emissions_flow(scenario_dict: dict, serialize_only: bool = False):
     business_cases_summary = read_pickle_folder(
