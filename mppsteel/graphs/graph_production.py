@@ -29,7 +29,7 @@ RESOURCE_COLS = ['bf_gas', 'bf_slag', 'bof_gas',
     'biomass', 'biomethane', 'cog', 'coke', 'dri', 'electricity',
     'hydrogen', 'iron_ore', 'met_coal', 'natural_gas', 'other_slag',
     'plastic_waste', 'process_emissions', 'scrap', 'steam', 'thermal_coal',
-    'captured_co2', 'coal', 'used_co2', 'power', 'bioenergy']
+    'captured_co2', 'coal', 'used_co2', 'bioenergy']
 
 REGION_COLS = ['region_wsa_region', 'region_continent', 'region_region']
 
@@ -147,7 +147,7 @@ def create_investment_per_tech_graph(filepath: str = None):
 
 
 @timer_func
-def create_graphs(filepath: str, ):
+def create_graphs(filepath: str):
     production_stats_all = read_pickle_folder(PKL_DATA_FINAL, 'production_stats_all', 'df')
     production_emissions = read_pickle_folder(PKL_DATA_FINAL, 'production_emissions', 'df')
 
