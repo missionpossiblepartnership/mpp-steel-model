@@ -169,7 +169,7 @@ def create_levelised_cost_of_steelmaking(variable_costs: pd.DataFrame, capex_ref
     tqdma.pandas(desc='Applying Lev. Steel')
     lev_cost_of_steel = lev_cost_of_steel.progress_apply(
         apply_lcos, v_costs=variable_costs, capex_costs=capex_ref, include_greenfield=include_greenfield, axis=1)
-    return lev_cost_of_steel.reset_index()
+    return lev_cost_of_steel
 
 @timer_func
 def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize_only: bool = False):
