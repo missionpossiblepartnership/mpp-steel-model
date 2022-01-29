@@ -142,7 +142,7 @@ def get_abatement_difference(
     base_tech_list = []
     switch_tech_list = []
     for eval_year in year_range:
-        year_loop_val = min(2050, eval_year)
+        year_loop_val = min(MODEL_YEAR_END, eval_year)
         base_tech_val = df.loc[year_loop_val, country_code, base_tech][emission_val]
         switch_tech_val = df.loc[year_loop_val, country_code, switch_tech][emission_val]
         base_tech_list.append(base_tech_val)
