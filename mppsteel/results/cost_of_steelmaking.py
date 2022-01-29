@@ -80,7 +80,7 @@ def apply_lcos(row, v_costs, capex_costs, include_greenfield: bool = True):
     renovation_cost = calculate_cc(capex_costs, row.year, relining_year_span, row.technology, discount_rate, 'brownfield')
     if include_greenfield:
         greenfield_cost = calculate_cc(capex_costs, row.year, life_of_plant, row.technology, discount_rate, 'greenfield')
-    row['levilised_cost_of_steelmaking'] = other_opex_cost + variable_cost + renovation_cost + greenfield_cost
+    row['levelised_cost_of_steelmaking'] = other_opex_cost + variable_cost + renovation_cost + greenfield_cost
     return row
 
 def cost_of_steelmaking(
@@ -164,8 +164,8 @@ def create_df_reference(cols_to_create: list):
         combined_df[column] = ''
     return combined_df
 
-def create_levilised_cost_of_steelmaking(variable_costs: pd.DataFrame, capex_ref: dict, include_greenfield=True):
-    lev_cost_of_steel = create_df_reference(['levilised_cost_of_steelmaking'])
+def create_levelised_cost_of_steelmaking(variable_costs: pd.DataFrame, capex_ref: dict, include_greenfield=True):
+    lev_cost_of_steel = create_df_reference(['levelised_cost_of_steelmaking'])
     tqdma.pandas(desc='Applying Lev. Steel')
     lev_cost_of_steel = lev_cost_of_steel.progress_apply(
         apply_lcos, v_costs=variable_costs, capex_costs=capex_ref, include_greenfield=include_greenfield, axis=1)
@@ -183,11 +183,11 @@ def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize_only: bo
         production_stats, variable_costs_regional, capex_dict,
         steel_demand_df, capacities_dict, 'bau', 'region_wsa_region')
 
-    lcos_data = create_levilised_cost_of_steelmaking(
+    lcos_data = create_levelised_cost_of_steelmaking(
         variable_costs_regional, capex_dict, include_greenfield=True)
 
     if serialize_only:
         logger.info(f'-- Serializing dataframes')
         serialize_file(cos_data, PKL_DATA_FINAL, "cost_of_steelmaking")
-        serialize_file(lcos_data, PKL_DATA_FINAL, "levilised_cost_of_steelmaking")
+        serialize_file(lcos_data, PKL_DATA_FINAL, "levelised_cost_of_steelmaking")
     return {'cos_data': cos_data, 'lcos_data': lcos_data}
