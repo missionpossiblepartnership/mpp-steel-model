@@ -6,10 +6,11 @@ import numpy as np
 
 # For logger and units dict
 from mppsteel.utility.utils import (
-    read_pickle_folder,
-    serialize_file,
     create_list_permutations,
-    enumerate_columns
+    enumerate_iterable
+)
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file, extract_data
 )
 
 # Get model parameters

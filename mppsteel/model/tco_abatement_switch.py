@@ -11,7 +11,12 @@ from tqdm.auto import tqdm as tqdma
 
 from mppsteel.data_loading.data_interface import load_business_cases
 from mppsteel.model.tco_calculation_functions import tco_calc, calculate_green_premium
-from mppsteel.utility.utils import timer_func, read_pickle_folder, serialize_file, add_results_metadata, move_cols_to_front, enumerate_columns
+from mppsteel.utility.utils import enumerate_iterable
+from mppsteel.utility.function_timer_utility import timer_func
+from mppsteel.utility.dataframe_utility import move_cols_to_front, add_results_metadata
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file
+)
 from mppsteel.utility.reference_lists import SWITCH_DICT
 from mppsteel.model_config import DISCOUNT_RATE, MODEL_YEAR_END, MODEL_YEAR_START, PKL_DATA_INTERMEDIATE, PKL_DATA_IMPORTS, INVESTMENT_CYCLE_LENGTH
 
@@ -81,7 +86,7 @@ def create_full_steel_plant_ref(eur_usd_rate: float):
         return row
     logger.info('Calculating green premium values')
     tqdma.pandas(desc="Apply Green Premium Values")
-    enumerated_cols = enumerate_columns(steel_plant_ref.columns)
+    enumerated_cols = enumerate_iterable(steel_plant_ref.columns)
     steel_plant_ref = steel_plant_ref.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     pair_list = []
     for tech in SWITCH_DICT.keys():

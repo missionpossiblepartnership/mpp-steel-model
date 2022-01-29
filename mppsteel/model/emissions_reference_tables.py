@@ -7,14 +7,12 @@ from tqdm import tqdm
 from tqdm.auto import tqdm as tqdma
 
 # For logger and units dict
-from mppsteel.utility.utils import (
-    read_pickle_folder,
-    serialize_file,
-    timer_func,
-    enumerate_columns,
-    move_cols_to_front
+from mppsteel.utility.utils import enumerate_iterable
+from mppsteel.utility.function_timer_utility import timer_func
+from mppsteel.utility.dataframe_utility import move_cols_to_front
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file
 )
-
 from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.data_loading.pe_model_formatter import (
@@ -112,7 +110,7 @@ def apply_emissions(
         df_c["carbon_cost"] = ""
 
         tqdma.pandas(desc="Apply Emissions to Technology Resource Usage")
-        enumerated_cols = enumerate_columns(df_c.columns)
+        enumerated_cols = enumerate_iterable(df_c.columns)
         df_c = df_c.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
 
         df_list.append(df_c)

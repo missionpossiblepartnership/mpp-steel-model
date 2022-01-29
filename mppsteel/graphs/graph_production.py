@@ -1,9 +1,9 @@
 """Creates graphs from model outputs"""
 import pandas as pd
 
-from mppsteel.utility.utils import (
-    read_pickle_folder, timer_func
-)
+from mppsteel.utility.function_timer_utility import timer_func
+from mppsteel.utility.file_handling_utility import read_pickle_folder
+
 from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.model_config import (

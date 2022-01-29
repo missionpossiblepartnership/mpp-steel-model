@@ -9,10 +9,12 @@ import pandas as pd
 from tqdm.auto import tqdm as tqdma
 
 # For logger
-from mppsteel.utility.utils import (
-    read_pickle_folder, serialize_file, 
-    timer_func, enumerate_columns
-    )
+from mppsteel.utility.utils import enumerate_iterable
+from mppsteel.utility.function_timer_utility import timer_func
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file
+)
+
 from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.model_config import (
@@ -181,7 +183,7 @@ def replace_units(df: pd.DataFrame, units_dict: dict):
             row[enum_dict['unit']] = ''
         return row
     tqdma.pandas(desc="Replace Units")
-    enumerated_cols = enumerate_columns(df_c.columns)
+    enumerated_cols = enumerate_iterable(df_c.columns)
     df_c = df_c.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     return df_c
 
@@ -217,7 +219,7 @@ def sum_product_ef(df: pd.DataFrame, ef_dict: dict, materials_to_exclude: list =
                 row[enum_dict['material_emissions']] = 0
         return row
     tqdma.pandas(desc="Sum Product Emissions Factors")
-    enumerated_cols = enumerate_columns(df_c.columns)
+    enumerated_cols = enumerate_iterable(df_c.columns)
     df_c = df_c.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     return df_c['material_emissions'].sum()
 

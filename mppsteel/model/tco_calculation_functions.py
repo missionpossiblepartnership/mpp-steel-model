@@ -10,7 +10,7 @@ from tqdm.auto import tqdm as tqdma
 
 from mppsteel.model.emissions_reference_tables import get_s2_emissions
 
-from mppsteel.utility.utils import enumerate_columns
+from mppsteel.utility.utils import enumerate_iterable
 
 from mppsteel.model_config import (
     MODEL_YEAR_END, DISCOUNT_RATE,
@@ -77,7 +77,7 @@ def calculate_capex(capex_df: pd.DataFrame, start_year: int, base_tech: str):
     def value_mapper(row, enum_dict):
         row[enum_dict['capex_value']] = capex_getter(c_df, SWITCH_DICT, start_year, base_tech, row[enum_dict['end_technology']])
         return row
-    enumerated_cols = enumerate_columns(df.columns)
+    enumerated_cols = enumerate_iterable(df.columns)
     df = df.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     return df.set_index(['year', 'start_technology'])
 

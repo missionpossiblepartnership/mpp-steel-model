@@ -4,7 +4,8 @@ import pandas as pd
 import numpy as np
 
 # For logger and units dict
-from mppsteel.utility.utils import serialize_file, timer_func
+from mppsteel.utility.file_handling_utility import serialize_file
+from mppsteel.utility.function_timer_utility import timer_func
 
 # Get model parameters
 from mppsteel.model_config import (

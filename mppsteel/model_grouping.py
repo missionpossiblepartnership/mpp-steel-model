@@ -2,10 +2,11 @@
 import argparse
 
 from mppsteel.utility.utils import (
-    pickle_to_csv, stdout_query,
-    create_folder_if_nonexist, get_currency_rate
-    )
-
+    stdout_query, get_currency_rate
+)
+from mppsteel.utility.file_handling_utility import (
+    pickle_to_csv, create_folder_if_nonexist
+)
 from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.data_loading.data_import import load_data

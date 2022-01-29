@@ -10,11 +10,10 @@ from mppsteel.model_config import (
 
 from mppsteel.model_scenarios import STEEL_DEMAND_SCENARIO_MAPPER
 
-from mppsteel.utility.utils import (
-    timer_func,
-    read_pickle_folder,
-    serialize_file,
-    match_country,
+from mppsteel.utility.function_timer_utility import timer_func
+from mppsteel.utility.location_utility import match_country
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file
 )
 from mppsteel.utility.log_utility import get_logger
 

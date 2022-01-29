@@ -3,10 +3,10 @@
 import pandas as pd
 from tqdm import tqdm
 
-from mppsteel.utility.utils import (
-    read_pickle_folder, serialize_file,
-    return_furnace_group,
-    timer_func, add_results_metadata
+from mppsteel.utility.function_timer_utility import timer_func
+from mppsteel.utility.dataframe_utility import add_results_metadata, return_furnace_group
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file
 )
 
 from mppsteel.model_config import (

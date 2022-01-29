@@ -9,10 +9,12 @@ from tqdm import tqdm
 from tqdm.auto import tqdm as tqdma
 
 # For logger
-from mppsteel.utility.utils import (
-    serialize_file, extract_data,
-    read_pickle_folder, timer_func, enumerate_columns
+from mppsteel.utility.utils import enumerate_iterable
+from mppsteel.utility.function_timer_utility import timer_func
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file, extract_data
 )
+
 from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.model_config import (
@@ -73,7 +75,7 @@ def process_inspector(df: pd.DataFrame, excel_bc_summary: pd.DataFrame, rounding
             row[enum_dict['matches_ref']] = 0
         row[enum_dict['ref_value']] = ref_value
     tqdma.pandas(desc="Prrocess Inspector")
-    enumerated_cols = enumerate_columns(df_c.columns)
+    enumerated_cols = enumerate_iterable(df_c.columns)
     df_c = df_c.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     return df_c
 

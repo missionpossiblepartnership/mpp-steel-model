@@ -15,8 +15,11 @@ from mppsteel.model.solver import load_business_cases
 
 
 from mppsteel.utility.utils import (
-    serialize_file, read_pickle_folder, timer_func,
-    enumerate_columns, cast_to_float
+    enumerate_iterable, cast_to_float
+)
+from mppsteel.utility.function_timer_utility import timer_func
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file
 )
 from mppsteel.utility.log_utility import get_logger
 
@@ -211,7 +214,7 @@ def generate_variable_costs(
         )
         natural_gas_high = static_energy_prices_getter(static_energy_df, 'Natural gas - high', static_year)
         natural_gas_low = static_energy_prices_getter(static_energy_df, 'Natural gas - low', static_year)
-        enumerated_cols = enumerate_columns(df_c.columns)
+        enumerated_cols = enumerate_iterable(df_c.columns)
         df_c = df_c.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
         df_c['year'] = year
         df_list.append(df_c)

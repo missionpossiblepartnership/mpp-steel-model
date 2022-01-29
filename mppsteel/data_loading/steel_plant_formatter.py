@@ -4,15 +4,16 @@ import pandas as pd
 from tqdm.auto import tqdm as tqdma
 
 # For logger and units dict
-from mppsteel.utility.utils import (
-    timer_func,
-    read_pickle_folder,
-    serialize_file,
-    country_mapping_fixer,
-    country_matcher,
-    match_country,
-    get_region_from_country_code,
-    enumerate_columns
+from mppsteel.utility.utils import enumerate_iterable
+from mppsteel.utility.function_timer_utility import timer_func
+
+from mppsteel.utility.location_utility import (
+    country_mapping_fixer, country_matcher,
+    match_country, get_region_from_country_code
+)
+
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file, extract_data
 )
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
@@ -86,7 +87,7 @@ def extract_steel_plant_capacity(df: pd.DataFrame):
                 row[enum_dict['primary_capacity_2020']] = 0
         return row
     tqdma.pandas(desc="Extract Steel Plant Capacity")
-    enumerated_cols = enumerate_columns(df_c.columns)
+    enumerated_cols = enumerate_iterable(df_c.columns)
     df_c = df_c.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     df_c['secondary_capacity_2020'] = df_c['EAF_capacity'].apply(lambda x: convert_to_float(x)) - df_c['DRIEAF_capacity'].apply(lambda x: convert_to_float(x)) 
     return df_c
@@ -112,7 +113,7 @@ def adjust_capacity_values(df: pd.DataFrame):
         return row
 
     tqdma.pandas(desc="Adjust Capacity Values")
-    enumerated_cols = enumerate_columns(df_c.columns)
+    enumerated_cols = enumerate_iterable(df_c.columns)
     df_c = df_c.progress_apply(value_mapper, enum_dict=enumerated_cols, avg_eaf_value=average_eaf_secondary_capacity, axis=1, raw=True)
     df_c['combined_capacity'] = df_c['primary_capacity_2020'] + df_c['secondary_capacity_2020']
     return df_c

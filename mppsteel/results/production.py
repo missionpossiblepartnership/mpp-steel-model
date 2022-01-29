@@ -29,11 +29,13 @@ from mppsteel.data_loading.data_interface import (
     load_business_cases
 )
 
-from mppsteel.model.emissions_reference_tables import get_s2_emissions, emissivity_getter
+from mppsteel.model.emissions_reference_tables import emissivity_getter
 
-from mppsteel.utility.utils import (
-    read_pickle_folder, serialize_file, timer_func,
-    add_results_metadata, enumerate_columns
+from mppsteel.utility.function_timer_utility import timer_func
+from mppsteel.utility.utils import enumerate_iterable
+from mppsteel.utility.dataframe_utility import add_results_metadata
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file
 )
 
 from mppsteel.utility.log_utility import get_logger
@@ -91,7 +93,7 @@ def tech_capacity_splits():
         df = pd.DataFrame({'year': year, 'steel_plant': steel_plants, 'technology': '', 'capacity': 0})
         df['technology'] = df['steel_plant'].apply(lambda plant: get_tech_choice(tech_choices_dict, year, plant))
         tqdma.pandas(desc="Technology Capacity Splits")
-        enumerated_cols = enumerate_columns(df.columns)
+        enumerated_cols = enumerate_iterable(df.columns)
         df = df.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
         df_list.append(df)
 
