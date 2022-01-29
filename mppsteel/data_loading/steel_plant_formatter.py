@@ -4,18 +4,18 @@ import pandas as pd
 from tqdm.auto import tqdm as tqdma
 
 # For logger and units dict
-from mppsteel.utility.utils import (
-    get_logger,
-    timer_func,
-    read_pickle_folder,
-    serialize_file,
-    country_mapping_fixer,
-    country_matcher,
-    match_country,
-    get_region_from_country_code,
-    enumerate_columns
+from mppsteel.utility.utils import enumerate_iterable
+from mppsteel.utility.function_timer_utility import timer_func
+
+from mppsteel.utility.location_utility import (
+    country_mapping_fixer, country_matcher,
+    match_country, get_region_from_country_code
 )
 
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file, extract_data
+)
+from mppsteel.utility.log_utility import get_logger
 from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
 
 # Create logger
@@ -39,11 +39,11 @@ def steel_plant_formatter(df: pd.DataFrame, remove_non_operating_plants: bool = 
         'Estimated EAF capacity (kt steel/y)',
         'Estimated DRI capacity (kt sponge iron/y)',
         'Estimated DRI-EAF capacity (kt steel/y)',
-        'Source', 'Excel Tab'
+        'Source',
     ]
     df_c.drop(steel_plant_cols_to_remove, axis=1, inplace = True)
     new_steel_plant_cols = [
-        'plant_name', 'parent', 'country', 'region', 'coordinates', 'status', 'start_of_operation',
+        'plant_id', 'plant_name', 'parent', 'country', 'region', 'coordinates', 'status', 'start_of_operation',
         'BFBOF_capacity', 'EAF_capacity', 'DRI_capacity', 'DRIEAF_capacity', 'abundant_res',
         'ccs_available', 'cheap_natural_gas', 'industrial_cluster', 'technology_in_2020']
     df_c = df_c.rename(mapper=dict(zip(df_c.columns, new_steel_plant_cols)), axis=1)
@@ -87,7 +87,7 @@ def extract_steel_plant_capacity(df: pd.DataFrame):
                 row[enum_dict['primary_capacity_2020']] = 0
         return row
     tqdma.pandas(desc="Extract Steel Plant Capacity")
-    enumerated_cols = enumerate_columns(df_c.columns)
+    enumerated_cols = enumerate_iterable(df_c.columns)
     df_c = df_c.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     df_c['secondary_capacity_2020'] = df_c['EAF_capacity'].apply(lambda x: convert_to_float(x)) - df_c['DRIEAF_capacity'].apply(lambda x: convert_to_float(x)) 
     return df_c
@@ -113,7 +113,7 @@ def adjust_capacity_values(df: pd.DataFrame):
         return row
 
     tqdma.pandas(desc="Adjust Capacity Values")
-    enumerated_cols = enumerate_columns(df_c.columns)
+    enumerated_cols = enumerate_iterable(df_c.columns)
     df_c = df_c.progress_apply(value_mapper, enum_dict=enumerated_cols, avg_eaf_value=average_eaf_secondary_capacity, axis=1, raw=True)
     df_c['combined_capacity'] = df_c['primary_capacity_2020'] + df_c['secondary_capacity_2020']
     return df_c
@@ -125,6 +125,16 @@ def get_countries_from_group(country_ref: pd.DataFrame, grouping: str, group: st
         exc_codes = [match_country(country) for country in exc_list]
         return list(set(code_list).difference(exc_codes))
     return code_list
+
+def map_plant_id_to_df(df: pd.DataFrame, plant_identifier: str, reverse: bool = False):
+    steel_plants = read_pickle_folder(PKL_DATA_IMPORTS, "steel_plants")
+    plant_id_dict = dict(zip(steel_plants['Plant name (English)'], steel_plants['Plant ID']))
+    df_c = df.copy()
+    if reverse:
+        id_plant_dict = {v: k for k, v in plant_id_dict.items()}
+        df_c['plant_name'] = df_c[plant_identifier].apply(lambda x: id_plant_dict[x])
+    df_c['plant_id'] = df_c[plant_identifier].apply(lambda x: plant_id_dict[x])
+    return df_c
 
 def apply_countries_to_steel_plants(steel_plant_formatted: pd.DataFrame):
     logger.info("Applying Country Data to Steel Plants")

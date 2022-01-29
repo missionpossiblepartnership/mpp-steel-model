@@ -1,17 +1,21 @@
 """Formats Regional Steel Demand and defines getter function"""
 
 import itertools
+
 import pandas as pd
 
-from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE, STEEL_DEMAND_SCENARIO_MAPPER
-
-from mppsteel.utility.utils import (
-    get_logger,
-    timer_func,
-    read_pickle_folder,
-    serialize_file,
-    match_country
+from mppsteel.model_config import (
+    PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE, MODEL_YEAR_END
 )
+
+from mppsteel.model_scenarios import STEEL_DEMAND_SCENARIO_MAPPER
+
+from mppsteel.utility.function_timer_utility import timer_func
+from mppsteel.utility.location_utility import match_country
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file
+)
+from mppsteel.utility.log_utility import get_logger
 
 # Create logger
 logger = get_logger("Regional Steel Demand Formatter")
@@ -56,7 +60,6 @@ def get_steel_demand(serialize_only: bool = False):
         serialize_file(steel_demand_f, PKL_DATA_INTERMEDIATE, "regional_steel_demand_formatted")
     return steel_demand_f
 
-
 def steel_demand_getter(
     df: pd.DataFrame, year: int, scenario: str, metric: str, country_code: str, default_country: str = 'GBL'):
     df_c = df.copy()
@@ -67,17 +70,13 @@ def steel_demand_getter(
         'scrap': 'Scrap availability',
     }
 
-    
     # Apply country check and use default
     if country_code in country_list:
         df_c = df_c[df_c['country_code'].str.contains(country_code, regex=False)]
     else:
         df_c = df_c[df_c['country_code'].str.contains(default_country, regex=False)]
-    
     # Cap year at 2050
-    if year > 2050:
-        year = 2050
-
+    year = min(MODEL_YEAR_END, year)
     # Apply subsets
     # Scenario: BAU, High Circ, average
     # Metric: crude, scrap

@@ -3,15 +3,17 @@
 import pandas as pd
 from tqdm import tqdm
 
-from mppsteel.utility.utils import (
-    read_pickle_folder, serialize_file,
-    get_logger, return_furnace_group,
-    timer_func, add_results_metadata
+from mppsteel.utility.function_timer_utility import timer_func
+from mppsteel.utility.dataframe_utility import add_results_metadata, return_furnace_group
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file
 )
 
 from mppsteel.model_config import (
-    MODEL_YEAR_START, PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE, TECH_SWITCH_SCENARIOS, SOLVER_LOGICS
+    MODEL_YEAR_START, PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
 )
+
+from mppsteel.model_scenarios import TECH_SWITCH_SCENARIOS, SOLVER_LOGICS
 
 from mppsteel.utility.reference_lists import (
     SWITCH_DICT, TECHNOLOGY_STATES, FURNACE_GROUP_DICT,
@@ -31,7 +33,7 @@ from mppsteel.model.solver_constraints import (
 from mppsteel.model.tco_and_abatement_optimizer import (
     get_best_choice
 )
-
+from mppsteel.utility.log_utility import get_logger
 # Create logger
 logger = get_logger("Solver Logic")
 
@@ -50,6 +52,7 @@ def return_best_tech(
     materials_list: list,
     year: int,
     plant_name: str,
+    country_code: str,
     steel_demand_scenario: str,
     base_tech: str = '',
     tech_moratorium: bool = False,
@@ -91,7 +94,7 @@ def return_best_tech(
         combined_available_list = list(matches.intersection(set(return_furnace_group(FURNACE_GROUP_DICT, base_tech))))
 
     best_choice = get_best_choice(
-        tco_reference_data, abatement_reference_data, plant_name, year, base_tech, solver_logic, proportions_dict, combined_available_list)
+        tco_reference_data, abatement_reference_data, country_code, year, base_tech, solver_logic, proportions_dict, combined_available_list)
     if return_material_container:
         return best_choice, material_usage_dict_container
     return best_choice
@@ -131,8 +134,8 @@ def choose_technology(
     # TCO & Abatement Data
     tco_reference_data = read_pickle_folder(PKL_DATA_INTERMEDIATE, "tco_reference_data", "df")
     tco_slim = tco_reference_data[['year','plant_name', 'base_tech', 'switch_tech', 'country_code', 'tco', 'capex_value']].set_index(['year','plant_name', 'base_tech']).copy()
-    steel_plant_abatement_switches = read_pickle_folder(PKL_DATA_INTERMEDIATE, "steel_plant_abatement_switches", "df")
-    abatement_slim = steel_plant_abatement_switches[['year','plant_name', 'base_tech', 'switch_tech', 'country_code', 'abated_emissions_combined']].set_index(['year','plant_name', 'base_tech']).copy()
+    steel_plant_abatement_switches = read_pickle_folder(PKL_DATA_INTERMEDIATE, "emissivity_abatement_switches", "df")
+    abatement_slim = steel_plant_abatement_switches[['year','plant_name', 'base_tech', 'switch_tech', 'country_code', 'abated_combined_emissivity']].set_index(['year','plant_name', 'base_tech']).copy()
 
     # General Reference data
     business_cases = load_business_cases()
@@ -172,6 +175,7 @@ def choose_technology(
         logger.info(f'-- Running investment decisions for Switching Plants')
         for plant in switchers_df.itertuples():
             plant_name = plant.plant_name
+            country_code = plant.country_code
 
             if year == 2020:
                 tech_in_2020 = switchers_df[switchers_df['plant_name'] == plant_name]['technology_in_2020'].values[0]
@@ -203,6 +207,7 @@ def choose_technology(
                         materials,
                         year,
                         plant_name,
+                        country_code,
                         steel_demand_scenario,
                         current_tech,
                         tech_moratorium=tech_moratorium,
@@ -232,6 +237,7 @@ def choose_technology(
                         materials,
                         year,
                         plant_name,
+                        country_code,
                         steel_demand_scenario,
                         current_tech,
                         tech_moratorium=tech_moratorium,

@@ -9,15 +9,13 @@ import pycountry
 from tqdm.auto import tqdm as tqdma
 
 # For logger and units dict
-from mppsteel.utility.utils import (
-    get_logger,
-    read_pickle_folder,
-    serialize_file,
-    CountryMetadata,
-    timer_func,
-    enumerate_columns,
+from mppsteel.utility.utils import enumerate_iterable
+from mppsteel.utility.function_timer_utility import timer_func
+from mppsteel.utility.location_utility import CountryMetadata
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file
 )
-
+from mppsteel.utility.log_utility import get_logger
 from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
 
 # Create logger
@@ -64,7 +62,7 @@ def create_country_ref_dict(df: pd.DataFrame, country_metadata_nt: namedtuple) -
             row[enum_dict['rmi_region']]
         )
     tqdma.pandas(desc="Create County Ref Dict")
-    enumerated_cols = enumerate_columns(df.columns)
+    enumerated_cols = enumerate_iterable(df.columns)
     df.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     return country_ref_dict
 

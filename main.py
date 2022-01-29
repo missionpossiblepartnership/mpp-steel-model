@@ -3,9 +3,13 @@
 from datetime import datetime
 from itertools import product
 
-from mppsteel.utility.utils import get_logger, create_folders_if_nonexistant, TIME_CONTAINER
+from mppsteel.utility.log_utility import get_logger
+from mppsteel.utility.file_handling_utility import create_folders_if_nonexistant
+from mppsteel.utility.function_timer_utility import TIME_CONTAINER
 
-from mppsteel.model_config import DEFAULT_SCENARIO, SCENARIO_SETTINGS, SCENARIO_OPTIONS, FOLDERS_TO_CHECK_IN_ORDER
+from mppsteel.model_config import FOLDERS_TO_CHECK_IN_ORDER
+
+from mppsteel.model_scenarios import DEFAULT_SCENARIO, SCENARIO_SETTINGS, SCENARIO_OPTIONS
 
 from mppsteel.model_grouping import *
 
@@ -104,6 +108,9 @@ if __name__ == "__main__":
         tco_switch_reference(scenario_dict=scenario_args)
 
     if args.abatement:
+        abatement_switch_reference(scenario_dict=scenario_args)
+
+    if args.emissivity:
         abatement_switch_reference(scenario_dict=scenario_args)
 
     TIME_CONTAINER.return_time_container()

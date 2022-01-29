@@ -2,7 +2,7 @@
 import pandas as pd
 import plotly.express as px
 
-from mppsteel.utility.utils import get_logger
+from mppsteel.utility.log_utility import get_logger
 
 logger = get_logger("Plotly graphs")
 
@@ -98,7 +98,7 @@ def line_chart(data, x, y, color, name, x_axis, y_axis, text=None, color_discret
     return fig_
 
 def area_chart(data, x, y, color, name, x_axis, y_axis, hoverdata, save_filepath: str=None, ext: str='png'):
-    fig_ = px.area(data, x=x, y=y, color=color, color_discrete_map=ARCHETYPE_COLORS, hover_data=hoverdata)  # , line_group="Metric")
+    fig_ = px.area(data, x=x, y=y, color=color, color_discrete_map=ARCHETYPE_COLORS, hover_data=hoverdata)
     fig_.update_layout(
         legend_title_text='',
         xaxis_title=None,
@@ -149,13 +149,15 @@ def area_chart(data, x, y, color, name, x_axis, y_axis, hoverdata, save_filepath
 
     return fig_
 
-def bar_chart(data, x, y, color, facet_col, color_discrete_map=None, save_filepath: str=None, ext: str='png'):
-    fig_ = px.bar(data, x=x, y=y, color=color, facet_col=facet_col, text=y, color_discrete_map=color_discrete_map)
+def bar_chart(data, x, y, color, color_discrete_map=None, array_order=None, title_text='', xaxis_title='', yaxis_title='', legend_text=''):
+
+    fig_ = px.bar(data, x=x, y=y, title=title_text, color=color, color_discrete_map=color_discrete_map, text=y, width=1500, height=1000)
     fig_.update_layout(
         titlefont=dict(family='Arial', size=12, color='black'),
-        # title_text=title_text,
-        # xaxis_title=x_text,
-        legend_title_text='',
+        title_text=title_text,
+        xaxis_title=xaxis_title,
+        yaxis_title=yaxis_title,
+        legend_title_text=legend_text,
         showlegend=True,
         hovermode='x unified',
         plot_bgcolor="white",
@@ -181,10 +183,12 @@ def bar_chart(data, x, y, color, facet_col, color_discrete_map=None, save_filepa
         fixedrange=True,
         linewidth=1,
         linecolor='grey',
+        categoryorder='array',
+        categoryarray=array_order
     )
 
     fig_.update_yaxes(
-        # title_text=y_text,
+        title_text='',
         titlefont=dict(family='Arial', size=12, color='black'),
         tickfont=dict(family='Arial', size=12, color='black'),
         title_standoff=3,
@@ -199,10 +203,6 @@ def bar_chart(data, x, y, color, facet_col, color_discrete_map=None, save_filepa
     fig_.update_traces(texttemplate='%{text:.4s}', textposition='inside')
     fig_.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
     fig_.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
-
-    if save_filepath:
-        fig_.write_image(f'{save_filepath}.{ext}')
-
     return fig_
 
 def bar_chart_vertical(data, x, y, facet_row, color, color_discrete_map, x_text, y_text, title_text, text=None, save_filepath: str=None, ext: str='png'):

@@ -2,8 +2,8 @@
 
 import pandas as pd
 
-from mppsteel.utility.utils import (
-    read_pickle_folder, get_logger
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder
 )
 
 from mppsteel.model_config import (
@@ -25,7 +25,7 @@ from mppsteel.data_loading.pe_model_formatter import (
 from mppsteel.data_loading.reg_steel_demand_formatter import (
     steel_demand_getter
 )
-
+from mppsteel.utility.log_utility import get_logger
 # Create logger
 logger = get_logger("Solver Constraints")
 
@@ -102,22 +102,16 @@ def create_plant_capacities_dict():
         [type]: [description]
     """
     steel_plant_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'steel_plants_processed', 'df')
-    technologies = steel_plant_df['technology_in_2020']
-    plant_names = steel_plant_df['plant_name']
-    primary_capacities = steel_plant_df['primary_capacity_2020']
-    secondary_capacities = steel_plant_df['secondary_capacity_2020']
     plant_capacities = {}
-    ticker = 0
-    while ticker < len(plant_names):
-        plant_name = plant_names.iloc[ticker]
+    for row in steel_plant_df.itertuples():
+        plant_name = row.plant_name
         row = {
-            '2020_tech': technologies.iloc[ticker],
-            'primary_capacity': primary_capacities.iloc[ticker],
-            'secondary_capacity': secondary_capacities.iloc[ticker]}
+            '2020_tech': row.technology_in_2020,
+            'primary_capacity': row.primary_capacity_2020,
+            'secondary_capacity': row.secondary_capacity_2020
+        }
         plant_capacities[plant_name] = row
-        ticker += 1
     return plant_capacities
-
 
 def calculate_primary_and_secondary(tech_capacities: dict, plant: str, tech: str):
     """[summary]
@@ -129,7 +123,7 @@ def calculate_primary_and_secondary(tech_capacities: dict, plant: str, tech: str
 
     Returns:
         [type]: [description]
-    """    
+    """
     if tech == 'EAF':
         return tech_capacities[plant]['secondary_capacity'] + tech_capacities[plant]['primary_capacity']
     return tech_capacities[plant]['primary_capacity']
@@ -167,8 +161,8 @@ def total_plant_capacity(plant_cap_dict: dict):
 
 
 def material_usage_calc(
-    plant_capacities: dict, steel_plant_df: pd.DataFrame, steel_demand_df: pd.DataFrame, business_cases: pd.DataFrame,
-    materials_list: list, plant_name: str, year: float, tech: str, material: str, steel_demand_scenario: str
+    plant_capacities: dict, steel_demand_df: pd.DataFrame, business_cases: pd.DataFrame,
+    materials_list: list, plant_name: str, country_code: str, year: float, tech: str, material: str, steel_demand_scenario: str
     ):
     """[summary]
 
@@ -187,8 +181,7 @@ def material_usage_calc(
     """
 
     plant_capacity = calculate_primary_and_secondary(plant_capacities, plant_name, tech) / 1000
-    plant_country = steel_plant_df[steel_plant_df['plant_name'] == plant_name]['country_code'].values[0]
-    steel_demand = steel_demand_getter(steel_demand_df, year, steel_demand_scenario, 'crude', plant_country)
+    steel_demand = steel_demand_getter(steel_demand_df, year, steel_demand_scenario, 'crude', country_code)
     capacity_sum = total_plant_capacity(plant_capacities)
     projected_production = (plant_capacity / capacity_sum) * steel_demand
     material_list = []
@@ -212,7 +205,7 @@ def plant_tech_resource_checker(
     tech_material_dict: dict,
     resource_container_ref: dict,
     plant_capacities: dict,
-    material_usage_dict: dict = {},
+    material_usage_dict: dict = None,
     output_type: str = 'excluded'
 ):
     """[summary]
@@ -240,6 +233,8 @@ def plant_tech_resource_checker(
 
     tech_approved_list = []
 
+    country_code = steel_plant_df[steel_plant_df['plant_name'] == plant_name]['country_code'].values[0]
+
     for tech in tech_list:
 
         material_check_container = []
@@ -264,8 +259,7 @@ def plant_tech_resource_checker(
             if material_check in ['Scrap', 'Scrap EAF']:
                 material_ref = 'Scrap'
                 # material_capacity = steel_demand_value_selector(steel_demand_df, 'Scrap', year, 'bau')
-                plant_country = steel_plant_df[steel_plant_df['plant_name'] == plant_name]['country_code'].values[0]
-                material_capacity = steel_demand_getter(steel_demand_df, year, steel_demand_scenario, 'crude', plant_country)
+                material_capacity = steel_demand_getter(steel_demand_df, year, steel_demand_scenario, 'crude', country_code)
                 materials_to_check = ['Scrap']
 
             # Checking for zero
@@ -281,7 +275,7 @@ def plant_tech_resource_checker(
                         #logger.info('First usage for {material_check}')
                         pass
                     resource_remaining = material_capacity - current_usage
-                    plant_usage = material_usage_calc(plant_capacities, steel_plant_df, steel_demand_df, business_cases, materials_list, plant_name, year, tech, materials_to_check, steel_demand_scenario)
+                    plant_usage = material_usage_calc(plant_capacities, steel_demand_df, business_cases, materials_list, plant_name, country_code, year, tech, materials_to_check, steel_demand_scenario)
                     if plant_usage > resource_remaining:
                         # print(f'{year} -> {plant_name} cannot adopt {tech} because usage of {material_check} exceeds capacity | uses {plant_usage} of remaining {resource_remaining}')
                         material_check_container.append(False)

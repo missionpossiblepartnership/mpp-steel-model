@@ -3,11 +3,12 @@
 import pandas as pd
 
 # For logger and units dict
-from mppsteel.utility.utils import get_logger, extract_data, serialize_df_dict, timer_func
+from mppsteel.utility.file_handling_utility import extract_data, serialize_df_dict
+from mppsteel.utility.function_timer_utility import timer_func
 
 # Get model parameters
 from mppsteel.model_config import IMPORT_DATA_PATH, PKL_DATA_IMPORTS, PE_MODEL_FILENAME_DICT, PE_MODEL_SHEETNAME_DICT
-
+from mppsteel.utility.log_utility import get_logger
 # Create logger
 logger = get_logger("Data Import")
 

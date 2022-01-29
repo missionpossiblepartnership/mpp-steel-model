@@ -6,22 +6,22 @@ import numpy as np
 
 # For logger and units dict
 from mppsteel.utility.utils import (
-    get_logger,
-    read_pickle_folder,
-    serialize_file,
-    serialize_file,
     create_list_permutations,
-    enumerate_columns
+    enumerate_iterable
+)
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file, extract_data
 )
 
 # Get model parameters
 from mppsteel.model_config import (
+    MODEL_YEAR_END,
     PKL_DATA_IMPORTS,
     PKL_DATA_INTERMEDIATE,
     EMISSIONS_FACTOR_SLAG,
     ENERGY_DENSITY_MET_COAL,
 )
-
+from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.timeseries_extender import (
     full_model_flow
 )
@@ -162,8 +162,7 @@ def scope1_emissions_getter(df: pd.DataFrame, metric: str) -> float:
     return value
 
 def ccs_co2_getter(df: pd.DataFrame, metric: str, year: str) -> float:
-    if year > 2050:
-        year = 2050
+    year = min(MODEL_YEAR_END, year)
     df_c = df.copy()
     metric_names = df_c["Metric"].unique()
     df_c.set_index(["Metric", "Year"], inplace=True)
@@ -172,8 +171,7 @@ def ccs_co2_getter(df: pd.DataFrame, metric: str, year: str) -> float:
     return value
 
 def biomass_getter(biomass_df: pd.DataFrame, year: int):
-    if year > 2050:
-        year = 2050
+    year = min(MODEL_YEAR_END, year)
     return biomass_df.set_index('year').loc[year]['value']
 
 def static_energy_prices_getter(df: pd.DataFrame, metric: str, year: str) -> float:

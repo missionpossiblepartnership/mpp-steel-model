@@ -1,17 +1,24 @@
 """Creates graphs from model outputs"""
 import pandas as pd
 
-from mppsteel.utility.utils import (
-    read_pickle_folder, get_logger, timer_func
-)
+from mppsteel.utility.function_timer_utility import timer_func
+from mppsteel.utility.file_handling_utility import read_pickle_folder
+
+from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.model_config import (
-    PKL_DATA_FINAL, OUTPUT_FOLDER
+    PKL_DATA_FINAL
 )
 
-from mppsteel.results.plotly_graphs import (
+from mppsteel.graphs.plotly_graphs import (
     line_chart, area_chart, bar_chart, bar_chart_vertical, line_graph, ARCHETYPE_COLORS
 )
+
+from mppsteel.graphs.opex_capex_graph import opex_capex_graph
+from mppsteel.graphs.consumption_over_time import consumption_over_time_graph
+from mppsteel.graphs.cost_of_steelmaking_graphs import lcos_graph
+from mppsteel.graphs.investment_graph import (
+    investment_line_chart, investment_per_tech)
 
 # Create logger
 logger = get_logger("Graph Production")
@@ -25,7 +32,7 @@ RESOURCE_COLS = ['bf_gas', 'bf_slag', 'bof_gas',
     'biomass', 'biomethane', 'cog', 'coke', 'dri', 'electricity',
     'hydrogen', 'iron_ore', 'met_coal', 'natural_gas', 'other_slag',
     'plastic_waste', 'process_emissions', 'scrap', 'steam', 'thermal_coal',
-    'captured_co2', 'coal', 'used_co2', 'power', 'bioenergy']
+    'captured_co2', 'coal', 'used_co2', 'bioenergy']
 
 REGION_COLS = ['region_wsa_region', 'region_continent', 'region_region']
 
@@ -120,11 +127,49 @@ def resource_line_charts(df: pd.DataFrame, resource: str, regions: list = None, 
         save_filepath=filename
     )
 
+def create_opex_capex_graph(filepath: str = None):
+    filename = f'opex_capex_graph_2050'
+    logger.info(f'Creating Opex Capex Graph Output: {filename}')
+    if filepath:
+        filename = f'{filepath}/{filename}'
+    return opex_capex_graph(save_filepath=filename)
+
+def create_investment_line_graph(group: str, operation: str, filepath: str = None):
+    filename = f'investment_graph_{group}_{operation}'
+    logger.info(f'Regional Investment Graph Output: {filename}')
+    if filepath:
+        filename = f'{filepath}/{filename}'
+    return investment_line_chart(group=group, operation=operation, save_filepath=filename)
+
+def create_investment_per_tech_graph(filepath: str = None):
+    filename = f'investment_graph_per_technology'
+    logger.info(f'Technology Investment Output: {filename}')
+    if filepath:
+        filename = f'{filepath}/{filename}'
+    return investment_per_tech(save_filepath=filename)
+
+def create_cot_graph(regions: list = None, filepath: str = None):
+    region_ref = 'global'
+    filename = 'consumption_over_time'
+    if regions:
+        region_ref = ', '.join(regions)
+        filename = f'{filename}_for_{region_ref}'
+    logger.info(f'Consumption Over Time Output: {filename}')
+    if filepath:
+        filename = f'{filepath}/{filename}'
+    return consumption_over_time_graph(regions=regions, save_filepath=filename)
+
+def create_lcos_graph(chosen_year: int, filepath: str = None):
+    filename = 'levelised_cost_of_steelmaking'
+    logger.info(f'Levelised Cost of Steelmaking Output: {filename}')
+    if filepath:
+        filename = f'{filepath}/{filename}'
+    return lcos_graph(chosen_year=chosen_year, save_filepath=filename)
+
 @timer_func
-def create_graphs(filepath: str, ):
+def create_graphs(filepath: str):
     production_stats_all = read_pickle_folder(PKL_DATA_FINAL, 'production_stats_all', 'df')
     production_emissions = read_pickle_folder(PKL_DATA_FINAL, 'production_emissions', 'df')
-    investment_results = read_pickle_folder(PKL_DATA_FINAL, 'investment_results', 'df')
 
     steel_production_area_chart(production_emissions, filepath)
     resource_line_charts(production_stats_all, 'electricity', ['EU + UK', 'China', 'India', 'USMCA'], filepath)
@@ -134,3 +179,13 @@ def create_graphs(filepath: str, ):
 
     for resource in RESOURCE_COLS:
         resource_line_charts(df=production_stats_all, resource=resource, filepath=filepath)
+
+    create_opex_capex_graph(filepath)
+
+    create_investment_line_graph(group='global', operation='cumsum', filepath=filepath)
+
+    create_investment_per_tech_graph(filepath=filepath)
+
+    create_cot_graph(filepath=filepath)
+
+    create_lcos_graph(2030, filepath=filepath)
