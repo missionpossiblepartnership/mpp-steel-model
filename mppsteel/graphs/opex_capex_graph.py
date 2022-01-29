@@ -11,6 +11,8 @@ from mppsteel.utility.utils import (
     cast_to_float
 )
 
+from mppsteel.graphs.plotly_graphs import bar_chart
+
 BAR_CHART_ORDER = {
     'GF Capex': '#A0522D',
     'BF Capex': '#7F6000',
@@ -113,62 +115,6 @@ def create_capex_opex_split_data():
     vcsmb_c['region'] = vcsmb_c['country_code'].apply(lambda x: get_region_from_country_code(x, 'rmi_region', country_ref_dict))
     vcsmb_cocd = vcsmb_c.reset_index(drop=True).drop(['country_code', 'region'], axis=1)
     return vcsmb_cocd.groupby(['technology', 'cost_type']).sum().groupby(['technology', 'cost_type']).mean().reset_index()
-
-def bar_chart(data, x, y, color, color_discrete_map=None, array_order=None, title_text='', xaxis_title='', yaxis_title='', legend_text=''):
-
-    fig_ = px.bar(data, x=x, y=y, title=title_text, color=color, color_discrete_map=color_discrete_map, text=y, width=1500, height=1000)
-    fig_.update_layout(
-        titlefont=dict(family='Arial', size=12, color='black'),
-        title_text=title_text,
-        xaxis_title=xaxis_title,
-        yaxis_title=yaxis_title,
-        legend_title_text=legend_text,
-        showlegend=True,
-        hovermode='x unified',
-        plot_bgcolor="white",
-        legend=dict(
-            font=dict(family="Arial", size=10, color="black"),
-            orientation="h",
-            yanchor="bottom",
-            y=-0.2,
-            xanchor="left",
-            x=-0),
-    )
-
-    fig_.update_xaxes(
-        title_text='',
-        titlefont=dict(family='Arial', size=12, color='black'),
-        tickfont=dict(family='Arial', size=12, color='black'),
-        title_standoff=3,
-        showspikes=False,
-        spikemode='across',
-        spikesnap='data',
-        showline=True,
-        showgrid=True,
-        fixedrange=True,
-        linewidth=1,
-        linecolor='grey',
-        categoryorder='array',
-        categoryarray=array_order
-    )
-
-    fig_.update_yaxes(
-        title_text='',
-        titlefont=dict(family='Arial', size=12, color='black'),
-        tickfont=dict(family='Arial', size=12, color='black'),
-        title_standoff=3,
-        fixedrange=True,
-        linewidth=1,
-        linecolor='grey',
-        showgrid=True,
-        gridwidth=1,
-        gridcolor='whitesmoke',
-        rangemode="tozero"
-    )
-    fig_.update_traces(texttemplate='%{text:.4s}', textposition='inside')
-    fig_.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
-    fig_.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
-    return fig_
 
 
 def opex_capex_graph(save_filepath:str=None, ext:str='png'):

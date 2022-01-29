@@ -15,6 +15,7 @@ from mppsteel.graphs.plotly_graphs import (
 
 from mppsteel.graphs.opex_capex_graph import opex_capex_graph
 from mppsteel.graphs.consumption_over_time import consumption_over_time_graph
+from mppsteel.graphs.cost_of_steelmaking_graphs import lcos_graph
 from mppsteel.graphs.investment_graph import (
     investment_line_chart, investment_per_tech)
 
@@ -152,11 +153,17 @@ def create_cot_graph(regions: list = None, filepath: str = None):
     if regions:
         region_ref = ', '.join(regions)
         filename = f'{filename}_for_{region_ref}'
-    logger.info(f'Technology Investment Output: {filename}')
+    logger.info(f'Consumption Over Time Output: {filename}')
     if filepath:
         filename = f'{filepath}/{filename}'
     return consumption_over_time_graph(regions=regions, save_filepath=filename)
 
+def create_lcos_graph(chosen_year: int, filepath: str = None):
+    filename = 'levelised_cost_of_steelmaking'
+    logger.info(f'Levelised Cost of Steelmaking Output: {filename}')
+    if filepath:
+        filename = f'{filepath}/{filename}'
+    return lcos_graph(chosen_year=chosen_year, save_filepath=filename)
 
 @timer_func
 def create_graphs(filepath: str):
@@ -179,3 +186,5 @@ def create_graphs(filepath: str):
     create_investment_per_tech_graph(filepath=filepath)
 
     create_cot_graph(filepath=filepath)
+
+    create_lcos_graph(2030, filepath=filepath)

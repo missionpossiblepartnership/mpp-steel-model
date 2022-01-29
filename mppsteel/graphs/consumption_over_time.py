@@ -10,7 +10,7 @@ from mppsteel.utility.utils import (
     read_pickle_folder,
 )
 
-from mppsteel.graphs.opex_capex_graph import bar_chart
+from mppsteel.graphs.plotly_graphs import bar_chart
 
 def format_cot_graph(df: pd.DataFrame, regions: list = None, resource_list: list = None):
 

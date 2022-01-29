@@ -3,18 +3,12 @@
 from itertools import zip_longest
 
 import pandas as pd
-import plotly.express as px
 from mppsteel.model_config import PKL_DATA_FINAL
 from mppsteel.utility.reference_lists import MPP_COLOR_LIST, TECH_REFERENCE_LIST
 from mppsteel.results.investments import create_inv_stats
 
-from mppsteel.utility.utils import (
-    PKL_DATA_INTERMEDIATE, read_pickle_folder,
-    get_region_from_country_code, column_sorter,
-    cast_to_float
-)
-from mppsteel.graphs.plotly_graphs import line_chart
-from mppsteel.graphs.opex_capex_graph import bar_chart
+from mppsteel.utility.utils import read_pickle_folder
+from mppsteel.graphs.plotly_graphs import line_chart, bar_chart
 
 def investment_line_chart(group: str = 'global', operation: str = 'cumsum', save_filepath:str=None, ext:str='png'):
     investment_results = read_pickle_folder(PKL_DATA_FINAL, "investment_results", "df")
