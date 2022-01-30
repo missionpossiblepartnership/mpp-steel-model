@@ -30,13 +30,13 @@ def consumption_over_time_graph(regions: list = None, save_filepath:str=None, ex
     resources = ['biomass','biomethane','electricity','hydrogen',
     'thermal_coal','met_coal', 'natural_gas']
 
-    production_stats = read_pickle_folder(PKL_DATA_FINAL, "production_stats_all", "df")
-    production_stats = format_cot_graph(production_stats, regions, resource_list=resources)
+    production_resource_usage = read_pickle_folder(PKL_DATA_FINAL, "production_resource_usage", "df")
+    production_resource_usage = format_cot_graph(production_resource_usage, regions, resource_list=resources)
 
     color_mapper = dict(zip_longest(resources, MPP_COLOR_LIST))
 
     fig_ = bar_chart(
-        data=production_stats,
+        data=production_resource_usage,
         x='year',
         y='value',
         color='metric',

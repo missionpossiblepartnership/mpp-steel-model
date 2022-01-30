@@ -2,7 +2,6 @@
 
 import pandas as pd
 from tqdm import tqdm
-from tqdm.auto import tqdm as tqdma
 
 from mppsteel.model_config import (
     AVERAGE_LEVEL_OF_CAPACITY,
@@ -64,6 +63,7 @@ def generate_production_stats(
         steel_demand = steel_demand_getter(steel_df, year, steel_demand_scenario, 'crude', 'World')
         # This calculates production!!!
         df['production'] = (df['capacity'] / capacity_sum) * steel_demand
+        df['capacity_utilization'] = steel_demand / df['capacity'] # NEW!
         df['low_carbon_tech'] = df['technology'].apply(lambda tech: 'Y' if tech in LOW_CARBON_TECHS else 'N')
         df_list.append(df)
     return pd.concat(df_list).reset_index(drop=True)
@@ -86,20 +86,19 @@ def tech_capacity_splits():
     df_list = []
 
     def value_mapper(row, enum_dict):
-        row[enum_dict['capacity']] = calculate_primary_and_secondary(tech_capacities_dict, row[enum_dict['steel_plant']], row[enum_dict['technology']]) / 1000
+        row[enum_dict['capacity']] = calculate_primary_and_secondary(tech_capacities_dict, row[enum_dict['plant_name']], row[enum_dict['technology']]) / 1000
         return row
 
     for year in tqdm(year_range, total=len(year_range), desc='Tech Capacity Splits'):
-        df = pd.DataFrame({'year': year, 'steel_plant': steel_plants, 'technology': '', 'capacity': 0})
-        df['technology'] = df['steel_plant'].apply(lambda plant: get_tech_choice(tech_choices_dict, year, plant))
-        tqdma.pandas(desc="Technology Capacity Splits")
+        df = pd.DataFrame({'year': year, 'plant_name': steel_plants, 'technology': '', 'capacity': 0})
+        df['technology'] = df['plant_name'].apply(lambda plant: get_tech_choice(tech_choices_dict, year, plant))
         enumerated_cols = enumerate_iterable(df.columns)
-        df = df.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
+        df = df.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
         df_list.append(df)
 
     df_combined = pd.concat(df_list)
-    df_combined = map_plant_id_to_df(df_combined, 'steel_plant')
-    df_combined['country_code'] = df['steel_plant'].apply(lambda plant: steel_plant_dict[plant])
+    df_combined = map_plant_id_to_df(df_combined, 'plant_name')
+    df_combined['country_code'] = df['plant_name'].apply(lambda plant: steel_plant_dict[plant])
 
     return df_combined, max_year
 
@@ -113,16 +112,17 @@ def production_stats_generator(production_df: pd.DataFrame, as_summary: bool = F
     """    
     logger.info(f'- Generating Production Stats')
     df_c = production_df.copy()
+    
     material_dict_mapper = load_materials_mapper()
     standardised_business_cases = load_business_cases()
 
     # Create columns
     for colname in material_dict_mapper.values():
         df_c[colname] = 0
-    df_c['power'] = 0
+    # df_c['power'] = 0
 
     # Create values
-    for row in tqdm(df_c.itertuples(), total=df_c.shape[0], desc='Production Stats Generator'):     
+    for row in tqdm(df_c.itertuples(), total=df_c.shape[0], desc='Production Stats Generator'):
         for item in material_dict_mapper.items():
             material_category = item[0]
             new_colname = item[1]
@@ -134,16 +134,17 @@ def production_stats_generator(production_df: pd.DataFrame, as_summary: bool = F
                 df_c.loc[row.Index, new_colname] = row.production * business_case_getter(standardised_business_cases, row.technology, material_category) / 3.6
             else:
                 df_c.loc[row.Index, new_colname] = row.production * business_case_getter(standardised_business_cases, row.technology, material_category)
+        
         # Create power column
-        electricity_value = business_case_getter(standardised_business_cases, row.technology, 'Electricity')
-        df_c.loc[row.Index, 'power'] = row.production * electricity_value / 3.6
+        #electricity_value = business_case_getter(standardised_business_cases, row.technology, 'Electricity')
+        #df_c.loc[row.Index, 'power'] = row.production * electricity_value / 3.6
 
     df_c['bioenergy'] = df_c['biomass'] + df_c['biomethane']
     if as_summary:
         return df_c.groupby(['year', 'technology']).sum()
 
     # Convert Electricity & Hydrogen from Twh to Pj
-    for material in ['Electricity', 'Hydrogen']:
+    for material in ['electricity', 'hydrogen']:
         df_c[material] = df_c[material] / 3.6
 
     return df_c
@@ -157,7 +158,8 @@ def generate_production_emission_stats(production_df: pd.DataFrame, as_summary: 
         [type]: [description]
     """    
     logger.info(f'- Generating Production Emission Stats')
-    calculated_emissivity_combined = read_pickle_folder(PKL_DATA_INTERMEDIATE, "calculated_emissivity_combined", "df") 
+    calculated_emissivity_combined = read_pickle_folder(PKL_DATA_INTERMEDIATE, "calculated_emissivity_combined", "df")
+    calculated_emissivity_combined=calculated_emissivity_combined.reset_index().set_index(['year', 'country_code', 'technology'])
     emissions_name_ref = ['s1', 's2', 's3']
 
     df_c = production_df.copy()
@@ -213,10 +215,10 @@ def production_results_flow(scenario_dict: dict, serialize_only: bool = False):
     tech_capacity_df, max_solver_year = tech_capacity_splits()
     steel_demand_scenario = scenario_dict['steel_demand_scenario']
     production_results = generate_production_stats(tech_capacity_df, steel_demand_df, steel_demand_scenario, max_solver_year)
-    production_results_all = production_stats_generator(production_results)
+    production_resource_usage = production_stats_generator(production_results)
     production_emissions = generate_production_emission_stats(production_results)
     results_dict = {
-        'production_results_all': production_results_all,
+        'production_resource_usage': production_resource_usage,
         'production_emissions': production_emissions,
         }
 
@@ -226,6 +228,6 @@ def production_results_flow(scenario_dict: dict, serialize_only: bool = False):
 
     if serialize_only:
         logger.info(f'-- Serializing dataframes')
-        serialize_file(results_dict['production_results_all'], PKL_DATA_FINAL, "production_stats_all")
+        serialize_file(results_dict['production_resource_usage'], PKL_DATA_FINAL, "production_resource_usage")
         serialize_file(results_dict['production_emissions'], PKL_DATA_FINAL, "production_emissions")
     return results_dict

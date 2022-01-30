@@ -124,7 +124,7 @@ def production_stats_getter(df: pd.DataFrame, year: int, plant_name, value_col: 
 
 def create_inv_stats(df: pd.DataFrame, results: str = 'global', agg: bool = False, operation: str = 'sum'):
 
-    df_c = df[['year', 'steel_plant', 'country_code', 'start_tech', 
+    df_c = df[['year', 'plant_name', 'country_code', 'start_tech', 
         'end_tech','switch_type', 'capital_cost', 'region_wsa_region']].copy()
     
     def create_global_stats(df, operation: str = 'sum'):
@@ -172,14 +172,14 @@ def investment_results(scenario_dict: dict, serialize_only: bool = False):
     plant_investment_cycles = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'plant_investment_cycles', 'df')
     steel_plant_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'steel_plants_processed', 'df')
     plant_names_and_country_codes = zip(steel_plant_df['plant_name'].values, steel_plant_df['country_code'].values)
-    production_stats_all = read_pickle_folder(PKL_DATA_FINAL, 'production_stats_all', 'df')
+    production_resource_usage = read_pickle_folder(PKL_DATA_FINAL, 'production_resource_usage', 'df')
     capex_df = create_capex_dict()
     max_year = max([int(year) for year in tech_choice_dict.keys()])
     year_range = range(MODEL_YEAR_START, max_year+1)
     data_container = []
     for plant_name, country_code in tqdm(plant_names_and_country_codes, total=len(steel_plant_df), desc='Steel Plant Investments'):
         for year in year_range:
-            capacity_value = production_stats_getter(production_stats_all, year, plant_name, 'capacity')
+            capacity_value = production_stats_getter(production_resource_usage, year, plant_name, 'capacity')
             data_container.append(
                 investment_row_calculator(
                     plant_investment_cycles, capex_df, tech_choice_dict, plant_name, country_code, year, capacity_value))

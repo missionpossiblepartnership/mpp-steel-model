@@ -10,9 +10,7 @@ from tqdm.auto import tqdm as tqdma
 from mppsteel.model.solver import create_plant_capacities_dict
 from mppsteel.data_loading.reg_steel_demand_formatter import steel_demand_getter
 
-from mppsteel.utility.utils import enumerate_iterable
 from mppsteel.utility.function_timer_utility import timer_func
-from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder, serialize_file
 )
@@ -28,7 +26,7 @@ logger = get_logger("Cost of Steelmaking")
 def create_region_plant_ref(df, region_string):
     region_dict = {}
     for region in df[region_string].unique():
-        region_dict[region] = list(df[df[region_string] == region]['steel_plant'].unique())
+        region_dict[region] = list(df[df[region_string] == region]['plant_name'].unique())
     return region_dict
 
 def extract_dict_values(main_dict: dict, key_to_extract: str, reference_dict: dict = None, ref: str = None):
@@ -47,21 +45,21 @@ def calculate_cc(capex_df: pd.DataFrame, year: int, year_span, technology: str, 
     return npf.npv(discount_rate, value_arr)
 
 def apply_cos(row, year, cap_dict, v_costs, capex_costs, steel_demand, steel_scenario, capital_charges):
-    primary_capacity = cap_dict[row.steel_plant]['primary_capacity']
-    secondary_capacity = cap_dict[row.steel_plant]['secondary_capacity']
+    primary_capacity = cap_dict[row.plant_name]['primary_capacity']
+    secondary_capacity = cap_dict[row.plant_name]['secondary_capacity']
     variable_cost = v_costs.loc[row.country_code, year, row.technology]['cost']
     other_opex_cost = capex_costs['other_opex'].loc[row.technology, year]['value']
     steel_demand_value = steel_demand_getter(steel_demand, year, steel_scenario, 'crude', 'World')
     discount_rate = DISCOUNT_RATE
     relining_year_span = INVESTMENT_CYCLE_LENGTH
 
-    cuf = steel_demand_value / row.capacity
+    #cuf = steel_demand_value / row.capacity
     relining_cost = 0
 
     if capital_charges:
         relining_cost = calculate_cc(capex_costs, year, relining_year_span, row.technology, discount_rate, 'brownfield')
 
-    result_1 = (primary_capacity + secondary_capacity) * ((variable_cost * cuf) + other_opex_cost + relining_cost)
+    result_1 = (primary_capacity + secondary_capacity) * ((variable_cost * row.capacity_utilization) + other_opex_cost + relining_cost)
 
     if not capital_charges:
         return result_1
@@ -78,7 +76,7 @@ def apply_lcos(row, v_costs, capex_costs, include_greenfield: bool = True):
     relining_year_span = INVESTMENT_CYCLE_LENGTH
     life_of_plant = STEEL_PLANT_LIFETIME
     greenfield_cost = 0
-    
+
     renovation_cost = calculate_cc(capex_costs, row.year, relining_year_span, row.technology, discount_rate, 'brownfield')
     if include_greenfield:
         greenfield_cost = calculate_cc(capex_costs, row.year, life_of_plant, row.technology, discount_rate, 'greenfield')
@@ -93,7 +91,7 @@ def cost_of_steelmaking(
     
     regions = production_stats[region_group].unique()
     years = production_stats['year'].unique()
-    cols_to_keep = ['year', 'steel_plant', 'country_code', 'technology', 'capacity', 'production', 'region_wsa_region', 'region_continent', 'region_region']
+    cols_to_keep = ['year', 'plant_name', 'country_code', 'technology', 'capacity', 'production', 'capacity_utilization', 'region_wsa_region', 'region_continent', 'region_region']
     production_stats = production_stats[cols_to_keep].set_index('year').copy()
     plant_region_ref = create_region_plant_ref(production_stats, region_group)
     cos_year_list = []
@@ -179,11 +177,12 @@ def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize_only: bo
     variable_costs_regional = read_pickle_folder(PKL_DATA_INTERMEDIATE, "variable_costs_regional", "df")
     capex_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "capex_dict", "df")
     steel_demand_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'regional_steel_demand_formatted', 'df')
-    production_stats = read_pickle_folder(PKL_DATA_FINAL, "production_stats_all", "df")
+    production_resource_usage = read_pickle_folder(PKL_DATA_FINAL, "production_resource_usage", "df")
+    steel_demand_scenario=scenario_dict['steel_demand_scenario']
 
     cos_data = create_cost_of_steelmaking_data(
-        production_stats, variable_costs_regional, capex_dict,
-        steel_demand_df, capacities_dict, 'bau', 'region_wsa_region')
+        production_resource_usage, variable_costs_regional, capex_dict,
+        steel_demand_df, capacities_dict, steel_demand_scenario, 'region_wsa_region')
 
     lcos_data = create_levelised_cost_of_steelmaking(
         variable_costs_regional, capex_dict, include_greenfield=True)

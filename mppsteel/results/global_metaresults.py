@@ -103,12 +103,12 @@ def metaresults_flow(scenario_dict: dict, serialize_only: bool = False):
     """
     logger.info(f'- Starting Production Results Model Flow')
     steel_demand_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'regional_steel_demand_formatted', 'df')
-    production_results_all = read_pickle_folder(PKL_DATA_FINAL, 'production_results_all', 'df')
+    production_resource_usage = read_pickle_folder(PKL_DATA_FINAL, 'production_resource_usage', 'df')
     tech_capacity_df, max_solver_year = tech_capacity_splits()
     steel_demand_scenario = scenario_dict['steel_demand_scenario']
     global_metaresults = global_metaresults_calculator(
-        steel_demand_df, tech_capacity_df, production_results_all, steel_demand_scenario, max_solver_year)
-    add_results_metadata(global_metaresults, scenario_dict, single_line=True)
+        steel_demand_df, tech_capacity_df, production_resource_usage, steel_demand_scenario, max_solver_year)
+    add_results_metadata(global_metaresults, scenario_dict, include_regions=False, single_line=True)
 
     if serialize_only:
         logger.info(f'-- Serializing dataframes')
