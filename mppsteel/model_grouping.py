@@ -110,7 +110,7 @@ def model_outputs_phase(new_folder: bool = False, timestamp: str = ''):
 
     # Save Final Pickle Files
     pkl_files = [
-        'production_stats_all', 'production_emissions',
+        'production_resource_usage', 'production_emissions',
         'global_metaresults', 'investment_results']
     for pkl_file in pkl_files:
         pickle_to_csv(save_path, PKL_DATA_FINAL, pkl_file)
@@ -196,48 +196,46 @@ def get_emissivity():
 
 parser = argparse.ArgumentParser(description='The MPP Python Steel Model Command Line Interface', add_help=False)
 parser.add_argument(
-    "-f", "--full_model", action="store_true", help="Runs the complete model flow")
-parser.add_argument(
-    "-s", "--solver", action="store_true", help="Runs the solver scripts directly")
-parser.add_argument(
-    "-p", "--preprocessing", action="store_true", help="Runs the preprocessing scripts directly")
-parser.add_argument(
-    "-m", "--production_and_investment", action="store_true", help="Runs the production and investment scripts")
-parser.add_argument(
-    "-o", "--output", action="store_true", help="Runs the output scripts directly")
-parser.add_argument(
-    "-h", "--half_model", action="store_true", help="Runs the half model sctips scripts directly")
-parser.add_argument(
-    "-i", "--data_import", action="store_true", help="Runs the data import scripts scripts directly")
-parser.add_argument(
-    "-d", "--data_refresh", action="store_true", help="Runs the data refresh scripts directly")
-parser.add_argument(
-    "-r", "--results", action="store_true", help="Runs the model results scripts directly")
-parser.add_argument(
-    "-b", "--business_cases", action="store_true", help="Runs the business cases script directly")
-parser.add_argument(
-    "-v", "--variable_costs", action="store_true", help="Runs the variable costs sumary script directly")
-parser.add_argument(
     "-q", "--custom_scenario", action="store_true", help="Adds custom scenario inputs to the model")
 parser.add_argument(
     "-c", "--choose_scenario", action="store", help="Runs a single fixed scenario to the model that you can specify by name")
 parser.add_argument(
-    "-a", "--all_scenarios", action="store_true", help="Runs all fixed scenarios in the model")
+    "-a", "--all_scenarios", action="store_true", help="Runs all fixed scenarios in the model") 
 parser.add_argument(
-    "-t", "--results_and_output", action="store_true", help="Runs the results and output scripts directly")
+    "-f", "--full_model", action="store_true", help="Runs the complete model flow") # full_flow
 parser.add_argument(
-    "-g", "--graphs", action="store_true", help="Runs the graph output script directly")
+    "-s", "--solver", action="store_true", help="Runs the solver scripts directly") # data_import_and_preprocessing_refresh
 parser.add_argument(
-    "-n", "--minimodels", action="store_true", help="Runs the minimodels script directly")
+    "-p", "--preprocessing", action="store_true", help="Runs the preprocessing scripts directly") # data_preprocessing_refresh
 parser.add_argument(
-    "-w", "--production", action="store_true", help="Runs the production script directly")
+    "-o", "--output", action="store_true", help="Runs the output scripts directly") # outputs_only
 parser.add_argument(
-    "-e", "--investment", action="store_true", help="Runs the investments script directly")
+    "-h", "--half_model", action="store_true", help="Runs the half model sctips scripts directly") # half_model_run
 parser.add_argument(
-    "-x", "--ta", action="store_true", help="Runs the tco and abatement scripts only")
+    "-i", "--data_import", action="store_true", help="Runs the data import scripts scripts directly") # data_import_refresh
 parser.add_argument(
-    "-y", "--tco", action="store_true", help="Runs the tco script only")
+    "-d", "--data_refresh", action="store_true", help="Runs the data refresh scripts directly") # data_import_and_preprocessing_refresh
 parser.add_argument(
-    "-z", "--abatement", action="store_true", help="Runs the abatament script only")
+    "-r", "--results", action="store_true", help="Runs the model results scripts directly") # model_results_phase
 parser.add_argument(
-    "-j", "--emissivity", action="store_true", help="Runs the emissivity script only")
+    "-b", "--business_cases", action="store_true", help="Runs the business cases script directly") # standardise_business_cases
+parser.add_argument(
+    "-v", "--variable_costs", action="store_true", help="Runs the variable costs sumary script directly") # generate_variable_plant_summary
+parser.add_argument(
+    "-t", "--results_and_output", action="store_true", help="Runs the results and output scripts directly") # results_and_output
+parser.add_argument(
+    "-g", "--graphs", action="store_true", help="Runs the graph output script directly") # graphs_only
+parser.add_argument(
+    "-n", "--minimodels", action="store_true", help="Runs the minimodels script directly") # generate_minimodels
+parser.add_argument(
+    "-w", "--production", action="store_true", help="Runs the production script directly") # production_flow
+parser.add_argument(
+    "-e", "--investment", action="store_true", help="Runs the investments script directly") # investment_flow
+parser.add_argument(
+    "-x", "--ta", action="store_true", help="Runs the tco and abatement scripts only") # tco_and_abatement_calculations
+parser.add_argument(
+    "-y", "--tco", action="store_true", help="Runs the tco script only") # tco_switch_reference
+parser.add_argument(
+    "-z", "--abatement", action="store_true", help="Runs the abatament script only") # abatement_switch_reference
+parser.add_argument(
+    "-j", "--emissivity", action="store_true", help="Runs the emissivity script only") # get_emissivity
