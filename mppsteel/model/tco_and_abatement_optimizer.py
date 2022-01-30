@@ -43,15 +43,16 @@ def abatement_ranker_logic(x: float):
     else:
         return 1
 
-def min_ranker(df: pd.DataFrame, value_col: str, data_type: str, year: int, country_code: str, start_tech: str, rank: bool = False):
-    df_subset = df.loc[year, country_code, start_tech].copy()
+def min_ranker(df: pd.DataFrame, value_col: str, data_type: str, year: int, country_code: str, start_tech: str, plant_name: str = None, rank: bool = False):
+    data_type_col_mapper = {'tco': 'tco_rank_score', 'abatement': 'abatement_rank_score'}
+    if data_type == 'tco':
+        df_subset = df.loc[year, plant_name, start_tech].copy()
+    elif data_type == 'abatement':
+        df_subset = df.loc[year, country_code, start_tech].copy()
     if len(df_subset) == 1:
         df_subset = df_subset.reset_index().set_index('switch_tech')
         if rank:
-            if data_type == 'tco':
-                df_subset['tco_rank_score'] = 1
-            if data_type == 'abatement':
-                df_subset['abatement_rank_score'] = 1
+            df_subset[data_type_col_mapper[data_type]] = 1
         return df_subset
     df_subset = df_subset.reset_index().set_index('switch_tech')
     df_subset.sort_values(value_col, ascending=True, inplace=True)
@@ -66,7 +67,7 @@ def min_ranker(df: pd.DataFrame, value_col: str, data_type: str, year: int, coun
 
 def get_best_choice(
     tco_df: pd.DataFrame, emissions_df: pd.DataFrame,
-    country_code: str, year: int, start_tech: str, solver_logic: str,
+    country_code: str, plant_name: str, year: int, start_tech: str, solver_logic: str,
     weighting_dict: dict, technology_list: list):
     # Simply return current technology if no other options
     if len(technology_list) < 2:
@@ -81,6 +82,7 @@ def get_best_choice(
             year=year,
             country_code=country_code,
             start_tech=start_tech,
+            plant_name=plant_name, # only for tco
             rank=False)
         abatement_values = min_ranker(
             df=emissions_df,
@@ -113,6 +115,7 @@ def get_best_choice(
             year=year,
             country_code=country_code,
             start_tech=start_tech,
+            plant_name=plant_name, # only for tco
             rank=True)
         abatement_values = min_ranker(
             df=emissions_df,
@@ -141,6 +144,7 @@ def get_best_choice(
                 year=year,
                 country_code=country_code,
                 start_tech=start_tech,
+                plant_name=plant_name, # only for tco
                 rank=False)
             return tco_values_min[['tco']].idxmin().values[0]
         return combined_ranks.idxmin()['overall_rank']

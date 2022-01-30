@@ -21,8 +21,8 @@ from mppsteel.utility.reference_lists import (
 from mppsteel.utility.log_utility import get_logger
 logger = get_logger("TCO Calculation Functions")
 
-def carbon_tax_estimate(s1_emissions_value: dict, scope2_emission_value: float, carbon_tax_value: pd.DataFrame):
-    return (scope2_emission_value + s1_emissions_value) * carbon_tax_value
+def carbon_tax_estimate(s1_emissions_value: dict, s2_emissions_value: float, carbon_tax_value: pd.DataFrame):
+    return (s1_emissions_value + s2_emissions_value) * carbon_tax_value
 
 @lru_cache(maxsize=200000)
 def green_premium_capacity_calculation(variable_tech_cost: float, primary_capacity: float, secondary_capacity: float, technology: str, eur_usd_rate: float):
@@ -49,7 +49,7 @@ def get_opex_costs(
     opex_df: pd.DataFrame,
     s1_emissions_ref: dict,
     carbon_tax_timeseries: pd.DataFrame,
-    scope2_emission_value: float,
+    s2_emissions_value: float,
 ):
     variable_costs = variable_costs_df.loc[country_code, year]
     opex_costs = opex_df.swaplevel().loc[year]
@@ -57,7 +57,7 @@ def get_opex_costs(
     s1_emissions_value = s1_emissions_ref.loc[year]
 
     # Carbon Tax Result
-    carbon_tax_result = carbon_tax_estimate(s1_emissions_value, scope2_emission_value, carbon_tax_value)
+    carbon_tax_result = carbon_tax_estimate(s1_emissions_value, s2_emissions_value, carbon_tax_value)
     variable_costs.rename(mapper={'cost': 'value'},axis=1, inplace=True)
     carbon_tax_result.rename(mapper={'emissions': 'value'},axis=1, inplace=True)
     total_opex = variable_costs + opex_costs + carbon_tax_result
@@ -115,7 +115,7 @@ def get_discounted_opex_values(
             other_opex_df,
             s1_emissions_df,
             carbon_tax_df,
-            scope2_emission_value=s2_value,
+            s2_value,
         )
         df['year'] = year
         df_list.append(df)
