@@ -89,18 +89,19 @@ def add_scenarios(df: pd.DataFrame, scenario_dict: dict, single_line: bool = Fal
     return df_c
 
 
-def add_regions(df: pd.DataFrame, country_ref_dict: dict, country_ref_col: str, region_schema: str, single_line: bool = False):
+def add_regions(df: pd.DataFrame, country_ref_dict: dict, country_ref_col: str, region_schema: str):
     df_c = df.copy()
     df_c[f'region_{region_schema}'] = df_c[country_ref_col].apply(lambda country: get_region_from_country_code(country, region_schema, country_ref_dict))
     return df_c
 
 
-def add_results_metadata(df: pd.DataFrame, scenario_dict: dict, single_line: bool = False):
+def add_results_metadata(df: pd.DataFrame, scenario_dict: dict, include_regions: bool = True, single_line: bool = False):
     country_reference_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'country_reference_dict', 'dict')
     df_c = df.copy()
     df_c = add_scenarios(df_c, scenario_dict, single_line)
-    for schema in RESULTS_REGIONS_TO_MAP:
-        df_c = add_regions(df_c, country_reference_dict, 'country_code', schema, single_line)
+    if include_regions:
+        for schema in RESULTS_REGIONS_TO_MAP:
+            df_c = add_regions(df_c, country_reference_dict, 'country_code', schema)
     return df_c
 
 def return_furnace_group(furnace_dict: dict, tech:str):
