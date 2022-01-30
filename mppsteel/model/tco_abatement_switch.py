@@ -13,18 +13,21 @@ from mppsteel.data_loading.data_interface import load_business_cases
 from mppsteel.model.tco_calculation_functions import tco_calc, calculate_green_premium
 from mppsteel.utility.utils import enumerate_iterable
 from mppsteel.utility.function_timer_utility import timer_func
-from mppsteel.utility.dataframe_utility import move_cols_to_front, add_results_metadata
+from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder, serialize_file
 )
-from mppsteel.utility.reference_lists import SWITCH_DICT
-from mppsteel.model_config import DISCOUNT_RATE, MODEL_YEAR_END, MODEL_YEAR_START, PKL_DATA_INTERMEDIATE, PKL_DATA_IMPORTS, INVESTMENT_CYCLE_LENGTH
+from mppsteel.utility.reference_lists import LOW_CARBON_TECHS, SWITCH_DICT
+from mppsteel.model_config import (
+    DISCOUNT_RATE, MODEL_YEAR_END, MODEL_YEAR_START, 
+    PKL_DATA_INTERMEDIATE, PKL_DATA_IMPORTS, INVESTMENT_CYCLE_LENGTH
+)
 
 from mppsteel.utility.log_utility import get_logger
 
 logger = get_logger("TCO & Abatement switches")
 
-def tco_regions_ref_generator(electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario, biomass_cost_scenario, eur_usd_rate, technology: str = None):
+def tco_regions_ref_generator(electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario):
     carbon_tax_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'carbon_tax_timeseries', 'df')
     variable_costs_regional = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'variable_costs_regional', 'df')
     power_model = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'power_model_formatted', 'df')
@@ -59,7 +62,7 @@ def create_full_steel_plant_ref(eur_usd_rate: float):
     green_premium_timeseries = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'green_premium_timeseries', 'df')
     variable_costs_regional = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'variable_costs_regional', 'df')
     steel_plants = read_pickle_folder(PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df")
-    steel_plant_ref = steel_plants[['plant_name', 'country_code', 'technology_in_2020']].copy()
+    steel_plant_ref = steel_plants[['plant_id', 'plant_name', 'country_code', 'technology_in_2020']].copy()
     year_range = range(MODEL_YEAR_START, MODEL_YEAR_END+1)
     df_list = []
     for year in tqdm(year_range, total=len(year_range), desc='Steel Plant TCO Switches: Year Loop'):
@@ -112,7 +115,15 @@ def map_region_tco_to_plants(steel_plant_ref: pd.DataFrame, opex_capex_ref: pd.D
     opex_capex_ref_c.set_index(['year', 'country_code', 'base_tech', 'switch_tech'], inplace=True)
     logger.info('Joining tco values on steel plant df')
     combined_df = steel_plant_ref.join(opex_capex_ref_c, how='left').reset_index()
-    combined_df['tco'] = combined_df.apply(lambda x: (x['capex_value'] + x['discounted_opex'] - x['discounted_green_premium']) / INVESTMENT_CYCLE_LENGTH, axis=1)
+    # Add rule to say if switch tech is a low carbon tax, apply the green premium, else apply zero
+    def value_mapper(row):
+        opex = row['capex_value'] + row['discounted_opex']
+        if row.switch_tech in LOW_CARBON_TECHS:
+            opex -= row['discounted_green_premium']
+        row['tco'] = opex / INVESTMENT_CYCLE_LENGTH
+        return row
+    combined_df['tco'] = 0
+    combined_df['tco'] = combined_df.apply(value_mapper, axis=1)
     new_col_order = ['year', 'plant_id', 'plant_name', 'country_code', 'base_tech', 'switch_tech', 'capex_value', 'discounted_opex', 'discounted_green_premium', 'tco']
     return combined_df[new_col_order]
 
@@ -122,9 +133,8 @@ def tco_presolver_reference(scenario_dict, serialize_only: bool = False):
     electricity_cost_scenario=scenario_dict['electricity_cost_scenario']
     grid_scenario=scenario_dict['grid_scenario']
     hydrogen_cost_scenario=scenario_dict['hydrogen_cost_scenario']
-    biomass_cost_scenario=scenario_dict['biomass_cost_scenario']
     eur_usd_rate=scenario_dict['eur_usd']
-    opex_capex_reference_data = tco_regions_ref_generator(electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario, biomass_cost_scenario, eur_usd_rate)
+    opex_capex_reference_data = tco_regions_ref_generator(electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario)
     steel_plant_ref = create_full_steel_plant_ref(eur_usd_rate)
     tco_reference_data = map_region_tco_to_plants(steel_plant_ref, opex_capex_reference_data)
     tco_reference_data = add_results_metadata(tco_reference_data, scenario_dict, single_line=True)
