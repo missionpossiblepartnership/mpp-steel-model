@@ -168,17 +168,17 @@ def create_lcos_graph(chosen_year: int, filepath: str = None):
 
 @timer_func
 def create_graphs(filepath: str):
-    production_stats_all = read_pickle_folder(PKL_DATA_FINAL, 'production_stats_all', 'df')
+    production_resource_usage = read_pickle_folder(PKL_DATA_FINAL, 'production_resource_usage', 'df')
     production_emissions = read_pickle_folder(PKL_DATA_FINAL, 'production_emissions', 'df')
 
     steel_production_area_chart(production_emissions, filepath)
-    resource_line_charts(production_stats_all, 'electricity', ['EU + UK', 'China', 'India', 'USMCA'], filepath)
+    resource_line_charts(production_resource_usage, 'electricity', ['EU + UK', 'China', 'India', 'USMCA'], filepath)
 
     for scope in ['s1', 's2', 's3', 'combined']:
         emissions_area_chart(production_emissions, filepath, scope)
 
     for resource in RESOURCE_COLS:
-        resource_line_charts(df=production_stats_all, resource=resource, filepath=filepath)
+        resource_line_charts(df=production_resource_usage, resource=resource, filepath=filepath)
 
     create_opex_capex_graph(filepath)
 
