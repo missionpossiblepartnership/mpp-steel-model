@@ -300,6 +300,21 @@ TECHNOLOGY_STATES = {
     'end_state': END_STATE_TECHS
 }
 
+TECHNOLOGY_PHASES = {
+    'Initial': ['Avg BF-BOF'],
+    'Transition': [
+        'BAT BF-BOF', 'BAT BF-BOF_bio PCI',
+        'BAT BF-BOF_H2 PCI', 'DRI-EAF',
+        'DRI-EAF_50% bio-CH4', 'DRI-EAF_50% green H2',
+        'Smelting Reduction', 'DRI-Melt-BOF'],
+    'End State': [
+        'BAT BF-BOF+CCUS', 'DRI-EAF_100% green H2',
+        'DRI-EAF+CCUS', 'EAF', 'BAT BF-BOF+CCU',
+        'BAT BF-BOF+BECCUS', 'Electrolyzer-EAF',
+        'Smelting Reduction+CCUS', 'DRI-Melt-BOF+CCUS',
+        'DRI-Melt-BOF_100% zero-C H2', 'Electrowinning-EAF'],
+}
+
 
 TECH_MATERIAL_CHECK_DICT = {
     "Avg BF-BOF": [],

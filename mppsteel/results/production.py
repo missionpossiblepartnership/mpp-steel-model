@@ -223,7 +223,7 @@ def production_results_flow(scenario_dict: dict, serialize_only: bool = False):
         }
 
     for key in results_dict.keys():
-        if key in ['production_results_all', 'production_emissions']:
+        if key in ['production_resource_usage', 'production_emissions']:
             results_dict[key] = add_results_metadata(results_dict[key], scenario_dict, single_line=True)
 
     if serialize_only:

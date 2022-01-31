@@ -1,4 +1,5 @@
 """Main solving script for deciding investment decisions."""
+from operator import itemgetter
 
 import pandas as pd
 from tqdm import tqdm
@@ -17,7 +18,7 @@ from mppsteel.model_scenarios import TECH_SWITCH_SCENARIOS, SOLVER_LOGICS
 
 from mppsteel.utility.reference_lists import (
     SWITCH_DICT, TECHNOLOGY_STATES, FURNACE_GROUP_DICT,
-    TECH_MATERIAL_CHECK_DICT, RESOURCE_CONTAINER_REF,
+    TECH_MATERIAL_CHECK_DICT, RESOURCE_CONTAINER_REF, TECHNOLOGY_PHASES
 )
 
 from mppsteel.data_loading.data_interface import (
@@ -48,6 +49,7 @@ def return_best_tech(
     biomass_df: pd.DataFrame,
     ccs_co2_df: pd.DataFrame,
     tech_availability: pd.DataFrame,
+    tech_avail_from_dict: dict,
     plant_capacities: dict,
     materials_list: list,
     year: int,
@@ -61,28 +63,8 @@ def return_best_tech(
     material_usage_dict_container: dict = None,
     return_material_container: bool = True,
 ):
-    # Availability checks
-    unavailable_techs = [tech for tech in SWITCH_DICT.keys() if not tech_availability_check(tech_availability, tech, year, tech_moratorium=tech_moratorium)]
-
-    if base_tech in unavailable_techs:
-        unavailable_techs.remove(base_tech)
-
-    # Non_switches
-    excluded_switches = [key for key in SWITCH_DICT.keys() if key not in SWITCH_DICT[base_tech]]
-
-    constraints_check = []
-    if enforce_constraints:
-        # Constraints checks
-        constraints_check = plant_tech_resource_checker(
-            plant_name, base_tech, year, steel_demand_df,
-            steel_plant_df, steel_demand_scenario,
-            business_cases, biomass_df, ccs_co2_df, materials_list, TECH_MATERIAL_CHECK_DICT,
-            RESOURCE_CONTAINER_REF, plant_capacities, material_usage_dict_container, 'excluded'
-            )
-
-    # Drop excluded techs
-    combined_unavailable_list = set(unavailable_techs + constraints_check + excluded_switches)
-    combined_available_list = list(set(SWITCH_DICT.keys()).difference(combined_unavailable_list))
+    # Valid Switches
+    combined_available_list = [key for key in SWITCH_DICT.keys() if key in SWITCH_DICT[base_tech]]
 
     # Transitional switches
     if transitional_switch_only:
@@ -93,16 +75,40 @@ def return_best_tech(
         # Must be within the furnace group
         combined_available_list = list(matches.intersection(set(return_furnace_group(FURNACE_GROUP_DICT, base_tech))))
 
+    # Availability checks
+    combined_available_list = [tech for tech in combined_available_list if tech_availability_check(tech_availability, tech, year, tech_moratorium=tech_moratorium)]
+
+    # Add base tech if the technology is technically unavailable but is already in use
+    if (base_tech not in combined_available_list) & (year < tech_avail_from_dict[base_tech]):
+        combined_available_list.append(base_tech)
+
+    if enforce_constraints:
+        # Constraints checks
+        combined_available_list = plant_tech_resource_checker(
+            plant_name, base_tech, year, steel_demand_df,
+            steel_plant_df, steel_demand_scenario,
+            business_cases, biomass_df, ccs_co2_df, materials_list,
+            TECH_MATERIAL_CHECK_DICT, RESOURCE_CONTAINER_REF,
+            plant_capacities, combined_available_list,
+            material_usage_dict_container, 'included'
+            )
+
     best_choice = get_best_choice(
-        tco_reference_data, abatement_reference_data, country_code, plant_name, year, base_tech, solver_logic, proportions_dict, combined_available_list)
+        tco_reference_data, abatement_reference_data,
+        country_code, plant_name, year, base_tech,
+        solver_logic, proportions_dict, combined_available_list)
+
     if return_material_container:
         return best_choice, material_usage_dict_container
-    return best_choice, None
+    return best_choice
+
 
 def choose_technology(
     year_end: int, solver_logic: str,
     tech_moratorium: bool = False,
+    enforce_constraints: bool = True,
     steel_demand_scenario: str = 'bau',
+    trans_switch_scenario: str = True,
     tech_switch_scenario: dict = {'tco': 0.6, 'emissions': 0.4},
     ):
     """[summary]
@@ -128,8 +134,9 @@ def choose_technology(
     ccs_co2 = read_pickle_folder(PKL_DATA_IMPORTS, 'ccs_co2', 'df')
     # steel_demand_df = extend_steel_demand(MODEL_YEAR_END)
     steel_demand_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'regional_steel_demand_formatted', 'df')
-    tech_availability_df = read_pickle_folder(PKL_DATA_IMPORTS, 'tech_availability', 'df')
-    tech_availability = read_and_format_tech_availability(tech_availability_df)
+    tech_availability = read_pickle_folder(PKL_DATA_IMPORTS, 'tech_availability', 'df')
+    ta_dict = dict(zip(tech_availability['Technology'], tech_availability['Year available from']))
+    tech_availability = read_and_format_tech_availability(tech_availability)
     plant_capacities_dict = create_plant_capacities_dict()
 
     # TCO & Abatement Data
@@ -204,6 +211,7 @@ def choose_technology(
                         bio_constraint_model,
                         ccs_co2,
                         tech_availability,
+                        ta_dict,
                         plant_capacities_dict,
                         materials,
                         year,
@@ -212,6 +220,7 @@ def choose_technology(
                         steel_demand_scenario,
                         current_tech,
                         tech_moratorium=tech_moratorium,
+                        enforce_constraints=enforce_constraints,
                         material_usage_dict_container=material_usage_dict,
                         return_material_container=True
                     )
@@ -234,6 +243,7 @@ def choose_technology(
                         bio_constraint_model,
                         ccs_co2,
                         tech_availability,
+                        ta_dict,
                         plant_capacities_dict,
                         materials,
                         year,
@@ -242,8 +252,9 @@ def choose_technology(
                         steel_demand_scenario,
                         current_tech,
                         tech_moratorium=tech_moratorium,
+                        enforce_constraints=enforce_constraints,
                         material_usage_dict_container=material_usage_dict,
-                        transitional_switch_only=True,
+                        transitional_switch_only=trans_switch_scenario,
                         return_material_container=True
                     )
                     if best_choice_tech != current_tech:
@@ -266,7 +277,7 @@ def extract_tech_plant_switchers(inv_cycle_ref: pd.DataFrame, year: int, combine
 
     Returns:
         [type]: [description]
-    """    
+    """
     main_switchers = []
     trans_switchers = []
     try:
@@ -298,7 +309,9 @@ def solver_flow(scenario_dict: dict, year_end: int, serialize_only: bool = False
         year_end=year_end,
         solver_logic=SOLVER_LOGICS[scenario_dict['solver_logic']],
         tech_moratorium=scenario_dict['tech_moratorium'],
+        enforce_constraints=scenario_dict['enforce_constraints'],
         steel_demand_scenario=scenario_dict['steel_demand_scenario'],
+        trans_switch_scenario=scenario_dict['transitional_switch'],
         tech_switch_scenario=TECH_SWITCH_SCENARIOS[scenario_dict['tech_switch_scenario']],
         )
 

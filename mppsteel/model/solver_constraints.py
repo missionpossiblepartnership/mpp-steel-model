@@ -11,7 +11,7 @@ from mppsteel.model_config import (
 )
 
 from mppsteel.utility.reference_lists import (
-    SWITCH_DICT, TECHNOLOGY_STATES, RESOURCE_CONTAINER_REF
+    SWITCH_DICT, TECHNOLOGY_PHASES, TECHNOLOGY_STATES, RESOURCE_CONTAINER_REF
 )
 
 from mppsteel.data_loading.data_interface import (
@@ -30,8 +30,8 @@ from mppsteel.utility.log_utility import get_logger
 logger = get_logger("Solver Constraints")
 
 def map_technology_state(tech: str):
-    for tech_state in TECHNOLOGY_STATES.keys():
-        if tech in TECHNOLOGY_STATES[tech_state]:
+    for tech_state in TECHNOLOGY_PHASES.keys():
+        if tech in TECHNOLOGY_PHASES[tech_state]:
             return tech_state
 
 
@@ -66,7 +66,7 @@ def tech_availability_check(
     technology_phase = row.loc['technology_phase']
     year_available_until = default_year_unavailable
 
-    if tech_moratorium and (technology_phase == 'current'):
+    if tech_moratorium and (technology_phase in ['Initial', 'Transition']):
         year_available_until = TECH_MORATORIUM_DATE
     if int(year_available_from) <= int(year) < int(year_available_until):
         # print(f'{technology} will be available in {year}')
@@ -205,6 +205,7 @@ def plant_tech_resource_checker(
     tech_material_dict: dict,
     resource_container_ref: dict,
     plant_capacities: dict,
+    available_tech_list: list = None,
     material_usage_dict: dict = None,
     output_type: str = 'excluded'
 ):
@@ -229,7 +230,9 @@ def plant_tech_resource_checker(
         [type]: [description]
     """
 
-    tech_list = SWITCH_DICT[base_tech].copy()
+    tech_list = SWITCH_DICT[base_tech]
+    if available_tech_list:
+        tech_list = available_tech_list
 
     tech_approved_list = []
 

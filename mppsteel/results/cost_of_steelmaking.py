@@ -88,14 +88,14 @@ def cost_of_steelmaking(
     steel_demand: pd.DataFrame, capacities_dict: dict, steel_scenario: str = 'bau',
     region_group: str = 'region_wsa_region',
     regional: bool = False, capital_charges: bool = False):
-    
+
     regions = production_stats[region_group].unique()
     years = production_stats['year'].unique()
     cols_to_keep = ['year', 'plant_name', 'country_code', 'technology', 'capacity', 'production', 'capacity_utilization', 'region_wsa_region', 'region_continent', 'region_region']
     production_stats = production_stats[cols_to_keep].set_index('year').copy()
     plant_region_ref = create_region_plant_ref(production_stats, region_group)
     cos_year_list = []
-    
+
     def calculate_cos(df, ref=None):
         df_c = df.copy()
         cos_values = df_c.apply(
