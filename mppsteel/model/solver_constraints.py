@@ -261,7 +261,6 @@ def plant_tech_resource_checker(
 
             if material_check in ['Scrap', 'Scrap EAF']:
                 material_ref = 'Scrap'
-                # material_capacity = steel_demand_value_selector(steel_demand_df, 'Scrap', year, 'bau')
                 material_capacity = steel_demand_getter(steel_demand_df, year, steel_demand_scenario, 'crude', country_code)
                 materials_to_check = ['Scrap']
 

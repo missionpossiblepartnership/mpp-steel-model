@@ -1,4 +1,5 @@
 """Script for the tco and abatament optimisation functions."""
+from functools import lru_cache
 
 import pandas as pd
 import numpy as np
@@ -24,6 +25,7 @@ def scale_data(df: pd.DataFrame, reverse: bool = False):
         df_c = normalise_data(df_c.values)
     return df_c
 
+@lru_cache(maxsize=250000)
 def tco_ranker_logic(x: float, min_value: float):
     if min_value is None: # check for this
         # print('NoneType value')
@@ -35,6 +37,7 @@ def tco_ranker_logic(x: float, min_value: float):
     else:
         return 1
 
+@lru_cache(maxsize=250000)
 def abatement_ranker_logic(x: float):
     if x < ABATEMENT_RANK_3:
         return 3
@@ -69,9 +72,6 @@ def get_best_choice(
     tco_df: pd.DataFrame, emissions_df: pd.DataFrame,
     country_code: str, plant_name: str, year: int, start_tech: str, solver_logic: str,
     weighting_dict: dict, technology_list: list):
-    # Simply return current technology if no other options
-    if len(technology_list) < 2:
-        return start_tech
     # Scaling algorithm
     if solver_logic == 'scaled':
         # Calculate minimum scaled values
@@ -95,6 +95,9 @@ def get_best_choice(
         # Remove unavailable techs
         tco_values = tco_values.filter(items=technology_list, axis=0)
         abatement_values = abatement_values.filter(items=technology_list, axis=0)
+        # Simply return current technology if no other options
+        if len(tco_values) < 2:
+            return start_tech
         # Scale the data
         tco_values['tco_scaled'] = scale_data(tco_values['tco'])
         tco_values.drop(tco_values.columns.difference(['tco_scaled']), 1, inplace=True)
