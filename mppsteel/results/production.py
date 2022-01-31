@@ -63,7 +63,7 @@ def generate_production_stats(
         steel_demand = steel_demand_getter(steel_df, year, steel_demand_scenario, 'crude', 'World')
         # This calculates production!!!
         df['production'] = (df['capacity'] / capacity_sum) * steel_demand
-        df['capacity_utilization'] = steel_demand / df['capacity'] # NEW!
+        df['capacity_utilization'] = ( steel_demand / 1000 ) / df['capacity']
         df['low_carbon_tech'] = df['technology'].apply(lambda tech: 'Y' if tech in LOW_CARBON_TECHS else 'N')
         df_list.append(df)
     return pd.concat(df_list).reset_index(drop=True)
