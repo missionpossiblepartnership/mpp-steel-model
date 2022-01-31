@@ -53,6 +53,8 @@ SOLVER_LOGICS = {
 
 SCENARIO_SETTINGS = {
     'tech_moratorium': [True, False],
+    'enforce_constraints': [True, False],
+    'transitional_switch': [True, False],
     'carbon_tax': CARBON_TAX_SCENARIOS.keys(),
     'green_premium_scenario': GREEN_PREMIUM_SCENARIOS.keys(),
     'electricity_cost_scenario': COST_SCENARIO_MAPPER.keys(),
@@ -67,6 +69,8 @@ SCENARIO_SETTINGS = {
 
 DEFAULT_SCENARIO = {
     'tech_moratorium': True, # bool
+    'enforce_constraints': True, # bool
+    'transitional_switch': True, #  bool
     'carbon_tax_scenario': 'off', # off / low / average / high
     'green_premium_scenario': 'off', # off / low / average / high
     'electricity_cost_scenario': 'average', # low / average / high
