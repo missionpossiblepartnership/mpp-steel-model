@@ -23,7 +23,7 @@ from mppsteel.graphs.investment_graph import (
 # Create logger
 logger = get_logger("Graph Production")
 
-INITIAL_COLS = ['year', 'steel_plant', 'technology', 'capacity',
+INITIAL_COLS = ['year', 'plant_name', 'technology', 'capacity',
     'country_code', 'production', 'low_carbon_tech']
 
 EMISSION_COLS = ['s1_emissions', 's2_emissions', 's3_emissions']
@@ -44,17 +44,17 @@ CAPACITY_PRODUCTION_COLS = ['capacity', 'production']
 
 def generate_production_emissions(df: pd.DataFrame, grouping_col: str, value_cols: list):
     df_c = df.copy()
-    df_c = pd.melt(df, id_vars=['year', 'steel_plant', grouping_col], value_vars=value_cols, var_name='metric')
+    df_c = pd.melt(df, id_vars=['year', 'plant_name', grouping_col], value_vars=value_cols, var_name='metric')
     df_c.reset_index(drop=True, inplace=True)
     return df_c.groupby([grouping_col, 'year', 'metric'], as_index=False).agg({"value": 'sum'}).round(2)
 
 def generate_production_stats(df: pd.DataFrame, grouping_col: str, value_cols: list):
-    df = pd.melt(df, id_vars=['year', 'steel_plant', grouping_col],value_vars=value_cols, var_name='metric')
+    df = pd.melt(df, id_vars=['year', 'plant_name', grouping_col],value_vars=value_cols, var_name='metric')
     return df.reset_index(drop=True)
 
 def generate_subset(df: pd.DataFrame, grouping_col: str, value_col: str, region_select: list = None):
     df_c = df.copy()
-    df_c = pd.melt(df, id_vars=['year', 'steel_plant', grouping_col], value_vars=value_col, var_name='metric')
+    df_c = pd.melt(df, id_vars=['year', 'plant_name', grouping_col], value_vars=value_col, var_name='metric')
     df_c.reset_index(drop=True, inplace=True)
     if region_select != None:
         df_c=df_c.groupby([grouping_col, 'year', 'metric'], as_index=False).agg({"value": 'sum'}).round(2)
