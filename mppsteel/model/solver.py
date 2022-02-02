@@ -198,7 +198,6 @@ def choose_technology(
             else:
                 switch_type = investment_year_ref.reset_index().set_index(['year', 'plant_name']).loc[year, plant_name].values[0]
 
-                # PUT BEST CHOICE FUNCTION HERE!
                 if switch_type == 'main cycle':
                     best_choice_tech, material_usage_dict = return_best_tech(
                         tco_slim,
