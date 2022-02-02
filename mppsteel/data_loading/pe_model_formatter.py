@@ -243,6 +243,7 @@ def power_data_getter(
     re_dict: dict = None, re_type: str = '',
     default_country: str = 'USA', grid_scenario: str = 'Central',
     cost_scenario: str = 'Baseline', customer: str = 'Industry',
+    as_GJ:bool =True
     
     ):
     # map data_type to df_dict keys
@@ -265,6 +266,8 @@ def power_data_getter(
 
     if data_type == 'renewable':
         df_c = df_c[df_c['Captive power source'] == re_dict[re_type]]
+    if data_type=='renewable' or data_type== 'grid' and as_GJ:
+        df_c['value']= df_c['value']/3.6 # converting unit to $/GJ 
 
     # Apply country check and use default
     if country_code in country_list:
@@ -274,7 +277,8 @@ def power_data_getter(
 def hydrogen_data_getter(
     df_dict: dict, data_type: str, year: int, country_code: str, country_ref_dict: dict,
     default_country: str = 'USA', variable: str = 'H2 price',
-    cost_scenario: str = 'Baseline', prod_scenario: str = 'On-site, dedicated VREs'
+    cost_scenario: str = 'Baseline', prod_scenario: str = 'On-site, dedicated VREs', 
+    as_GJ: bool = True
     ):
     # map data_type to df_dict keys
     data_type_mapper = {
@@ -303,6 +307,8 @@ def hydrogen_data_getter(
         df_c = df_c[(df_c['Variable'] == variable)]
     elif (data_type=='prices') and not variable:
         df_c = df_c[(df_c['Variable'] == 'Total price premium ')]
+    if (data_type=='prices') and as_GJ:
+        df_c['value']= df_c['value']/(120*1000) # converting unit to $/GJ
 
     # Apply country check and use default
     if country_code in country_list:
