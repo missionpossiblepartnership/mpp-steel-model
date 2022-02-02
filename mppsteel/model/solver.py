@@ -67,13 +67,13 @@ def return_best_tech(
     combined_available_list = [key for key in SWITCH_DICT.keys() if key in SWITCH_DICT[base_tech]]
 
     # Transitional switches
-    if transitional_switch_only:
+    if transitional_switch_only and (base_tech not in TECHNOLOGY_STATES['end_state']):
         # Cannot downgrade tech
         # Must be current or transitional tech
-        transitional_switch_possibilities = TECHNOLOGY_STATES['current'] + TECHNOLOGY_STATES['transitional']
-        matches = set(transitional_switch_possibilities).intersection(set(SWITCH_DICT.keys()))
         # Must be within the furnace group
-        combined_available_list = list(matches.intersection(set(return_furnace_group(FURNACE_GROUP_DICT, base_tech))))
+        combined_available_list = set(combined_available_list).intersection(set(return_furnace_group(FURNACE_GROUP_DICT, base_tech))))
+        
+    
 
     # Availability checks
     combined_available_list = [tech for tech in combined_available_list if tech_availability_check(tech_availability, tech, year, tech_moratorium=tech_moratorium)]
