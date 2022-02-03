@@ -266,7 +266,7 @@ def power_data_getter(
 
     if data_type == 'renewable':
         df_c = df_c[df_c['Captive power source'] == re_dict[re_type]]
-    if data_type=='renewable' or data_type== 'grid' and as_GJ:
+    if (data_type in ['renewable','grid']) and as_GJ:
         df_c['value']= df_c['value']/3.6 # converting unit to $/GJ 
 
     # Apply country check and use default
