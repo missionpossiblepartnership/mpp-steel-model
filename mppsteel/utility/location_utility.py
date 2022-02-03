@@ -89,8 +89,8 @@ CountryMetadata = namedtuple("CountryMetadata", NEW_COUNTRY_COL_LIST)
 
 
 def get_region_from_country_code(country_code: str, schema: str, country_ref_dict: dict):
-    if country_code == 'TWN':
-        country_code = 'CHN'
+    if country_code == 'TWN': 
+        country_code = 'CHN' # !!! Not a political statement. Blame the lookup ref !!!!
     country_metadata_obj = country_ref_dict[country_code]
     options = ["m49_code", "region", "continent", "wsa_region", "rmi_region"]
     if schema in dir(country_metadata_obj):

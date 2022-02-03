@@ -128,22 +128,6 @@ def map_region_tco_to_plants(steel_plant_ref: pd.DataFrame, opex_capex_ref: pd.D
     return combined_df[new_col_order]
 
 
-@timer_func
-def tco_presolver_reference(scenario_dict, serialize_only: bool = False):
-    electricity_cost_scenario=scenario_dict['electricity_cost_scenario']
-    grid_scenario=scenario_dict['grid_scenario']
-    hydrogen_cost_scenario=scenario_dict['hydrogen_cost_scenario']
-    eur_usd_rate=scenario_dict['eur_usd']
-    opex_capex_reference_data = tco_regions_ref_generator(electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario)
-    steel_plant_ref = create_full_steel_plant_ref(eur_usd_rate)
-    tco_reference_data = map_region_tco_to_plants(steel_plant_ref, opex_capex_reference_data)
-    tco_reference_data = add_results_metadata(tco_reference_data, scenario_dict, single_line=True)
-    if serialize_only:
-        logger.info(f'-- Serializing dataframe')
-        serialize_file(tco_reference_data, PKL_DATA_INTERMEDIATE, "tco_reference_data")
-    return tco_reference_data
-
-
 def get_abatement_difference(
     df: pd.DataFrame, year: int, country_code: str,
     base_tech: str, switch_tech: str, emission_type: str,
@@ -187,6 +171,26 @@ def emissivity_abatement(combined_emissivity: pd.DataFrame, scope: str):
                     df_list.append(entry)
     combined_df = pd.DataFrame(df_list)
     return combined_df
+
+
+@timer_func
+def tco_presolver_reference(scenario_dict, serialize_only: bool = False):
+    electricity_cost_scenario=scenario_dict['electricity_cost_scenario']
+    grid_scenario=scenario_dict['grid_scenario']
+    hydrogen_cost_scenario=scenario_dict['hydrogen_cost_scenario']
+    eur_usd_rate=scenario_dict['eur_usd']
+    opex_capex_reference_data = tco_regions_ref_generator(electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario)
+    tco_summary = opex_capex_reference_data.copy()
+    tco_summary['tco'] = tco_summary['discounted_opex'] + tco_summary['capex_value']
+    steel_plant_ref = create_full_steel_plant_ref(eur_usd_rate)
+    tco_reference_data = map_region_tco_to_plants(steel_plant_ref, opex_capex_reference_data)
+    tco_reference_data = add_results_metadata(tco_reference_data, scenario_dict, single_line=True)
+    if serialize_only:
+        logger.info(f'-- Serializing dataframe')
+        serialize_file(tco_reference_data, PKL_DATA_INTERMEDIATE, "tco_reference_data")
+        serialize_file(tco_summary, PKL_DATA_INTERMEDIATE, "tco_summary_data") # This version does not incorporate green premium
+    return tco_reference_data
+
 
 @timer_func
 def abatement_presolver_reference(scenario_dict, serialize_only: bool = False):

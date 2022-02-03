@@ -106,6 +106,7 @@ def model_outputs_phase(new_folder: bool = False, timestamp: str = ''):
     pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'capex_switching_df')
     pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'calculated_emissivity_combined')
     pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'emissivity_abatement_switches')
+    pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'tco_summary')
     pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, 'tco_reference_data')
 
     # Save Final Pickle Files
