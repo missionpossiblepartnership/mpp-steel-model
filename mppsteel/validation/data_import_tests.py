@@ -17,6 +17,7 @@ YEAR_VALUE_TEST = Column(int, Check.greater_than_or_equal_to(2020))
 COUNTRY_CODE_CHECK = Column(str, Check.str_length(8), required=True)
 NULLABLE_INT_CHECK = Column(int, nullable=True)
 NULLABLE_STR_CHECK = Column(str, nullable=True)
+UNIT_COL_TEST = Column(str, Check.str_contains('/'))
 
 # OBJECT METHOD
 COUNTRY_REF_SCHEMA = DataFrameSchema({
@@ -131,7 +132,30 @@ SCOPE3_EF_SCHEMA_2 = DataFrameSchema({
     RE_YEAR_COL_TEST: Column(float, regex=True, nullable=True),
 })
 
+SCOPE1_EF_SCHEMA = DataFrameSchema({
+    'Year': YEAR_VALUE_TEST,
+    'Category': Column(str),
+    'Metric': Column(str),
+    'Unit': UNIT_COL_TEST,
+    'Value': Column(float),
+    'Source': Column(str)
+})
 
+ENERGY_PRICES_STATIC = DataFrameSchema({
+    'Year': YEAR_VALUE_TEST,
+    'Category': Column(str),
+    'Metric': Column(str),
+    'Value': Column(float),
+    'Source': Column(str)
+})
+
+TECH_AVAILABILIY = DataFrameSchema({
+    'Year': YEAR_VALUE_TEST,
+    'Category': Column(str),
+    'Metric': Column(str),
+    'Value': Column(float),
+    'Source': Column(str)
+})
 
 def import_data_tests():
     country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref")
@@ -159,5 +183,13 @@ def import_data_tests():
 
     ethanol_plastic_charcoal = read_pickle_folder(PKL_DATA_IMPORTS, "ethanol_plastic_charcoal")
     ETHANOL_PLASTIC_CHARCOAL_SCHEMA.validate(ethanol_plastic_charcoal)
+
+    s1_emissions_factors = read_pickle_folder(PKL_DATA_IMPORTS, "s1_emissions_factors")
+    SCOPE1_EF_SCHEMA.validate(s1_emissions_factors)
+
+    static_energy_prices = read_pickle_folder(PKL_DATA_IMPORTS, "static_energy_prices")
+    ENERGY_PRICES_STATIC.validate(static_energy_prices)
+
+    tech_availability = read_pickle_folder(PKL_DATA_IMPORTS, "tech_availability")
 
     # (pa.schema_inference.infer_schema(steel_plants))
