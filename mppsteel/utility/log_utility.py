@@ -1,7 +1,10 @@
 """Utility Script for logger"""
 
 import logging
+import os
 import sys
+
+from pathlib import Path
 
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
@@ -29,6 +32,11 @@ def get_file_handler():
         [type]: A formatted file handler
     """
     today_time = datetime.today().strftime('%y%m%d_%H%M%S')
+    if not Path(LOG_PATH).is_dir():
+        try:
+            os.mkdir(LOG_PATH)
+        except OSError as error:
+            print(error)
     log_filepath = f"{LOG_PATH}/mppsteel_{today_time}.log"
     file_handler = TimedRotatingFileHandler(log_filepath, when="midnight")
     file_handler.setFormatter(LOG_FORMATTER)
