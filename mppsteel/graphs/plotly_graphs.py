@@ -35,7 +35,9 @@ SCENARIO_COLOURS = {
     "Fast Abatement": '#4C6C9C'
 }
 
-def line_graph(df: pd.DataFrame, x: str, y: str, title: str, save_filepath:str=None, ext:str='png'):
+def line_graph(
+    df: pd.DataFrame, x: str, y: str, title: str,
+    save_filepath:str=None, ext:str='png') -> px.line:
     fig_ = px.line(df, x=x, y=y, title=title)
 
     if save_filepath:
@@ -43,7 +45,13 @@ def line_graph(df: pd.DataFrame, x: str, y: str, title: str, save_filepath:str=N
 
     return fig_
 
-def line_chart(data, x, y, color, name, x_axis, y_axis, text=None, color_discrete_map=None, save_filepath:str=None, ext:str='png'):
+def line_chart(
+    data: pd.DataFrame,
+    x: str, y: str, color: str, name: str,
+    x_axis: str, y_axis: str, text: str = None,
+    color_discrete_map: dict = None,
+    save_filepath:str = None,
+    ext: str ='png') -> px.line:
     ## this need to be updated to account for multiple facets https://github.com/plotly/plotly.py/issues/2545
     fig_ = px.line(
         data, x=x, y=y, color=color, text=text, color_discrete_map=color_discrete_map
@@ -97,7 +105,12 @@ def line_chart(data, x, y, color, name, x_axis, y_axis, text=None, color_discret
 
     return fig_
 
-def area_chart(data, x, y, color, name, x_axis, y_axis, hoverdata, save_filepath: str=None, ext: str='png'):
+def area_chart(
+    data: pd.DataFrame,
+    x: str, y: str, color: str,
+    name: str, x_axis: str, y_axis: str,
+    hoverdata, save_filepath: str = None,
+    ext: str = 'png') -> px.area:
     fig_ = px.area(data, x=x, y=y, color=color, color_discrete_map=ARCHETYPE_COLORS, hover_data=hoverdata)
     fig_.update_layout(
         legend_title_text='',
@@ -149,7 +162,15 @@ def area_chart(data, x, y, color, name, x_axis, y_axis, hoverdata, save_filepath
 
     return fig_
 
-def bar_chart(data, x, y, color, color_discrete_map=None, array_order=None, title_text='', xaxis_title='', yaxis_title='', legend_text=''):
+def bar_chart(
+    data: pd.DataFrame,
+    x: str, y:str, color: str,
+    color_discrete_map: dict = None,
+    array_order: list = None,
+    title_text: str = '',
+    xaxis_title: str = '',
+    yaxis_title: str = '',
+    legend_text: str ='') -> px.bar:
 
     fig_ = px.bar(data, x=x, y=y, title=title_text, color=color, color_discrete_map=color_discrete_map, text=y, width=1500, height=1000)
     fig_.update_layout(
@@ -205,7 +226,13 @@ def bar_chart(data, x, y, color, color_discrete_map=None, array_order=None, titl
     fig_.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
     return fig_
 
-def bar_chart_vertical(data, x, y, facet_row, color, color_discrete_map, x_text, y_text, title_text, text=None, save_filepath: str=None, ext: str='png'):
+def bar_chart_vertical(
+    data: pd.DataFrame,
+    x: str, y: str, facet_row: str, color: str,
+    color_discrete_map: dict, x_text: str, y_text: str,
+    title_text: str, text: str = None,
+    save_filepath: str = None, ext: str='png') -> px.bar:
+
     fig_ = px.bar(data, x=x, y=y, facet_row=facet_row, color=color, color_discrete_map=color_discrete_map, orientation='h', text=text)
     fig_.update_layout(
         titlefont=dict(family='Arial', size=12,color='black'),

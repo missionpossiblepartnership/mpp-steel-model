@@ -1,5 +1,6 @@
 """Creates graphs from model outputs"""
 import pandas as pd
+import plotly.express as px
 
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import read_pickle_folder
@@ -42,17 +43,17 @@ SCENARIO_COLS = ['scenario_tech_moratorium', 'scenario_carbon_tax',
 
 CAPACITY_PRODUCTION_COLS = ['capacity', 'production']
 
-def generate_production_emissions(df: pd.DataFrame, grouping_col: str, value_cols: list):
+def generate_production_emissions(df: pd.DataFrame, grouping_col: str, value_cols: list) -> pd.DataFrame:
     df_c = df.copy()
     df_c = pd.melt(df, id_vars=['year', 'plant_name', grouping_col], value_vars=value_cols, var_name='metric')
     df_c.reset_index(drop=True, inplace=True)
     return df_c.groupby([grouping_col, 'year', 'metric'], as_index=False).agg({"value": 'sum'}).round(2)
 
-def generate_production_stats(df: pd.DataFrame, grouping_col: str, value_cols: list):
+def generate_production_stats(df: pd.DataFrame, grouping_col: str, value_cols: list) -> pd.DataFrame:
     df = pd.melt(df, id_vars=['year', 'plant_name', grouping_col],value_vars=value_cols, var_name='metric')
     return df.reset_index(drop=True)
 
-def generate_subset(df: pd.DataFrame, grouping_col: str, value_col: str, region_select: list = None):
+def generate_subset(df: pd.DataFrame, grouping_col: str, value_col: str, region_select: list = None) -> pd.DataFrame:
     df_c = df.copy()
     df_c = pd.melt(df, id_vars=['year', 'plant_name', grouping_col], value_vars=value_col, var_name='metric')
     df_c.reset_index(drop=True, inplace=True)
@@ -64,7 +65,7 @@ def generate_subset(df: pd.DataFrame, grouping_col: str, value_col: str, region_
     return df_c
 
 
-def steel_production_area_chart(df: pd.DataFrame, filepath: str = None):
+def steel_production_area_chart(df: pd.DataFrame, filepath: str = None) -> px.area:
     filename = 'steel_production_per_technology'
     logger.info(f'Creating area graph output: {filename}')
     if filepath:
@@ -82,7 +83,7 @@ def steel_production_area_chart(df: pd.DataFrame, filepath: str = None):
     )
 
 
-def emissions_area_chart(df: pd.DataFrame, filepath: str = None, scope: str = 'combined'):
+def emissions_area_chart(df: pd.DataFrame, filepath: str = None, scope: str = 'combined') -> px.area:
     scope_mapper = dict(zip(['s1', 's2', 's3'], EMISSION_COLS))
     emission_cols = EMISSION_COLS
     if scope in scope_mapper.keys():
@@ -105,7 +106,7 @@ def emissions_area_chart(df: pd.DataFrame, filepath: str = None, scope: str = 'c
         save_filepath=filename
     )
 
-def resource_line_charts(df: pd.DataFrame, resource: str, regions: list = None, filepath: str = None):
+def resource_line_charts(df: pd.DataFrame, resource: str, regions: list = None, filepath: str = None) -> px.line:
     region_list = regions
     filename = f'{resource}_multiregional_line_graph'
     if not regions:
@@ -127,28 +128,28 @@ def resource_line_charts(df: pd.DataFrame, resource: str, regions: list = None, 
         save_filepath=filename
     )
 
-def create_opex_capex_graph(filepath: str = None):
+def create_opex_capex_graph(filepath: str = None) -> px.bar:
     filename = f'opex_capex_graph_2050'
     logger.info(f'Creating Opex Capex Graph Output: {filename}')
     if filepath:
         filename = f'{filepath}/{filename}'
     return opex_capex_graph(save_filepath=filename)
 
-def create_investment_line_graph(group: str, operation: str, filepath: str = None):
+def create_investment_line_graph(group: str, operation: str, filepath: str = None) -> px.line:
     filename = f'investment_graph_{group}_{operation}'
     logger.info(f'Regional Investment Graph Output: {filename}')
     if filepath:
         filename = f'{filepath}/{filename}'
     return investment_line_chart(group=group, operation=operation, save_filepath=filename)
 
-def create_investment_per_tech_graph(filepath: str = None):
+def create_investment_per_tech_graph(filepath: str = None) -> px.bar:
     filename = f'investment_graph_per_technology'
     logger.info(f'Technology Investment Output: {filename}')
     if filepath:
         filename = f'{filepath}/{filename}'
     return investment_per_tech(save_filepath=filename)
 
-def create_cot_graph(regions: list = None, filepath: str = None):
+def create_cot_graph(regions: list = None, filepath: str = None) -> px.bar:
     region_ref = 'global'
     filename = 'consumption_over_time'
     if regions:
@@ -159,7 +160,7 @@ def create_cot_graph(regions: list = None, filepath: str = None):
         filename = f'{filepath}/{filename}'
     return consumption_over_time_graph(regions=regions, save_filepath=filename)
 
-def create_lcos_graph(chosen_year: int, filepath: str = None):
+def create_lcos_graph(chosen_year: int, filepath: str = None) -> px.bar:
     filename = 'levelised_cost_of_steelmaking'
     logger.info(f'Levelised Cost of Steelmaking Output: {filename}')
     if filepath:
@@ -167,7 +168,7 @@ def create_lcos_graph(chosen_year: int, filepath: str = None):
     return lcos_graph(chosen_year=chosen_year, save_filepath=filename)
 
 @timer_func
-def create_graphs(filepath: str):
+def create_graphs(filepath: str) -> None:
     production_resource_usage = read_pickle_folder(PKL_DATA_FINAL, 'production_resource_usage', 'df')
     production_emissions = read_pickle_folder(PKL_DATA_FINAL, 'production_emissions', 'df')
 

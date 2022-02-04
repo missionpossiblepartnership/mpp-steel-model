@@ -41,7 +41,7 @@ from mppsteel.model_config import MODEL_YEAR_END, OUTPUT_FOLDER, PKL_DATA_FINAL,
 
 logger = get_logger("Main Model Code")
 
-def stdout_question(count_iter: int, scenario_type: str, scenario_options: dict, default_dict: dict):
+def stdout_question(count_iter: int, scenario_type: str, scenario_options: dict, default_dict: dict) -> str:
     query = f'''
     Scenario Option {count_iter+1}/{len(scenario_options)}: {scenario_type}
     Default value: {default_dict[scenario_type]}.
@@ -50,28 +50,28 @@ def stdout_question(count_iter: int, scenario_type: str, scenario_options: dict,
     '''
     return query
 
-def get_inputted_scenarios(scenario_options: dict, default_scenario: dict):
+def get_inputted_scenarios(scenario_options: dict, default_scenario: dict) -> dict:
     inputted_scenario_args = {}
     for count, scenario in enumerate(scenario_options.keys()):
         question = stdout_question(count, scenario, scenario_options, default_scenario)
         inputted_scenario_args[scenario] = stdout_query(question, default_scenario[scenario], scenario_options[scenario])
     return inputted_scenario_args
 
-def add_currency_rates_to_scenarios(scenario_dict: dict):
+def add_currency_rates_to_scenarios(scenario_dict: dict) -> dict:
     scenario_dict['eur_usd'] = get_currency_rate('eur')
     scenario_dict['usd_eur'] = get_currency_rate('usd')
     return scenario_dict
 
 
 # Model phasing
-def data_import_stage():
+def data_import_stage() -> None:
     load_data(serialize_only=True)
     get_steel_demand(serialize_only=True)
     format_pe_data(serialize_only=True)
     standardise_business_cases(serialize_only=True)
     create_country_ref(serialize_only=True)
 
-def data_preprocessing_phase(scenario_dict: dict):
+def data_preprocessing_phase(scenario_dict: dict) -> None:
     generate_timeseries(serialize_only=True, scenario_dict=scenario_dict)
     steel_plant_processor(serialize_only=True, remove_non_operating_plants=True)
     create_capex_opex_dict(serialize_only=True)
@@ -81,20 +81,20 @@ def data_preprocessing_phase(scenario_dict: dict):
     investment_cycle_flow(serialize_only=True)
     generate_variable_plant_summary(scenario_dict, serialize_only=True)
 
-def model_presolver(scenario_dict: dict):
+def model_presolver(scenario_dict: dict) -> None:
     tco_presolver_reference(scenario_dict, serialize_only=True)
     abatement_presolver_reference(scenario_dict, serialize_only=True)
 
-def model_calculation_phase(scenario_dict: dict):
+def model_calculation_phase(scenario_dict: dict) -> None:
     solver_flow(scenario_dict, year_end=MODEL_YEAR_END, serialize_only=True)
 
-def model_results_phase(scenario_dict: dict):
+def model_results_phase(scenario_dict: dict) -> None:
     production_results_flow(scenario_dict, serialize_only=True)
     generate_cost_of_steelmaking_results(scenario_dict, serialize_only=True)
     metaresults_flow(scenario_dict, serialize_only=True)
     investment_results(scenario_dict, serialize_only=True)
 
-def model_outputs_phase(new_folder: bool = False, timestamp: str = ''):
+def model_outputs_phase(new_folder: bool = False, timestamp: str = '') -> None:
     save_path = OUTPUT_FOLDER
     if new_folder:
         folder_filepath = f'{OUTPUT_FOLDER}/{timestamp}'
@@ -116,7 +116,7 @@ def model_outputs_phase(new_folder: bool = False, timestamp: str = ''):
     for pkl_file in pkl_files:
         pickle_to_csv(save_path, PKL_DATA_FINAL, pkl_file)
 
-def model_graphs_phase(new_folder: bool = False, timestamp: str = ''):
+def model_graphs_phase(new_folder: bool = False, timestamp: str = '') -> None:
     save_path = OUTPUT_FOLDER
     if new_folder:
         folder_filepath = f'{OUTPUT_FOLDER}/{timestamp}/graphs'
@@ -125,49 +125,50 @@ def model_graphs_phase(new_folder: bool = False, timestamp: str = ''):
     create_graphs(save_path)
 
 # Group phases
-def data_import_refresh():
+def data_import_refresh() -> None:
     data_import_stage()
 
-def data_preprocessing_refresh(scenario_dict: dict):
+def data_preprocessing_refresh(scenario_dict: dict) -> None:
     data_preprocessing_phase(scenario_dict)
 
-def data_import_and_preprocessing_refresh(scenario_dict: dict):
+def data_import_and_preprocessing_refresh(scenario_dict: dict) -> None:
     data_import_stage()
     data_preprocessing_phase(scenario_dict)
 
-def tco_and_abatement_calculations(scenario_dict: dict):
+def tco_and_abatement_calculations(scenario_dict: dict) -> None:
     model_presolver(scenario_dict)
 
-def scenario_batch_run(scenario_dict: dict, dated_output_folder: bool, timestamp: str):
+def scenario_batch_run(scenario_dict: dict, dated_output_folder: bool, timestamp: str) -> None:
     data_preprocessing_phase(scenario_dict)
     model_presolver(scenario_dict)
     model_calculation_phase(scenario_dict)
     model_results_phase(scenario_dict)
     model_outputs_phase(dated_output_folder, timestamp)
 
-def half_model_run(scenario_dict: dict, dated_output_folder: bool, timestamp: str):
+def half_model_run(scenario_dict: dict, dated_output_folder: bool, timestamp: str) -> None:
     model_calculation_phase(scenario_dict)
     model_results_phase(scenario_dict)
     model_outputs_phase(dated_output_folder, timestamp)
     model_graphs_phase(dated_output_folder, timestamp)
 
-def results_and_output(scenario_dict: dict, dated_output_folder: bool, timestamp: str):
+def results_and_output(scenario_dict: dict, dated_output_folder: bool, timestamp: str) -> None:
     model_results_phase(scenario_dict)
     model_outputs_phase(dated_output_folder, timestamp)
     model_graphs_phase(dated_output_folder, timestamp)
 
-def outputs_only(dated_output_folder: bool, timestamp: str):
+def outputs_only(dated_output_folder: bool, timestamp: str) -> None:
     model_outputs_phase(dated_output_folder, timestamp)
     model_graphs_phase(dated_output_folder, timestamp)
 
-def graphs_only(timestamp: str, dated_output_folder: bool):
+def graphs_only(timestamp: str, dated_output_folder: bool) -> None:
     model_graphs_phase(dated_output_folder, timestamp)
 
-def full_flow(scenario_dict: dict, dated_output_folder: bool, timestamp: str):
+def full_flow(scenario_dict: dict, dated_output_folder: bool, timestamp: str) -> None:
     data_import_and_preprocessing_refresh(scenario_dict)
     half_model_run(scenario_dict, dated_output_folder, timestamp)
 
-def business_case_tests(new_folder: bool = False, timestamp: str = '', create_test_df: bool = True):
+def business_case_tests(
+    new_folder: bool = False, timestamp: str = '', create_test_df: bool = True) -> None:
     save_path = BC_TEST_FOLDER
     if new_folder:
         folder_filepath = f'{BC_TEST_FOLDER}/{timestamp}'
@@ -177,22 +178,22 @@ def business_case_tests(new_folder: bool = False, timestamp: str = '', create_te
         create_bc_test_df(serialize_only=True)
     test_all_technology_business_cases(save_path)
 
-def generate_minimodels(scenario_dict: dict):
+def generate_minimodels(scenario_dict: dict) -> None:
     generate_timeseries(serialize_only=True, scenario_dict=scenario_dict)
 
-def tco_switch_reference(scenario_dict: dict):
+def tco_switch_reference(scenario_dict: dict) -> None:
     tco_presolver_reference(scenario_dict, serialize_only=True)
 
-def abatement_switch_reference(scenario_dict: dict):
+def abatement_switch_reference(scenario_dict: dict) -> None:
     abatement_presolver_reference(scenario_dict, serialize_only=True)
 
-def production_flow(scenario_dict: dict):
+def production_flow(scenario_dict: dict) -> None:
     production_results_flow(scenario_dict, serialize_only=True)
 
-def investment_flow(scenario_dict: dict):
+def investment_flow(scenario_dict: dict) -> None:
     investment_results(scenario_dict, serialize_only=True)
 
-def get_emissivity():
+def get_emissivity() -> None:
     generate_emissions_flow(False)
 
 parser = argparse.ArgumentParser(description='The MPP Python Steel Model Command Line Interface', add_help=False)

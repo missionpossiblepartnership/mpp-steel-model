@@ -3,6 +3,8 @@
 from itertools import zip_longest
 
 import pandas as pd
+import plotly.express as px
+
 from mppsteel.model_config import PKL_DATA_FINAL
 from mppsteel.utility.reference_lists import MPP_COLOR_LIST, TECH_REFERENCE_LIST
 from mppsteel.results.investments import create_inv_stats
@@ -11,7 +13,7 @@ from mppsteel.utility.file_handling_utility import read_pickle_folder
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.graphs.plotly_graphs import line_chart, bar_chart
 
-def investment_line_chart(group: str = 'global', operation: str = 'cumsum', save_filepath:str=None, ext:str='png'):
+def investment_line_chart(group: str = 'global', operation: str = 'cumsum', save_filepath:str=None, ext:str='png') -> px.line:
     investment_results = read_pickle_folder(PKL_DATA_FINAL, "investment_results", "df")
     data = create_inv_stats(investment_results, results=group, operation=operation, agg=False)
 
@@ -28,7 +30,7 @@ def investment_line_chart(group: str = 'global', operation: str = 'cumsum', save
     if save_filepath:
         fig_.write_image(f'{save_filepath}.{ext}')
 
-def investment_per_tech(save_filepath:str=None, ext:str='png'):
+def investment_per_tech(save_filepath:str=None, ext:str='png') -> px.bar:
     investment_results = read_pickle_folder(PKL_DATA_FINAL, "investment_results", "df")
     tech_investment = investment_results.groupby(['end_tech', 'region_wsa_region']).agg({'capital_cost': 'sum'}).reset_index().copy()
     tech_inv_color_map = dict(zip_longest(tech_investment['end_tech'].unique(), MPP_COLOR_LIST))

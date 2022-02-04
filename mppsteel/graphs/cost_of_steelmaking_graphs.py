@@ -1,7 +1,8 @@
 """Graph for (Levelised) Cost of Steelmaking"""
-from itertools import zip_longest
+from typing import Union
 
 import pandas as pd
+import plotly.express as px
 
 from mppsteel.model_config import PKL_DATA_FINAL
 from mppsteel.utility.reference_lists import TECH_REFERENCE_LIST
@@ -11,7 +12,7 @@ from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.graphs.plotly_graphs import bar_chart
 
-def get_lcos_lowest_vals(df: pd.DataFrame, chosen_year: int, value_col: str):
+def get_lcos_lowest_vals(df: pd.DataFrame, chosen_year: int, value_col: str) -> Union[pd.DataFrame, dict]:
     df_c = df.copy()
     df_c.rename(mapper={'levelised_cost_of_steelmaking': value_col}, axis=1, inplace=True)
     df_s = df_c.set_index(['year', 'technology', 'country_code']).copy()
@@ -30,7 +31,7 @@ def get_lcos_lowest_vals(df: pd.DataFrame, chosen_year: int, value_col: str):
     df_combined.drop(['year', 'country_code'], axis=1, inplace=True)
     return df_combined, tech_delta_dict
 
-def assign_country_deltas(df: pd.DataFrame, delta_dict: dict):
+def assign_country_deltas(df: pd.DataFrame, delta_dict: dict) -> pd.DataFrame:
     df_c = df.copy()
     tech_values = df_c.index.get_level_values(0).unique()
     for technology in tech_values:
@@ -38,7 +39,7 @@ def assign_country_deltas(df: pd.DataFrame, delta_dict: dict):
     return df_c.reset_index().melt(id_vars=['technology'], var_name='cost_type', value_name='cost')
 
 
-def lcos_graph(chosen_year:int=2030, save_filepath:str=None, ext:str='png'):
+def lcos_graph(chosen_year:int=2030, save_filepath:str=None, ext:str='png') -> px.bar:
 
     lcos_data = read_pickle_folder(PKL_DATA_FINAL, "levelised_cost_of_steelmaking", "df")
     lcos_c, country_deltas = get_lcos_lowest_vals(lcos_data, chosen_year, 'LCOS')
