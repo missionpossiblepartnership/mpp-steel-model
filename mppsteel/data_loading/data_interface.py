@@ -199,7 +199,7 @@ def format_commodities_data(df: pd.DataFrame, material_mapper: dict) -> pd.DataF
             df_c.loc[row.Index, "implied_price"] = row.trade_value / row.netweight
     return df_c
 
-def commodity_data_getter(df: pd.DataFrame, commodity: str = "") -> Union[float, dict]:
+def commodity_data_getter(df: pd.DataFrame, commodity: str = "") -> float:
     df_c = df.copy()
     if commodity:
         # logger.info(f'Getting the weighted average price for {commodity}')

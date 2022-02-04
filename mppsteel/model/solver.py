@@ -1,5 +1,5 @@
 """Main solving script for deciding investment decisions."""
-from ctypes import Union
+from typing import Union
 from operator import itemgetter
 from typing import Tuple
 

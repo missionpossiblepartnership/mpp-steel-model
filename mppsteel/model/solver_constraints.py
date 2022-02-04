@@ -1,6 +1,6 @@
 """Script with functions for implementing solver constraints."""
 
-from ctypes import Union
+from typing import Union
 import pandas as pd
 
 from mppsteel.utility.file_handling_utility import (

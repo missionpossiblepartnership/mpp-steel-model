@@ -1,5 +1,5 @@
 """Graph fpr the OPEX CAPEX split"""
-from ctypes import Union
+from typing import Union
 import pandas as pd
 import plotly.express as px
 import numpy as np
