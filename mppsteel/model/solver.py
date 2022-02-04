@@ -1,5 +1,7 @@
 """Main solving script for deciding investment decisions."""
+from ctypes import Union
 from operator import itemgetter
+from typing import Tuple
 
 import pandas as pd
 from tqdm import tqdm
@@ -62,7 +64,7 @@ def return_best_tech(
     enforce_constraints: bool = False,
     material_usage_dict_container: dict = None,
     return_material_container: bool = True,
-):
+) -> Union[str, dict]:
     # Valid Switches
     combined_available_list = [key for key in SWITCH_DICT.keys() if key in SWITCH_DICT[base_tech]]
 
@@ -108,7 +110,7 @@ def choose_technology(
     steel_demand_scenario: str = 'bau',
     trans_switch_scenario: str = True,
     tech_switch_scenario: dict = {'tco': 0.6, 'emissions': 0.4},
-    ):
+    ) -> dict:
     """[summary]
 
     Args:
@@ -264,7 +266,8 @@ def choose_technology(
     return current_plant_choices
 
 
-def extract_tech_plant_switchers(inv_cycle_ref: pd.DataFrame, year: int, combined_output: bool = True):
+def extract_tech_plant_switchers(
+    inv_cycle_ref: pd.DataFrame, year: int, combined_output: bool = True) -> Tuple[list, list]:
     """[summary]
 
     Args:
@@ -291,7 +294,7 @@ def extract_tech_plant_switchers(inv_cycle_ref: pd.DataFrame, year: int, combine
 
 
 @timer_func
-def solver_flow(scenario_dict: dict, year_end: int, serialize_only: bool = False):
+def solver_flow(scenario_dict: dict, year_end: int, serialize_only: bool = False) -> dict:
     """[summary]
 
     Args:

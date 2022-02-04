@@ -14,10 +14,10 @@ from mppsteel.model_config import (
 # Create logger
 logger = get_logger("TCO & Abataement Optimsation Functions")
 
-def normalise_data(data):
-    return (data - np.min(data)) / (np.max(data) - np.min(data))
+def normalise_data(arr: np.array) -> np.array:
+    return (arr - np.min(arr)) / (np.max(arr) - np.min(arr))
 
-def scale_data(df: pd.DataFrame, reverse: bool = False):
+def scale_data(df: pd.DataFrame, reverse: bool = False) -> pd.DataFrame:
     df_c = df.copy()
     if reverse:
         df_c = 1 - normalise_data(df_c.values)
@@ -26,7 +26,7 @@ def scale_data(df: pd.DataFrame, reverse: bool = False):
     return df_c
 
 @lru_cache(maxsize=250000)
-def tco_ranker_logic(x: float, min_value: float):
+def tco_ranker_logic(x: float, min_value: float) -> int:
     if min_value is None: # check for this
         # print('NoneType value')
         return 1
@@ -38,7 +38,7 @@ def tco_ranker_logic(x: float, min_value: float):
         return 1
 
 @lru_cache(maxsize=250000)
-def abatement_ranker_logic(x: float):
+def abatement_ranker_logic(x: float) -> int:
     if x < ABATEMENT_RANK_3:
         return 3
     elif x < ABATEMENT_RANK_2:
@@ -46,7 +46,12 @@ def abatement_ranker_logic(x: float):
     else:
         return 1
 
-def min_ranker(df: pd.DataFrame, value_col: str, data_type: str, year: int, country_code: str, start_tech: str, plant_name: str = None, rank: bool = False):
+def min_ranker(
+    df: pd.DataFrame, value_col: str,
+    data_type: str, year: int, country_code: str,
+    start_tech: str, plant_name: str = None,
+    rank: bool = False) -> pd.DataFrame:
+
     data_type_col_mapper = {'tco': 'tco_rank_score', 'abatement': 'abatement_rank_score'}
     if data_type == 'tco':
         df_subset = df.loc[year, plant_name, start_tech].copy()
@@ -70,8 +75,9 @@ def min_ranker(df: pd.DataFrame, value_col: str, data_type: str, year: int, coun
 
 def get_best_choice(
     tco_df: pd.DataFrame, emissions_df: pd.DataFrame,
-    country_code: str, plant_name: str, year: int, start_tech: str, solver_logic: str,
-    weighting_dict: dict, technology_list: list):
+    country_code: str, plant_name: str, year: int,
+    start_tech: str, solver_logic: str,
+    weighting_dict: dict, technology_list: list) -> str:
     # Scaling algorithm
     if solver_logic == 'scaled':
         # Calculate minimum scaled values

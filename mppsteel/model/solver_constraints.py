@@ -1,5 +1,6 @@
 """Script with functions for implementing solver constraints."""
 
+from ctypes import Union
 import pandas as pd
 
 from mppsteel.utility.file_handling_utility import (
@@ -29,13 +30,13 @@ from mppsteel.utility.log_utility import get_logger
 # Create logger
 logger = get_logger("Solver Constraints")
 
-def map_technology_state(tech: str):
+def map_technology_state(tech: str) -> str:
     for tech_state in TECHNOLOGY_PHASES.keys():
         if tech in TECHNOLOGY_PHASES[tech_state]:
             return tech_state
 
 
-def read_and_format_tech_availability(df: pd.DataFrame):
+def read_and_format_tech_availability(df: pd.DataFrame) -> pd.DataFrame:
     """[summary]
 
     Returns:
@@ -45,7 +46,8 @@ def read_and_format_tech_availability(df: pd.DataFrame):
     df_c.columns = [col.lower().replace(' ', '_') for col in df_c.columns]
     df_c = df_c[~df_c['technology'].isin(['Close plant', 'Charcoal mini furnace', 'New capacity'])]
     df_c['technology_phase'] = df_c['technology'].apply(lambda x: map_technology_state(x))
-    return df_c[['technology', 'main_technology_type', 'technology_phase', 'year_available_from', 'year_available_until']].set_index('technology')
+    col_order = ['technology', 'main_technology_type', 'technology_phase', 'year_available_from', 'year_available_until']
+    return df_c[col_order].set_index('technology')
 
 def tech_availability_check(
     tech_df: pd.DataFrame, technology: str, year: int,
@@ -79,7 +81,7 @@ def tech_availability_check(
         return False
 
 
-def plant_closure_check(utilization_rate: float, cutoff: float, current_tech: str):
+def plant_closure_check(utilization_rate: float, cutoff: float, current_tech: str) -> str:
     """[summary]
 
     Args:
@@ -95,7 +97,7 @@ def plant_closure_check(utilization_rate: float, cutoff: float, current_tech: st
     return current_tech
 
 
-def create_plant_capacities_dict():
+def create_plant_capacities_dict() -> dict:
     """[summary]
 
     Returns:
@@ -113,7 +115,7 @@ def create_plant_capacities_dict():
         plant_capacities[plant_name] = row
     return plant_capacities
 
-def calculate_primary_and_secondary(tech_capacities: dict, plant: str, tech: str):
+def calculate_primary_and_secondary(tech_capacities: dict, plant: str, tech: str) -> float:
     """[summary]
 
     Args:
@@ -128,7 +130,7 @@ def calculate_primary_and_secondary(tech_capacities: dict, plant: str, tech: str
         return tech_capacities[plant]['secondary_capacity'] + tech_capacities[plant]['primary_capacity']
     return tech_capacities[plant]['primary_capacity']
 
-def material_usage_summary(business_case_df: pd.DataFrame, material: str, technology: str = ''):
+def material_usage_summary(business_case_df: pd.DataFrame, material: str, technology: str = '') -> Union[float, pd.DataFrame]:
     """[summary]
 
     Args:
@@ -146,7 +148,7 @@ def material_usage_summary(business_case_df: pd.DataFrame, material: str, techno
             return 0
     return business_case_df.groupby(['material_category', 'technology']).sum().loc[material]
 
-def total_plant_capacity(plant_cap_dict: dict):
+def total_plant_capacity(plant_cap_dict: dict) -> float:
     """[summary]
 
     Args:
@@ -163,7 +165,7 @@ def total_plant_capacity(plant_cap_dict: dict):
 def material_usage_calc(
     plant_capacities: dict, steel_demand_df: pd.DataFrame, business_cases: pd.DataFrame,
     materials_list: list, plant_name: str, country_code: str, year: float, tech: str, material: str, steel_demand_scenario: str
-    ):
+    ) -> float:
     """[summary]
 
     Args:
@@ -208,7 +210,7 @@ def plant_tech_resource_checker(
     available_tech_list: list = None,
     material_usage_dict: dict = None,
     output_type: str = 'excluded'
-):
+) -> list:
     """[summary]
 
     Args:
@@ -314,7 +316,7 @@ def plant_tech_resource_checker(
     if output_type == 'included':
         return tech_approved_list
 
-def create_new_material_usage_dict(resource_container_ref: dict):
+def create_new_material_usage_dict(resource_container_ref: dict) -> dict:
     """[summary]
 
     Args:
@@ -333,7 +335,7 @@ def material_usage_per_plant(
     plant_capacities: dict,
     steel_demand_df: pd.DataFrame,
     materials_list: list, year: float,
-    steel_demand_scenario: str):
+    steel_demand_scenario: str) -> pd.DataFrame:
     """[summary]
 
     Args:
@@ -363,7 +365,7 @@ def material_usage_per_plant(
         df_list.append(df)
     return pd.concat(df_list).reset_index().groupby(['index']).sum()
 
-def load_resource_usage_dict(yearly_usage_df: pd.DataFrame):
+def load_resource_usage_dict(yearly_usage_df: pd.DataFrame) -> dict:
     """[summary]
 
     Args:

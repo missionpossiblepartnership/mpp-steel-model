@@ -34,7 +34,7 @@ from mppsteel.data_loading.pe_model_formatter import (
 # Create logger
 logger = get_logger("Variable Plant Cost Archetypes")
 
-def generate_feedstock_dict():
+def generate_feedstock_dict() -> dict:
     """[summary]
 
     Returns:
@@ -50,8 +50,8 @@ def generate_feedstock_dict():
 
 
 def plant_variable_costs(
-    year_end: int, electricity_cost_scenario: str, grid_decarb_scenario: str, 
-    hydrogen_cost_scenario: str, biomass_cost_scenario: str, ccus_cost_scenario: str):
+    year_end: int, electricity_cost_scenario: str, grid_decarb_scenario: str,
+    hydrogen_cost_scenario: str, biomass_cost_scenario: str, ccus_cost_scenario: str) -> pd.DataFrame:
     """[summary]
 
     Args:
@@ -130,7 +130,6 @@ def generate_variable_costs(
     """
 
     df_list = []
-
     # Create resources reference list
     country_ref_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "country_reference_dict", "df")
     FEEDSTOCK_LIST = ['Iron Ore', 'Scrap', 'DRI', 'Coal']
@@ -140,7 +139,7 @@ def generate_variable_costs(
     OTHER_OPEX = ['Steam', 'BF slag']
 
 
-    def value_mapper(row, enum_dict):
+    def value_mapper(row, enum_dict: dict):
         resource = row[enum_dict['material_category']]
 
         if resource in FOSSIL_FUELS:
@@ -218,10 +217,9 @@ def generate_variable_costs(
         df_c = df_c.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
         df_c['year'] = year
         df_list.append(df_c)
-    combined_df = pd.concat(df_list)
-    return combined_df
+    return pd.concat(df_list)
 
-def format_variable_costs(variable_cost_df: pd.DataFrame, group_data: bool = True):
+def format_variable_costs(variable_cost_df: pd.DataFrame, group_data: bool = True) -> pd.DataFrame:
     """[summary]
 
     Args:
@@ -243,7 +241,7 @@ def format_variable_costs(variable_cost_df: pd.DataFrame, group_data: bool = Tru
     return df_c
 
 @timer_func
-def generate_variable_plant_summary(scenario_dict: dict, serialize_only: bool = False):
+def generate_variable_plant_summary(scenario_dict: dict, serialize_only: bool = False) -> pd.DataFrame:
     """[summary]
 
     Args:

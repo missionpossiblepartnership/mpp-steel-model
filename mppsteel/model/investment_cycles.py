@@ -24,7 +24,7 @@ logger = get_logger("Investment Cycles")
 def calculate_investment_years(
     op_start_year: int, cutoff_start_year: int = MODEL_YEAR_START,
     cutoff_end_year: int = MODEL_YEAR_END, inv_intervals: int = INVESTMENT_CYCLE_LENGTH
-):
+) -> list:
     x = op_start_year
     decision_years = []
     unique_investment_interval = inv_intervals + random.randrange(-INVESTMENT_CYCLE_VARIANCE, INVESTMENT_CYCLE_VARIANCE, 1)
@@ -38,12 +38,12 @@ def calculate_investment_years(
 
 def add_off_cycle_investment_years(
     main_investment_cycle: list,
-    start_buff, end_buff,
-):
+    start_buff: int, end_buff: int,
+) -> list:
     inv_cycle_length = len(main_investment_cycle)
     range_list = []
 
-    def net_zero_year_bring_forward(year: int):
+    def net_zero_year_bring_forward(year: int) -> int:
         if year in range(NET_ZERO_TARGET+1, NET_ZERO_TARGET+NET_ZERO_VARIANCE+1):
             bring_forward_date = NET_ZERO_TARGET-1
             logger.info(f'Investment Cycle Brought Forward to {bring_forward_date}')
@@ -63,7 +63,7 @@ def add_off_cycle_investment_years(
 
     return range_list
 
-def apply_investment_years(year_value):
+def apply_investment_years(year_value: int) -> list:
     if pd.isna(year_value):
         return calculate_investment_years(MODEL_YEAR_START)
     elif '(anticipated)' in str(year_value):
@@ -75,7 +75,7 @@ def apply_investment_years(year_value):
         except:
             return calculate_investment_years(int(year_value[:4]))
 
-def create_investment_cycle_reference(plant_names: list, investment_years: list, year_end: int):
+def create_investment_cycle_reference(plant_names: list, investment_years: list, year_end: int) -> pd.DataFrame:
     logger.info('Creating the investment cycle reference table')
     zipped_plant_investments = zip(plant_names, investment_years)
     year_range = range(MODEL_YEAR_START, year_end+1)
@@ -92,14 +92,14 @@ def create_investment_cycle_reference(plant_names: list, investment_years: list,
             df=df.append(row_dict, ignore_index=True)
     return df.set_index(['year', 'switch_type'])
 
-def create_investment_cycle_ref(steel_plant_df: pd.DataFrame):
+def create_investment_cycle(steel_plant_df: pd.DataFrame) -> pd.DataFrame:
     logger.info('Creating investment cycle')
     investment_years = steel_plant_df['start_of_operation'].apply(lambda year: apply_investment_years(year))
     investment_years_inc_off_cycle = [add_off_cycle_investment_years(inv_year, INVESTMENT_OFFCYCLE_BUFFER_TOP, INVESTMENT_OFFCYCLE_BUFFER_TAIL) for inv_year in investment_years]
     return create_investment_cycle_reference(steel_plant_df['plant_name'].values, investment_years_inc_off_cycle, MODEL_YEAR_END)
 
 @timer_func
-def investment_cycle_flow(serialize_only: bool = False):
+def investment_cycle_flow(serialize_only: bool = False) -> pd.DataFrame:
     """[summary]
 
     Args:
@@ -109,7 +109,7 @@ def investment_cycle_flow(serialize_only: bool = False):
         [type]: [description]
     """    
     steel_plants_aug = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'steel_plants_processed', 'df')
-    plant_investment_cycles = create_investment_cycle_ref(steel_plants_aug)
+    plant_investment_cycles = create_investment_cycle(steel_plants_aug)
 
     if serialize_only:
         logger.info(f'-- Serializing Investment Cycle Reference')

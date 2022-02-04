@@ -21,11 +21,17 @@ from mppsteel.utility.reference_lists import (
 from mppsteel.utility.log_utility import get_logger
 logger = get_logger("TCO Calculation Functions")
 
-def carbon_tax_estimate(s1_emissions_value: dict, s2_emissions_value: float, carbon_tax_value: pd.DataFrame):
+def carbon_tax_estimate(s1_emissions_value: float, s2_emissions_value: float, carbon_tax_value: float) -> float:
     return (s1_emissions_value + s2_emissions_value) * carbon_tax_value
 
 @lru_cache(maxsize=200000)
-def green_premium_capacity_calculation(variable_tech_cost: float, primary_capacity: float, secondary_capacity: float, technology: str, eur_usd_rate: float):
+def green_premium_capacity_calculation(
+    variable_tech_cost: float,
+    primary_capacity: float,
+    secondary_capacity: float,
+    technology: str,
+    eur_usd_rate: float) -> float:
+
     combined_capacity = primary_capacity + secondary_capacity
     if technology == 'EAF':
         variable_cost_value = (variable_tech_cost * primary_capacity) + (variable_tech_cost * secondary_capacity)
@@ -33,7 +39,13 @@ def green_premium_capacity_calculation(variable_tech_cost: float, primary_capaci
         variable_cost_value = variable_tech_cost * primary_capacity
     return combined_capacity * (variable_cost_value / combined_capacity) / combined_capacity / eur_usd_rate
 
-def calculate_green_premium(variable_costs, steel_plant_df, green_premium_timeseries, country_code, plant_name, technology_2020, year, eur_usd_rate: float):
+def calculate_green_premium(
+    variable_costs: pd.DataFrame,
+    steel_plant_df: pd.DataFrame,
+    green_premium_timeseries: pd.DataFrame,
+    country_code: str, plant_name: str,
+    technology_2020: str, year: int, eur_usd_rate: float) -> float:
+
     variable_tech_cost = variable_costs.loc[country_code, year, technology_2020].values[0]
     steel_plant_df_c = steel_plant_df.loc[steel_plant_df['plant_name'] == plant_name].copy()
     primary_capacity = steel_plant_df_c['primary_capacity_2020'].values[0]
@@ -50,7 +62,8 @@ def get_opex_costs(
     s1_emissions_ref: dict,
     carbon_tax_timeseries: pd.DataFrame,
     s2_emissions_value: float,
-):
+) -> pd.DataFrame:
+
     variable_costs = variable_costs_df.loc[country_code, year]
     opex_costs = opex_df.swaplevel().loc[year]
     carbon_tax_value = carbon_tax_timeseries.set_index('year').loc[year]['value']
@@ -65,13 +78,15 @@ def get_opex_costs(
     total_opex.rename(mapper={'value': 'opex'},axis=1, inplace=True)
     return total_opex
 
-def capex_getter(capex_df, switch_dict, year, start_tech, end_tech):
+def capex_getter(
+    capex_df: pd.DataFrame, switch_dict: dict,
+    year: int, start_tech: str, end_tech: str) -> float:
     year = min(MODEL_YEAR_END, year)
     if end_tech in switch_dict[start_tech]:
         return capex_df.loc[year, start_tech, end_tech][0]
     return 0
 
-def calculate_capex(capex_df: pd.DataFrame, start_year: int, base_tech: str):
+def calculate_capex(capex_df: pd.DataFrame, start_year: int, base_tech: str) -> pd.DataFrame:
     df = pd.DataFrame({'start_technology': base_tech, 'end_technology': SWITCH_DICT[base_tech], 'year': start_year, 'capex_value': ''})
     c_df = capex_df.reset_index().set_index(['Year', 'Start Technology', 'New Technology']).copy()
     def value_mapper(row, enum_dict):
@@ -98,7 +113,7 @@ def get_discounted_opex_values(
     grid_scenario: str,
     hydrogen_cost_scenario: str,
     base_tech: str,
-    ):
+    ) -> pd.DataFrame:
 
     year_range = range(year_start, year_start+year_interval+1)
     df_list = []
@@ -132,7 +147,8 @@ def tco_calc(
     other_opex_df: pd.DataFrame, s1_emissions_df: pd.DataFrame, country_ref_dict: pd.DataFrame, capex_df: pd.DataFrame,
     investment_cycle: int, electricity_cost_scenario: str,
     grid_scenario: str, hydrogen_cost_scenario: str,
-    ):
+    ) -> pd.DataFrame:
+
     opex_values = get_discounted_opex_values(
         country_code, start_year, carbon_tax_df, business_cases,
         variable_cost_summary, power_model,

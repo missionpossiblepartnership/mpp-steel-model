@@ -1,6 +1,7 @@
 """Script that creates the price and emissions tables."""
 
 # For Data Manipulation
+from typing import Tuple
 import pandas as pd
 
 from tqdm import tqdm
@@ -53,7 +54,7 @@ def apply_emissions(
     carbon_tax_df: pd.DataFrame = None,
     non_standard_dict: dict = None,
     scope: str = "1",
-) -> pd.DataFrame:
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     # Create resources reference list
     s1_emissivity_resources = s1_emissivity_factors["Metric"].unique().tolist()
@@ -68,7 +69,7 @@ def apply_emissions(
 
     logger.info(f"calculating emissions reference tables")
 
-    def value_mapper(row, enum_dict):
+    def value_mapper(row, enum_dict: dict):
         resource = row[enum_dict['material_category']]
         resource_consumed = row[enum_dict['value']]
 
@@ -141,7 +142,7 @@ def apply_emissions(
     return emissions_df, carbon_df
 
 
-def create_emissions_ref_dict(df: pd.DataFrame, tech_ref_list: list):
+def create_emissions_ref_dict(df: pd.DataFrame, tech_ref_list: list) -> dict:
     value_ref_dict = {}
     resource_list = ["Process emissions", "Captured CO2", "Used CO2"]
     for technology in tech_ref_list:
@@ -159,7 +160,11 @@ def create_emissions_ref_dict(df: pd.DataFrame, tech_ref_list: list):
     return value_ref_dict
 
 
-def full_emissions(df: pd.DataFrame, emissions_exceptions_dict: dict, tech_list: list):
+def full_emissions(
+    df: pd.DataFrame,
+    emissions_exceptions_dict: dict,
+    tech_list: list) -> pd.DataFrame:
+
     df_c = df.copy()
     for year in df_c.index.get_level_values(0).unique().values:
         for technology in tech_list:
@@ -174,7 +179,7 @@ def full_emissions(df: pd.DataFrame, emissions_exceptions_dict: dict, tech_list:
             )
     return df_c
 
-def generate_emissions_dataframe(df: pd.DataFrame, year_end: int):
+def generate_emissions_dataframe(df: pd.DataFrame, year_end: int) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     # S1 emissions covers the Green House Gas (GHG) emissions that a company makes directly
     s1_emissivity_factors = read_pickle_folder(PKL_DATA_IMPORTS, "s1_emissions_factors", "df")
@@ -199,7 +204,13 @@ def generate_emissions_dataframe(df: pd.DataFrame, year_end: int):
 
     return emissions, carbon
 
-def get_s2_emissions(power_model: dict, hydrogen_model: dict, business_cases: pd.DataFrame, country_ref_dict: dict, year: int, country_code: str, technology: str, electricity_cost_scenario: str, grid_scenario: str, hydrogen_cost_scenario: str):
+def get_s2_emissions(
+    power_model: dict, hydrogen_model: dict,
+    business_cases: pd.DataFrame, country_ref_dict: dict,
+    year: int, country_code: str, technology: str,
+    electricity_cost_scenario: str, grid_scenario: str,
+    hydrogen_cost_scenario: str) -> float:
+
     electricity_cost_scenario = COST_SCENARIO_MAPPER[electricity_cost_scenario]
     grid_scenario = GRID_DECARBONISATION_SCENARIOS[grid_scenario]
     hydrogen_cost_scenario = COST_SCENARIO_MAPPER[hydrogen_cost_scenario]
@@ -234,7 +245,7 @@ def get_s2_emissions(power_model: dict, hydrogen_model: dict, business_cases: pd
 
     return total_s2_emission
 
-def regional_s2_emissivity(electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario):
+def regional_s2_emissivity(electricity_cost_scenario: str, grid_scenario: str, hydrogen_cost_scenario: str) -> pd.DataFrame:
     b_df = load_business_cases()
     power_model_formatted = read_pickle_folder(PKL_DATA_INTERMEDIATE, "power_model_formatted", "df")
     hydrogen_model_formatted = read_pickle_folder(PKL_DATA_INTERMEDIATE, "hydrogen_model_formatted", "df")
@@ -252,7 +263,7 @@ def regional_s2_emissivity(electricity_cost_scenario, grid_scenario, hydrogen_co
     combined_df = pd.DataFrame(df_list)
     return combined_df
 
-def combine_emissivity(s1_ref: pd.DataFrame, s2_ref: pd.DataFrame, s3_ref: pd.DataFrame ):
+def combine_emissivity(s1_ref: pd.DataFrame, s2_ref: pd.DataFrame, s3_ref: pd.DataFrame) -> pd.DataFrame:
     logger.info('Combining S2 Emissions with S1 & S3 emissivity')
     total_emissivity = s2_ref.set_index(['year', 'country_code', 'technology']).copy()
     total_emissivity['s1_emissivity'] = ''
@@ -272,7 +283,7 @@ def combine_emissivity(s1_ref: pd.DataFrame, s2_ref: pd.DataFrame, s3_ref: pd.Da
         total_emissivity, ['s1_emissivity', 's2_emissivity', 's3_emissivity', 'combined_emissivity'])
     return total_emissivity[new_col_order].reset_index()
 
-def emissivity_getter(df_ref: pd.DataFrame, year: int, country_code: str, technology: str, scope: str):
+def emissivity_getter(df_ref: pd.DataFrame, year: int, country_code: str, technology: str, scope: str) -> float:
     year = min(2050, year)
     emissivity_mapper = {
         's1': 's1_emissivity',
@@ -285,7 +296,7 @@ def emissivity_getter(df_ref: pd.DataFrame, year: int, country_code: str, techno
         return df_ref.loc[year, country_code, technology]['combined_emissivity']
 
 @timer_func
-def generate_emissions_flow(scenario_dict: dict, serialize_only: bool = False):
+def generate_emissions_flow(scenario_dict: dict, serialize_only: bool = False) -> pd.DataFrame:
     business_cases_summary = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "standardised_business_cases", "df"
     )
