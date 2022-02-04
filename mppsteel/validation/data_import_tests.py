@@ -1,6 +1,7 @@
-'''Pandera recipies for data validation'''
+'''Data Import Pandera Checks'''
 import pandas as pd
 import pandera as pa
+
 from pandera import (
     DataFrameSchema, Column, Index, MultiIndex, Check
 )
@@ -55,21 +56,21 @@ STEEL_PLANT_DATA_SCHEMA = DataFrameSchema(
         'Coordinates': Column(str),
         'Status': Column(str),
         'Start of operation': Column(str, nullable=True, coerce=True), # WARNING! handle this case later
-        'Fill in data BF-BOF': Column(float),
-        'Fill in data EAF': Column(float),
-        'Fill in data DRI': Column(float),
-        'Estimated BF-BOF capacity (kt steel/y)': Column(float),
-        'Estimated EAF capacity (kt steel/y)': Column(float),
-        'Estimated DRI capacity (kt sponge iron/y)': Column(float),
-        'Estimated DRI-EAF capacity (kt steel/y)': Column(float),
-        'Final estimated BF-BOF capacity (kt steel/y)': Column(float),
-        'Final estimated EAF capacity (kt steel/y)': Column(float),
-        'Final estimated DRI capacity (kt sponge iron/y)': Column(float),
-        'Final estimated DRI-EAF capacity (kt steel/y)': Column(float),
-        'Abundant RES?': Column(int),
-        'CCS available?': Column(int),
-        'Cheap natural gas?': Column(int),
-        'Industrial cluster?': Column(int),
+        'Fill in data BF-BOF': Column(float, coerce=True),
+        'Fill in data EAF': Column(float, coerce=True),
+        'Fill in data DRI': Column(float, coerce=True),
+        'Estimated BF-BOF capacity (kt steel/y)': Column(float, coerce=True),
+        'Estimated EAF capacity (kt steel/y)': Column(str, coerce=True), # WARNING! handle this case later
+        'Estimated DRI capacity (kt sponge iron/y)': Column(float, coerce=True),
+        'Estimated DRI-EAF capacity (kt steel/y)': Column(float, coerce=True),
+        'Final estimated BF-BOF capacity (kt steel/y)': Column(float, coerce=True),
+        'Final estimated EAF capacity (kt steel/y)': Column(str, coerce=True), # WARNING! handle this case later
+        'Final estimated DRI capacity (kt sponge iron/y)': Column(float, coerce=True),
+        'Final estimated DRI-EAF capacity (kt steel/y)': Column(float, coerce=True),
+        'Abundant RES?': Column(int, Check.isin([0, 1])),
+        'CCS available?': Column(int, Check.isin([0, 1])),
+        'Cheap natural gas?': Column(int, Check.isin([0, 1])),
+        'Industrial cluster?': Column(int, Check.isin([0, 1])),
         'Plant Technology in 2020': Column(str),
         'Source': Column(str),
     })

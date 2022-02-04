@@ -1,5 +1,6 @@
 """Function to create a steel plant class."""
 import pandas as pd
+import pandera as pa
 
 from tqdm.auto import tqdm as tqdma
 
@@ -17,10 +18,12 @@ from mppsteel.utility.file_handling_utility import (
 )
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
+from mppsteel.validation.data_import_tests import STEEL_PLANT_DATA_SCHEMA
 
 # Create logger
 logger = get_logger("Steel Plant Formatter")
 
+@pa.check_input(STEEL_PLANT_DATA_SCHEMA)
 def steel_plant_formatter(df: pd.DataFrame, remove_non_operating_plants: bool = False) -> pd.DataFrame:
     """Formats the steel plants data input.
 
@@ -47,9 +50,7 @@ def steel_plant_formatter(df: pd.DataFrame, remove_non_operating_plants: bool = 
         'BFBOF_capacity', 'EAF_capacity', 'DRI_capacity', 'DRIEAF_capacity', 'abundant_res',
         'ccs_available', 'cheap_natural_gas', 'industrial_cluster', 'technology_in_2020']
     df_c = df_c.rename(mapper=dict(zip(df_c.columns, new_steel_plant_cols)), axis=1)
-
     df_c["country_code"] = ""
-
     df_c = extract_steel_plant_capacity(df_c)
     df_c = adjust_capacity_values(df_c)
 
@@ -147,14 +148,11 @@ def apply_countries_to_steel_plants(steel_plant_formatted: pd.DataFrame):
     df_c["country_code"] = df_c["country"].apply(
         lambda x: matching_dict[x]
     )
-
     country_fixer_dict = {"Korea, North": "PRK"}
-
     steel_plants = country_mapping_fixer(df_c, "country", "country_code", country_fixer_dict)
-
     country_reference_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'country_reference_dict', 'df')
-
-    steel_plants['region'] = steel_plants['country_code'].apply(lambda x: get_region_from_country_code(x, 'wsa_region', country_reference_dict))
+    steel_plants['region'] = steel_plants['country_code'].apply(
+        lambda x: get_region_from_country_code(x, 'wsa_region', country_reference_dict))
 
     return steel_plants
 

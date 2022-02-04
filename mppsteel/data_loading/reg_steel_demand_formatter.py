@@ -3,6 +3,7 @@
 import itertools
 
 import pandas as pd
+import pandera as pa
 
 from mppsteel.model_config import (
     PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE, MODEL_YEAR_END
@@ -15,6 +16,7 @@ from mppsteel.utility.location_utility import match_country
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder, serialize_file
 )
+from mppsteel.validation.data_import_tests import REGIONAL_STEEL_DEMAND_SCHEMA
 from mppsteel.utility.log_utility import get_logger
 
 # Create logger
@@ -43,19 +45,20 @@ def steel_demand_region_assignor(region: str, country_ref: pd.DataFrame, rmi_mat
         return rmi_matcher[region]
     return get_countries_from_group(country_ref, 'RMI Model Region', region)
 
-
-def steel_demand_creator(rmi_matcher: dict):
+@pa.check_input(REGIONAL_STEEL_DEMAND_SCHEMA)
+def steel_demand_creator(df: pd.DataFrame, rmi_matcher: dict):
     logger.info('Formatting the Regional Steel Demand Data')
     country_ref = read_pickle_folder(PKL_DATA_IMPORTS, 'country_ref', 'df')
-    steel_demand = read_pickle_folder(PKL_DATA_IMPORTS, 'regional_steel_demand', 'df')
-    steel_demand['country_code'] = steel_demand['Region'].apply(lambda x: steel_demand_region_assignor(x, country_ref, rmi_matcher))
-    steel_demand = steel_demand.melt(id_vars = ['Metric', 'Region', 'Scenario', 'country_code'], var_name=['year'])
-    steel_demand.set_index(['year', 'Scenario', 'Metric'], inplace=True)
-    return steel_demand
+    df_c = df.copy()
+    df_c['country_code'] = df_c['Region'].apply(lambda x: steel_demand_region_assignor(x, country_ref, rmi_matcher))
+    df_c = df_c.melt(id_vars = ['Metric', 'Region', 'Scenario', 'country_code'], var_name=['year'])
+    df_c.set_index(['year', 'Scenario', 'Metric'], inplace=True)
+    return df_c
 
 @timer_func
 def get_steel_demand(serialize_only: bool = False):
-    steel_demand_f = steel_demand_creator(RMI_MATCHER) # pickle this
+    steel_demand = read_pickle_folder(PKL_DATA_IMPORTS, 'regional_steel_demand', 'df')
+    steel_demand_f = steel_demand_creator(steel_demand, RMI_MATCHER) # pickle this
     if serialize_only:
         serialize_file(steel_demand_f, PKL_DATA_INTERMEDIATE, "regional_steel_demand_formatted")
     return steel_demand_f

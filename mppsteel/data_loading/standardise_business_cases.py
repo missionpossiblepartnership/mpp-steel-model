@@ -5,6 +5,7 @@ from copy import deepcopy
 
 # For Data Manipulation
 import pandas as pd
+import pandera as pa
 
 from tqdm.auto import tqdm as tqdma
 
@@ -16,6 +17,7 @@ from mppsteel.utility.file_handling_utility import (
 )
 
 from mppsteel.utility.log_utility import get_logger
+from mppsteel.validation.data_import_tests import STEEL_BUSINESS_CASES_SCHEMA
 
 from mppsteel.model_config import (
     PKL_DATA_IMPORTS,
@@ -104,6 +106,7 @@ def furnace_group_from_tech(furnace_group_dict: dict):
             tech_container[tech] = group
     return tech_container
 
+@pa.check_input(STEEL_BUSINESS_CASES_SCHEMA)
 def business_case_formatter_splitter(df: pd.DataFrame):
     df_c = df.copy()
     df_c = df_c.melt(id_vars=['Section', 'Process', 'Process Detail', 'Step', 'Material Category', 'Unit'], var_name='Technology')

@@ -30,8 +30,8 @@ def replace_rows(df: pd.DataFrame, header_row: int) -> pd.DataFrame:
     return df_c
 
 
-def get_pe_model_data(model_name: str):
-    def get_path(model_name: str, filenames_dict: dict):
+def get_pe_model_data(model_name: str) -> pd.DataFrame:
+    def get_path(model_name: str, filenames_dict: dict) -> str:
         return f'{IMPORT_DATA_PATH}/{filenames_dict[model_name]}'
     datapath = get_path(model_name, PE_MODEL_FILENAME_DICT)
     return pd.read_excel(datapath, sheet_name=PE_MODEL_SHEETNAME_DICT[model_name])

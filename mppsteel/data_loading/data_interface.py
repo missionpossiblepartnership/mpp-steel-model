@@ -2,17 +2,26 @@
 
 # For Data Manipulation
 import pandas as pd
+import pandera as pa
 import numpy as np
+
+from mppsteel.validation.data_import_tests import (
+    FEEDSTOCK_INPUT_SCHEMA, ENERGY_PRICES_STATIC_SCHEMA,
+    ETHANOL_PLASTIC_CHARCOAL_SCHEMA, SCOPE1_EF_SCHEMA,
+    SCOPE3_EF_SCHEMA_1, SCOPE3_EF_SCHEMA_2, CAPEX_OPEX_PER_TECH_SCHEMA,
+    STEEL_BUSINESS_CASES_SCHEMA
+)
 
 # For logger and units dict
 from mppsteel.utility.utils import (
-    create_list_permutations,
-    enumerate_iterable
+    create_list_permutations
 )
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder, serialize_file, extract_data
 )
-
+from mppsteel.utility.dataframe_utility import (
+    melt_and_index
+)
 # Get model parameters
 from mppsteel.model_config import (
     MODEL_YEAR_END,
@@ -35,7 +44,7 @@ COMMODITY_MATERIAL_MAPPER = {
     "391510": "plastic",
 }
 
-
+@pa.check_input(SCOPE3_EF_SCHEMA_2)
 def format_scope3_ef_2(df: pd.DataFrame, emissions_factor_slag: float) -> pd.DataFrame:
     df_c = df.copy()
     df_c = df_c.drop(["Unnamed: 1"], axis=1).loc[0:0]
@@ -45,7 +54,7 @@ def format_scope3_ef_2(df: pd.DataFrame, emissions_factor_slag: float) -> pd.Dat
     df_c["value"] = df_c["value"].apply(lambda x: x * emissions_factor_slag)
     return df_c
 
-
+@pa.check_input(SCOPE3_EF_SCHEMA_1)
 def modify_scope3_ef_1(
     df: pd.DataFrame, slag_values: np.array, met_coal_density: float
 ) -> pd.DataFrame:
@@ -63,23 +72,6 @@ def modify_scope3_ef_1(
     scope3df_index.reset_index(inplace=True)
     scope3df_index.head()
     return scope3df_index.melt(id_vars=["Category", "Fuel", "Unit"], var_name="Year")
-
-
-def melt_and_index(
-    df: pd.DataFrame, id_vars: list, var_name: str, index: list
-) -> pd.DataFrame:
-    """Make the dataframes tabular and create a multiindex
-
-    Args:
-        df (pd.DataFrame): The data import of the capex tables
-
-    Returns:
-        pd.DataFrame: A datframe of the tabular dataframe
-    """
-    df_c = df.copy()
-    df_c = pd.melt(frame=df_c, id_vars=id_vars, var_name=var_name)
-    df_c.set_index(index, inplace=True)
-    return df_c
 
 
 def capex_generator(
@@ -114,7 +106,7 @@ def capex_generator(
     # logger.info(f"Creating capex value: {output_type} for: {technology}")
     return capex_dict[output_type]
 
-
+@pa.check_input(CAPEX_OPEX_PER_TECH_SCHEMA)
 def capex_dictionary_generator(
     greenfield_df: pd.DataFrame, brownfield_df: pd.DataFrame, other_df: pd.DataFrame
 ) -> dict:
@@ -170,9 +162,6 @@ def ccs_co2_getter(df: pd.DataFrame, metric: str, year: str) -> float:
     value = df_c.loc[metric, year]["Value"]
     return value
 
-def biomass_getter(biomass_df: pd.DataFrame, year: int):
-    year = min(MODEL_YEAR_END, year)
-    return biomass_df.set_index('year').loc[year]['value']
 
 def static_energy_prices_getter(df: pd.DataFrame, metric: str, year: str) -> float:
     df_c = df.copy()
@@ -183,16 +172,8 @@ def static_energy_prices_getter(df: pd.DataFrame, metric: str, year: str) -> flo
     value = df_c.loc[metric, year]["Value"]
     return value
 
-def technology_availability_getter(df: pd.DataFrame, technology: str) -> tuple:
-    df_c = df.copy()
-    metric_names = df_c["Technology"].unique()
-    # logger.info(f'Creating Technology getter with the following metrics: {metric_names}')
-    df_c.set_index(["Technology"], inplace=True)
-    # logger.info(f'Getting {technology} availability')
-    year_available_from = df_c.loc[technology]["Year available from"]
-    year_available_until = df_c.loc[technology]["Year available until"]
-    return year_available_from, year_available_until
 
+@pa.check_input(ETHANOL_PLASTIC_CHARCOAL_SCHEMA)
 def format_commodities_data(df: pd.DataFrame, material_mapper: dict) -> pd.DataFrame:
     df_c = df.copy()
     logger.info(f"Formatting the ethanol_plastics_charcoal data")

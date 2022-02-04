@@ -108,3 +108,19 @@ def return_furnace_group(furnace_dict: dict, tech:str):
     for key in furnace_dict.keys():
         if tech in furnace_dict[key]:
             return furnace_dict[key]
+
+def melt_and_index(
+    df: pd.DataFrame, id_vars: list, var_name: str, index: list
+) -> pd.DataFrame:
+    """Make the dataframes tabular and create a multiindex
+
+    Args:
+        df (pd.DataFrame): The data import of the capex tables
+
+    Returns:
+        pd.DataFrame: A datframe of the tabular dataframe
+    """
+    df_c = df.copy()
+    df_c = pd.melt(frame=df_c, id_vars=id_vars, var_name=var_name)
+    df_c.set_index(index, inplace=True)
+    return df_c

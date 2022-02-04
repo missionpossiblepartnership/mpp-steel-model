@@ -54,29 +54,6 @@ NEW_COUNTRY_COL_LIST = [
     "rmi_region",
 ]
 
-TECH_REFERENCE_LIST = [
-    "Avg BF-BOF",
-    "BAT BF-BOF",
-    "BAT BF-BOF_bio PCI",
-    "BAT BF-BOF_H2 PCI",
-    "BAT BF-BOF+CCUS",
-    "DRI-EAF",
-    "DRI-EAF_50% green H2",
-    "DRI-EAF_50% bio-CH4",
-    "DRI-EAF+CCUS",
-    "DRI-EAF_100% green H2",
-    "Smelting Reduction",
-    "Smelting Reduction+CCUS",
-    "EAF",
-    "Electrolyzer-EAF",
-    "BAT BF-BOF+CCU",
-    "DRI-Melt-BOF",
-    "DRI-Melt-BOF+CCUS",
-    "DRI-Melt-BOF_100% zero-C H2",
-    "Electrowinning-EAF",
-    "BAT BF-BOF+BECCUS",
-]
-
 FURNACE_GROUP_DICT = {
     "blast_furnace": [
         "Avg BF-BOF",
@@ -245,6 +222,8 @@ SWITCH_DICT = {
     "Electrolyzer-EAF": ["Electrolyzer-EAF"],
     "Electrowinning-EAF": ["Electrowinning-EAF"],
 }
+
+TECH_REFERENCE_LIST = list(SWITCH_DICT.keys())
 
 HARD_CODED_FACTORS = {
     "dri": {"Coke Production": 0, "Sintering": 0},

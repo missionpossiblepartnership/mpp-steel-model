@@ -4,6 +4,7 @@
 from collections import namedtuple
 
 import pandas as pd
+import pandera as pa
 import pycountry
 
 from tqdm.auto import tqdm as tqdma
@@ -17,6 +18,7 @@ from mppsteel.utility.file_handling_utility import (
 )
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
+from mppsteel.validation.data_import_tests import COUNTRY_REF_SCHEMA
 
 # Create logger
 logger = get_logger("Country Reference")
@@ -66,6 +68,7 @@ def create_country_ref_dict(df: pd.DataFrame, country_metadata_nt: namedtuple) -
     df.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     return country_ref_dict
 
+@pa.check_input(COUNTRY_REF_SCHEMA)
 def country_df_formatter(df: pd.DataFrame) -> pd.DataFrame:
     """Formats a country metadata DataFrame.
 
@@ -107,7 +110,7 @@ def country_df_formatter(df: pd.DataFrame) -> pd.DataFrame:
     return df_c
 
 
-def country_ref_getter(country_ref_dict: dict, country_code: str, ref: str = ""):
+def country_ref_getter(country_ref_dict: dict, country_code: str, ref: str = "") -> CountryMetadata:
     """A getter function to retrieve an attribute of a Country Metadata object.
 
     Args:
@@ -116,7 +119,7 @@ def country_ref_getter(country_ref_dict: dict, country_code: str, ref: str = "")
         ref (str, optional): A reference to the desired attribute. Defaults to ''.
 
     Returns:
-        [type]: A country class object with the country data loaded as attributes.
+        CountryMetadata: A country class object with the country data loaded as attributes.
     """
     if country_code in country_ref_dict.keys():
         country_class = country_ref_dict[country_code]
