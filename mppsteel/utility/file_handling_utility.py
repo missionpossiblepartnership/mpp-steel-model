@@ -4,6 +4,7 @@ import os
 import pickle
 
 from pathlib import Path
+from typing import Union
 
 import pandas as pd
 
@@ -11,7 +12,9 @@ from mppsteel.utility.log_utility import get_logger
 
 logger = get_logger("File Handling")
 
-def read_pickle_folder(data_path: str, pkl_file: str = "", mode: str = "dict", log: bool = False):
+def read_pickle_folder(
+    data_path: str, pkl_file: str = "", 
+    mode: str = "dict", log: bool = False) -> Union[pd.DataFrame, dict]:
     """Reads a path where pickle files are stores and saves them to a dictionary
 
     Args:
@@ -65,7 +68,7 @@ def extract_data(
         return pd.read_csv(full_filename)
 
 
-def serialize_file(object, pkl_folder: str, filename: str):
+def serialize_file(object, pkl_folder: str, filename: str) -> None:
     """Serializes a file using the pickle protocol.
 
     Args:
@@ -79,7 +82,7 @@ def serialize_file(object, pkl_folder: str, filename: str):
         pickle.dump(object, f, pickle.HIGHEST_PROTOCOL)
 
 
-def serialize_df_dict(data_path: str, data_dict: dict):
+def serialize_df_dict(data_path: str, data_dict: dict) -> None:
     """Iterate through each df and store the file as pickle or feather. Does not return any object.
 
     Args:
@@ -91,17 +94,16 @@ def serialize_df_dict(data_path: str, data_dict: dict):
         serialize_file(data_dict[df_name], data_path, df_name)
 
 
-def create_folders_if_nonexistant(folder_list: list):
+def create_folders_if_nonexistant(folder_list: list) -> None:
     for folder_path in folder_list:
         if os.path.isdir(folder_path):
             logger.info(f'{folder_path} already exists')
-            pass
         else:
             logger.info(f'{folder_path} does not exist yet. Creating folder.')
             Path(folder_path).mkdir(parents=True, exist_ok=True)
 
 
-def pickle_to_csv(folder_path: str, pkl_folder: str, pickle_filename: str, csv_filename: str = ''):
+def pickle_to_csv(folder_path: str, pkl_folder: str, pickle_filename: str, csv_filename: str = '') -> None:
     df = read_pickle_folder(pkl_folder, pickle_filename)
     logger.info(f'||| Saving {pickle_filename} pickle file as {csv_filename or pickle_filename}.csv')
     if csv_filename:

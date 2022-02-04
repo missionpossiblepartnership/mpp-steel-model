@@ -23,19 +23,19 @@ from mppsteel.utility.reference_lists import TECH_REFERENCE_LIST
 
 logger = get_logger("Cost of Steelmaking")
 
-def create_region_plant_ref(df, region_string):
+def create_region_plant_ref(df: pd.DataFrame, region_string: str) -> dict:
     region_dict = {}
     for region in df[region_string].unique():
         region_dict[region] = list(df[df[region_string] == region]['plant_name'].unique())
     return region_dict
 
-def extract_dict_values(main_dict: dict, key_to_extract: str, reference_dict: dict = None, ref: str = None):
+def extract_dict_values(main_dict: dict, key_to_extract: str, reference_dict: dict = None, ref: str = None) -> float:
     if (reference_dict and ref):
         ref_list = reference_dict[ref]
         return sum([main_dict[key][key_to_extract] for key in main_dict.keys() if key in ref_list])
     return sum([main_dict[key][key_to_extract] for key in main_dict.keys()])
 
-def calculate_cc(capex_df: pd.DataFrame, year: int, year_span, technology: str, discount_rate: float, cost_type: str):
+def calculate_cc(capex_df: pd.DataFrame, year: int, year_span: range, technology: str, discount_rate: float, cost_type: str) -> float:
     year_range = range(year, year + year_span)
     value_arr = np.array([])
     for eval_year in year_range:
@@ -44,7 +44,12 @@ def calculate_cc(capex_df: pd.DataFrame, year: int, year_span, technology: str, 
         value_arr = np.append(value_arr, value)
     return npf.npv(discount_rate, value_arr)
 
-def apply_cos(row, year, cap_dict, v_costs, capex_costs, steel_demand, steel_scenario, capital_charges):
+def apply_cos(
+    row, year: int, cap_dict: dict,
+    v_costs: pd.DataFrame, capex_costs: dict,
+    steel_demand: pd.DataFrame, steel_scenario: pd.DataFrame,
+    capital_charges: bool) -> float:
+
     primary_capacity = cap_dict[row.plant_name]['primary_capacity']
     secondary_capacity = cap_dict[row.plant_name]['secondary_capacity']
     variable_cost = v_costs.loc[row.country_code, year, row.technology]['cost']
@@ -69,7 +74,7 @@ def apply_cos(row, year, cap_dict, v_costs, capex_costs, steel_demand, steel_sce
 
     return result_1 - result_2
 
-def apply_lcos(row, v_costs, capex_costs, include_greenfield: bool = True):
+def apply_lcos(row, v_costs: pd.DataFrame, capex_costs: dict, include_greenfield: bool = True):
     variable_cost = v_costs.loc[row.country_code, row.year, row.technology]['cost']
     other_opex_cost = capex_costs['other_opex'].loc[row.technology, row.year]['value']
     discount_rate = DISCOUNT_RATE
@@ -87,7 +92,7 @@ def cost_of_steelmaking(
     production_stats: pd.DataFrame, variable_costs: pd.DataFrame, capex_df: pd.DataFrame,
     steel_demand: pd.DataFrame, capacities_dict: dict, steel_scenario: str = 'bau',
     region_group: str = 'region_wsa_region',
-    regional: bool = False, capital_charges: bool = False):
+    regional: bool = False, capital_charges: bool = False) -> dict:
 
     regions = production_stats[region_group].unique()
     years = production_stats['year'].unique()
@@ -96,7 +101,7 @@ def cost_of_steelmaking(
     plant_region_ref = create_region_plant_ref(production_stats, region_group)
     cos_year_list = []
 
-    def calculate_cos(df, ref=None):
+    def calculate_cos(df, ref=None) -> float:
         df_c = df.copy()
         cos_values = df_c.apply(
             apply_cos, year=year, cap_dict=capacities_dict, 
@@ -107,7 +112,6 @@ def cost_of_steelmaking(
         secondary_sum = extract_dict_values(capacities_dict, 'secondary_capacity', plant_region_ref, ref)
         return cos_sum / (primary_sum + secondary_sum)
 
-    
     for year in tqdm(years, total=len(years), desc='Cost of Steelmaking: Year Loop'):
         ps_y = production_stats.loc[year]
 
@@ -125,7 +129,7 @@ def cost_of_steelmaking(
             cos_year_list.append(cos_final)
     return dict(zip(years, cos_year_list))
 
-def dict_to_df(df, region_group, cc: bool = False):
+def dict_to_df(df: pd.DataFrame, region_group: str, cc: bool = False) -> pd.DataFrame:
     value_col = 'cost_of_steelmaking'
     if cc:
         value_col = f'{value_col}_with_cc'
@@ -136,7 +140,9 @@ def dict_to_df(df, region_group, cc: bool = False):
 
 
 def create_cost_of_steelmaking_data(
-    production_df: pd.DataFrame, variable_costs_df: pd.DataFrame, capex_ref: dict, steel_demand_df: pd.DataFrame, capacities_ref: dict, demand_scenario: str, region_group: str):
+    production_df: pd.DataFrame, variable_costs_df: pd.DataFrame, 
+    capex_ref: dict, steel_demand_df: pd.DataFrame, capacities_ref: dict, 
+    demand_scenario: str, region_group: str) -> pd.DataFrame:
 
     standard_cos = cost_of_steelmaking(
         production_df, variable_costs_df, capex_ref, steel_demand_df,
@@ -148,7 +154,7 @@ def create_cost_of_steelmaking_data(
     standard_cos_d = dict_to_df(standard_cos, region_group, False)
     return standard_cos_d.join(cc_cos_d)
 
-def create_df_reference(cols_to_create: list):
+def create_df_reference(cols_to_create: list) -> pd.DataFrame:
     steel_plant_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'steel_plants_processed', 'df')
     country_codes = steel_plant_df['country_code'].unique()
     init_cols = ['year', 'country_code', 'technology']
@@ -164,7 +170,8 @@ def create_df_reference(cols_to_create: list):
         combined_df[column] = ''
     return combined_df
 
-def create_levelised_cost_of_steelmaking(variable_costs: pd.DataFrame, capex_ref: dict, include_greenfield=True):
+def create_levelised_cost_of_steelmaking(
+    variable_costs: pd.DataFrame, capex_ref: dict, include_greenfield=True) -> pd.DataFrame:
     lev_cost_of_steel = create_df_reference(['levelised_cost_of_steelmaking'])
     tqdma.pandas(desc='Applying Lev. Steel')
     lev_cost_of_steel = lev_cost_of_steel.progress_apply(

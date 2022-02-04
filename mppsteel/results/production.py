@@ -1,5 +1,7 @@
 """Production Results generator for technology investments"""
 
+from typing import Union, Tuple
+
 import pandas as pd
 from tqdm import tqdm
 
@@ -43,7 +45,8 @@ from mppsteel.utility.log_utility import get_logger
 logger = get_logger("Production Results")
 
 def generate_production_stats(
-    tech_capacity_df: pd.DataFrame, steel_df: pd.DataFrame, steel_demand_scenario: str, year_end: int):
+    tech_capacity_df: pd.DataFrame, steel_df: pd.DataFrame,
+    steel_demand_scenario: str, year_end: int) -> pd.DataFrame:
     """[summary]
 
     Args:
@@ -69,7 +72,7 @@ def generate_production_stats(
     return pd.concat(df_list).reset_index(drop=True)
 
 
-def tech_capacity_splits():
+def tech_capacity_splits() -> Tuple[pd.DataFrame, int]:
     """[summary]
 
     Returns:
@@ -102,7 +105,7 @@ def tech_capacity_splits():
 
     return df_combined, max_year
 
-def production_stats_generator(production_df: pd.DataFrame, as_summary: bool = False):
+def production_stats_generator(production_df: pd.DataFrame, as_summary: bool = False) -> pd.DataFrame:
     """[summary]
     Args:
         production_df (pd.DataFrame): [description]
@@ -149,7 +152,7 @@ def production_stats_generator(production_df: pd.DataFrame, as_summary: bool = F
 
     return df_c
 
-def generate_production_emission_stats(production_df: pd.DataFrame, as_summary: bool = False):
+def generate_production_emission_stats(production_df: pd.DataFrame, as_summary: bool = False) -> pd.DataFrame:
     """[summary]
     Args:
         production_df (pd.DataFrame): [description]
@@ -182,15 +185,15 @@ def generate_production_emission_stats(production_df: pd.DataFrame, as_summary: 
         return df_c.groupby(['year', 'technology']).sum()
     return df_c
 
-def business_case_getter(df: pd.DataFrame, tech: str, material: str):
+def business_case_getter(df: pd.DataFrame, tech: str, material: str) -> float:
     if material in df[(df['technology'] == tech)]['material_category'].unique():
         return df[(df['technology'] == tech) & (df['material_category'] == material)]['value'].values
     return 0
 
-def get_tech_choice(tc_dict: dict, year: int, plant_name: str):
+def get_tech_choice(tc_dict: dict, year: int, plant_name: str) -> str:
     return tc_dict[str(year)][plant_name]
 
-def load_materials_mapper():
+def load_materials_mapper() -> dict:
     """[summary]
 
     Returns:
@@ -201,7 +204,7 @@ def load_materials_mapper():
     return dict(zip(materials, material_col_names))
 
 @timer_func
-def production_results_flow(scenario_dict: dict, serialize_only: bool = False):
+def production_results_flow(scenario_dict: dict, serialize_only: bool = False) -> dict:
     """[summary]
 
     Args:

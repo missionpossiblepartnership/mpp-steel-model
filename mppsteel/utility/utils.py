@@ -11,14 +11,14 @@ from mppsteel.utility.log_utility import get_logger
 
 logger = get_logger("Utils")
 
-def get_today_time():
+def get_today_time() -> str:
     return datetime.today().strftime('%y%m%d_%H%M%S')
 
-def create_list_permutations(list1: list, list2: list):
+def create_list_permutations(list1: list, list2: list) -> list:
     comb =  [list(zip(each_permutation, list2)) for each_permutation in itertools.permutations(list1, len(list2))]
     return list(itertools.chain(*comb))
 
-def stdout_query(question: str, default: str, options: str):
+def stdout_query(question: str, default: str, options: str) -> None:
     """Ask a yes/no question via raw_input() and return their answer.
 
     "question" is a string that is presented to the user.
@@ -41,7 +41,7 @@ def stdout_query(question: str, default: str, options: str):
         elif choice != "" and choice not in options:
             sys.stdout.write(f"Please respond with a choice from {options}.\n")
 
-def get_currency_rate(base: str):
+def get_currency_rate(base: str) -> str:
     logger.info(f'Getting currency exchange rate for {base}')
     c = CurrencyConverter()
     if base.lower() == 'usd':
@@ -49,11 +49,11 @@ def get_currency_rate(base: str):
     if base.lower() == 'eur':
         return c.convert(1, 'EUR', 'USD')
 
-def enumerate_iterable(iterable : list):
+def enumerate_iterable(iterable : list) -> dict:
     return dict(zip(iterable, range(len(iterable))))
 
 
-def cast_to_float(val):
+def cast_to_float(val) -> float:
     if isinstance(val, float):
         return val
     elif isinstance(val, Iterable):

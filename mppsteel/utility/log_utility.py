@@ -14,7 +14,7 @@ from mppsteel.model_config import LOG_PATH
 LOG_FORMATTER = logging.Formatter("%(asctime)s — %(name)s — %(levelname)s — %(message)s")
 
 
-def get_console_handler():
+def get_console_handler() -> logging.StreamHandler:
     """Formats the log for console output
 
     Returns:
@@ -25,7 +25,7 @@ def get_console_handler():
     return console_handler
 
 
-def get_file_handler():
+def get_file_handler() -> TimedRotatingFileHandler:
     """Formats the log for file output
 
     Returns:
@@ -43,7 +43,7 @@ def get_file_handler():
     return file_handler
 
 
-def get_logger(logger_name, create_logfile: bool = True):
+def get_logger(logger_name, create_logfile: bool = True) -> logging.Logger:
     """Creates a log object that can be outputted to file or std output.
 
     Args:

@@ -35,7 +35,7 @@ def country_mapping_fixer(
         df_c.loc[df_c[country_colname] == item[0], country_code_colname] = item[1]
     return df_c
 
-def match_country(country: str):
+def match_country(country: str) -> str:
     # try to match the country to using pycountry.
     # If not match, return an empty string
     try:
@@ -77,7 +77,7 @@ def country_matcher(country_list: list, output_type: str = "all") -> dict:
         return unmatched_dict
 
 
-def official_country_name_getter(country_code: str):
+def official_country_name_getter(country_code: str) -> str:
     match = pycountry.countries.get(alpha_3=country_code)
     match_attributes = dir(match)
     if "official_name" in match_attributes:
@@ -88,7 +88,7 @@ def official_country_name_getter(country_code: str):
 CountryMetadata = namedtuple("CountryMetadata", NEW_COUNTRY_COL_LIST)
 
 
-def get_region_from_country_code(country_code: str, schema: str, country_ref_dict: dict):
+def get_region_from_country_code(country_code: str, schema: str, country_ref_dict: dict) -> str:
     if country_code == 'TWN': 
         country_code = 'CHN' # !!! Not a political statement. Blame the lookup ref !!!!
     country_metadata_obj = country_ref_dict[country_code]

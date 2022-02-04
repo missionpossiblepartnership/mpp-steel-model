@@ -17,11 +17,12 @@ from mppsteel.utility.file_handling_utility import (
 )
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.data_loading.steel_plant_formatter import map_plant_id_to_df
+from mppsteel.results.production import get_tech_choice
 
 # Create logger
 logger = get_logger("Investment Results")
 
-def create_capex_dict():
+def create_capex_dict() -> pd.DataFrame:
     """[summary]
 
     Returns:
@@ -33,7 +34,9 @@ def create_capex_dict():
     capex_c.columns = [col.lower().replace(' ', '_') for col in capex_c.columns]
     return capex_c.set_index(['year', 'start_technology']).sort_index()
 
-def get_capex_ref(capex_df: pd.DataFrame, year: int, start_tech: str, new_tech: str, switch_type: str):
+def get_capex_ref(
+    capex_df: pd.DataFrame, year: int, start_tech: str,
+    new_tech: str, switch_type: str) -> pd.DataFrame:
     """[summary]
 
     Args:
@@ -53,7 +56,7 @@ def get_capex_ref(capex_df: pd.DataFrame, year: int, start_tech: str, new_tech: 
     capex_ref = capex_df.loc[capex_year, start_tech]
     return capex_ref.loc[capex_ref['new_technology'] == new_tech]['value'].values[0]
 
-def investment_switch_getter(inv_df: pd.DataFrame, year: int, plant_name: str):
+def investment_switch_getter(inv_df: pd.DataFrame, year: int, plant_name: str) -> pd.DataFrame:
     """[summary]
 
     Args:
@@ -67,20 +70,10 @@ def investment_switch_getter(inv_df: pd.DataFrame, year: int, plant_name: str):
     inv_df_ref = inv_df.reset_index().set_index(['year', 'plant_name']).sort_values(['year'])
     return inv_df_ref.loc[year, plant_name].values[0]
 
-def get_tech_choice(tc_dict: dict, year: int, plant_name: str):
-    """[summary]
-
-    Args:
-        tc_dict (dict): [description]
-        year (int): [description]
-        plant_name (str): [description]
-
-    Returns:
-        [type]: [description]
-    """    
-    return tc_dict[str(year)][plant_name]
-
-def investment_row_calculator(inv_df: pd.DataFrame, capex_df: pd.DataFrame, tech_choices: dict, plant_name: str, country_code: str, year: int, capacity_value: float):
+def investment_row_calculator(
+    inv_df: pd.DataFrame, capex_df: pd.DataFrame,
+    tech_choices: dict, plant_name: str, country_code: str,
+    year: int, capacity_value: float) -> dict:
     """[summary]
 
     Args:
@@ -116,13 +109,15 @@ def investment_row_calculator(inv_df: pd.DataFrame, capex_df: pd.DataFrame, tech
     }
     return new_row
 
-def production_stats_getter(df: pd.DataFrame, year: int, plant_name, value_col: str):
+def production_stats_getter(df: pd.DataFrame, year: int, plant_name, value_col: str) -> pd.DataFrame:
     df_c = df.copy()
     df_c.set_index(['year', 'plant_name'], inplace=True)
     return df_c.xs((year, plant_name))[value_col]
 
 
-def create_inv_stats(df: pd.DataFrame, results: str = 'global', agg: bool = False, operation: str = 'sum'):
+def create_inv_stats(
+    df: pd.DataFrame, results: str = 'global', 
+    agg: bool = False, operation: str = 'sum') -> dict:
 
     df_c = df[['year', 'plant_name', 'country_code', 'start_tech', 
         'end_tech','switch_type', 'capital_cost', 'region_wsa_region']].copy()
@@ -158,7 +153,7 @@ def create_inv_stats(df: pd.DataFrame, results: str = 'global', agg: bool = Fals
 
 
 @timer_func
-def investment_results(scenario_dict: dict, serialize_only: bool = False):
+def investment_results(scenario_dict: dict, serialize_only: bool = False) -> pd.DataFrame:
     """[summary]
 
     Args:

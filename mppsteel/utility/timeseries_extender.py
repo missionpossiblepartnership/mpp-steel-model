@@ -1,5 +1,7 @@
 """Function that extends a timeseries beyond its boundaries flexible assumptions."""
 
+from typing import Union, Tuple
+
 import pandas as pd
 import numpy as np
 
@@ -11,7 +13,7 @@ logger = get_logger("Timeseries Extender")
 
 def create_timeseries_extension_components(
     df: pd.DataFrame, year_colname: str, value_colname: str, new_last_year: int
-):
+) -> Tuple[pd.DataFrame, pd.DatetimeIndex, pd.DatetimeIndex, list, float]:
     """
     Generates the materials
 
@@ -186,7 +188,7 @@ def combine_timeseries(
     return pd.concat([df_c, new_df])
 
 
-def generate_timeseries_plots(df_list: list, year_colname: str, value_colname: str):
+def generate_timeseries_plots(df_list: list, year_colname: str, value_colname: str) -> None:
     """Produces a plot of each timeseries.
 
     Args:
