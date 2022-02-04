@@ -27,12 +27,12 @@ RMI_MATCHER = {
     'World': ['GBL']
 }
 
-def get_unique_countries(country_arrays):
+def get_unique_countries(country_arrays) -> list:
     b_set = set(tuple(x) for x in country_arrays)
     b_list = [list(x) for x in b_set if x]
     return list(itertools.chain(*b_list))
 
-def get_countries_from_group(country_ref: pd.DataFrame, grouping: str, group: str, exc_list: list = None):
+def get_countries_from_group(country_ref: pd.DataFrame, grouping: str, group: str, exc_list: list = None) -> list:
     df_c = country_ref[['ISO-alpha3 code', grouping]].copy()
     code_list = df_c.set_index([grouping, 'ISO-alpha3 code']).sort_index().loc[group].index.unique().to_list()
     if exc_list:
@@ -40,13 +40,13 @@ def get_countries_from_group(country_ref: pd.DataFrame, grouping: str, group: st
         return list(set(code_list).difference(exc_codes))
     return code_list
 
-def steel_demand_region_assignor(region: str, country_ref: pd.DataFrame, rmi_matcher: dict):
+def steel_demand_region_assignor(region: str, country_ref: pd.DataFrame, rmi_matcher: dict) -> list:
     if region in rmi_matcher.keys():
         return rmi_matcher[region]
     return get_countries_from_group(country_ref, 'RMI Model Region', region)
 
 @pa.check_input(REGIONAL_STEEL_DEMAND_SCHEMA)
-def steel_demand_creator(df: pd.DataFrame, rmi_matcher: dict):
+def steel_demand_creator(df: pd.DataFrame, rmi_matcher: dict) -> pd.DataFrame:
     logger.info('Formatting the Regional Steel Demand Data')
     country_ref = read_pickle_folder(PKL_DATA_IMPORTS, 'country_ref', 'df')
     df_c = df.copy()
@@ -56,7 +56,7 @@ def steel_demand_creator(df: pd.DataFrame, rmi_matcher: dict):
     return df_c
 
 @timer_func
-def get_steel_demand(serialize_only: bool = False):
+def get_steel_demand(serialize_only: bool = False) -> pd.DataFrame:
     steel_demand = read_pickle_folder(PKL_DATA_IMPORTS, 'regional_steel_demand', 'df')
     steel_demand_f = steel_demand_creator(steel_demand, RMI_MATCHER) # pickle this
     if serialize_only:
@@ -64,7 +64,8 @@ def get_steel_demand(serialize_only: bool = False):
     return steel_demand_f
 
 def steel_demand_getter(
-    df: pd.DataFrame, year: int, scenario: str, metric: str, country_code: str, default_country: str = 'GBL'):
+    df: pd.DataFrame, year: int, scenario: str, 
+    metric: str, country_code: str, default_country: str = 'GBL') -> float:
     df_c = df.copy()
     # define country list based on the data_type
     country_list = get_unique_countries(df_c['country_code'].values)

@@ -2,6 +2,7 @@
 
 # For copying float objects
 from copy import deepcopy
+from typing import Union
 
 # For Data Manipulation
 import pandas as pd
@@ -46,7 +47,7 @@ from copy import deepcopy
 
 from tqdm import tqdm
 
-def create_tech_processes_list():
+def create_tech_processes_list() -> dict:
     basic_bof_processes = ['Coke Production', 'Sintering', 'Pelletisation', 'Blast Furnace', 'Oxygen Generation', 'Basic Oxygen Steelmaking + Casting', 'Limestone', 'Self-Generation Of Electricity']
     basic_bof_processes_ccs = basic_bof_processes.copy()
     basic_bof_processes_ccs.append('CCS')
@@ -91,14 +92,14 @@ def create_tech_processes_list():
     }
 
 
-def create_hardcoded_exceptions(hard_coded_dict: dict, furnace_group_dict: dict):
+def create_hardcoded_exceptions(hard_coded_dict: dict, furnace_group_dict: dict) -> list:
     hard_coded_factor_list = []
     for furnace_group in hard_coded_dict:
         hard_coded_factor_list.extend(furnace_group_dict[furnace_group])
     return hard_coded_factor_list
 
 
-def furnace_group_from_tech(furnace_group_dict: dict):
+def furnace_group_from_tech(furnace_group_dict: dict) -> dict:
     tech_container = {}
     for group in furnace_group_dict.keys():
         tech_list = furnace_group_dict[group]
@@ -107,7 +108,7 @@ def furnace_group_from_tech(furnace_group_dict: dict):
     return tech_container
 
 @pa.check_input(STEEL_BUSINESS_CASES_SCHEMA)
-def business_case_formatter_splitter(df: pd.DataFrame):
+def business_case_formatter_splitter(df: pd.DataFrame) -> Union[pd.DataFrame, pd.DataFrame]:
     df_c = df.copy()
     df_c = df_c.melt(id_vars=['Section', 'Process', 'Process Detail', 'Step', 'Material Category', 'Unit'], var_name='Technology')
     df_c.columns = [col.lower().replace(' ', '_') for col in df_c.columns]
@@ -121,11 +122,8 @@ def business_case_formatter_splitter(df: pd.DataFrame):
 
 def tech_process_getter(
     df, technology: str, process: str, 
-    step: str = None, 
-    material: str = None, 
-    process_detail: str = None, 
-    full_ref: bool = False):
-    
+    step: str = None, material: str = None, 
+    process_detail: str = None, full_ref: bool = False) -> pd.DataFrame:
     df_c = df.copy()
     full_ref_cols = ['technology', 'step', 'material_category', 'value']
     if full_ref:
@@ -135,7 +133,6 @@ def tech_process_getter(
         return df_c[
             (df_c['technology'] == technology) & (df_c['process'] == process) & (df_c['step'] == step) & (df_c['material_category'] == material) & (df_c['process_detail'] == process_detail)
         ]['value'].values[0]
-    
     # 2 ONLY
     if material and step and not process_detail:
         return df_c[
@@ -149,7 +146,6 @@ def tech_process_getter(
         return df_c[
             (df_c['technology'] == technology) & (df_c['process'] == process) & (df_c['process_detail'] == process_detail) & (df_c['step'] == step)
         ]['value'].values[0]
-    
     # 1 ONLY
     if material and not step and not process_detail:
         return df_c[
@@ -163,21 +159,17 @@ def tech_process_getter(
         return df_c[
             (df_c['technology'] == technology) & (df_c['process'] == process) & (df_c['process_detail'] == process_detail)
         ]['value'].values[0]
-
     # NONE
     if not full_ref:
         return df_c[(df_c['technology'] == technology) & (df_c['process'] == process)]
     full_ref_df = df_c[(df_c['technology'] == technology) & (df_c['process'] == process)]
     return full_ref_df
 
-
-
-
-def tech_parameter_getter(df, technology, parameter):
+def tech_parameter_getter(df, technology, parameter) -> float:
     df_c = df.copy()
     return df_c[(df_c['technology'] == technology) & (df_c['step'] == parameter)]['value'].values[0]
 
-def replace_units(df: pd.DataFrame, units_dict: dict):
+def replace_units(df: pd.DataFrame, units_dict: dict) -> pd.DataFrame:
     df_c = df.copy()
     def value_mapper(row, enum_dict):
         if row[enum_dict['material_category']] in units_dict.keys():
@@ -190,7 +182,9 @@ def replace_units(df: pd.DataFrame, units_dict: dict):
     df_c = df_c.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     return df_c
 
-def create_mini_process_dfs(df: pd.DataFrame, technology_name: str, process_mapper: dict, factor_value_dict: dict):
+def create_mini_process_dfs(
+    df: pd.DataFrame, technology_name: str, 
+    process_mapper: dict, factor_value_dict: dict) -> dict:
     df_c = df.copy()
     df_dict = {}
     for process in process_mapper[technology_name]:
@@ -199,14 +193,12 @@ def create_mini_process_dfs(df: pd.DataFrame, technology_name: str, process_mapp
         df_dict[process] = df_f
     return df_dict
 
-def format_combined_df(df: pd.DataFrame, units_dict: dict):
+def format_combined_df(df: pd.DataFrame, units_dict: dict) -> pd.DataFrame:
     df_c = df.copy()
     df_c = replace_units(df_c, units_dict)
     return df_c
-    #df_c_grouped = df_c.groupby(by=['technology', 'material_category', 'unit']).sum()
-    #return df_c_grouped.reset_index()
     
-def sum_product_ef(df: pd.DataFrame, ef_dict: dict, materials_to_exclude: list = None):
+def sum_product_ef(df: pd.DataFrame, ef_dict: dict, materials_to_exclude: list = None) -> float:
     df_c = df.copy()
     df_c['material_emissions'] = ''
     def value_mapper(row, enum_dict):
@@ -226,7 +218,7 @@ def sum_product_ef(df: pd.DataFrame, ef_dict: dict, materials_to_exclude: list =
     df_c = df_c.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     return df_c['material_emissions'].sum()
 
-def get_all_steam_values(df: pd.DataFrame, technology: str, process_list: list, factor_dict: dict):
+def get_all_steam_values(df: pd.DataFrame, technology: str, process_list: list, factor_dict: dict) -> list:
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     steam_value_list = []
@@ -239,7 +231,7 @@ def get_all_steam_values(df: pd.DataFrame, technology: str, process_list: list, 
     return steam_value_list
 
 
-def get_all_electricity_values(df: pd.DataFrame, technology: str, process_list: list, factor_mapper: dict = [], as_dict: bool = False): 
+def get_all_electricity_values(df: pd.DataFrame, technology: str, process_list: list, factor_mapper: dict = [], as_dict: bool = False) -> Union[dict, list]: 
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     electricity_value_list = []
@@ -274,12 +266,11 @@ def get_all_electricity_values(df: pd.DataFrame, technology: str, process_list: 
 
 
 
-def create_production_factors(technology: str, furnace_group_dict: dict, hard_coded_factors: dict):
+def create_production_factors(technology: str, furnace_group_dict: dict, hard_coded_factors: dict) -> dict:
     
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     processes = bc_processes['process'].copy().unique()
-
 
     # Instantiate factors
     COKE_PRODUCTION_FACTOR = None
@@ -396,7 +387,7 @@ def create_production_factors(technology: str, furnace_group_dict: dict, hard_co
 
 
 
-def limestone_df_editor(df_dict: dict, technology: str, furnace_group_dict: dict, factor_dict: dict):
+def limestone_df_editor(df_dict: dict, technology: str, furnace_group_dict: dict, factor_dict: dict) -> dict:
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     df_dict_c = df_dict.copy()
@@ -441,7 +432,7 @@ def limestone_df_editor(df_dict: dict, technology: str, furnace_group_dict: dict
     
     return df_dict_c
 
-def fix_ccs_factors(r_dict, factor_dict: dict, technology: str, furnace_group_dict: dict, ef_dict: dict):
+def fix_ccs_factors(r_dict, factor_dict: dict, technology: str, furnace_group_dict: dict, ef_dict: dict) -> dict:
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     factor_dict_c = factor_dict.copy()
@@ -496,7 +487,7 @@ def fix_ccs_factors(r_dict, factor_dict: dict, technology: str, furnace_group_di
     return factor_dict_c
 
 
-def fix_ccs_bat_ccus_factors(r_dict, factor_dict: dict, technology: str, furnace_group_dict: dict, ef_dict: dict):
+def fix_ccs_bat_ccus_factors(r_dict, factor_dict: dict, technology: str, furnace_group_dict: dict, ef_dict: dict) -> dict:
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     factor_dict_c = factor_dict.copy()
@@ -520,7 +511,7 @@ def fix_ccs_bat_ccus_factors(r_dict, factor_dict: dict, technology: str, furnace
         
     return factor_dict_c
 
-def fix_ccu_factors(r_dict, factor_dict: dict, technology: str, furnace_group_dict: dict, ef_dict: dict):
+def fix_ccu_factors(r_dict, factor_dict: dict, technology: str, furnace_group_dict: dict, ef_dict: dict) -> dict:
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     factor_dict_c = factor_dict.copy()
@@ -547,7 +538,7 @@ def fix_ccu_factors(r_dict, factor_dict: dict, technology: str, furnace_group_di
     return factor_dict_c
 
 
-def ccs_df_editor(df_dict: dict, technology: str, furnace_group_dict: dict, factor_dict: dict, ef_dict: dict):
+def ccs_df_editor(df_dict: dict, technology: str, furnace_group_dict: dict, factor_dict: dict, ef_dict: dict) -> dict:
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     df_dict_c = df_dict.copy()
@@ -614,7 +605,7 @@ def ccs_df_editor(df_dict: dict, technology: str, furnace_group_dict: dict, fact
     return df_dict_c
 
 
-def ccu_df_editor(df_dict: dict, technology: str, furnace_group_dict: dict, factor_dict: dict, ef_dict: dict):
+def ccu_df_editor(df_dict: dict, technology: str, furnace_group_dict: dict, factor_dict: dict, ef_dict: dict) -> dict:
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     df_dict_c = df_dict.copy()
@@ -647,8 +638,8 @@ def self_gen_df_editor(
     technology: str,
     furnace_group_dict: dict,
     factor_dict: dict,
-    tech_processes_dict: dict,
-):
+    tech_processes_dict: dict) -> dict:
+
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     df_dict_c = df_dict.copy()
@@ -715,15 +706,14 @@ def self_gen_df_editor(
     return df_dict_c
 
 
-def concat_process_dfs(df_dict: pd.DataFrame, process_list: list):
+def concat_process_dfs(df_dict: pd.DataFrame, process_list: list) -> pd.DataFrame:
     df_list = []
     for process in process_list:
         df_list.append(df_dict[process])
-    concat_df = pd.concat(df_list)
-    return concat_df
+    return pd.concat(df_list)
 
 
-def fix_exceptions(df_dict: dict, technology: str, furnace_group_dict: dict, factor_dict: dict, process_dict: dict):
+def fix_exceptions(df_dict: dict, technology: str, furnace_group_dict: dict, factor_dict: dict, process_dict: dict) -> dict:
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     df_dict_c = df_dict.copy()
@@ -908,7 +898,7 @@ def fix_exceptions(df_dict: dict, technology: str, furnace_group_dict: dict, fac
     return df_dict_c
 
 
-def get_material_values(values_dict: dict, tech_processes: dict, technology: str, material: str, stage: str, factor_map: dict):
+def get_material_values(values_dict: dict, tech_processes: dict, technology: str, material: str, stage: str, factor_map: dict) -> pd.DataFrame:
     cols_ref = ['technology', 'process', 'material', 'stage', 'value', 'process_factor_value']
     container = []
     for process in tech_processes[technology]:
@@ -924,7 +914,7 @@ def get_material_values(values_dict: dict, tech_processes: dict, technology: str
             row_container.append(row_dict)
     return pd.DataFrame(data=row_container)
 
-def switch_ironore_and_pellets(df_dict: dict):
+def switch_ironore_and_pellets(df_dict: dict) -> pd.DataFrame:
     
     df_dict_c = df_dict.copy()
     if 'Shaft Furnace' in df_dict_c.keys():
@@ -938,7 +928,7 @@ def switch_ironore_and_pellets(df_dict: dict):
     return df_dict_c
 
 
-def full_model_flow(technology: str, material: str = None):
+def full_model_flow(technology: str, material: str = None) -> Union[pd.DataFrame, pd.DataFrame]:
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     s1_emissions_factors = read_pickle_folder(PKL_DATA_IMPORTS, "s1_emissions_factors")
@@ -1002,7 +992,7 @@ def full_model_flow(technology: str, material: str = None):
 
 
 
-def generate_full_consumption_table(technology_list: list):
+def generate_full_consumption_table(technology_list: list) -> pd.DataFrame:
     logger.info("- Generating the full resource consumption table")
     summary_df_list = []
     for technology in technology_list:
@@ -1013,7 +1003,7 @@ def generate_full_consumption_table(technology_list: list):
     return df.groupby(['material_category', 'technology', 'unit']).sum().reset_index()
 
 
-def concat_process_dfs(df_dict: pd.DataFrame, process_list: list):
+def concat_process_dfs(df_dict: pd.DataFrame, process_list: list) -> pd.DataFrame:
     df_list = []
     for process in process_list:
         df_list.append(df_dict[process])

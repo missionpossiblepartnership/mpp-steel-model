@@ -5,6 +5,8 @@ import pandas as pd
 import pandera as pa
 import numpy as np
 
+from typing import List, Tuple, Union
+
 from mppsteel.validation.data_import_tests import (
     FEEDSTOCK_INPUT_SCHEMA, ENERGY_PRICES_STATIC_SCHEMA,
     ETHANOL_PLASTIC_CHARCOAL_SCHEMA, SCOPE1_EF_SCHEMA,
@@ -56,8 +58,7 @@ def format_scope3_ef_2(df: pd.DataFrame, emissions_factor_slag: float) -> pd.Dat
 
 @pa.check_input(SCOPE3_EF_SCHEMA_1)
 def modify_scope3_ef_1(
-    df: pd.DataFrame, slag_values: np.array, met_coal_density: float
-) -> pd.DataFrame:
+    df: pd.DataFrame, slag_values: np.array, met_coal_density: float) -> pd.DataFrame:
     df_c = df.copy()
     scope3df_index = df_c.set_index(["Category", "Fuel", "Unit"])
     scope3df_index.loc[
@@ -198,7 +199,7 @@ def format_commodities_data(df: pd.DataFrame, material_mapper: dict) -> pd.DataF
             df_c.loc[row.Index, "implied_price"] = row.trade_value / row.netweight
     return df_c
 
-def commodity_data_getter(df: pd.DataFrame, commodity: str = ""):
+def commodity_data_getter(df: pd.DataFrame, commodity: str = "") -> Union[float, dict]:
     df_c = df.copy()
     if commodity:
         # logger.info(f'Getting the weighted average price for {commodity}')
@@ -229,7 +230,7 @@ def scope3_ef_getter(df: pd.DataFrame, fuel: str, year: str) -> float:
     return value
 
 
-def create_capex_opex_dict(serialize_only: bool = False):
+def create_capex_opex_dict(serialize_only: bool = False) -> dict:
     greenfield_capex_df = read_pickle_folder(PKL_DATA_IMPORTS, "greenfield_capex")
     brownfield_capex_df = read_pickle_folder(PKL_DATA_IMPORTS, "brownfield_capex")
     other_opex_df = read_pickle_folder(PKL_DATA_IMPORTS, "other_opex")
@@ -238,10 +239,9 @@ def create_capex_opex_dict(serialize_only: bool = False):
     )
     if serialize_only:
         serialize_file(capex_dict, PKL_DATA_INTERMEDIATE, "capex_dict")
-        return
     return capex_dict
 
-def generate_preprocessed_emissions_data(serialize_only: bool = False):
+def generate_preprocessed_emissions_data(serialize_only: bool = False) -> Tuple[pd.DataFrame, pd.DataFrame]:
     ethanol_plastic_charcoal = read_pickle_folder(
         PKL_DATA_IMPORTS, "ethanol_plastic_charcoal"
     )
@@ -260,24 +260,23 @@ def generate_preprocessed_emissions_data(serialize_only: bool = False):
     if serialize_only:
         serialize_file(commodities_df, PKL_DATA_INTERMEDIATE, "commodities_df")
         serialize_file(final_scope3_ef_df, PKL_DATA_INTERMEDIATE, "final_scope3_ef_df")
-        return
     return commodities_df, final_scope3_ef_df
 
-def format_bc(df: pd.DataFrame):
+def format_bc(df: pd.DataFrame) -> pd.DataFrame:
     df_c = df.copy()
     df_c = df_c[df_c['material_category'] != 0]
     df_c['material_category'] = df_c['material_category'].apply(lambda x: x.strip())
     return df_c
 
-def load_business_cases():
+def load_business_cases() -> pd.DataFrame:
     standardised_business_cases = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'standardised_business_cases', 'df')
     return format_bc(standardised_business_cases)
 
-def load_materials():
+def load_materials() -> list:
     return load_business_cases()['material_category'].unique()
 
 
-def extend_steel_demand(year_end: int):
+def extend_steel_demand(year_end: int) -> pd.DataFrame:
     logger.info(f'-- Extedning the Steel Demand DataFrame to {year_end}')
     scenarios = ['Circular', 'BAU']
     steel_types = ['Crude', 'Scrap']

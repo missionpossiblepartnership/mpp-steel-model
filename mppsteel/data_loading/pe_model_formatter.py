@@ -6,7 +6,7 @@ import pandera as pa
 from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE, MODEL_YEAR_END
 
 from mppsteel.utility.function_timer_utility import timer_func
-from mppsteel.utility.dataframe_utility import expand_dataset_years
+from mppsteel.utility.dataframe_utility import expand_dataset_years, expand_melt_and_sort_years
 from mppsteel.utility.location_utility import match_country, get_region_from_country_code
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder, serialize_file
@@ -139,7 +139,7 @@ def get_model_country_groups(country_ref: pd.DataFrame):
 
     return group_dict
 
-def country_match_ref(df: pd.DataFrame, country_group_dict: dict, default_country: str = None):
+def country_match_ref(df: pd.DataFrame, country_group_dict: dict, default_country: str = None) -> pd.DataFrame:
     df_c = df.copy()
     countries = df_c['Region'].unique()
     country_dict = {}
@@ -165,15 +165,8 @@ def country_match_ref(df: pd.DataFrame, country_group_dict: dict, default_countr
     df_c['country_code'] = df_c['Region'].apply(lambda x: country_dict[x])
     return df_c
 
-def expand_melt_and_sort_years(df: pd.DataFrame, year_pairs):
-    df_c = df.copy()
-    df_c = expand_dataset_years(df_c, year_pairs)
-    years = [year_col for year_col in df_c.columns if isinstance(year_col, int)]
-    df_c = df_c.melt(id_vars=set(df_c.columns).difference(set(years)), var_name='year')
-    df_c.sort_values(by=['year'], axis=0, inplace=True)
-    return df_c
 
-def format_model_data(model_name: str, data_dict: dict, sheet_dict: dict, index_dict: dict, country_ref: pd.DataFrame):
+def format_model_data(model_name: str, data_dict: dict, sheet_dict: dict, index_dict: dict, country_ref: pd.DataFrame) -> dict:
     logger.info(f'Formatting the {model_name} model')
     dict_obj = {}
     country_group_dict = get_model_country_groups(country_ref)
@@ -192,21 +185,21 @@ def format_model_data(model_name: str, data_dict: dict, sheet_dict: dict, index_
         dict_obj[sheet] = temp_df
     return dict_obj
 
-def full_model_getter_flow(model_name: str, country_ref: pd.DataFrame):
+def full_model_getter_flow(model_name: str, country_ref: pd.DataFrame) -> pd.DataFrame:
     logger.info(f'Creating the formatted model for {model_name}')
     model_pickle_file = f'{model_name}_model'
     data_dict = read_pickle_folder(PKL_DATA_IMPORTS, model_pickle_file, 'df')
     return format_model_data(model_name, data_dict, OUTPUT_SHEETS, INDEX_DICT, country_ref)
 
 @pa.check_input(BIO_CONSTRAINT_MODEL_SCHEMA)
-def format_biomass_constraint_data(df):
+def format_biomass_constraint_data(df) -> pd.DataFrame:
     logger.info(f'Formatting Biomass Price Data')
     biomass_year_pairs = [(2020, 2030), (2030, 2040), (2040, 2050)]
     biomass_constraint_formatted = expand_melt_and_sort_years(df, biomass_year_pairs)
     return biomass_constraint_formatted
 
 @timer_func
-def format_pe_data(serialize_only: bool = False):
+def format_pe_data(serialize_only: bool = False) -> dict:
     logger.info(f'Initiating fulll format flow for all models')
     country_ref = read_pickle_folder(PKL_DATA_IMPORTS, 'country_ref', 'df')
     power = full_model_getter_flow('power', country_ref)
@@ -232,7 +225,7 @@ def format_pe_data(serialize_only: bool = False):
 
     return data_dict
 
-def remapping_country_code_to_mapped_countries(df, country_code, country_ref_dict, mapper):
+def remapping_country_code_to_mapped_countries(df, country_code, country_ref_dict, mapper) -> float:
     country_code_region = get_region_from_country_code(country_code, 'rmi_region', country_ref_dict)
     mapped_region = mapper[country_code_region]
     # Managing Bio Average case: return average of all regions
@@ -246,9 +239,7 @@ def power_data_getter(
     re_dict: dict = None, re_type: str = '',
     default_country: str = 'USA', grid_scenario: str = 'Central',
     cost_scenario: str = 'Baseline', customer: str = 'Industry',
-    as_GJ:bool =True
-    
-    ):
+    as_GJ:bool =True) -> float:
     # map data_type to df_dict keys
     data_type_mapper = dict(zip(['grid', 'renewable', 'emissions'], OUTPUT_SHEETS['power']))
 
@@ -281,8 +272,7 @@ def hydrogen_data_getter(
     df_dict: dict, data_type: str, year: int, country_code: str, country_ref_dict: dict,
     default_country: str = 'USA', variable: str = 'H2 price',
     cost_scenario: str = 'Baseline', prod_scenario: str = 'On-site, dedicated VREs', 
-    as_GJ: bool = True
-    ):
+    as_GJ: bool = True) -> float:
     # map data_type to df_dict keys
     data_type_mapper = {
         'prices': 'Prices',
@@ -322,7 +312,7 @@ def hydrogen_data_getter(
 def bio_price_getter(
     df_dict: dict, year: int, country_code: str, country_ref_dict: dict,
     default_country: str = 'USA', feedstock_type: str = 'Weighted average',
-    cost_scenario: str = 'Medium'):
+    cost_scenario: str = 'Medium') -> float:
 
     # subset the dict_object
     df_c = df_dict['Feedstock_Prices'].copy()
@@ -346,7 +336,8 @@ def bio_price_getter(
     else:
         return remapping_country_code_to_mapped_countries(df_c, country_code, country_ref_dict, BIO_COUNTRY_MAPPER)
 
-def bio_constraint_getter(df: pd.DataFrame, year: int, sector: str = 'Steel', const_scenario: str = 'Prudent'):
+def bio_constraint_getter(
+    df: pd.DataFrame, year: int, sector: str = 'Steel', const_scenario: str = 'Prudent') -> float:
     # Cap year at 2050
     year = min(MODEL_YEAR_END, year)
     # Scenario options: Prudent, MaxPotential
@@ -356,9 +347,7 @@ def bio_constraint_getter(df: pd.DataFrame, year: int, sector: str = 'Steel', co
 
 def ccus_data_getter(
     df_dict: dict, data_type: str, country_code: str,
-    default_country: str = 'GBL',
-    cost_scenario: str = 'BaseCase',
-    ):
+    default_country: str = 'GBL', cost_scenario: str = 'BaseCase') -> float:
     # map data_type to df_dict keys
     data_type_mapper = {
         'transport': 'Transport',

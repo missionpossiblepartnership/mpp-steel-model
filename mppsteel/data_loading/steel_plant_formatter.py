@@ -60,7 +60,7 @@ def steel_plant_formatter(df: pd.DataFrame, remove_non_operating_plants: bool = 
     return df_c
 
 
-def extract_steel_plant_capacity(df: pd.DataFrame):
+def extract_steel_plant_capacity(df: pd.DataFrame) -> pd.DataFrame:
     logger.info("Extracting Steel Plant Capacity")
     def convert_to_float(val):
         try:
@@ -73,7 +73,7 @@ def extract_steel_plant_capacity(df: pd.DataFrame):
     df_c['primary_capacity_2020'] = 0
     capacity_cols = ['BFBOF_capacity', 'EAF_capacity', 'DRI_capacity', 'DRIEAF_capacity']
 
-    def value_mapper(row, enum_dict):
+    def value_mapper(row, enum_dict: dict):
         tech = row[enum_dict['technology_in_2020']]
         for col in capacity_cols:
             if (col == 'EAF_capacity') & (tech == 'EAF'):
@@ -94,10 +94,10 @@ def extract_steel_plant_capacity(df: pd.DataFrame):
     return df_c
 
 
-def adjust_capacity_values(df: pd.DataFrame):
+def adjust_capacity_values(df: pd.DataFrame) -> pd.DataFrame:
     df_c = df.copy()
     average_eaf_secondary_capacity = df_c[(df_c['secondary_capacity_2020'] != 0) & (df_c['technology_in_2020'] == 'EAF')]['secondary_capacity_2020'].mean()
-    def value_mapper(row, enum_dict, avg_eaf_value):
+    def value_mapper(row, enum_dict: dict, avg_eaf_value: float):
         # use average bfof values for primary if technology is BOF but primary capapcity is 0
         if (row[enum_dict['BFBOF_capacity']] != 0) & (row[enum_dict['technology_in_2020']] in ['Avg BF-BOF', 'BAT BF-BOF']):
             row[enum_dict['primary_capacity_2020']] = row[enum_dict['BFBOF_capacity']]
@@ -119,7 +119,7 @@ def adjust_capacity_values(df: pd.DataFrame):
     df_c['combined_capacity'] = df_c['primary_capacity_2020'] + df_c['secondary_capacity_2020']
     return df_c
 
-def get_countries_from_group(country_ref: pd.DataFrame, grouping: str, group: str, exc_list: list = None):
+def get_countries_from_group(country_ref: pd.DataFrame, grouping: str, group: str, exc_list: list = None) -> list:
     df_c = country_ref[['ISO-alpha3 code', grouping]].copy()
     code_list = df_c.set_index([grouping, 'ISO-alpha3 code']).sort_index().loc[group].index.unique().to_list()
     if exc_list:
@@ -127,7 +127,7 @@ def get_countries_from_group(country_ref: pd.DataFrame, grouping: str, group: st
         return list(set(code_list).difference(exc_codes))
     return code_list
 
-def map_plant_id_to_df(df: pd.DataFrame, plant_identifier: str, reverse: bool = False):
+def map_plant_id_to_df(df: pd.DataFrame, plant_identifier: str, reverse: bool = False) -> pd.DataFrame:
     steel_plants = read_pickle_folder(PKL_DATA_IMPORTS, "steel_plants")
     plant_id_dict = dict(zip(steel_plants['Plant name (English)'], steel_plants['Plant ID']))
     df_c = df.copy()
@@ -137,7 +137,7 @@ def map_plant_id_to_df(df: pd.DataFrame, plant_identifier: str, reverse: bool = 
     df_c['plant_id'] = df_c[plant_identifier].apply(lambda x: plant_id_dict[x])
     return df_c
 
-def apply_countries_to_steel_plants(steel_plant_formatted: pd.DataFrame):
+def apply_countries_to_steel_plants(steel_plant_formatted: pd.DataFrame) -> pd.DataFrame:
     logger.info("Applying Country Data to Steel Plants")
     df_c = steel_plant_formatted.copy()
     steel_plant_countries = df_c["country"].unique().tolist()
@@ -153,7 +153,6 @@ def apply_countries_to_steel_plants(steel_plant_formatted: pd.DataFrame):
     country_reference_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'country_reference_dict', 'df')
     steel_plants['region'] = steel_plants['country_code'].apply(
         lambda x: get_region_from_country_code(x, 'wsa_region', country_reference_dict))
-
     return steel_plants
 
 @timer_func

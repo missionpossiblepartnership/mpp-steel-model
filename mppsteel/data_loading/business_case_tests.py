@@ -1,7 +1,5 @@
 """Script to test the business cases"""
 
-from itertools import groupby
-
 import pandas as pd
 import numpy as np
 
@@ -45,7 +43,7 @@ logger = get_logger("Business Case Tests")
 
 return_strings = lambda x: [y for y in x if isinstance(y, str)]
 
-def create_full_process_summary(bc_process_df: pd.DataFrame):
+def create_full_process_summary(bc_process_df: pd.DataFrame) -> pd.DataFrame:
     material_list = return_strings(bc_process_df['material_category'].unique())
     main_container = []
     for technology in tqdm(TECH_REFERENCE_LIST, total=len(TECH_REFERENCE_LIST), desc='Business Case Full Summary'):
@@ -55,18 +53,18 @@ def create_full_process_summary(bc_process_df: pd.DataFrame):
                 main_container.append(keep)
     return pd.concat(main_container).reset_index(drop=True)
 
-def master_getter(df, materials_ref, tech, material, rounding = 3):
+def master_getter(df, materials_ref, tech, material, rounding = 3) -> float:
     if material in materials_ref:
         return round(df.loc[tech, material].values[0], rounding)
     return 0
 
-def process_inspector(df: pd.DataFrame, excel_bc_summary: pd.DataFrame, rounding = 3):
+def process_inspector(df: pd.DataFrame, excel_bc_summary: pd.DataFrame, rounding = 3) -> pd.DataFrame:
     df_c = df.copy()
     df_c['ref_value'] = ''
     df_c['matches_ref'] = ''
     materials_ref = excel_bc_summary.index.get_level_values(1).unique()
 
-    def value_mapper(row, enum_dict):
+    def value_mapper(row, enum_dict) -> pd.DataFrame:
         ref_value = master_getter(excel_bc_summary, materials_ref, row[enum_dict['technology']], row[enum_dict['material']], rounding)
         calculated_value = round(row[enum_dict['value']], rounding)
         if calculated_value == ref_value:
@@ -80,7 +78,7 @@ def process_inspector(df: pd.DataFrame, excel_bc_summary: pd.DataFrame, rounding
     return df_c
 
 
-def inspector_getter(df, technology, material=None, process=None):
+def inspector_getter(df, technology, material=None, process=None) -> pd.DataFrame:
     row_order = ['process_factor_value', 'value', 'ref_value', 'matches_ref']
     df_c = df.copy()
     df_c.set_index(['technology',  'material', 'stage', 'process'], inplace=True)
@@ -89,7 +87,7 @@ def inspector_getter(df, technology, material=None, process=None):
     if process:
         return df_c.xs(key=(technology, process), level=['technology', 'process'])[row_order]
 
-def get_summary_dict_from_idf(df, technology, material, function_order=None, rounding=3):
+def get_summary_dict_from_idf(df, technology, material, function_order=None, rounding=3) -> pd.DataFrame:
     if not function_order:
         function_order = ['Initial Creation', 'Limestone Editor', 'CCS', 'CCU', 'Self Gen']
     df_c = df.set_index(['technology', 'material']).xs((technology, material)).reset_index().sort_index()
@@ -98,18 +96,14 @@ def get_summary_dict_from_idf(df, technology, material, function_order=None, rou
         .round(rounding).reindex(function_order) \
         .to_dict()
 
-def all_equal(iterable):
-    g = groupby(iterable)
-    return next(g, True) and not next(g, False)
-
-def all_process_values(dfi, tech, material, rounding=3):
+def all_process_values(dfi, tech, material, rounding=3) -> dict:
     cont_dict = {}
     df = inspector_getter(dfi, tech, material).copy()['value']
     for stage in df.index.get_level_values(0).unique():
         cont_dict[stage] = df.loc[stage].round(rounding).to_dict()
     return cont_dict
 
-def inspector_df_flow(bc_master_df: pd.DataFrame):
+def inspector_df_flow(bc_master_df: pd.DataFrame) -> pd.DataFrame:
     logger.info(f'Running all model flows')
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
@@ -117,20 +111,18 @@ def inspector_df_flow(bc_master_df: pd.DataFrame):
     bc_master_c = bc_master_df.copy()
     return process_inspector(create_full_process_summary_df, bc_master_c)
 
-def check_matches(i_df: pd.DataFrame, materials_ref: list, technology: str, file_obj = None, rounding: int = 3):
+def check_matches(i_df: pd.DataFrame, materials_ref: list, technology: str, file_obj = None, rounding: int = 3) -> None:
     logger.info(f'-- Printing results for {technology}')
     process_prod_factor_mapper = create_production_factors(technology, FURNACE_GROUP_DICT, HARD_CODED_FACTORS)
     furnace_group = furnace_group_from_tech(FURNACE_GROUP_DICT)[technology]
     materials_list = materials_ref[:-4].copy()
     tech_processes = TECHNOLOGY_PROCESSES[technology].copy()
-    
-    
     hard_coded_exception_check = False
     bosc_factor_group_check = False
     eaf_factor_group_check = False
     electricity_and_steam_self_gen_group_check = False
     electricity_self_gen_group_check = False
-    
+
     if technology in create_hardcoded_exceptions(HARD_CODED_FACTORS, FURNACE_GROUP_DICT):
         hard_coded_exception_check = True
     if technology in bosc_factor_group:
@@ -141,9 +133,9 @@ def check_matches(i_df: pd.DataFrame, materials_ref: list, technology: str, file
         electricity_and_steam_self_gen_group_check = True
     if technology in electricity_self_gen_group:
         electricity_self_gen_group_check = True
-        
+
     pretty_dict_flow = lambda dict_obj: ' -> '.join([f'{step}: {value}' for step, value in dict_obj.items()])
-    
+
     if file_obj:
         def write_line_to_file(line, file_obj=file_obj):
             file_obj.write(f'\n{line}')
@@ -156,7 +148,6 @@ def check_matches(i_df: pd.DataFrame, materials_ref: list, technology: str, file
     write_line_to_file(f'eaf_factor_group_check: {eaf_factor_group_check or False}')
     write_line_to_file(f'electricity_and_steam_self_gen_group_check: {electricity_and_steam_self_gen_group_check or False}')
     write_line_to_file(f'electricity_self_gen_group_check: {electricity_self_gen_group_check or False}')
-
     write_line_to_file('')
 
         # iterate over every material
@@ -257,7 +248,7 @@ def check_matches(i_df: pd.DataFrame, materials_ref: list, technology: str, file
             write_line_to_file('-------------------')
     write_line_to_file(f'============================ END OF RESULTS ============================')
 
-def write_tech_report_to_file(df_i: pd.DataFrame, materials_ref: pd.Index, technology: str, folder_path: str):
+def write_tech_report_to_file(df_i: pd.DataFrame, materials_ref: pd.Index, technology: str, folder_path: str) -> None:
     logger.info(f'-- {technology} test')
     file_path = f'{folder_path}/{technology}.txt'
     f = open(file_path, 'w', encoding='utf-8')
@@ -265,7 +256,7 @@ def write_tech_report_to_file(df_i: pd.DataFrame, materials_ref: pd.Index, techn
     f.close()
 
 @timer_func
-def create_bc_test_df(serialize_only: bool):
+def create_bc_test_df(serialize_only: bool) -> None:
     logger.info(f'Creating business case tests')
     business_case_master = extract_data(IMPORT_DATA_PATH, "Business Cases Excel Master", "csv")
     bc_master = business_case_master.drop(labels=['Type of metric', 'Unit'],axis=1).melt(
@@ -274,7 +265,7 @@ def create_bc_test_df(serialize_only: bool):
     if serialize_only:
         serialize_file(df_inspector, PKL_DATA_INTERMEDIATE, "business_case_test_df")
 
-def test_all_technology_business_cases(folder_path: str):
+def test_all_technology_business_cases(folder_path: str) -> None:
     logger.info(f'Writing business case tests to path: {folder_path}')
     business_case_master = extract_data(IMPORT_DATA_PATH, "Business Cases Excel Master", "csv")
     bc_master = business_case_master.drop(labels=['Type of metric', 'Unit'],axis=1).melt(

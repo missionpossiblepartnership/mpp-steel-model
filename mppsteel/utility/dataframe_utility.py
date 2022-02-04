@@ -124,3 +124,11 @@ def melt_and_index(
     df_c = pd.melt(frame=df_c, id_vars=id_vars, var_name=var_name)
     df_c.set_index(index, inplace=True)
     return df_c
+
+def expand_melt_and_sort_years(df: pd.DataFrame, year_pairs) -> pd.DataFrame:
+    df_c = df.copy()
+    df_c = expand_dataset_years(df_c, year_pairs)
+    years = [year_col for year_col in df_c.columns if isinstance(year_col, int)]
+    df_c = df_c.melt(id_vars=set(df_c.columns).difference(set(years)), var_name='year')
+    df_c.sort_values(by=['year'], axis=0, inplace=True)
+    return df_c
