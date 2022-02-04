@@ -176,7 +176,7 @@ def emissivity_abatement(combined_emissivity: pd.DataFrame, scope: str) -> pd.Da
 
 
 @timer_func
-def tco_presolver_reference(scenario_dict, serialize_only: bool = False) -> pd.DataFrame:
+def tco_presolver_reference(scenario_dict, serialize: bool = False) -> pd.DataFrame:
     electricity_cost_scenario=scenario_dict['electricity_cost_scenario']
     grid_scenario=scenario_dict['grid_scenario']
     hydrogen_cost_scenario=scenario_dict['hydrogen_cost_scenario']
@@ -187,7 +187,7 @@ def tco_presolver_reference(scenario_dict, serialize_only: bool = False) -> pd.D
     steel_plant_ref = create_full_steel_plant_ref(eur_usd_rate)
     tco_reference_data = map_region_tco_to_plants(steel_plant_ref, opex_capex_reference_data)
     tco_reference_data = add_results_metadata(tco_reference_data, scenario_dict, single_line=True)
-    if serialize_only:
+    if serialize:
         logger.info(f'-- Serializing dataframe')
         serialize_file(tco_summary, PKL_DATA_INTERMEDIATE, "tco_summary_data") # This version does not incorporate green premium
         serialize_file(tco_reference_data, PKL_DATA_INTERMEDIATE, "tco_reference_data")
@@ -195,12 +195,12 @@ def tco_presolver_reference(scenario_dict, serialize_only: bool = False) -> pd.D
 
 
 @timer_func
-def abatement_presolver_reference(scenario_dict, serialize_only: bool = False) -> pd.DataFrame:
+def abatement_presolver_reference(scenario_dict, serialize: bool = False) -> pd.DataFrame:
     logger.info('Running Abatement Reference Sheet')
     calculated_emissivity_combined = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'calculated_emissivity_combined', 'df')
     emissivity_abatement_switches = emissivity_abatement(calculated_emissivity_combined, scope='combined')
     emissivity_abatement_switches = add_results_metadata(emissivity_abatement_switches, scenario_dict, single_line=True)
-    if serialize_only:
+    if serialize:
         logger.info(f'-- Serializing dataframe')
         serialize_file(emissivity_abatement_switches, PKL_DATA_INTERMEDIATE, "emissivity_abatement_switches")
     return emissivity_abatement_switches

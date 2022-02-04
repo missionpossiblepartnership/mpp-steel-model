@@ -120,11 +120,11 @@ def timeseries_generator(
     return df
 
 @timer_func
-def generate_timeseries(serialize_only: bool = False, scenario_dict: dict = None) -> dict:
+def generate_timeseries(serialize: bool = False, scenario_dict: dict = None) -> dict:
     """Generates timeseries for biomass, carbon taxes and electricity.
 
     Args:
-        serialize_only (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
+        serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
 
     Returns:
         dict: A dict containing dataframes with the following keys: 'biomass', 'carbon_tax', 'electricity'
@@ -156,7 +156,7 @@ def generate_timeseries(serialize_only: bool = False, scenario_dict: dict = None
         green_premium_scenario_values[0],
     )
 
-    if serialize_only:
+    if serialize:
         # Serialize timeseries
         serialize_file(biomass_availability, PKL_DATA_INTERMEDIATE, "biomass_availability")
         serialize_file(carbon_tax_timeseries, PKL_DATA_INTERMEDIATE, "carbon_tax_timeseries")

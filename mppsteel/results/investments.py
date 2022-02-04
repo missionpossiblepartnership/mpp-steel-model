@@ -153,11 +153,11 @@ def create_inv_stats(
 
 
 @timer_func
-def investment_results(scenario_dict: dict, serialize_only: bool = False) -> pd.DataFrame:
+def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataFrame:
     """[summary]
 
     Args:
-        serialize_only (bool, optional): [description]. Defaults to False.
+        serialize (bool, optional): [description]. Defaults to False.
 
     Returns:
         [type]: [description]
@@ -185,7 +185,7 @@ def investment_results(scenario_dict: dict, serialize_only: bool = False) -> pd.
     investment_results = add_results_metadata(investment_results, scenario_dict, single_line=True)
     cumulative_investment_results = create_inv_stats(investment_results, results='regional', agg=True, operation='cumsum')
 
-    if serialize_only:
+    if serialize:
         logger.info(f'-- Serializing dataframes')
         serialize_file(investment_results, PKL_DATA_FINAL, "investment_results")
         serialize_file(cumulative_investment_results, PKL_DATA_FINAL, "cumulative_investment_results")

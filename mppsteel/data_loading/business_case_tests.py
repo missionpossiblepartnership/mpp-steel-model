@@ -256,13 +256,13 @@ def write_tech_report_to_file(df_i: pd.DataFrame, materials_ref: pd.Index, techn
     f.close()
 
 @timer_func
-def create_bc_test_df(serialize_only: bool) -> None:
+def create_bc_test_df(serialize: bool) -> None:
     logger.info(f'Creating business case tests')
     business_case_master = extract_data(IMPORT_DATA_PATH, "Business Cases Excel Master", "csv")
     bc_master = business_case_master.drop(labels=['Type of metric', 'Unit'],axis=1).melt(
         id_vars=['Material'], var_name='Technology').set_index(['Technology', 'Material']).copy()
     df_inspector = inspector_df_flow(bc_master)
-    if serialize_only:
+    if serialize:
         serialize_file(df_inspector, PKL_DATA_INTERMEDIATE, "business_case_test_df")
 
 def test_all_technology_business_cases(folder_path: str) -> None:

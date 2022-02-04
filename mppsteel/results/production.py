@@ -204,11 +204,11 @@ def load_materials_mapper() -> dict:
     return dict(zip(materials, material_col_names))
 
 @timer_func
-def production_results_flow(scenario_dict: dict, serialize_only: bool = False) -> dict:
+def production_results_flow(scenario_dict: dict, serialize: bool = False) -> dict:
     """[summary]
 
     Args:
-        serialize_only (bool, optional): [description]. Defaults to False.
+        serialize (bool, optional): [description]. Defaults to False.
 
     Returns:
         [type]: [description]
@@ -229,7 +229,7 @@ def production_results_flow(scenario_dict: dict, serialize_only: bool = False) -
         if key in ['production_resource_usage', 'production_emissions']:
             results_dict[key] = add_results_metadata(results_dict[key], scenario_dict, single_line=True)
 
-    if serialize_only:
+    if serialize:
         logger.info(f'-- Serializing dataframes')
         serialize_file(results_dict['production_resource_usage'], PKL_DATA_FINAL, "production_resource_usage")
         serialize_file(results_dict['production_emissions'], PKL_DATA_FINAL, "production_emissions")

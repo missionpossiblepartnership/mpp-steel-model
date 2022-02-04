@@ -296,7 +296,7 @@ def emissivity_getter(df_ref: pd.DataFrame, year: int, country_code: str, techno
         return df_ref.loc[year, country_code, technology]['combined_emissivity']
 
 @timer_func
-def generate_emissions_flow(scenario_dict: dict, serialize_only: bool = False) -> pd.DataFrame:
+def generate_emissions_flow(scenario_dict: dict, serialize: bool = False) -> pd.DataFrame:
     business_cases_summary = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "standardised_business_cases", "df"
     )
@@ -326,7 +326,7 @@ def generate_emissions_flow(scenario_dict: dict, serialize_only: bool = False) -
     s2_emissivity = regional_s2_emissivity(electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario)
     combined_emissivity = combine_emissivity(s1_emissivity, s2_emissivity, s3_emissivity)
 
-    if serialize_only:
+    if serialize:
         serialize_file(s1_emissivity, PKL_DATA_INTERMEDIATE, "calculated_s1_emissivity")
         serialize_file(s3_emissivity, PKL_DATA_INTERMEDIATE, "calculated_s3_emissivity")
         serialize_file(s2_emissivity, PKL_DATA_INTERMEDIATE, "calculated_s2_emissivity")

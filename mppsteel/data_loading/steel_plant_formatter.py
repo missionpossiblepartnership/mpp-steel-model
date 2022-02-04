@@ -157,12 +157,12 @@ def apply_countries_to_steel_plants(steel_plant_formatted: pd.DataFrame) -> pd.D
 
 @timer_func
 def steel_plant_processor(
-    serialize_only: bool = False,
+    serialize: bool = False,
     remove_non_operating_plants: bool = False) -> pd.DataFrame:
     """Generates the preprocessed Steel plant DataFrame.
 
     Args:
-        serialize_only (bool, optional): Flag to only serialize the DataFrame to a pickle file and not return a DataFrame. Defaults to False.
+        serialize (bool, optional): Flag to only serialize the DataFrame to a pickle file and not return a DataFrame. Defaults to False.
 
     Returns:
         pd.DataFrame: A dataframe containing the preprocessed steel plants.
@@ -172,7 +172,7 @@ def steel_plant_processor(
     steel_plants = steel_plant_formatter(steel_plants, remove_non_operating_plants)
     steel_plants = apply_countries_to_steel_plants(steel_plants)
 
-    if serialize_only:
+    if serialize:
         serialize_file(steel_plants, PKL_DATA_INTERMEDIATE, "steel_plants_processed")
         return
 

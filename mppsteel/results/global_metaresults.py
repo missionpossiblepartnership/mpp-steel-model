@@ -92,11 +92,11 @@ def global_metaresults_calculator(
     return df
 
 @timer_func
-def metaresults_flow(scenario_dict: dict, serialize_only: bool = False):
+def metaresults_flow(scenario_dict: dict, serialize: bool = False):
     """[summary]
 
     Args:
-        serialize_only (bool, optional): [description]. Defaults to False.
+        serialize (bool, optional): [description]. Defaults to False.
 
     Returns:
         [type]: [description]
@@ -110,7 +110,7 @@ def metaresults_flow(scenario_dict: dict, serialize_only: bool = False):
         steel_demand_df, tech_capacity_df, production_resource_usage, steel_demand_scenario, max_solver_year)
     add_results_metadata(global_metaresults, scenario_dict, include_regions=False, single_line=True)
 
-    if serialize_only:
+    if serialize:
         logger.info(f'-- Serializing dataframes')
         serialize_file(global_metaresults, PKL_DATA_FINAL, "global_metaresults")
     return global_metaresults

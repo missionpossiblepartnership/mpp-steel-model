@@ -31,20 +31,28 @@ def replace_rows(df: pd.DataFrame, header_row: int) -> pd.DataFrame:
 
 
 def get_pe_model_data(model_name: str) -> pd.DataFrame:
+    """Extracts individual sheets from the Price & Emissions shared assumptions models.
+
+    Args:
+        model_name (str): The name of the excel model to be extracted.
+
+    Returns:
+        pd.DataFrame: A DataFrame of the specific sheet you have extracted.
+    """
     def get_path(model_name: str, filenames_dict: dict) -> str:
         return f'{IMPORT_DATA_PATH}/{filenames_dict[model_name]}'
     datapath = get_path(model_name, PE_MODEL_FILENAME_DICT)
     return pd.read_excel(datapath, sheet_name=PE_MODEL_SHEETNAME_DICT[model_name])
 
 @timer_func
-def load_data(serialize_only: bool = False) -> dict:
+def load_data(serialize: bool = False) -> dict:
     """Loads all the data you specify when the function is called.
 
     Args:
-        serialize_only (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
+        serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
 
     Returns:
-        dict: A dictionary with all the data
+        dict: A dictionary with all the data from your imported files.
     """
     # Import capex numbers
     greenfield_capex = extract_data(
@@ -132,7 +140,7 @@ def load_data(serialize_only: bool = False) -> dict:
         "ccus_model": ccus_model,
     }
 
-    if serialize_only:
+    if serialize:
         # Turn dataframes into pickle files
         serialize_df_dict(PKL_DATA_IMPORTS, df_dict)
         return

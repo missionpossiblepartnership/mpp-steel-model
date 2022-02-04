@@ -65,34 +65,34 @@ def add_currency_rates_to_scenarios(scenario_dict: dict) -> dict:
 
 # Model phasing
 def data_import_stage() -> None:
-    load_data(serialize_only=True)
-    get_steel_demand(serialize_only=True)
-    format_pe_data(serialize_only=True)
-    standardise_business_cases(serialize_only=True)
-    create_country_ref(serialize_only=True)
+    load_data(serialize=True)
+    get_steel_demand(serialize=True)
+    format_pe_data(serialize=True)
+    standardise_business_cases(serialize=True)
+    create_country_ref(serialize=True)
 
 def data_preprocessing_phase(scenario_dict: dict) -> None:
-    generate_timeseries(serialize_only=True, scenario_dict=scenario_dict)
-    steel_plant_processor(serialize_only=True, remove_non_operating_plants=True)
-    create_capex_opex_dict(serialize_only=True)
-    generate_preprocessed_emissions_data(serialize_only=True)
-    generate_emissions_flow(scenario_dict=scenario_dict, serialize_only=True)
-    create_capex_timeseries(serialize_only=True)
-    investment_cycle_flow(serialize_only=True)
-    generate_variable_plant_summary(scenario_dict, serialize_only=True)
+    generate_timeseries(serialize=True, scenario_dict=scenario_dict)
+    steel_plant_processor(serialize=True, remove_non_operating_plants=True)
+    create_capex_opex_dict(serialize=True)
+    generate_preprocessed_emissions_data(serialize=True)
+    generate_emissions_flow(scenario_dict=scenario_dict, serialize=True)
+    create_capex_timeseries(serialize=True)
+    investment_cycle_flow(serialize=True)
+    generate_variable_plant_summary(scenario_dict, serialize=True)
 
 def model_presolver(scenario_dict: dict) -> None:
-    tco_presolver_reference(scenario_dict, serialize_only=True)
-    abatement_presolver_reference(scenario_dict, serialize_only=True)
+    tco_presolver_reference(scenario_dict, serialize=True)
+    abatement_presolver_reference(scenario_dict, serialize=True)
 
 def model_calculation_phase(scenario_dict: dict) -> None:
-    solver_flow(scenario_dict, year_end=MODEL_YEAR_END, serialize_only=True)
+    solver_flow(scenario_dict, year_end=MODEL_YEAR_END, serialize=True)
 
 def model_results_phase(scenario_dict: dict) -> None:
-    production_results_flow(scenario_dict, serialize_only=True)
-    generate_cost_of_steelmaking_results(scenario_dict, serialize_only=True)
-    metaresults_flow(scenario_dict, serialize_only=True)
-    investment_results(scenario_dict, serialize_only=True)
+    production_results_flow(scenario_dict, serialize=True)
+    generate_cost_of_steelmaking_results(scenario_dict, serialize=True)
+    metaresults_flow(scenario_dict, serialize=True)
+    investment_results(scenario_dict, serialize=True)
 
 def model_outputs_phase(new_folder: bool = False, timestamp: str = '') -> None:
     save_path = OUTPUT_FOLDER
@@ -175,23 +175,23 @@ def business_case_tests(
         create_folder_if_nonexist(folder_filepath)
         save_path = folder_filepath
     if create_test_df:
-        create_bc_test_df(serialize_only=True)
+        create_bc_test_df(serialize=True)
     test_all_technology_business_cases(save_path)
 
 def generate_minimodels(scenario_dict: dict) -> None:
-    generate_timeseries(serialize_only=True, scenario_dict=scenario_dict)
+    generate_timeseries(serialize=True, scenario_dict=scenario_dict)
 
 def tco_switch_reference(scenario_dict: dict) -> None:
-    tco_presolver_reference(scenario_dict, serialize_only=True)
+    tco_presolver_reference(scenario_dict, serialize=True)
 
 def abatement_switch_reference(scenario_dict: dict) -> None:
-    abatement_presolver_reference(scenario_dict, serialize_only=True)
+    abatement_presolver_reference(scenario_dict, serialize=True)
 
 def production_flow(scenario_dict: dict) -> None:
-    production_results_flow(scenario_dict, serialize_only=True)
+    production_results_flow(scenario_dict, serialize=True)
 
 def investment_flow(scenario_dict: dict) -> None:
-    investment_results(scenario_dict, serialize_only=True)
+    investment_results(scenario_dict, serialize=True)
 
 def get_emissivity() -> None:
     generate_emissions_flow(False)

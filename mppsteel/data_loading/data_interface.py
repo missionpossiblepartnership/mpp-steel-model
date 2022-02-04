@@ -230,18 +230,18 @@ def scope3_ef_getter(df: pd.DataFrame, fuel: str, year: str) -> float:
     return value
 
 
-def create_capex_opex_dict(serialize_only: bool = False) -> dict:
+def create_capex_opex_dict(serialize: bool = False) -> dict:
     greenfield_capex_df = read_pickle_folder(PKL_DATA_IMPORTS, "greenfield_capex")
     brownfield_capex_df = read_pickle_folder(PKL_DATA_IMPORTS, "brownfield_capex")
     other_opex_df = read_pickle_folder(PKL_DATA_IMPORTS, "other_opex")
     capex_dict = capex_dictionary_generator(
         greenfield_capex_df, brownfield_capex_df, other_opex_df
     )
-    if serialize_only:
+    if serialize:
         serialize_file(capex_dict, PKL_DATA_INTERMEDIATE, "capex_dict")
     return capex_dict
 
-def generate_preprocessed_emissions_data(serialize_only: bool = False) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def generate_preprocessed_emissions_data(serialize: bool = False) -> Tuple[pd.DataFrame, pd.DataFrame]:
     ethanol_plastic_charcoal = read_pickle_folder(
         PKL_DATA_IMPORTS, "ethanol_plastic_charcoal"
     )
@@ -257,7 +257,7 @@ def generate_preprocessed_emissions_data(serialize_only: bool = False) -> Tuple[
     final_scope3_ef_df = modify_scope3_ef_1(
         s3_emissions_factors_1, slag_new_values, ENERGY_DENSITY_MET_COAL
     )
-    if serialize_only:
+    if serialize:
         serialize_file(commodities_df, PKL_DATA_INTERMEDIATE, "commodities_df")
         serialize_file(final_scope3_ef_df, PKL_DATA_INTERMEDIATE, "final_scope3_ef_df")
     return commodities_df, final_scope3_ef_df

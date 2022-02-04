@@ -80,11 +80,11 @@ if __name__ == "__main__":
         model_results_phase(scenario_dict=scenario_args)
 
     if args.business_cases:
-        standardise_business_cases(serialize_only=True)
+        standardise_business_cases(serialize=True)
         #business_case_tests(new_folder=True, timestamp=timestamp, create_test_df=True)
 
     if args.variable_costs:
-        generate_variable_plant_summary(scenario_dict=scenario_args, serialize_only=True)
+        generate_variable_plant_summary(scenario_dict=scenario_args, serialize=True)
 
     if args.results_and_output:
         results_and_output(scenario_dict=scenario_args, dated_output_folder=True, timestamp=timestamp)

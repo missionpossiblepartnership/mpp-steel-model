@@ -331,11 +331,11 @@ def get_capex_values(
     )
 
 @timer_func
-def create_capex_timeseries(serialize_only: bool = False) -> pd.DataFrame:
+def create_capex_timeseries(serialize: bool = False) -> pd.DataFrame:
     """Runs through the flow to create a capex dictionary.
 
     Args:
-        serialize_only (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
+        serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
 
     Returns:
         pd.DataFrame: A DataFrame with all of the potential switches.
@@ -349,6 +349,6 @@ def create_capex_timeseries(serialize_only: bool = False) -> pd.DataFrame:
         capex_dict_ref=capex_dict,
         year_end=max_model_year,
     )
-    if serialize_only:
+    if serialize:
         serialize_file(switching_df_with_capex, PKL_DATA_INTERMEDIATE, "capex_switching_df")
     return switching_df_with_capex

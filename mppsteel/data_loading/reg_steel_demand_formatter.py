@@ -56,10 +56,10 @@ def steel_demand_creator(df: pd.DataFrame, rmi_matcher: dict) -> pd.DataFrame:
     return df_c
 
 @timer_func
-def get_steel_demand(serialize_only: bool = False) -> pd.DataFrame:
+def get_steel_demand(serialize: bool = False) -> pd.DataFrame:
     steel_demand = read_pickle_folder(PKL_DATA_IMPORTS, 'regional_steel_demand', 'df')
     steel_demand_f = steel_demand_creator(steel_demand, RMI_MATCHER) # pickle this
-    if serialize_only:
+    if serialize:
         serialize_file(steel_demand_f, PKL_DATA_INTERMEDIATE, "regional_steel_demand_formatted")
     return steel_demand_f
 

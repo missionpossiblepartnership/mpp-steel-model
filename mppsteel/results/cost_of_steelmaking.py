@@ -179,7 +179,7 @@ def create_levelised_cost_of_steelmaking(
     return lev_cost_of_steel
 
 @timer_func
-def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize_only: bool = False):
+def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize: bool = False):
     capacities_dict = create_plant_capacities_dict()
     variable_costs_regional = read_pickle_folder(PKL_DATA_INTERMEDIATE, "variable_costs_regional", "df")
     capex_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "capex_dict", "df")
@@ -194,7 +194,7 @@ def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize_only: bo
     lcos_data = create_levelised_cost_of_steelmaking(
         variable_costs_regional, capex_dict, include_greenfield=True)
 
-    if serialize_only:
+    if serialize:
         logger.info(f'-- Serializing dataframes')
         serialize_file(cos_data, PKL_DATA_FINAL, "cost_of_steelmaking")
         serialize_file(lcos_data, PKL_DATA_FINAL, "levelised_cost_of_steelmaking")

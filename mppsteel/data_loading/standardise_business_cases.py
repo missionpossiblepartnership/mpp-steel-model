@@ -1012,16 +1012,16 @@ def concat_process_dfs(df_dict: pd.DataFrame, process_list: list) -> pd.DataFram
 
 
 @timer_func
-def standardise_business_cases(serialize_only: bool = False) -> pd.DataFrame:
+def standardise_business_cases(serialize: bool = False) -> pd.DataFrame:
     """Standardises the business cases for each technology into per t steel.
 
     Args:
-        serialize_only (bool, optional): Flag to only serialize the DataFrame to a pickle file and not return a DataFrame. Defaults to False.
+        serialize (bool, optional): Flag to only serialize the DataFrame to a pickle file and not return a DataFrame. Defaults to False.
 
     Returns:
         pd.DataFrame: A tabular dataframe containing the standardised business cases
     """
     full_summary_df = generate_full_consumption_table(TECH_REFERENCE_LIST)
-    if serialize_only:
+    if serialize:
         serialize_file(full_summary_df, PKL_DATA_INTERMEDIATE, "standardised_business_cases")
     return full_summary_df

@@ -128,11 +128,11 @@ def country_ref_getter(country_ref_dict: dict, country_code: str, ref: str = "")
     return country_class
 
 @timer_func
-def create_country_ref(serialize_only: bool = False) -> dict:
+def create_country_ref(serialize: bool = False) -> dict:
     """Preprocesses the country data.
 
     Args:
-        serialize_only (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
+        serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
 
     Returns:
         dict: A dictionary of each country code to metadata.
@@ -142,7 +142,7 @@ def create_country_ref(serialize_only: bool = False) -> dict:
     country_ref = country_df_formatter(country_ref)
     cr_dict = create_country_ref_dict(country_ref, CountryMetadata)
 
-    if serialize_only:
+    if serialize:
         serialize_file(cr_dict, PKL_DATA_INTERMEDIATE, "country_reference_dict")
         return
     return cr_dict

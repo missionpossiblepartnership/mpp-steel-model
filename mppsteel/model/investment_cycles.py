@@ -99,11 +99,11 @@ def create_investment_cycle(steel_plant_df: pd.DataFrame) -> pd.DataFrame:
     return create_investment_cycle_reference(steel_plant_df['plant_name'].values, investment_years_inc_off_cycle, MODEL_YEAR_END)
 
 @timer_func
-def investment_cycle_flow(serialize_only: bool = False) -> pd.DataFrame:
+def investment_cycle_flow(serialize: bool = False) -> pd.DataFrame:
     """[summary]
 
     Args:
-        serialize_only (bool, optional): [description]. Defaults to False.
+        serialize (bool, optional): [description]. Defaults to False.
 
     Returns:
         [type]: [description]
@@ -111,7 +111,7 @@ def investment_cycle_flow(serialize_only: bool = False) -> pd.DataFrame:
     steel_plants_aug = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'steel_plants_processed', 'df')
     plant_investment_cycles = create_investment_cycle(steel_plants_aug)
 
-    if serialize_only:
+    if serialize:
         logger.info(f'-- Serializing Investment Cycle Reference')
         serialize_file(plant_investment_cycles, PKL_DATA_INTERMEDIATE, "plant_investment_cycles")
         return

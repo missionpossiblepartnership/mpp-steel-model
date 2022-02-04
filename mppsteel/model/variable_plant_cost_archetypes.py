@@ -241,11 +241,11 @@ def format_variable_costs(variable_cost_df: pd.DataFrame, group_data: bool = Tru
     return df_c
 
 @timer_func
-def generate_variable_plant_summary(scenario_dict: dict, serialize_only: bool = False) -> pd.DataFrame:
+def generate_variable_plant_summary(scenario_dict: dict, serialize: bool = False) -> pd.DataFrame:
     """[summary]
 
     Args:
-        serialize_only (bool, optional): [description]. Defaults to False.
+        serialize (bool, optional): [description]. Defaults to False.
 
     Returns:
         [type]: [description]
@@ -261,7 +261,7 @@ def generate_variable_plant_summary(scenario_dict: dict, serialize_only: bool = 
     variable_costs_summary = format_variable_costs(variable_costs)
     variable_costs_summary_material_breakdown = format_variable_costs(variable_costs, group_data=False)
 
-    if serialize_only:
+    if serialize:
         logger.info(f'-- Serializing dataframes')
         serialize_file(variable_costs_summary, PKL_DATA_INTERMEDIATE, "variable_costs_regional")
         serialize_file(variable_costs_summary_material_breakdown, PKL_DATA_INTERMEDIATE, "variable_costs_regional_material_breakdown")

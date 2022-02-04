@@ -199,7 +199,7 @@ def format_biomass_constraint_data(df) -> pd.DataFrame:
     return biomass_constraint_formatted
 
 @timer_func
-def format_pe_data(serialize_only: bool = False) -> dict:
+def format_pe_data(serialize: bool = False) -> dict:
     logger.info(f'Initiating fulll format flow for all models')
     country_ref = read_pickle_folder(PKL_DATA_IMPORTS, 'country_ref', 'df')
     power = full_model_getter_flow('power', country_ref)
@@ -216,7 +216,7 @@ def format_pe_data(serialize_only: bool = False) -> dict:
         'bio_constraint': bio_constraint,
         'ccus': ccus
     }
-    if serialize_only:
+    if serialize:
         serialize_file(power, PKL_DATA_INTERMEDIATE, "power_model_formatted")
         serialize_file(hydrogen, PKL_DATA_INTERMEDIATE, "hydrogen_model_formatted")
         serialize_file(bio_price, PKL_DATA_INTERMEDIATE, "bio_price_model_formatted")

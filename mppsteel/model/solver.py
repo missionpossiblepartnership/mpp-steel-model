@@ -294,12 +294,12 @@ def extract_tech_plant_switchers(
 
 
 @timer_func
-def solver_flow(scenario_dict: dict, year_end: int, serialize_only: bool = False) -> dict:
+def solver_flow(scenario_dict: dict, year_end: int, serialize: bool = False) -> dict:
     """[summary]
 
     Args:
         year_end (int): [description]
-        serialize_only (bool, optional): [description]. Defaults to False.
+        serialize (bool, optional): [description]. Defaults to False.
 
     Returns:
         [type]: [description]
@@ -315,7 +315,7 @@ def solver_flow(scenario_dict: dict, year_end: int, serialize_only: bool = False
         tech_switch_scenario=TECH_SWITCH_SCENARIOS[scenario_dict['tech_switch_scenario']],
         )
 
-    if serialize_only:
+    if serialize:
         logger.info(f'-- Serializing dataframes')
         serialize_file(tech_choice_dict, PKL_DATA_INTERMEDIATE, "tech_choice_dict")
     return tech_choice_dict
