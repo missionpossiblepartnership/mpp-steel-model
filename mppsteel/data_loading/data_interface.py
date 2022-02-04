@@ -5,7 +5,7 @@ import pandas as pd
 import pandera as pa
 import numpy as np
 
-from typing import List, Tuple, Union
+from typing import Tuple, Union
 
 from mppsteel.validation.data_import_tests import (
     FEEDSTOCK_INPUT_SCHEMA, ENERGY_PRICES_STATIC_SCHEMA,
