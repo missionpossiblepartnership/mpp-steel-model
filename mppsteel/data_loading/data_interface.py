@@ -1,4 +1,4 @@
-"""Functions to access data sources"""
+"""Functions to format and access data imports"""
 
 # For Data Manipulation
 import pandas as pd
@@ -48,6 +48,15 @@ COMMODITY_MATERIAL_MAPPER = {
 
 @pa.check_input(SCOPE3_EF_SCHEMA_2)
 def format_scope3_ef_2(df: pd.DataFrame, emissions_factor_slag: float) -> pd.DataFrame:
+    """Format scope 3 emissions sheets
+
+    Args:
+        df (pd.DataFrame): A data frame containing the timeseries for Slag emissions.
+        emissions_factor_slag (float): An emissions factor value for slag.
+
+    Returns:
+        pd.DataFrame: A formatted dataframe with the scope 3 emissions factors.
+    """
     df_c = df.copy()
     df_c = df_c.drop(["Unnamed: 1"], axis=1).loc[0:0]
     df_c = df_c.melt(id_vars=["Year"])
@@ -59,6 +68,16 @@ def format_scope3_ef_2(df: pd.DataFrame, emissions_factor_slag: float) -> pd.Dat
 @pa.check_input(SCOPE3_EF_SCHEMA_1)
 def modify_scope3_ef_1(
     df: pd.DataFrame, slag_values: np.array, met_coal_density: float) -> pd.DataFrame:
+    """Formatting steps for the Scope 3 Emissions Factors.
+
+    Args:
+        df (pd.DataFrame): A DataFrame of Scope 3 Emission Energy Factors
+        slag_values (np.array): An array of values for slag
+        met_coal_density (float): A singular value representing the density of met coal.
+
+    Returns:
+        pd.DataFrame: A DataFrame of the reformatted data.
+    """
     df_c = df.copy()
     scope3df_index = df_c.set_index(["Category", "Fuel", "Unit"])
     scope3df_index.loc[
@@ -77,7 +96,7 @@ def modify_scope3_ef_1(
 
 def capex_generator(
     capex_dict: dict, technology: str, year: int, output_type: str = "all"
-):
+) -> Union[dict, pd.DataFrame]:
     """Creates an interface to the tabular capex data.
 
     Args:
@@ -87,8 +106,7 @@ def capex_generator(
         output_type (str, optional): Flag whether to access all the the capex values or whichever you specify. Defaults to 'all'.
 
     Returns:
-        A (dict) if output_type is set to 'all'.
-        Otherwise returns the specific output_type specified (as float).
+        Union[dict, pd.DataFrame]: A (dict) if output_type is set to 'all'. Otherwise returns the specific output_type specified (as float).
     """
 
     greenfield = capex_dict["greenfield"].loc[technology, year].value
@@ -111,20 +129,16 @@ def capex_generator(
 def capex_dictionary_generator(
     greenfield_df: pd.DataFrame, brownfield_df: pd.DataFrame, other_df: pd.DataFrame
 ) -> dict:
-    """[summary]
+    """A dictionary of greenfield, brownfield and other_opex.
 
     Args:
-        greenfield_df (pd.DataFrame): A dataframe of greenfield capex
-        brownfield_df (pd.DataFrame): A dataframe of brownfield capex
-        other_df (pd.DataFrame): A dataframe of other opex
+        greenfield_df (pd.DataFrame): A dataframe of greenfield capex.
+        brownfield_df (pd.DataFrame): A dataframe of brownfield capex.
+        other_df (pd.DataFrame): A dataframe of other opex.
 
     Returns:
-        dict: A dictionary of the formatted capex and opex dataframes
+        dict: A dictionary of the formatted capex and opex dataframes.
     """
-
-    brownfield_df.drop(
-        ["Available from", "Available until", "Technology type"], axis=1, inplace=True
-    )
     return {
         "greenfield": melt_and_index(
             greenfield_df, ["Technology"], "Year", ["Technology", "Year"]
@@ -137,45 +151,81 @@ def capex_dictionary_generator(
         ),
     }
 
-def carbon_tax_getter(df: pd.DataFrame, year: str) -> float:
+def carbon_tax_getter(df: pd.DataFrame, year: int) -> float:
+    """Function to get a carbon tax value at a particular year.
+
+    Args:
+        df (pd.DataFrame): A DataFrame containing the carbon tax timeseries
+        year (int): The year that you want to query.
+
+    Returns:
+        float: The value of the carbon tax at a particular year
+    """
     df_c = df.copy()
     df_c.columns = [col.lower() for col in df_c.columns]
     df_c.set_index(["year"], inplace=True)
-    # logger.info(f'Getting Carbon Tax value for: {year}')
-    value = df_c.loc[year]["value"]
-    return value
+    return df_c.loc[year]["value"]
 
 def scope1_emissions_getter(df: pd.DataFrame, metric: str) -> float:
+    """Function to get the Scope 1 Emissions value at a particular year.
+
+    Args:
+        df (pd.DataFrame): The DataFrame containing the Scope 1 Emissions metrics and values.
+        metric (str): The metric you are querying.
+
+    Returns:
+        float: The value of the Scope 1 Emission Metric at a particular year.
+    """
     df_c = df.copy()
-    metric_names = df_c["Metric"].to_list()
-    # logger.info(f'Creating scope 1 emissions getter with the following metrics: {metric_names}')
     df_c.set_index(["Metric"], inplace=True)
-    # logger.info(f'Getting Scope 1 emissions value for: {metric}')
     value = df_c.loc[metric]["Value"]
     return value
 
-def ccs_co2_getter(df: pd.DataFrame, metric: str, year: str) -> float:
+def ccs_co2_getter(df: pd.DataFrame, metric: str, year: int) -> float:
+    """Function to get the CCS CO2 value at a particular year.
+
+    Args:
+        df (pd.DataFrame): The DataFrame containing the CCS & CO2 figures.
+        metric (str): The metric you are querying (CCS or CO2).
+        year (int): The year that you want to query.
+
+    Returns:
+        float: The value of the metric at a particular year.
+    """
     year = min(MODEL_YEAR_END, year)
     df_c = df.copy()
-    metric_names = df_c["Metric"].unique()
     df_c.set_index(["Metric", "Year"], inplace=True)
-    # logger.info(f'Getting {metric} value for: {year}')
-    value = df_c.loc[metric, year]["Value"]
-    return value
+    return df_c.loc[metric, year]["Value"]
 
 
 def static_energy_prices_getter(df: pd.DataFrame, metric: str, year: str) -> float:
+    """Function to get the static energy price at a particular year.
+
+    Args:
+        df (pd.DataFrame): A DataFrame containing the static energy metrics and prices.
+        metric (str): The metric you are querying.
+        year (str): The year that you want to query.
+
+    Returns:
+        float: The value of the metric at a particular year.
+    """
+    year = min(MODEL_YEAR_END, year)
     df_c = df.copy()
-    metric_names = df_c["Metric"].unique()
-    # logger.info(f'Creating Static Energy getter with the following metrics: {metric_names}')
     df_c.set_index(["Metric", "Year"], inplace=True)
-    # logger.info(f'Getting {metric} value for: {year}')
-    value = df_c.loc[metric, year]["Value"]
-    return value
+    return df_c.loc[metric, year]["Value"]
 
 
 @pa.check_input(ETHANOL_PLASTIC_CHARCOAL_SCHEMA)
 def format_commodities_data(df: pd.DataFrame, material_mapper: dict) -> pd.DataFrame:
+    """Formats the Commodities dataset.
+
+    Args:
+        df (pd.DataFrame): A DataFrame containing the commodities data.
+        material_mapper (dict): A dictionary mapping the material to the commoodity code to the commodity.
+
+    Returns:
+        pd.DataFrame:
+    """
     df_c = df.copy()
     logger.info(f"Formatting the ethanol_plastics_charcoal data")
     columns_of_interest = [

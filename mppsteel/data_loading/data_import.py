@@ -24,9 +24,12 @@ def replace_rows(df: pd.DataFrame, header_row: int) -> pd.DataFrame:
         DataFrame: A reformatted DataFrame
     """
     df_c = df.copy()
-    new_header = df_c.iloc[header_row]  # grab the first row for the header
-    df_c = df[header_row + 1 :]  # take the data less the header row
-    df_c.columns = new_header  # set the header row as the df header
+    # grab the first row for the header
+    new_header = df_c.iloc[header_row]
+    # take the data less the header row
+    df_c = df[header_row + 1 :]
+    # set the header row as the df header
+    df_c.columns = new_header
     return df_c
 
 
@@ -52,7 +55,7 @@ def load_data(serialize: bool = False) -> dict:
         serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
 
     Returns:
-        dict: A dictionary with all the data from your imported files.
+        dict: A dictionary with all the data from the imported files.
     """
     # Import capex numbers
     greenfield_capex = extract_data(
