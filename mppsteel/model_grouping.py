@@ -165,6 +165,7 @@ def graphs_only(timestamp: str, dated_output_folder: bool) -> None:
 
 def full_flow(scenario_dict: dict, dated_output_folder: bool, timestamp: str) -> None:
     data_import_and_preprocessing_refresh(scenario_dict)
+    model_presolver(scenario_dict)
     half_model_run(scenario_dict, dated_output_folder, timestamp)
 
 def business_case_tests(
