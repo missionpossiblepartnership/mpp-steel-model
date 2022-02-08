@@ -10,10 +10,8 @@ from mppsteel.utility.function_timer_utility import timer_func
 # Get model parameters
 from mppsteel.model_config import (
     PKL_DATA_INTERMEDIATE,
-    BIOMASS_AV_TS_END_VALUE,
     MODEL_YEAR_END,
-    MODEL_YEAR_START,
-    ELECTRICITY_PRICE_MID_YEAR
+    MODEL_YEAR_START
 )
 
 from mppsteel.model_scenarios import CARBON_TAX_SCENARIOS, GREEN_PREMIUM_SCENARIOS
@@ -57,29 +55,6 @@ def timeseries_generator(
     df["units"] = units
     df["units"] = df["units"].apply(lambda x: x.lower())
 
-    def biomass_logic(df: pd.DataFrame) -> pd.DataFrame:
-        """Applies logic to generate biomass timeseries
-
-        Args:
-            df (pd.DataFrame): A dataframe with empty values column.
-
-        Returns:
-            pd.DataFrame: A dataframe with the value logic applied.
-        """
-        df_c = df.copy()
-        for row in df_c.itertuples():
-            if row.Index < 2:  # skip first 2 years
-                df_c.loc[row.Index, "value"] = 0
-            elif (
-                row.Index < len(year_range) - 1
-            ):  # logic for remaining years except last year
-                df_c.loc[row.Index, "value"] = end_value / (
-                    1 + (np.exp(-0.45 * (row.year - ELECTRICITY_PRICE_MID_YEAR)))
-                )
-            else:
-                df_c.loc[row.Index, "value"] = end_value  # logic for last year
-        return df_c
-
     def levy_logic(df: pd.DataFrame) -> pd.DataFrame:
         """Applies logic to generate carbon tax timeseries
 
@@ -104,9 +79,6 @@ def timeseries_generator(
 
     # Setting values: BUSINESS LOGIC
     logger.info(f"Running {timeseries_type} timeseries generator")
-    if timeseries_type == "biomass":
-        df = biomass_logic(df)
-        df["units"] = "PJ / y"
     if timeseries_type == "carbon_tax":
         df = levy_logic(df)
         df["units"] = "EUR / t CO2 eq"
@@ -132,14 +104,6 @@ def generate_timeseries(serialize: bool = False, scenario_dict: dict = None) -> 
 
     carbon_tax_scenario_values = CARBON_TAX_SCENARIOS[scenario_dict['carbon_tax_scenario']]
     green_premium_scenario_values = GREEN_PREMIUM_SCENARIOS[scenario_dict['green_premium_scenario']]
-    # Create Biomass timeseries
-    biomass_availability = timeseries_generator(
-        "biomass",
-        MODEL_YEAR_START,
-        MODEL_YEAR_END,
-        BIOMASS_AV_TS_END_VALUE,
-    )
-
     # Create Carbon Tax timeseries
     carbon_tax_timeseries = timeseries_generator(
         "carbon_tax",
@@ -158,12 +122,10 @@ def generate_timeseries(serialize: bool = False, scenario_dict: dict = None) -> 
 
     if serialize:
         # Serialize timeseries
-        serialize_file(biomass_availability, PKL_DATA_INTERMEDIATE, "biomass_availability")
         serialize_file(carbon_tax_timeseries, PKL_DATA_INTERMEDIATE, "carbon_tax_timeseries")
         serialize_file(green_premium_timeseries, PKL_DATA_INTERMEDIATE, "green_premium_timeseries")
 
     return {
-        "biomass": biomass_availability,
         "carbon_tax_timeseries": carbon_tax_timeseries,
         "green_premium_timeseries": green_premium_timeseries
     }
