@@ -13,39 +13,55 @@ from mppsteel.utility.file_handling_utility import read_pickle_folder
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.graphs.plotly_graphs import line_chart, bar_chart
 
-def investment_line_chart(group: str = 'global', operation: str = 'cumsum', save_filepath:str=None, ext:str='png') -> px.line:
+
+def investment_line_chart(
+    group: str = "global",
+    operation: str = "cumsum",
+    save_filepath: str = None,
+    ext: str = "png",
+) -> px.line:
     investment_results = read_pickle_folder(PKL_DATA_FINAL, "investment_results", "df")
-    data = create_inv_stats(investment_results, results=group, operation=operation, agg=False)
+    data = create_inv_stats(
+        investment_results, results=group, operation=operation, agg=False
+    )
 
     fig_ = line_chart(
         data=data,
-        x='year',
-        y='capital_cost',
+        x="year",
+        y="capital_cost",
         color=None,
-        name='Investment Over Time',
-        x_axis='Year',
-        y_axis='Capital Cost',
+        name="Investment Over Time",
+        x_axis="Year",
+        y_axis="Capital Cost",
     )
 
     if save_filepath:
-        fig_.write_image(f'{save_filepath}.{ext}')
+        fig_.write_image(f"{save_filepath}.{ext}")
 
-def investment_per_tech(save_filepath:str=None, ext:str='png') -> px.bar:
+
+def investment_per_tech(save_filepath: str = None, ext: str = "png") -> px.bar:
     investment_results = read_pickle_folder(PKL_DATA_FINAL, "investment_results", "df")
-    tech_investment = investment_results.groupby(['end_tech', 'region_wsa_region']).agg({'capital_cost': 'sum'}).reset_index().copy()
-    tech_inv_color_map = dict(zip_longest(tech_investment['end_tech'].unique(), MPP_COLOR_LIST))
+    tech_investment = (
+        investment_results.groupby(["end_tech", "region_wsa_region"])
+        .agg({"capital_cost": "sum"})
+        .reset_index()
+        .copy()
+    )
+    tech_inv_color_map = dict(
+        zip_longest(tech_investment["end_tech"].unique(), MPP_COLOR_LIST)
+    )
 
     fig_ = bar_chart(
         data=tech_investment,
-        x='end_tech',
-        y='capital_cost',
-        color='region_wsa_region',
+        x="end_tech",
+        y="capital_cost",
+        color="region_wsa_region",
         color_discrete_map=tech_inv_color_map,
         array_order=TECH_REFERENCE_LIST,
-        xaxis_title='End Technology',
-        yaxis_title='Capital Cost',
-        title_text='Capital Investment Per Technology (Regional Split)',
+        xaxis_title="End Technology",
+        yaxis_title="Capital Cost",
+        title_text="Capital Investment Per Technology (Regional Split)",
     )
 
     if save_filepath:
-        fig_.write_image(f'{save_filepath}.{ext}')
+        fig_.write_image(f"{save_filepath}.{ext}")

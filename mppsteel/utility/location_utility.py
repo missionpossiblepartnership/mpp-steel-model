@@ -11,6 +11,7 @@ from mppsteel.utility.reference_lists import NEW_COUNTRY_COL_LIST, FILES_TO_REFR
 
 logger = get_logger("Location Utility")
 
+
 def country_mapping_fixer(
     df: pd.DataFrame,
     country_colname: str,
@@ -35,6 +36,7 @@ def country_mapping_fixer(
         df_c.loc[df_c[country_colname] == item[0], country_code_colname] = item[1]
     return df_c
 
+
 def match_country(country: str) -> str:
     # try to match the country to using pycountry.
     # If not match, return an empty string
@@ -44,6 +46,7 @@ def match_country(country: str) -> str:
         return match
     except:  # Currently no exception specification.
         return ""
+
 
 def country_matcher(country_list: list, output_type: str = "all") -> dict:
     """Fuzzy matches a list of countries and creates a mapping of the country to alpha-3 name.
@@ -88,12 +91,16 @@ def official_country_name_getter(country_code: str) -> str:
 CountryMetadata = namedtuple("CountryMetadata", NEW_COUNTRY_COL_LIST)
 
 
-def get_region_from_country_code(country_code: str, schema: str, country_ref_dict: dict) -> str:
-    if country_code == 'TWN': 
-        country_code = 'CHN' # !!! Not a political statement. Blame the lookup ref !!!!
+def get_region_from_country_code(
+    country_code: str, schema: str, country_ref_dict: dict
+) -> str:
+    if country_code == "TWN":
+        country_code = "CHN"  # !!! Not a political statement. Blame the lookup ref !!!!
     country_metadata_obj = country_ref_dict[country_code]
     options = ["m49_code", "region", "continent", "wsa_region", "rmi_region"]
     if schema in dir(country_metadata_obj):
         return getattr(country_metadata_obj, schema)
     else:
-        raise AttributeError(f'Schema: {schema} is not an attribute of {country_code} CountryMetadata object. Choose from the following options: {options}')
+        raise AttributeError(
+            f"Schema: {schema} is not an attribute of {country_code} CountryMetadata object. Choose from the following options: {options}"
+        )

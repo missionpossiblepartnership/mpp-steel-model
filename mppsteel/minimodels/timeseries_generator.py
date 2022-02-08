@@ -11,11 +11,12 @@ from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.model_config import (
     PKL_DATA_INTERMEDIATE,
     MODEL_YEAR_END,
-    MODEL_YEAR_START
+    MODEL_YEAR_START,
 )
 
 from mppsteel.model_scenarios import CARBON_TAX_SCENARIOS, GREEN_PREMIUM_SCENARIOS
 from mppsteel.utility.log_utility import get_logger
+
 # Create logger
 logger = get_logger("Timeseries generator")
 
@@ -91,6 +92,7 @@ def timeseries_generator(
     logger.info(f"{timeseries_type} timeseries complete")
     return df
 
+
 @timer_func
 def generate_timeseries(serialize: bool = False, scenario_dict: dict = None) -> dict:
     """Generates timeseries for biomass, carbon taxes and electricity.
@@ -102,8 +104,12 @@ def generate_timeseries(serialize: bool = False, scenario_dict: dict = None) -> 
         dict: A dict containing dataframes with the following keys: 'biomass', 'carbon_tax', 'electricity'
     """
 
-    carbon_tax_scenario_values = CARBON_TAX_SCENARIOS[scenario_dict['carbon_tax_scenario']]
-    green_premium_scenario_values = GREEN_PREMIUM_SCENARIOS[scenario_dict['green_premium_scenario']]
+    carbon_tax_scenario_values = CARBON_TAX_SCENARIOS[
+        scenario_dict["carbon_tax_scenario"]
+    ]
+    green_premium_scenario_values = GREEN_PREMIUM_SCENARIOS[
+        scenario_dict["green_premium_scenario"]
+    ]
     # Create Carbon Tax timeseries
     carbon_tax_timeseries = timeseries_generator(
         "carbon_tax",
@@ -113,7 +119,7 @@ def generate_timeseries(serialize: bool = False, scenario_dict: dict = None) -> 
         carbon_tax_scenario_values[0],
     )
     green_premium_timeseries = timeseries_generator(
-        'green_premium',
+        "green_premium",
         MODEL_YEAR_START,
         MODEL_YEAR_END,
         green_premium_scenario_values[1],
@@ -122,10 +128,14 @@ def generate_timeseries(serialize: bool = False, scenario_dict: dict = None) -> 
 
     if serialize:
         # Serialize timeseries
-        serialize_file(carbon_tax_timeseries, PKL_DATA_INTERMEDIATE, "carbon_tax_timeseries")
-        serialize_file(green_premium_timeseries, PKL_DATA_INTERMEDIATE, "green_premium_timeseries")
+        serialize_file(
+            carbon_tax_timeseries, PKL_DATA_INTERMEDIATE, "carbon_tax_timeseries"
+        )
+        serialize_file(
+            green_premium_timeseries, PKL_DATA_INTERMEDIATE, "green_premium_timeseries"
+        )
 
     return {
         "carbon_tax_timeseries": carbon_tax_timeseries,
-        "green_premium_timeseries": green_premium_timeseries
+        "green_premium_timeseries": green_premium_timeseries,
     }

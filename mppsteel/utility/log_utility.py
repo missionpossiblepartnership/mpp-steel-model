@@ -11,7 +11,9 @@ from logging.handlers import TimedRotatingFileHandler
 
 from mppsteel.model_config import LOG_PATH
 
-LOG_FORMATTER = logging.Formatter("%(asctime)s — %(name)s — %(levelname)s — %(message)s")
+LOG_FORMATTER = logging.Formatter(
+    "%(asctime)s — %(name)s — %(levelname)s — %(message)s"
+)
 
 
 def get_console_handler() -> logging.StreamHandler:
@@ -31,7 +33,7 @@ def get_file_handler() -> TimedRotatingFileHandler:
     Returns:
         [type]: A formatted file handler
     """
-    today_time = datetime.today().strftime('%y%m%d_%H%M%S')
+    today_time = datetime.today().strftime("%y%m%d_%H%M%S")
     if not Path(LOG_PATH).is_dir():
         try:
             os.mkdir(LOG_PATH)

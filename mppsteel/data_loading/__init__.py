@@ -6,5 +6,5 @@ from . import (
     standardise_business_cases,
     steel_plant_formatter,
     reg_steel_demand_formatter,
-    pe_model_formatter
+    pe_model_formatter,
 )

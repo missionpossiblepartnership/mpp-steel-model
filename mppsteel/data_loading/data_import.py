@@ -7,8 +7,14 @@ from mppsteel.utility.file_handling_utility import extract_data, serialize_df_di
 from mppsteel.utility.function_timer_utility import timer_func
 
 # Get model parameters
-from mppsteel.model_config import IMPORT_DATA_PATH, PKL_DATA_IMPORTS, PE_MODEL_FILENAME_DICT, PE_MODEL_SHEETNAME_DICT
+from mppsteel.model_config import (
+    IMPORT_DATA_PATH,
+    PKL_DATA_IMPORTS,
+    PE_MODEL_FILENAME_DICT,
+    PE_MODEL_SHEETNAME_DICT,
+)
 from mppsteel.utility.log_utility import get_logger
+
 # Create logger
 logger = get_logger("Data Import")
 
@@ -42,10 +48,13 @@ def get_pe_model_data(model_name: str) -> pd.DataFrame:
     Returns:
         pd.DataFrame: A DataFrame of the specific sheet you have extracted.
     """
+
     def get_path(model_name: str, filenames_dict: dict) -> str:
-        return f'{IMPORT_DATA_PATH}/{filenames_dict[model_name]}'
+        return f"{IMPORT_DATA_PATH}/{filenames_dict[model_name]}"
+
     datapath = get_path(model_name, PE_MODEL_FILENAME_DICT)
     return pd.read_excel(datapath, sheet_name=PE_MODEL_SHEETNAME_DICT[model_name])
+
 
 @timer_func
 def load_data(serialize: bool = False) -> dict:
@@ -115,10 +124,10 @@ def load_data(serialize: bool = False) -> dict:
     )
 
     # Import Price and Emissions Models
-    power_model = get_pe_model_data('power')
-    hydrogen_model = get_pe_model_data('hydrogen')
-    bio_model = get_pe_model_data('bio')
-    ccus_model = get_pe_model_data('ccus')
+    power_model = get_pe_model_data("power")
+    hydrogen_model = get_pe_model_data("hydrogen")
+    bio_model = get_pe_model_data("bio")
+    ccus_model = get_pe_model_data("ccus")
 
     # Define a data dictionary
     df_dict = {

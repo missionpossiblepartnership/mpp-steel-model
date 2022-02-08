@@ -2,9 +2,11 @@
 
 import time
 
+
 def format_times(start_t: float, end_t: float) -> str:
     time_diff = end_t - start_t
-    return f'{time_diff :0.2f} seconds | {time_diff / 60 :0.2f} minutes'
+    return f"{time_diff :0.2f} seconds | {time_diff / 60 :0.2f} minutes"
+
 
 class TimeContainerClass:
     def __init__(self):
@@ -16,11 +18,13 @@ class TimeContainerClass:
     def return_time_container(self, return_object: bool = False) -> dict:
         time_container = self.time_container
         for entry in time_container:
-            print(f'The {entry} function took {time_container[entry]}')
+            print(f"The {entry} function took {time_container[entry]}")
         if return_object:
             return time_container
 
+
 TIME_CONTAINER = TimeContainerClass()
+
 
 def timer_func(func):
     def wrap_func(*args, **kwargs):
@@ -29,4 +33,5 @@ def timer_func(func):
         endtime = time.time()
         TIME_CONTAINER.update_time(func.__name__, format_times(starttime, endtime))
         return result
+
     return wrap_func

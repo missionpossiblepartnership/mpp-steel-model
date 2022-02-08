@@ -13,9 +13,7 @@ from tqdm.auto import tqdm as tqdma
 from mppsteel.utility.utils import enumerate_iterable
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.location_utility import CountryMetadata
-from mppsteel.utility.file_handling_utility import (
-    read_pickle_folder, serialize_file
-)
+from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
 from mppsteel.validation.data_import_tests import COUNTRY_REF_SCHEMA
@@ -52,21 +50,24 @@ def create_country_ref_dict(df: pd.DataFrame, country_metadata_nt: namedtuple) -
     """
     logger.info("Creating Country Reference dictionary")
     country_ref_dict = {}
+
     def value_mapper(row, enum_dict):
-        country_ref_dict[row[enum_dict['country_code']]] = country_metadata_nt(
-            row[enum_dict['country_code']],
-            row[enum_dict['country']],
-            row[enum_dict['official_name']],
-            row[enum_dict['m49_code']],
-            row[enum_dict['region']],
-            row[enum_dict['continent']],
-            row[enum_dict['wsa_region']],
-            row[enum_dict['rmi_region']]
+        country_ref_dict[row[enum_dict["country_code"]]] = country_metadata_nt(
+            row[enum_dict["country_code"]],
+            row[enum_dict["country"]],
+            row[enum_dict["official_name"]],
+            row[enum_dict["m49_code"]],
+            row[enum_dict["region"]],
+            row[enum_dict["continent"]],
+            row[enum_dict["wsa_region"]],
+            row[enum_dict["rmi_region"]],
         )
+
     tqdma.pandas(desc="Create County Ref Dict")
     enumerated_cols = enumerate_iterable(df.columns)
     df.progress_apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
     return country_ref_dict
+
 
 @pa.check_input(COUNTRY_REF_SCHEMA)
 def country_df_formatter(df: pd.DataFrame) -> pd.DataFrame:
@@ -110,7 +111,9 @@ def country_df_formatter(df: pd.DataFrame) -> pd.DataFrame:
     return df_c
 
 
-def country_ref_getter(country_ref_dict: dict, country_code: str, ref: str = "") -> CountryMetadata:
+def country_ref_getter(
+    country_ref_dict: dict, country_code: str, ref: str = ""
+) -> CountryMetadata:
     """A getter function to retrieve an attribute of a Country Metadata object.
 
     Args:
@@ -126,6 +129,7 @@ def country_ref_getter(country_ref_dict: dict, country_code: str, ref: str = "")
     if ref in dir(country_class):
         return getattr(country_class, ref)
     return country_class
+
 
 @timer_func
 def create_country_ref(serialize: bool = False) -> dict:

@@ -5,9 +5,7 @@ import pandas as pd
 import numpy as np
 
 # For logger and units dict
-from mppsteel.utility.file_handling_utility import (
-    read_pickle_folder
-)
+from mppsteel.utility.file_handling_utility import read_pickle_folder
 from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.model_config import PKL_DATA_INTERMEDIATE
@@ -101,7 +99,9 @@ def split_regions(
 
 
 def create_regional_split(df: pd.DataFrame, region_type: str, split_type: str):
-    country_ref_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "country_reference_dict", "df")
+    country_ref_dict = read_pickle_folder(
+        PKL_DATA_INTERMEDIATE, "country_reference_dict", "df"
+    )
     region_split_dict = create_region_dict_generator(
         country_ref_dict, region_type=region_type, split_type=split_type
     )

@@ -29,29 +29,42 @@ ARCHETYPE_COLORS = {
     "Smelting Reduction+CCS": "#D7B5A6",
 }
 SCENARIO_COLOURS = {
-    "Baseline": '#A5A5A5',
-    "Tech Moratorium": '#9DB1CF',
-    "Carbon Tax": '#6F8DB9',
-    "Fast Abatement": '#4C6C9C'
+    "Baseline": "#A5A5A5",
+    "Tech Moratorium": "#9DB1CF",
+    "Carbon Tax": "#6F8DB9",
+    "Fast Abatement": "#4C6C9C",
 }
 
+
 def line_graph(
-    df: pd.DataFrame, x: str, y: str, title: str,
-    save_filepath:str=None, ext:str='png') -> px.line:
+    df: pd.DataFrame,
+    x: str,
+    y: str,
+    title: str,
+    save_filepath: str = None,
+    ext: str = "png",
+) -> px.line:
     fig_ = px.line(df, x=x, y=y, title=title)
 
     if save_filepath:
-        fig_.write_image(f'{save_filepath}.{ext}')
+        fig_.write_image(f"{save_filepath}.{ext}")
 
     return fig_
 
+
 def line_chart(
     data: pd.DataFrame,
-    x: str, y: str, color: str, name: str,
-    x_axis: str, y_axis: str, text: str = None,
+    x: str,
+    y: str,
+    color: str,
+    name: str,
+    x_axis: str,
+    y_axis: str,
+    text: str = None,
     color_discrete_map: dict = None,
-    save_filepath:str = None,
-    ext: str ='png') -> px.line:
+    save_filepath: str = None,
+    ext: str = "png",
+) -> px.line:
     ## this need to be updated to account for multiple facets https://github.com/plotly/plotly.py/issues/2545
     fig_ = px.line(
         data, x=x, y=y, color=color, text=text, color_discrete_map=color_discrete_map
@@ -101,19 +114,33 @@ def line_chart(
     )
 
     if save_filepath:
-        fig_.write_image(f'{save_filepath}.{ext}')
+        fig_.write_image(f"{save_filepath}.{ext}")
 
     return fig_
 
+
 def area_chart(
     data: pd.DataFrame,
-    x: str, y: str, color: str,
-    name: str, x_axis: str, y_axis: str,
-    hoverdata, save_filepath: str = None,
-    ext: str = 'png') -> px.area:
-    fig_ = px.area(data, x=x, y=y, color=color, color_discrete_map=ARCHETYPE_COLORS, hover_data=hoverdata)
+    x: str,
+    y: str,
+    color: str,
+    name: str,
+    x_axis: str,
+    y_axis: str,
+    hoverdata,
+    save_filepath: str = None,
+    ext: str = "png",
+) -> px.area:
+    fig_ = px.area(
+        data,
+        x=x,
+        y=y,
+        color=color,
+        color_discrete_map=ARCHETYPE_COLORS,
+        hover_data=hoverdata,
+    )
     fig_.update_layout(
-        legend_title_text='',
+        legend_title_text="",
         xaxis_title=None,
         titlefont=dict(family="Arial", size=18, color="black"),
         title_text=name,
@@ -158,29 +185,43 @@ def area_chart(
     )
 
     if save_filepath:
-        fig_.write_image(f'{save_filepath}.{ext}')
+        fig_.write_image(f"{save_filepath}.{ext}")
 
     return fig_
 
+
 def bar_chart(
     data: pd.DataFrame,
-    x: str, y:str, color: str,
+    x: str,
+    y: str,
+    color: str,
     color_discrete_map: dict = None,
     array_order: list = None,
-    title_text: str = '',
-    xaxis_title: str = '',
-    yaxis_title: str = '',
-    legend_text: str ='') -> px.bar:
+    title_text: str = "",
+    xaxis_title: str = "",
+    yaxis_title: str = "",
+    legend_text: str = "",
+) -> px.bar:
 
-    fig_ = px.bar(data, x=x, y=y, title=title_text, color=color, color_discrete_map=color_discrete_map, text=y, width=1500, height=1000)
+    fig_ = px.bar(
+        data,
+        x=x,
+        y=y,
+        title=title_text,
+        color=color,
+        color_discrete_map=color_discrete_map,
+        text=y,
+        width=1500,
+        height=1000,
+    )
     fig_.update_layout(
-        titlefont=dict(family='Arial', size=12, color='black'),
+        titlefont=dict(family="Arial", size=12, color="black"),
         title_text=title_text,
         xaxis_title=xaxis_title,
         yaxis_title=yaxis_title,
         legend_title_text=legend_text,
         showlegend=True,
-        hovermode='x unified',
+        hovermode="x unified",
         plot_bgcolor="white",
         legend=dict(
             font=dict(family="Arial", size=10, color="black"),
@@ -188,100 +229,120 @@ def bar_chart(
             yanchor="bottom",
             y=-0.2,
             xanchor="left",
-            x=-0),
+            x=-0,
+        ),
     )
 
     fig_.update_xaxes(
-        title_text='',
-        titlefont=dict(family='Arial', size=12, color='black'),
-        tickfont=dict(family='Arial', size=12, color='black'),
+        title_text="",
+        titlefont=dict(family="Arial", size=12, color="black"),
+        tickfont=dict(family="Arial", size=12, color="black"),
         title_standoff=3,
         showspikes=False,
-        spikemode='across',
-        spikesnap='data',
+        spikemode="across",
+        spikesnap="data",
         showline=True,
         showgrid=True,
         fixedrange=True,
         linewidth=1,
-        linecolor='grey',
-        categoryorder='array',
-        categoryarray=array_order
+        linecolor="grey",
+        categoryorder="array",
+        categoryarray=array_order,
     )
 
     fig_.update_yaxes(
-        title_text='',
-        titlefont=dict(family='Arial', size=12, color='black'),
-        tickfont=dict(family='Arial', size=12, color='black'),
+        title_text="",
+        titlefont=dict(family="Arial", size=12, color="black"),
+        tickfont=dict(family="Arial", size=12, color="black"),
         title_standoff=3,
         fixedrange=True,
         linewidth=1,
-        linecolor='grey',
+        linecolor="grey",
         showgrid=True,
         gridwidth=1,
-        gridcolor='whitesmoke',
-        rangemode="tozero"
+        gridcolor="whitesmoke",
+        rangemode="tozero",
     )
-    fig_.update_traces(texttemplate='%{text:.4s}', textposition='inside')
-    fig_.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
+    fig_.update_traces(texttemplate="%{text:.4s}", textposition="inside")
+    fig_.update_layout(uniformtext_minsize=8, uniformtext_mode="hide")
     fig_.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
     return fig_
 
+
 def bar_chart_vertical(
     data: pd.DataFrame,
-    x: str, y: str, facet_row: str, color: str,
-    color_discrete_map: dict, x_text: str, y_text: str,
-    title_text: str, text: str = None,
-    save_filepath: str = None, ext: str='png') -> px.bar:
+    x: str,
+    y: str,
+    facet_row: str,
+    color: str,
+    color_discrete_map: dict,
+    x_text: str,
+    y_text: str,
+    title_text: str,
+    text: str = None,
+    save_filepath: str = None,
+    ext: str = "png",
+) -> px.bar:
 
-    fig_ = px.bar(data, x=x, y=y, facet_row=facet_row, color=color, color_discrete_map=color_discrete_map, orientation='h', text=text)
+    fig_ = px.bar(
+        data,
+        x=x,
+        y=y,
+        facet_row=facet_row,
+        color=color,
+        color_discrete_map=color_discrete_map,
+        orientation="h",
+        text=text,
+    )
     fig_.update_layout(
-        titlefont=dict(family='Arial', size=12,color='black'),
+        titlefont=dict(family="Arial", size=12, color="black"),
         title_text=title_text,
-        legend_title_text='',
+        legend_title_text="",
         showlegend=False,
-        hovermode='y unified',
+        hovermode="y unified",
         plot_bgcolor="white",
         legend=dict(
-            font=dict(family="Arial",size=10,color="black"),
+            font=dict(family="Arial", size=10, color="black"),
             orientation="h",
             yanchor="bottom",
             y=-0.2,
             xanchor="left",
-            x=-0)
+            x=-0,
+        ),
     )
     fig_.update_xaxes(
         title_text=x_text,
-        titlefont=dict(family='Arial', size=12, color='black'),
-        tickfont=dict(family='Arial',size=10,color='black'),
+        titlefont=dict(family="Arial", size=12, color="black"),
+        tickfont=dict(family="Arial", size=10, color="black"),
         title_standoff=3,
         showspikes=False,
-        spikemode='across',
-        spikesnap='data',
+        spikemode="across",
+        spikesnap="data",
         showline=True,
         showgrid=True,
         fixedrange=True,
         linewidth=1,
-        linecolor='grey',
+        linecolor="grey",
     )
     fig_.update_yaxes(
         title_text=None,
-        titlefont=dict(family='Arial', size=12,color='black'),
-        tickfont=dict(family='Arial', size=10, color='black'),
+        titlefont=dict(family="Arial", size=12, color="black"),
+        tickfont=dict(family="Arial", size=10, color="black"),
         title_standoff=3,
         fixedrange=True,
         linewidth=1,
-        linecolor='grey',
+        linecolor="grey",
         showgrid=True,
         gridwidth=1,
-        gridcolor='whitesmoke',
+        gridcolor="whitesmoke",
         rangemode="tozero",
-        showspikes = False,
+        showspikes=False,
     )
-    fig_.update_traces(texttemplate='%{x:,.0f}', textposition='inside')
-    fig_.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
+    fig_.update_traces(texttemplate="%{x:,.0f}", textposition="inside")
+    fig_.update_layout(uniformtext_minsize=8, uniformtext_mode="hide")
     fig_.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
 
     if save_filepath:
-        fig_.write_image(f'{save_filepath}.{ext}')
+        fig_.write_image(f"{save_filepath}.{ext}")
 
     return fig_

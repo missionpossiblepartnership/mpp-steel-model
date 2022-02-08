@@ -5,48 +5,58 @@ import pandas as pd
 from tqdm import tqdm
 
 from mppsteel.model_config import (
-    MODEL_YEAR_START, MODEL_YEAR_END, 
-    PKL_DATA_INTERMEDIATE, PKL_DATA_IMPORTS,
-    NET_ZERO_TARGET, NET_ZERO_VARIANCE,
-    INVESTMENT_CYCLE_LENGTH, INVESTMENT_CYCLE_VARIANCE,
-    INVESTMENT_OFFCYCLE_BUFFER_TOP, INVESTMENT_OFFCYCLE_BUFFER_TAIL,
+    MODEL_YEAR_START,
+    MODEL_YEAR_END,
+    PKL_DATA_INTERMEDIATE,
+    PKL_DATA_IMPORTS,
+    NET_ZERO_TARGET,
+    NET_ZERO_VARIANCE,
+    INVESTMENT_CYCLE_LENGTH,
+    INVESTMENT_CYCLE_VARIANCE,
+    INVESTMENT_OFFCYCLE_BUFFER_TOP,
+    INVESTMENT_OFFCYCLE_BUFFER_TAIL,
 )
 
 from mppsteel.utility.function_timer_utility import timer_func
-from mppsteel.utility.file_handling_utility import (
-    read_pickle_folder, serialize_file
-)
+from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
 from mppsteel.utility.log_utility import get_logger
 
 # Create logger
 logger = get_logger("Investment Cycles")
 
+
 def calculate_investment_years(
-    op_start_year: int, cutoff_start_year: int = MODEL_YEAR_START,
-    cutoff_end_year: int = MODEL_YEAR_END, inv_intervals: int = INVESTMENT_CYCLE_LENGTH
+    op_start_year: int,
+    cutoff_start_year: int = MODEL_YEAR_START,
+    cutoff_end_year: int = MODEL_YEAR_END,
+    inv_intervals: int = INVESTMENT_CYCLE_LENGTH,
 ) -> list:
     x = op_start_year
     decision_years = []
-    unique_investment_interval = inv_intervals + random.randrange(-INVESTMENT_CYCLE_VARIANCE, INVESTMENT_CYCLE_VARIANCE, 1)
+    unique_investment_interval = inv_intervals + random.randrange(
+        -INVESTMENT_CYCLE_VARIANCE, INVESTMENT_CYCLE_VARIANCE, 1
+    )
     while x < cutoff_end_year:
         if x < cutoff_start_year:
-            x+=unique_investment_interval
+            x += unique_investment_interval
         elif x >= cutoff_start_year:
             decision_years.append(x)
-            x+=unique_investment_interval
+            x += unique_investment_interval
     return decision_years
+
 
 def add_off_cycle_investment_years(
     main_investment_cycle: list,
-    start_buff: int, end_buff: int,
+    start_buff: int,
+    end_buff: int,
 ) -> list:
     inv_cycle_length = len(main_investment_cycle)
     range_list = []
 
     def net_zero_year_bring_forward(year: int) -> int:
-        if year in range(NET_ZERO_TARGET+1, NET_ZERO_TARGET+NET_ZERO_VARIANCE+1):
-            bring_forward_date = NET_ZERO_TARGET-1
-            logger.info(f'Investment Cycle Brought Forward to {bring_forward_date}')
+        if year in range(NET_ZERO_TARGET + 1, NET_ZERO_TARGET + NET_ZERO_VARIANCE + 1):
+            bring_forward_date = NET_ZERO_TARGET - 1
+            logger.info(f"Investment Cycle Brought Forward to {bring_forward_date}")
             return bring_forward_date
         return year
 
@@ -57,16 +67,19 @@ def add_off_cycle_investment_years(
     if inv_cycle_length > 1:
         for index in range(1, inv_cycle_length):
             inv_year = net_zero_year_bring_forward(main_investment_cycle[index])
-            range_object = range(main_investment_cycle[index-1]+start_buff, inv_year-end_buff)
+            range_object = range(
+                main_investment_cycle[index - 1] + start_buff, inv_year - end_buff
+            )
             range_list.append(range_object)
             range_list.append(inv_year)
 
     return range_list
 
+
 def apply_investment_years(year_value: int) -> list:
     if pd.isna(year_value):
         return calculate_investment_years(MODEL_YEAR_START)
-    elif '(anticipated)' in str(year_value):
+    elif "(anticipated)" in str(year_value):
         year_value = year_value[:4]
         return calculate_investment_years(int(year_value))
     else:
@@ -75,28 +88,54 @@ def apply_investment_years(year_value: int) -> list:
         except:
             return calculate_investment_years(int(year_value[:4]))
 
-def create_investment_cycle_reference(plant_names: list, investment_years: list, year_end: int) -> pd.DataFrame:
-    logger.info('Creating the investment cycle reference table')
-    zipped_plant_investments = zip(plant_names, investment_years)
-    year_range = range(MODEL_YEAR_START, year_end+1)
-    df = pd.DataFrame(columns=['plant_name', 'year', 'switch_type'])
 
-    for plant_name, investments in tqdm(zipped_plant_investments, total=len(plant_names), desc='Investment Cycles'):
+def create_investment_cycle_reference(
+    plant_names: list, investment_years: list, year_end: int
+) -> pd.DataFrame:
+    logger.info("Creating the investment cycle reference table")
+    zipped_plant_investments = zip(plant_names, investment_years)
+    year_range = range(MODEL_YEAR_START, year_end + 1)
+    df = pd.DataFrame(columns=["plant_name", "year", "switch_type"])
+
+    for plant_name, investments in tqdm(
+        zipped_plant_investments, total=len(plant_names), desc="Investment Cycles"
+    ):
         for year in year_range:
-            row_dict = {'plant_name': plant_name, 'year': year, 'switch_type': 'no switch'}
-            if year in [inv_year for inv_year in investments if isinstance(inv_year, int)]:
-                row_dict['switch_type'] = 'main cycle'
-            for range_object in [inv_range for inv_range in investments if isinstance(inv_range, range)]:
+            row_dict = {
+                "plant_name": plant_name,
+                "year": year,
+                "switch_type": "no switch",
+            }
+            if year in [
+                inv_year for inv_year in investments if isinstance(inv_year, int)
+            ]:
+                row_dict["switch_type"] = "main cycle"
+            for range_object in [
+                inv_range for inv_range in investments if isinstance(inv_range, range)
+            ]:
                 if year in range_object:
-                    row_dict['switch_type'] = 'trans switch'
-            df=df.append(row_dict, ignore_index=True)
-    return df.set_index(['year', 'switch_type'])
+                    row_dict["switch_type"] = "trans switch"
+            df = df.append(row_dict, ignore_index=True)
+    return df.set_index(["year", "switch_type"])
+
 
 def create_investment_cycle(steel_plant_df: pd.DataFrame) -> pd.DataFrame:
-    logger.info('Creating investment cycle')
-    investment_years = steel_plant_df['start_of_operation'].apply(lambda year: apply_investment_years(year))
-    investment_years_inc_off_cycle = [add_off_cycle_investment_years(inv_year, INVESTMENT_OFFCYCLE_BUFFER_TOP, INVESTMENT_OFFCYCLE_BUFFER_TAIL) for inv_year in investment_years]
-    return create_investment_cycle_reference(steel_plant_df['plant_name'].values, investment_years_inc_off_cycle, MODEL_YEAR_END)
+    logger.info("Creating investment cycle")
+    investment_years = steel_plant_df["start_of_operation"].apply(
+        lambda year: apply_investment_years(year)
+    )
+    investment_years_inc_off_cycle = [
+        add_off_cycle_investment_years(
+            inv_year, INVESTMENT_OFFCYCLE_BUFFER_TOP, INVESTMENT_OFFCYCLE_BUFFER_TAIL
+        )
+        for inv_year in investment_years
+    ]
+    return create_investment_cycle_reference(
+        steel_plant_df["plant_name"].values,
+        investment_years_inc_off_cycle,
+        MODEL_YEAR_END,
+    )
+
 
 @timer_func
 def investment_cycle_flow(serialize: bool = False) -> pd.DataFrame:
@@ -107,12 +146,16 @@ def investment_cycle_flow(serialize: bool = False) -> pd.DataFrame:
 
     Returns:
         [type]: [description]
-    """    
-    steel_plants_aug = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'steel_plants_processed', 'df')
+    """
+    steel_plants_aug = read_pickle_folder(
+        PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df"
+    )
     plant_investment_cycles = create_investment_cycle(steel_plants_aug)
 
     if serialize:
-        logger.info(f'-- Serializing Investment Cycle Reference')
-        serialize_file(plant_investment_cycles, PKL_DATA_INTERMEDIATE, "plant_investment_cycles")
+        logger.info(f"-- Serializing Investment Cycle Reference")
+        serialize_file(
+            plant_investment_cycles, PKL_DATA_INTERMEDIATE, "plant_investment_cycles"
+        )
         return
     return plant_investment_cycles

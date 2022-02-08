@@ -11,12 +11,18 @@ from mppsteel.utility.log_utility import get_logger
 
 logger = get_logger("Utils")
 
+
 def get_today_time() -> str:
-    return datetime.today().strftime('%y%m%d_%H%M%S')
+    return datetime.today().strftime("%y%m%d_%H%M%S")
+
 
 def create_list_permutations(list1: list, list2: list) -> list:
-    comb =  [list(zip(each_permutation, list2)) for each_permutation in itertools.permutations(list1, len(list2))]
+    comb = [
+        list(zip(each_permutation, list2))
+        for each_permutation in itertools.permutations(list1, len(list2))
+    ]
     return list(itertools.chain(*comb))
+
 
 def stdout_query(question: str, default: str, options: str) -> None:
     """Ask a yes/no question via raw_input() and return their answer.
@@ -29,27 +35,29 @@ def stdout_query(question: str, default: str, options: str) -> None:
     The "answer" return value is True for "yes" or False for "no".
     """
     if default not in options:
-        raise ValueError(f'invalid default answer {default}. Not in options: {options}')
+        raise ValueError(f"invalid default answer {default}. Not in options: {options}")
 
     while True:
-        sys.stdout.write(f'{question} {default}')
+        sys.stdout.write(f"{question} {default}")
         choice = input().lower()
-        if choice == '':
+        if choice == "":
             return default
         elif choice != "" and choice in options:
             return choice
         elif choice != "" and choice not in options:
             sys.stdout.write(f"Please respond with a choice from {options}.\n")
 
-def get_currency_rate(base: str) -> str:
-    logger.info(f'Getting currency exchange rate for {base}')
-    c = CurrencyConverter()
-    if base.lower() == 'usd':
-        return c.convert(1, 'USD', 'EUR')
-    if base.lower() == 'eur':
-        return c.convert(1, 'EUR', 'USD')
 
-def enumerate_iterable(iterable : list) -> dict:
+def get_currency_rate(base: str) -> str:
+    logger.info(f"Getting currency exchange rate for {base}")
+    c = CurrencyConverter()
+    if base.lower() == "usd":
+        return c.convert(1, "USD", "EUR")
+    if base.lower() == "eur":
+        return c.convert(1, "EUR", "USD")
+
+
+def enumerate_iterable(iterable: list) -> dict:
     return dict(zip(iterable, range(len(iterable))))
 
 

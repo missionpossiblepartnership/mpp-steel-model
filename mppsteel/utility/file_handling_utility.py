@@ -12,9 +12,10 @@ from mppsteel.utility.log_utility import get_logger
 
 logger = get_logger("File Handling")
 
+
 def read_pickle_folder(
-    data_path: str, pkl_file: str = "", 
-    mode: str = "dict", log: bool = False) -> Union[pd.DataFrame, dict]:
+    data_path: str, pkl_file: str = "", mode: str = "dict", log: bool = False
+) -> Union[pd.DataFrame, dict]:
     """Reads a path where pickle files are stores and saves them to a dictionary
 
     Args:
@@ -97,19 +98,24 @@ def serialize_df_dict(data_path: str, data_dict: dict) -> None:
 def create_folders_if_nonexistant(folder_list: list) -> None:
     for folder_path in folder_list:
         if os.path.isdir(folder_path):
-            logger.info(f'{folder_path} already exists')
+            logger.info(f"{folder_path} already exists")
         else:
-            logger.info(f'{folder_path} does not exist yet. Creating folder.')
+            logger.info(f"{folder_path} does not exist yet. Creating folder.")
             Path(folder_path).mkdir(parents=True, exist_ok=True)
 
 
-def pickle_to_csv(folder_path: str, pkl_folder: str, pickle_filename: str, csv_filename: str = '') -> None:
+def pickle_to_csv(
+    folder_path: str, pkl_folder: str, pickle_filename: str, csv_filename: str = ""
+) -> None:
     df = read_pickle_folder(pkl_folder, pickle_filename)
-    logger.info(f'||| Saving {pickle_filename} pickle file as {csv_filename or pickle_filename}.csv')
+    logger.info(
+        f"||| Saving {pickle_filename} pickle file as {csv_filename or pickle_filename}.csv"
+    )
     if csv_filename:
         df.to_csv(f"{folder_path}/{csv_filename}.csv", index=False)
     else:
         df.to_csv(f"{folder_path}/{pickle_filename}.csv", index=False)
+
 
 def create_folder_if_nonexist(folder_path: str):
     Path(folder_path).mkdir(parents=True, exist_ok=True)

@@ -8,22 +8,25 @@ import numpy as np
 from typing import Tuple, Union
 
 from mppsteel.validation.data_import_tests import (
-    FEEDSTOCK_INPUT_SCHEMA, ENERGY_PRICES_STATIC_SCHEMA,
-    ETHANOL_PLASTIC_CHARCOAL_SCHEMA, SCOPE1_EF_SCHEMA,
-    SCOPE3_EF_SCHEMA_1, SCOPE3_EF_SCHEMA_2, CAPEX_OPEX_PER_TECH_SCHEMA,
-    STEEL_BUSINESS_CASES_SCHEMA
+    FEEDSTOCK_INPUT_SCHEMA,
+    ENERGY_PRICES_STATIC_SCHEMA,
+    ETHANOL_PLASTIC_CHARCOAL_SCHEMA,
+    SCOPE1_EF_SCHEMA,
+    SCOPE3_EF_SCHEMA_1,
+    SCOPE3_EF_SCHEMA_2,
+    CAPEX_OPEX_PER_TECH_SCHEMA,
+    STEEL_BUSINESS_CASES_SCHEMA,
 )
 
 # For logger and units dict
-from mppsteel.utility.utils import (
-    create_list_permutations
-)
+from mppsteel.utility.utils import create_list_permutations
 from mppsteel.utility.file_handling_utility import (
-    read_pickle_folder, serialize_file, extract_data
+    read_pickle_folder,
+    serialize_file,
+    extract_data,
 )
-from mppsteel.utility.dataframe_utility import (
-    melt_and_index
-)
+from mppsteel.utility.dataframe_utility import melt_and_index
+
 # Get model parameters
 from mppsteel.model_config import (
     MODEL_YEAR_END,
@@ -33,9 +36,7 @@ from mppsteel.model_config import (
     ENERGY_DENSITY_MET_COAL,
 )
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.utility.timeseries_extender import (
-    full_model_flow
-)
+from mppsteel.utility.timeseries_extender import full_model_flow
 
 # Create logger
 logger = get_logger("Data Interface")
@@ -45,6 +46,7 @@ COMMODITY_MATERIAL_MAPPER = {
     "220710": "ethanol",
     "391510": "plastic",
 }
+
 
 @pa.check_input(SCOPE3_EF_SCHEMA_2)
 def format_scope3_ef_2(df: pd.DataFrame, emissions_factor_slag: float) -> pd.DataFrame:
@@ -65,9 +67,11 @@ def format_scope3_ef_2(df: pd.DataFrame, emissions_factor_slag: float) -> pd.Dat
     df_c["value"] = df_c["value"].apply(lambda x: x * emissions_factor_slag)
     return df_c
 
+
 @pa.check_input(SCOPE3_EF_SCHEMA_1)
 def modify_scope3_ef_1(
-    df: pd.DataFrame, slag_values: np.array, met_coal_density: float) -> pd.DataFrame:
+    df: pd.DataFrame, slag_values: np.array, met_coal_density: float
+) -> pd.DataFrame:
     """Formatting steps for the Scope 3 Emissions Factors.
 
     Args:
@@ -125,6 +129,7 @@ def capex_generator(
     # logger.info(f"Creating capex value: {output_type} for: {technology}")
     return capex_dict[output_type]
 
+
 @pa.check_input(CAPEX_OPEX_PER_TECH_SCHEMA)
 def capex_dictionary_generator(
     greenfield_df: pd.DataFrame, brownfield_df: pd.DataFrame, other_df: pd.DataFrame
@@ -151,6 +156,7 @@ def capex_dictionary_generator(
         ),
     }
 
+
 def carbon_tax_getter(df: pd.DataFrame, year: int) -> float:
     """Function to get a carbon tax value at a particular year.
 
@@ -166,6 +172,7 @@ def carbon_tax_getter(df: pd.DataFrame, year: int) -> float:
     df_c.set_index(["year"], inplace=True)
     return df_c.loc[year]["value"]
 
+
 def scope1_emissions_getter(df: pd.DataFrame, metric: str) -> float:
     """Function to get the Scope 1 Emissions value at a particular year.
 
@@ -180,6 +187,7 @@ def scope1_emissions_getter(df: pd.DataFrame, metric: str) -> float:
     df_c.set_index(["Metric"], inplace=True)
     value = df_c.loc[metric]["Value"]
     return value
+
 
 def ccs_co2_getter(df: pd.DataFrame, metric: str, year: int) -> float:
     """Function to get the CCS CO2 value at a particular year.
@@ -249,6 +257,7 @@ def format_commodities_data(df: pd.DataFrame, material_mapper: dict) -> pd.DataF
             df_c.loc[row.Index, "implied_price"] = row.trade_value / row.netweight
     return df_c
 
+
 def commodity_data_getter(df: pd.DataFrame, commodity: str = "") -> float:
     df_c = df.copy()
     if commodity:
@@ -269,6 +278,7 @@ def commodity_data_getter(df: pd.DataFrame, commodity: str = "") -> float:
             )
             values_dict[commodity_ref] = value_productsum
     return values_dict
+
 
 def scope3_ef_getter(df: pd.DataFrame, fuel: str, year: str) -> float:
     df_c = df.copy()
@@ -291,19 +301,26 @@ def create_capex_opex_dict(serialize: bool = False) -> dict:
         serialize_file(capex_dict, PKL_DATA_INTERMEDIATE, "capex_dict")
     return capex_dict
 
-def generate_preprocessed_emissions_data(serialize: bool = False) -> Tuple[pd.DataFrame, pd.DataFrame]:
+
+def generate_preprocessed_emissions_data(
+    serialize: bool = False,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     ethanol_plastic_charcoal = read_pickle_folder(
         PKL_DATA_IMPORTS, "ethanol_plastic_charcoal"
     )
     commodities_df = format_commodities_data(
         ethanol_plastic_charcoal, COMMODITY_MATERIAL_MAPPER
     )
-    s3_emissions_factors_2 = read_pickle_folder(PKL_DATA_IMPORTS, "s3_emissions_factors_2")
+    s3_emissions_factors_2 = read_pickle_folder(
+        PKL_DATA_IMPORTS, "s3_emissions_factors_2"
+    )
     scope3df_2_formatted = format_scope3_ef_2(
         s3_emissions_factors_2, EMISSIONS_FACTOR_SLAG
     )
     slag_new_values = scope3df_2_formatted["value"].values
-    s3_emissions_factors_1 = read_pickle_folder(PKL_DATA_IMPORTS, "s3_emissions_factors_1")
+    s3_emissions_factors_1 = read_pickle_folder(
+        PKL_DATA_IMPORTS, "s3_emissions_factors_1"
+    )
     final_scope3_ef_df = modify_scope3_ef_1(
         s3_emissions_factors_1, slag_new_values, ENERGY_DENSITY_MET_COAL
     )
@@ -312,55 +329,66 @@ def generate_preprocessed_emissions_data(serialize: bool = False) -> Tuple[pd.Da
         serialize_file(final_scope3_ef_df, PKL_DATA_INTERMEDIATE, "final_scope3_ef_df")
     return commodities_df, final_scope3_ef_df
 
+
 def format_bc(df: pd.DataFrame) -> pd.DataFrame:
     df_c = df.copy()
-    df_c = df_c[df_c['material_category'] != 0]
-    df_c['material_category'] = df_c['material_category'].apply(lambda x: x.strip())
+    df_c = df_c[df_c["material_category"] != 0]
+    df_c["material_category"] = df_c["material_category"].apply(lambda x: x.strip())
     return df_c
 
+
 def load_business_cases() -> pd.DataFrame:
-    standardised_business_cases = read_pickle_folder(PKL_DATA_INTERMEDIATE, 'standardised_business_cases', 'df')
+    standardised_business_cases = read_pickle_folder(
+        PKL_DATA_INTERMEDIATE, "standardised_business_cases", "df"
+    )
     return format_bc(standardised_business_cases)
 
+
 def load_materials() -> list:
-    return load_business_cases()['material_category'].unique()
+    return load_business_cases()["material_category"].unique()
 
 
 def extend_steel_demand(year_end: int) -> pd.DataFrame:
-    logger.info(f'-- Extedning the Steel Demand DataFrame to {year_end}')
-    scenarios = ['Circular', 'BAU']
-    steel_types = ['Crude', 'Scrap']
+    logger.info(f"-- Extedning the Steel Demand DataFrame to {year_end}")
+    scenarios = ["Circular", "BAU"]
+    steel_types = ["Crude", "Scrap"]
     steel_demand_perms = create_list_permutations(steel_types, scenarios)
-    global_demand = read_pickle_folder(PKL_DATA_IMPORTS, 'steel_demand', 'df')
+    global_demand = read_pickle_folder(PKL_DATA_IMPORTS, "steel_demand", "df")
     df_list = []
     for permutation in steel_demand_perms:
         steel_type = permutation[0]
         scenario = permutation[1]
-        if steel_type == 'Crude' and scenario == 'BAU':
-            series_type = 'geometric'
-            growth_type = 'fixed'
+        if steel_type == "Crude" and scenario == "BAU":
+            series_type = "geometric"
+            growth_type = "fixed"
             value_change = 2850
-        if steel_type == 'Crude' and scenario == 'Circular':
-            series_type = 'linear'
-            growth_type = 'fixed'
+        if steel_type == "Crude" and scenario == "Circular":
+            series_type = "linear"
+            growth_type = "fixed"
             value_change = 1500
-        if steel_type == 'Scrap' and scenario == 'BAU':
-            series_type = 'geometric'
-            growth_type = 'pct'
+        if steel_type == "Scrap" and scenario == "BAU":
+            series_type = "geometric"
+            growth_type = "pct"
             value_change = 15
-        if steel_type == 'Scrap' and scenario == 'Circular':
-            series_type = 'geometric'
-            growth_type = 'pct'
+        if steel_type == "Scrap" and scenario == "Circular":
+            series_type = "geometric"
+            growth_type = "pct"
             value_change = 20
         df = full_model_flow(
-            df=global_demand[(global_demand['Steel Type'] == steel_type) & (global_demand['Scenario'] == scenario)],
-            year_value_col_dict={'year': 'Year', 'value': 'Value'},
-            static_value_override_dict={'Source': 'RMI + Model Extension beyond 2050', 'Excel Tab': 'Extended from Excel'},
-            new_end_year = year_end,
-            series_type = series_type,
-            growth_type = growth_type,
-            value_change = value_change,
-            year_only=True
+            df=global_demand[
+                (global_demand["Steel Type"] == steel_type)
+                & (global_demand["Scenario"] == scenario)
+            ],
+            year_value_col_dict={"year": "Year", "value": "Value"},
+            static_value_override_dict={
+                "Source": "RMI + Model Extension beyond 2050",
+                "Excel Tab": "Extended from Excel",
+            },
+            new_end_year=year_end,
+            series_type=series_type,
+            growth_type=growth_type,
+            value_change=value_change,
+            year_only=True,
         )
         df_list.append(df)
     return pd.concat(df_list).reset_index(drop=True)

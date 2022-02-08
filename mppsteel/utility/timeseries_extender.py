@@ -181,14 +181,16 @@ def combine_timeseries(
     logger.info(f"Combining the original and extended timeseries")
     df_c = df.copy()
     new_df = pd.DataFrame(index=range(len(added_date_range)), columns=df_c.columns)
-    new_df[year_value_col_dict['year']] = added_date_range
-    new_df[year_value_col_dict['value']] = values
+    new_df[year_value_col_dict["year"]] = added_date_range
+    new_df[year_value_col_dict["value"]] = values
     for col_val in static_col_mapper.items():
         new_df[col_val[0]] = col_val[1]
     return pd.concat([df_c, new_df])
 
 
-def generate_timeseries_plots(df_list: list, year_colname: str, value_colname: str) -> None:
+def generate_timeseries_plots(
+    df_list: list, year_colname: str, value_colname: str
+) -> None:
     """Produces a plot of each timeseries.
 
     Args:
@@ -210,7 +212,7 @@ def full_model_flow(
     growth_type: str,
     value_change: float = 0,
     plot_dfs: bool = False,
-    year_only: bool = True, # change this!!!!
+    year_only: bool = True,  # change this!!!!
 ) -> pd.DataFrame:
     """A full run through the complete cycle to produce an extended timeseries.
 
@@ -256,7 +258,9 @@ def full_model_flow(
             year_value_col_dict["year"],
             year_value_col_dict["value"],
         )
-    if year_only: # Change this!!!
-        combined_df[year_value_col_dict["year"]] = pd.DatetimeIndex(combined_df[year_value_col_dict["year"]]).year
+    if year_only:  # Change this!!!
+        combined_df[year_value_col_dict["year"]] = pd.DatetimeIndex(
+            combined_df[year_value_col_dict["year"]]
+        ).year
 
     return combined_df

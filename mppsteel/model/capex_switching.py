@@ -7,16 +7,15 @@ from tqdm import tqdm
 # For logger
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import create_line_through_points
-from mppsteel.utility.file_handling_utility import (
-    read_pickle_folder, serialize_file
-)
+from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
 from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.model_config import (
     PKL_DATA_IMPORTS,
     PKL_DATA_INTERMEDIATE,
     SWITCH_CAPEX_DATA_POINTS,
-    MODEL_YEAR_END, MODEL_YEAR_START
+    MODEL_YEAR_END,
+    MODEL_YEAR_START,
 )
 
 from mppsteel.utility.reference_lists import (
@@ -79,11 +78,13 @@ def get_capex_values(
         year_range = [single_year]
 
     year_list = []
-    for year in tqdm(year_range, total=len(year_range), desc='Get Capex Values'):
+    for year in tqdm(year_range, total=len(year_range), desc="Get Capex Values"):
         logger.info(f"Calculating year {year}")
 
         tech_list = []
-        for technology in tqdm(SWITCH_DICT.keys(), total=len(SWITCH_DICT), desc=f'Technology'):
+        for technology in tqdm(
+            SWITCH_DICT.keys(), total=len(SWITCH_DICT), desc=f"Technology"
+        ):
             # logger.info(f"-- Generating Capex values for {technology}")
 
             df_temp = df_dict_c[technology].copy()
@@ -330,6 +331,7 @@ def get_capex_values(
         .sort_index(ascending=True)
     )
 
+
 @timer_func
 def create_capex_timeseries(serialize: bool = False) -> pd.DataFrame:
     """Runs through the flow to create a capex dictionary.
@@ -350,5 +352,7 @@ def create_capex_timeseries(serialize: bool = False) -> pd.DataFrame:
         year_end=max_model_year,
     )
     if serialize:
-        serialize_file(switching_df_with_capex, PKL_DATA_INTERMEDIATE, "capex_switching_df")
+        serialize_file(
+            switching_df_with_capex, PKL_DATA_INTERMEDIATE, "capex_switching_df"
+        )
     return switching_df_with_capex
