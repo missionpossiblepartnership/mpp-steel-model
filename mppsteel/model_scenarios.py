@@ -72,6 +72,96 @@ DEFAULT_SCENARIO = {
     "tech_switch_scenario": "equal_weight",  # max_abatement / lowest_cost / equal_weight
     "solver_logic": "scale",  # scale / rank
 }
+TECH_MORATORIUM = {
+    'tech_moratorium': True, 
+    'enforce_constraints': True, 
+    'transitional_switch': True, 
+    'carbon_tax_scenario': 'off', 
+    'green_premium_scenario': 'off', 
+    'electricity_cost_scenario': 'average', 
+    'grid_scenario': 'high',
+    'hydrogen_cost_scenario': 'average', 
+    'biomass_cost_scenario': 'average', 
+    'ccus_cost_scenario': 'low', 
+    'steel_demand_scenario': 'bau', 
+    'tech_switch_scenario': 'lowest_cost', 
+    'solver_logic': 'rank' 
+}
+CARBON_COST = {
+    'tech_moratorium': False, 
+    'enforce_constraints': True, 
+    'transitional_switch': True, 
+    'carbon_tax_scenario': 'average', 
+    'green_premium_scenario': 'off', 
+    'electricity_cost_scenario': 'average', 
+    'grid_scenario': 'high',
+    'hydrogen_cost_scenario': 'average', 
+    'biomass_cost_scenario': 'average', 
+    'ccus_cost_scenario': 'low', 
+    'steel_demand_scenario': 'bau', 
+    'tech_switch_scenario': 'lowest_cost', 
+    'solver_logic': 'rank' 
+}
+BAU_SCENARIO = {
+    'tech_moratorium': False, 
+    'enforce_constraints': True, 
+    'transitional_switch': True, 
+    'carbon_tax_scenario': 'off', 
+    'green_premium_scenario': 'off', 
+    'electricity_cost_scenario': 'average', 
+    'grid_scenario': 'high', 
+    'hydrogen_cost_scenario': 'average', 
+    'biomass_cost_scenario': 'average', 
+    'ccus_cost_scenario': 'low', 
+    'steel_demand_scenario': 'bau',
+    'tech_switch_scenario': 'lowest_cost', 
+    'solver_logic': 'rank' 
+}
+BAU_HIGH_CIRC_SCENARIO = {
+    'tech_moratorium': False, 
+    'enforce_constraints': True,
+    'transitional_switch': True, 
+    'carbon_tax_scenario': 'off', 
+    'green_premium_scenario': 'off', 
+    'electricity_cost_scenario': 'average', 
+    'grid_scenario': 'high', 
+    'hydrogen_cost_scenario': 'average', 
+    'biomass_cost_scenario': 'average', 
+    'ccus_cost_scenario': 'low', 
+    'steel_demand_scenario': 'high', 
+    'tech_switch_scenario': 'lowest_cost', 
+    'solver_logic': 'rank' 
+}
+ABATEMENT_SCENARIO = {
+    'tech_moratorium': False, 
+    'enforce_constraints': True, 
+    'transitional_switch': True, 
+    'carbon_tax_scenario': 'off', 
+    'green_premium_scenario': 'off', 
+    'electricity_cost_scenario': 'average', 
+    'grid_scenario': 'high', 
+    'hydrogen_cost_scenario': 'average', 
+    'biomass_cost_scenario': 'average', 
+    'ccus_cost_scenario': 'low', 
+    'steel_demand_scenario': 'bau', 
+    'tech_switch_scenario': 'max_abatement',
+    'solver_logic': 'rank' 
+}
+ABATEMENT_HIGH_CIRC_SCENARIO = {
+    'tech_moratorium': False, 
+    'enforce_constraints': True, 
+    'transitional_switch': True, 
+    'carbon_tax_scenario': 'off', 
+    'green_premium_scenario': 'off', 
+    'electricity_cost_scenario': 'average', 
+    'grid_scenario': 'high', 
+    'hydrogen_cost_scenario': 'average',
+    'biomass_cost_scenario': 'average', 
+    'ccus_cost_scenario': 'low', 
+    'steel_demand_scenario': 'high', 
+    'tech_switch_scenario': 'max_abatement',
+    'solver_logic': 'rank' 
+}
 
 SCENARIO_OPTIONS = {
     "default": DEFAULT_SCENARIO,
