@@ -198,7 +198,7 @@ def total_plant_capacity(plant_cap_dict: dict) -> float:
         calculate_primary_and_secondary(
             plant_cap_dict, plant, plant_cap_dict[plant]["2020_tech"]
         )
-        for plant in plant_cap_dict.keys()
+        for plant in plant_cap_dict
     ]
     all_capacities = [x for x in all_capacities if str(x) != "nan"]
     return sum(all_capacities)

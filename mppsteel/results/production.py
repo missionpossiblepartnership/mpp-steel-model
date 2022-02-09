@@ -93,7 +93,7 @@ def tech_capacity_splits() -> Tuple[pd.DataFrame, int]:
     steel_plant_dict = dict(
         zip(steel_plant_df["plant_name"].values, steel_plant_df["country_code"].values)
     )
-    max_year = max([int(year) for year in tech_choices_dict.keys()])
+    max_year = max([int(year) for year in tech_choices_dict])
     steel_plants = tech_capacities_dict.keys()
     year_range = range(MODEL_YEAR_START, max_year + 1)
     df_list = []
@@ -303,7 +303,7 @@ def production_results_flow(scenario_dict: dict, serialize: bool = False) -> dic
         "production_emissions": production_emissions,
     }
 
-    for key in results_dict.keys():
+    for key in results_dict:
         if key in ["production_resource_usage", "production_emissions"]:
             results_dict[key] = add_results_metadata(
                 results_dict[key], scenario_dict, single_line=True

@@ -148,7 +148,7 @@ def create_full_steel_plant_ref(eur_usd_rate: float) -> pd.DataFrame:
         value_mapper, enum_dict=enumerated_cols, axis=1, raw=True
     )
     pair_list = []
-    for tech in SWITCH_DICT.keys():
+    for tech in SWITCH_DICT:
         pair_list.append(list(itertools.product([tech], SWITCH_DICT[tech])))
     all_tech_switch_combinations = [item for sublist in pair_list for item in sublist]
     df_list = []
@@ -187,10 +187,10 @@ def map_region_tco_to_plants(
     combined_df = steel_plant_ref.join(opex_capex_ref_c, how="left").reset_index()
     # Add rule to say if switch tech is a low carbon tax, apply the green premium, else apply zero
     def value_mapper(row):
-        opex = row["capex_value"] + row["discounted_opex"]
+        opex = float(row["capex_value"] + row["discounted_opex"])
         if row.switch_tech in LOW_CARBON_TECHS:
-            opex -= row["discounted_green_premium"]
-        row["tco"] = opex / INVESTMENT_CYCLE_LENGTH
+            opex -= float(row["discounted_green_premium"])
+        row["tco"] = float(opex / INVESTMENT_CYCLE_LENGTH)
         return row
 
     combined_df["tco"] = 0

@@ -83,7 +83,7 @@ def get_capex_values(
 
         tech_list = []
         for technology in tqdm(
-            SWITCH_DICT.keys(), total=len(SWITCH_DICT), desc=f"Technology"
+            SWITCH_DICT, total=len(SWITCH_DICT), desc=f"Technology"
         ):
             # logger.info(f"-- Generating Capex values for {technology}")
 

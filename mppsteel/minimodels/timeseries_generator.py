@@ -49,7 +49,7 @@ def timeseries_generator(
     # Create the DataFrame
     df = pd.DataFrame(
         index=pd.RangeIndex(0, len(year_range)),
-        columns=[key.lower() for key in df_schema.keys()],
+        columns=[key.lower() for key in df_schema],
     )
     # Define the year columns
     df["year"] = year_range

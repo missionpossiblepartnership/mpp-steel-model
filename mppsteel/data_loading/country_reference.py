@@ -124,7 +124,7 @@ def country_ref_getter(
     Returns:
         CountryMetadata: A country class object with the country data loaded as attributes.
     """
-    if country_code in country_ref_dict.keys():
+    if country_code in country_ref_dict:
         country_class = country_ref_dict[country_code]
     if ref in dir(country_class):
         return getattr(country_class, ref)

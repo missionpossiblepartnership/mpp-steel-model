@@ -307,7 +307,7 @@ def regional_s2_emissivity(
         desc="All Country Code S2 Emission: Year Loop",
     ):
         for country_code in steel_plant_country_codes:
-            for technology in SWITCH_DICT.keys():
+            for technology in SWITCH_DICT:
                 value = get_s2_emissions(
                     power_model_formatted,
                     hydrogen_model_formatted,

@@ -54,9 +54,8 @@ def get_countries_from_group(
 def steel_demand_region_assignor(
     region: str, country_ref: pd.DataFrame, rmi_matcher: dict
 ) -> list:
-    if region in rmi_matcher.keys():
-        return rmi_matcher[region]
-    return get_countries_from_group(country_ref, "RMI Model Region", region)
+    return rmi_matcher.get(
+        region, get_countries_from_group(country_ref, "RMI Model Region", region))
 
 
 @pa.check_input(REGIONAL_STEEL_DEMAND_SCHEMA)

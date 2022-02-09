@@ -1,6 +1,6 @@
 """Function that extends a timeseries beyond its boundaries flexible assumptions."""
 
-from typing import Union, Tuple
+from typing import Tuple
 
 import pandas as pd
 import numpy as np
@@ -153,9 +153,9 @@ def create_dict_mapper(
     new_dict_column_mapper = {}
     current_dict_mapping = dict(original_df.iloc[0])  # gets first row for mapping
     for value in static_column_list:
-        if value in current_dict_mapping.keys():
+        if value in current_dict_mapping:
             new_dict_column_mapper[value] = current_dict_mapping[value]
-        if value in values_to_override.keys():
+        if value in values_to_override:
             new_dict_column_mapper[value] = values_to_override[value]
     return new_dict_column_mapper
 
@@ -178,7 +178,7 @@ def combine_timeseries(
     Returns:
         pd.DataFrame: A new combined timeseries
     """
-    logger.info(f"Combining the original and extended timeseries")
+    logger.info('Combining the original and extended timeseries')
     df_c = df.copy()
     new_df = pd.DataFrame(index=range(len(added_date_range)), columns=df_c.columns)
     new_df[year_value_col_dict["year"]] = added_date_range
@@ -198,7 +198,7 @@ def generate_timeseries_plots(
         year_colname (str): The name of the column containing the years.
         value_colname (str): The name of the column containing the values.
     """
-    logger.info(f"Generating plots for the original and extended timeseries")
+    logger.info(f'Generating plots for the original and extended timeseries')
     for df in df_list:
         df.plot(x=year_colname, y=value_colname)
 
@@ -228,7 +228,7 @@ def full_model_flow(
     Returns:
         pd.DataFrame: A dataframe containing the new extended timeseries.
     """
-    logger.info(f"Running through the complete timeseries generation flow.")
+    logger.info(f'Running through the complete timeseries generation flow.')
     (
         df_f,
         full_date_range,
