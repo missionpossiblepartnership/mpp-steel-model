@@ -94,7 +94,17 @@ def split_regions(
     return pd.concat([df_c, new_dfs]).reset_index(drop=True)
 
 
-def create_regional_split(df: pd.DataFrame, region_type: str, split_type: str):
+def create_regional_split(df: pd.DataFrame, region_type: str, split_type: str) -> pd.DataFrame:
+    """The flow to create a DataFrame timeseries split by region according to a specified schema.
+
+    Args:
+        df (pd.DataFrame): The DataFrame containing the timeseries you want to split across regions.
+        region_type (str): The regional schema you want to use to segment each region.
+        split_type (str): Determines whether you want to split the data in equal proportions or via a random split.
+
+    Returns:
+        pd.DataFrame: A modified DataFrame containing the regional splits.
+    """
     country_ref_dict = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "country_reference_dict", "df"
     )

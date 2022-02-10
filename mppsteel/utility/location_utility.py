@@ -27,7 +27,7 @@ def country_mapping_fixer(
         country_to_code_dict (dict): The name of the dictionary containing the country and the code.
 
     Returns:
-        pd.DataFrame: An amended dataframe with the code mappings fixed
+        pd.DataFrame: An amended dataframe with the code mappings fixed.
     """
     df_c = df.copy()
 
@@ -38,27 +38,48 @@ def country_mapping_fixer(
 
 
 def match_country(country: str) -> str:
-    # try to match the country to using pycountry.
-    # If not match, return an empty string
+    """Matches a country string to a recognised ISO Alpha-3 country code using the pycountry library.
+
+    Args:
+        country (str): The string containing the country name you want to match.
+
+    Returns:
+        str: A string containing the matched country. Return an empty string if no match is found.
+    """
     try:
         match = pycountry.countries.search_fuzzy(country)
-        match = match[0].alpha_3
-        return match
+        return match[0].alpha_3
     except:  # Currently no exception specification.
         return ""
 
 
+def official_country_attr_getter(country_code: str, attr: str = 'official_name') -> str:
+    """Gets an attribute from a given country code. Using the pycountry library.
+
+    Args:
+        country_code (str): The official ISO Alpha-3 country code that you want to match.
+        attr (str) : The attribute of the matched pycountry object. Defaults to 'official_name'.
+
+    Returns:
+        str: The attribute of the matched country object.
+    """
+    match = pycountry.countries.get(alpha_3=country_code)
+    match_attributes = dir(match)
+    if attr in match_attributes:
+        return getattr(match, attr)
+    return ""
+
+
 def country_matcher(country_list: list, output_type: str = "all") -> dict:
-    """Fuzzy matches a list of countries and creates a mapping of the country to alpha-3 name.
+    """Fuzzy matches a list of countries and creates a mapping of the country to ISO Alpha-3 name.
     The function produces a dictionary of mappings and also a dictionary of all unmapped countries.
 
     Args:
         country_list (list): The list of countries you would like to map.
-        output_type (str, optional): The output you want - mapped dictionary, unmapped dictionary or both.
-        Defaults to 'all'.
+        output_type (str, optional): The output you want - mapped dictionary, unmapped dictionary or both. Defaults to 'all'.
 
     Returns:
-        dict: A dictionary(ies) based on the output_type parameters
+        dict: Dictionary(ies) based on the output_type parameters.
     """
 
     # Generate matched entries
@@ -76,20 +97,25 @@ def country_matcher(country_list: list, output_type: str = "all") -> dict:
         return unmatched_dict
 
 
-def official_country_name_getter(country_code: str) -> str:
-    match = pycountry.countries.get(alpha_3=country_code)
-    match_attributes = dir(match)
-    if "official_name" in match_attributes:
-        return match.official_name
-    return ""
-
-
 CountryMetadata = namedtuple("CountryMetadata", NEW_COUNTRY_COL_LIST)
 
 
 def get_region_from_country_code(
     country_code: str, schema: str, country_ref_dict: dict
 ) -> str:
+    """Gets a prespecified country region from a country code.
+
+    Args:
+        country_code (str): The country code you want to map to a region.
+        schema (str): The region schema you want to use in your mapping.
+        country_ref_dict (dict): The mapping of country codes to regions implemented as a CountryMetadata Class.
+
+    Raises:
+        AttributeError: If the schema inputted is not in the CountryMetaData class, then error is raised.
+
+    Returns:
+        str: The request region from the schema you have specified.
+    """
     if country_code == "TWN":
         country_code = "CHN"  # !!! Not a political statement. Blame the lookup ref !!!!
     country_metadata_obj = country_ref_dict[country_code]

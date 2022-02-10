@@ -17,10 +17,10 @@ LOG_FORMATTER = logging.Formatter(
 
 
 def get_console_handler() -> logging.StreamHandler:
-    """Formats the log for console output
+    """Formats the log for console output.
 
     Returns:
-        StreamHandler: A formatted stream handler
+        StreamHandler: A formatted stream handler.
     """
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(LOG_FORMATTER)
@@ -28,10 +28,10 @@ def get_console_handler() -> logging.StreamHandler:
 
 
 def get_file_handler() -> TimedRotatingFileHandler:
-    """Formats the log for file output
+    """Formats the log for file output.
 
     Returns:
-        [type]: A formatted file handler
+        [type]: A formatted file handler.
     """
     today_time = datetime.today().strftime("%y%m%d_%H%M%S")
     if not Path(LOG_PATH).is_dir():
@@ -45,15 +45,15 @@ def get_file_handler() -> TimedRotatingFileHandler:
     return file_handler
 
 
-def get_logger(logger_name, create_logfile: bool = True) -> logging.Logger:
-    """Creates a log object that can be outputted to file or std output.
+def get_logger(logger_name: str, create_logfile: bool = True) -> logging.Logger:
+    """Creates a log object that can be outputted to file or console output.
 
     Args:
-        logger_name ([type]): Defines the name of the log based on the user input.
+        logger_name (str): Defines the name of the log based on the user input.
         create_logfile (bool, optional): Determines whether to create a logfile. Defaults to False.
 
     Returns:
-        [type]: [description]
+        logging.Logger: A logger that can used to log runtime code.
     """
     generic_logger = logging.getLogger(logger_name)
     generic_logger.setLevel(

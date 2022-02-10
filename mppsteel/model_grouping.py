@@ -74,8 +74,8 @@ def get_inputted_scenarios(scenario_options: dict, default_scenario: dict) -> di
 
 
 def add_currency_rates_to_scenarios(scenario_dict: dict) -> dict:
-    scenario_dict["eur_usd"] = get_currency_rate("eur")
-    scenario_dict["usd_eur"] = get_currency_rate("usd")
+    scenario_dict["eur_usd"] = get_currency_rate("eur", "usd")
+    scenario_dict["usd_eur"] = get_currency_rate("usd", "eur")
     return scenario_dict
 
 

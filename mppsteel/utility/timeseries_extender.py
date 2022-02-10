@@ -198,7 +198,7 @@ def generate_timeseries_plots(
         year_colname (str): The name of the column containing the years.
         value_colname (str): The name of the column containing the values.
     """
-    logger.info(f'Generating plots for the original and extended timeseries')
+    logger.info('Generating plots for the original and extended timeseries')
     for df in df_list:
         df.plot(x=year_colname, y=value_colname)
 
@@ -228,7 +228,7 @@ def full_model_flow(
     Returns:
         pd.DataFrame: A dataframe containing the new extended timeseries.
     """
-    logger.info(f'Running through the complete timeseries generation flow.')
+    logger.info('Running through the complete timeseries generation flow.')
     (
         df_f,
         full_date_range,

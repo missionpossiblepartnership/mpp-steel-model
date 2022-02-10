@@ -37,7 +37,7 @@ from mppsteel.data_loading.data_interface import (
     carbon_tax_getter,
 )
 
-from mppsteel.utility.transform_units import mwh_gj
+from mppsteel.utility.transform_units import transform_units
 
 from mppsteel.model_scenarios import (
     COST_SCENARIO_MAPPER,
@@ -275,11 +275,9 @@ def get_s2_emissions(
             "value"
         ].values[0]
 
-    total_s2_emission = ((h2_emissions / 1000) * hydrogen_consumption) + (
-        mwh_gj(electricity_emissions, "larger") * electricity_consumption
+    return ((h2_emissions / 1000) * hydrogen_consumption) + (
+        transform_units(electricity_emissions, "mwh_gj", "larger") * electricity_consumption
     )
-
-    return total_s2_emission
 
 
 def regional_s2_emissivity(

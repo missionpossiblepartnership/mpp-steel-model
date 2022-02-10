@@ -20,10 +20,14 @@ def read_pickle_folder(
 
     Args:
         data_path (str): A path in the repository where pickle files are stored
+        pkl_file (str, optional): The file you want to unpickle. Defaults to "".
+        mode (str, optional): Describes the unpickled format: A dictionary (dict) or a DataFrame (df). Defaults to "dict".
+        log (bool, optional): Optional flag to log file read. Defaults to False.
 
     Returns:
-        [dict]: A dictionary with keys based on the file names without the extension.
+        Union[pd.DataFrame, dict]: A DataFrame or a Dictionary object depending on `mode`.
     """
+
     if pkl_file:
         mode = "df"
 
@@ -57,7 +61,7 @@ def extract_data(
         sheet (int, optional): Number of the sheet to extract. For xlsx (workbook) files only. - . Defaults to 0.
 
     Returns:
-        DataFrame: A dataframe of the data file
+        pd.DataFrame: A dataframe of the data file
     """
     # Full path of the file
     full_filename = fr"{data_path}/{filename}.{ext}"
@@ -96,6 +100,10 @@ def serialize_df_dict(data_path: str, data_dict: dict) -> None:
 
 
 def create_folders_if_nonexistant(folder_list: list) -> None:
+    """For each path in the `folder_list`, check if the folder already exists, if it doesn't create it.
+    Args:
+        folder_list (list): A list of folder paths to check.
+    """
     for folder_path in folder_list:
         if os.path.isdir(folder_path):
             logger.info(f"{folder_path} already exists")
@@ -107,6 +115,14 @@ def create_folders_if_nonexistant(folder_list: list) -> None:
 def pickle_to_csv(
     folder_path: str, pkl_folder: str, pickle_filename: str, csv_filename: str = ""
 ) -> None:
+    """Checks a folder path where a pickled DataFrame is stored. Loads the DataFrame and converts it to a .csv file.
+
+    Args:
+        folder_path (str): The path where you want to save the .csv file.
+        pkl_folder (str): The path where the pickled DataFrame is stored.
+        pickle_filename (str): The name of the pickle file you want to load. (No .pkl/.pickle extension necessary).
+        csv_filename (str, optional): The name of the newly created csv file. (No .csv extension necessary). If none, defaults to pickle_filename. Defaults to "".
+    """
     df = read_pickle_folder(pkl_folder, pickle_filename)
     logger.info(
         f"||| Saving {pickle_filename} pickle file as {csv_filename or pickle_filename}.csv"
