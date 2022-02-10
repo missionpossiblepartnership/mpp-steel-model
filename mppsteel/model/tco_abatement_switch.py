@@ -131,7 +131,7 @@ def create_full_steel_plant_ref(eur_usd_rate: float) -> pd.DataFrame:
                 steel_plants,
                 green_premium_timeseries,
                 row[enum_dict["country_code"]],
-                row[enum_dict["plant_name"]],  # remove ref to region
+                row[enum_dict["plant_name"]],
                 row[enum_dict["technology_in_2020"]],
                 year_loop_val,
                 eur_usd_rate,
@@ -148,7 +148,7 @@ def create_full_steel_plant_ref(eur_usd_rate: float) -> pd.DataFrame:
         value_mapper, enum_dict=enumerated_cols, axis=1, raw=True
     )
     pair_list = []
-    for tech in SWITCH_DICT.keys():
+    for tech in SWITCH_DICT:
         pair_list.append(list(itertools.product([tech], SWITCH_DICT[tech])))
     all_tech_switch_combinations = [item for sublist in pair_list for item in sublist]
     df_list = []
@@ -173,8 +173,9 @@ def map_region_tco_to_plants(
     steel_plant_ref: pd.DataFrame, opex_capex_ref: pd.DataFrame
 ) -> pd.DataFrame:
     logger.info("Mapping Regional emissions dict to plants")
-    # Format TCO values
+
     opex_capex_ref_c = opex_capex_ref.reset_index(drop=True).copy()
+    
     opex_capex_ref_c.rename(
         {"start_technology": "base_tech", "end_technology": "switch_tech"},
         axis="columns",
@@ -185,7 +186,7 @@ def map_region_tco_to_plants(
     )
     logger.info("Joining tco values on steel plant df")
     combined_df = steel_plant_ref.join(opex_capex_ref_c, how="left").reset_index()
-    # Add rule to say if switch tech is a low carbon tax, apply the green premium, else apply zero
+
     def value_mapper(row):
         opex = float(row["capex_value"] + row["discounted_opex"])
         if row.switch_tech in LOW_CARBON_TECHS:
@@ -194,7 +195,8 @@ def map_region_tco_to_plants(
         return row
 
     combined_df["tco"] = 0
-    combined_df["tco"] = combined_df.apply(value_mapper, axis=1)
+    combined_df = combined_df.apply(value_mapper, axis=1)
+
     new_col_order = [
         "year",
         "plant_id",

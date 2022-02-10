@@ -42,9 +42,9 @@ def stdout_query(question: str, default: str, options: str) -> None:
         choice = input().lower()
         if choice == "":
             return default
-        elif choice != "" and choice in options:
+        elif choice in options:
             return choice
-        elif choice != "" and choice not in options:
+        else:
             sys.stdout.write(f"Please respond with a choice from {options}.\n")
 
 

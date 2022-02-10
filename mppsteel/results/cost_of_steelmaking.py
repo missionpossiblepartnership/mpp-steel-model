@@ -44,11 +44,11 @@ def extract_dict_values(
         return sum(
             [
                 main_dict[key][key_to_extract]
-                for key in main_dict.keys()
+                for key in main_dict
                 if key in ref_list
             ]
         )
-    return sum([main_dict[key][key_to_extract] for key in main_dict.keys()])
+    return sum([main_dict[key][key_to_extract] for key in main_dict])
 
 
 def calculate_cc(

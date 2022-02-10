@@ -159,7 +159,7 @@ def emissions_area_chart(
 ) -> px.area:
     scope_mapper = dict(zip(["s1", "s2", "s3"], EMISSION_COLS))
     emission_cols = EMISSION_COLS
-    if scope in scope_mapper.keys():
+    if scope in scope_mapper:
         emission_cols = [scope_mapper[scope]]
     filename_string = "".join(emission_cols)
     filename = f"{scope}_emissions_per_technology"

@@ -37,10 +37,7 @@ def create_region_dict_generator(
     region_list = []
 
     def extract_unique_attrs(attr_name: str):
-        ref_list = []
-        for key in country_ref.keys():
-            cm_object = country_ref[key]
-            ref_list.append(getattr(cm_object, attr_name))
+        ref_list = [getattr(country_ref[key], attr_name) for key in country_ref]
         return list(set(ref_list))
 
     if region_type == "continent":
@@ -81,19 +78,18 @@ def split_regions(
     Returns:
         pd.DataFrame: A DataFrame with a regional split of the global values.
     """
-    logger.info(f"-- Splitting the global timeseries database")
+    logger.info('-- Splitting the global timeseries database')
     df_c = df.copy()
     df_c["region"] = "Global"
     df_list = []
-    for country in regional_splits.keys():
+    for country, value in regional_splits():
         df_n = df_c.copy()
         df_n["region"] = country
-        value = regional_splits[country]
         df_n[value_column] = df_n[value_column].apply(lambda x: x * value)
         df_list.append(df_n)
     new_dfs = pd.concat(df_list)
     if drop_global:
-        logger.info(f"-- Dropping the global values")
+        logger.info('-- Dropping the global values')
         return new_dfs.reset_index(drop=True)
     return pd.concat([df_c, new_dfs]).reset_index(drop=True)
 

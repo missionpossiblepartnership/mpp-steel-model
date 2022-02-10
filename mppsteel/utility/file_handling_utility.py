@@ -33,7 +33,7 @@ def read_pickle_folder(
         with open(fr"{data_path}/{pkl_file}.pickle", "rb") as f:
             return pickle.load(f)
 
-    if mode == "dict":
+    elif mode == "dict":
         if log:
             logger.info(f"||| Loading pickle files from path {data_path}")
         new_data_dict = {}
@@ -69,18 +69,18 @@ def extract_data(
         return pd.read_csv(full_filename)
 
 
-def serialize_file(object, pkl_folder: str, filename: str) -> None:
+def serialize_file(obj, pkl_folder: str, filename: str) -> None:
     """Serializes a file using the pickle protocol.
 
     Args:
-        object: The object that you want to serialize.
+        obj: The object that you want to serialize.
         pkl_folder (str): The folder where you want to store the pickle file.
         filename (str): The name of the file you want to use (do not include a file extension in the string)
     """
     with open(f"{pkl_folder}/{filename}.pickle", "wb") as f:
         # Pickle the 'data' using the highest protocol available.
         logger.info(f"* Saving Pickle file {filename} to path")
-        pickle.dump(object, f, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
 
 
 def serialize_df_dict(data_path: str, data_dict: dict) -> None:
@@ -91,7 +91,7 @@ def serialize_df_dict(data_path: str, data_dict: dict) -> None:
         data_path (str): The path where the pickle files will be stored
     """
     logger.info(f"||| Serializing each df to a pickle file {data_path}")
-    for df_name in data_dict.keys():
+    for df_name in data_dict:
         serialize_file(data_dict[df_name], data_path, df_name)
 
 

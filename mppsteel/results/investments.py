@@ -168,7 +168,7 @@ def create_inv_stats(
             region_dict[region] = calc
         if agg:
             df_list = []
-            for region_key in region_dict.keys():
+            for region_key in region_dict:
                 df_r = region_dict[region_key]
                 df_r["region"] = region_key
                 df_list.append(df_r[["region", "capital_cost"]])
@@ -203,7 +203,7 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
         PKL_DATA_FINAL, "production_resource_usage", "df"
     )
     capex_df = create_capex_dict()
-    max_year = max([int(year) for year in tech_choice_dict.keys()])
+    max_year = max([int(year) for year in tech_choice_dict])
     year_range = range(MODEL_YEAR_START, max_year + 1)
     data_container = []
     for plant_name, country_code in tqdm(

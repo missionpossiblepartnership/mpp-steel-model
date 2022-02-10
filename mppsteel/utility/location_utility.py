@@ -62,15 +62,11 @@ def country_matcher(country_list: list, output_type: str = "all") -> dict:
     """
 
     # Generate matched entries
-    countries_dict = {}
-    for country in country_list:
-        countries_dict[country] = match_country(country)
-
+    countries_dict = {country: match_country(country) for country in country_list}
     # Get reference of unmatched entries
-    unmatched_dict = {}
-    for item in countries_dict.items():
-        if not item[1]:
-            unmatched_dict[item[0]] = item[1]
+    unmatched_dict = {
+        item[0]: item[1] for item in countries_dict.items() if not item[1]
+    }
 
     if output_type == "all":
         return countries_dict, unmatched_dict
@@ -97,10 +93,9 @@ def get_region_from_country_code(
     if country_code == "TWN":
         country_code = "CHN"  # !!! Not a political statement. Blame the lookup ref !!!!
     country_metadata_obj = country_ref_dict[country_code]
-    options = ["m49_code", "region", "continent", "wsa_region", "rmi_region"]
     if schema in dir(country_metadata_obj):
         return getattr(country_metadata_obj, schema)
-    else:
-        raise AttributeError(
-            f"Schema: {schema} is not an attribute of {country_code} CountryMetadata object. Choose from the following options: {options}"
-        )
+    options = ["m49_code", "region", "continent", "wsa_region", "rmi_region"]
+    raise AttributeError(
+        f"Schema: {schema} is not an attribute of {country_code} CountryMetadata object. Choose from the following options: {options}"
+    )

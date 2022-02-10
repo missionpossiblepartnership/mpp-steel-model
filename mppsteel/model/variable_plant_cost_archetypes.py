@@ -56,7 +56,7 @@ def generate_feedstock_dict() -> dict:
         "ethanol": "Ethanol",
         "charcoal": "Charcoal",
     }
-    for key in commodity_dictname_mapper.keys():
+    for key in commodity_dictname_mapper:
         commodities_dict[commodity_dictname_mapper[key]] = commodities_dict.pop(key)
     return {
         **commodities_dict,
