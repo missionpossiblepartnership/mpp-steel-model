@@ -136,7 +136,7 @@ dmypy.json
 *.log
 
 # tests
-/tests
+mppsteel/tests/business_case_tests
 
 # pickle files
 mppsteel/data/pkl_data
