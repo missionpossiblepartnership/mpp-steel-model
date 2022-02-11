@@ -134,48 +134,26 @@ def get_capex_values(
                             or new_technology == "BAT BF-BOF+CCU"
                             or new_technology == "BAT BF-BOF+BECCUS"
                         ):
-                            if technology == "Avg BF-BOF":
-                                switch_capex_value = (
-                                    capex_generator(capex_dict_ref, "BAT BF-BOF", year)[
-                                        "brownfield"
-                                    ]
-                                    + capex_difference
+                        
+                            switch_capex_value = (
+                                capex_generator(capex_dict_ref, "BAT BF-BOF", year)[
+                                "brownfield"
+                                ]
+                                + capex_difference
                                 )
-                                df_temp.loc[
-                                    (df_temp["Start Technology"] == technology)
-                                    & (df_temp["New Technology"] == new_technology),
-                                    "value",
-                                ] = switch_capex_value
-
-                            elif (
-                                technology == "BAT BF-BOF_bio PCI"
-                                or technology == "BAT BF-BOF_H2 PCI"
-                            ):
-                                switch_capex_value = hard_coded_capex_values.loc[
-                                    year
-                                ].values[0]
-                                df_temp.loc[
-                                    (df_temp["Start Technology"] == technology)
-                                    & (df_temp["New Technology"] == new_technology),
-                                    "value",
-                                ] = switch_capex_value
-
-                            else:  # if technology is BAT BF BOF
-                                switch_capex_value = (
-                                    capex_generator(capex_dict_ref, "BAT BF-BOF", year)[
-                                        "brownfield"
-                                    ]
-                                    + capex_difference
-                                )
-                                df_temp.loc[
-                                    (df_temp["Start Technology"] == technology)
-                                    & (df_temp["New Technology"] == new_technology),
-                                    "value",
-                                ] = switch_capex_value
+                            df_temp.loc[
+                                (df_temp["Start Technology"] == technology)
+                                & (df_temp["New Technology"] == new_technology),
+                                "value",
+                            ] = switch_capex_value
 
                         else:  # bio PCI or H2PCI
                             if technology == "Avg BF-BOF":
-                                switch_capex_value = 195
+                                switch_capex_value = (
+                                    capex_generator(capex_dict, "BAT BF-BOF", year)[
+                                    'brownfield'
+                                    ]
+                                )
                                 df_temp.loc[
                                     (df_temp["Start Technology"] == technology)
                                     & (df_temp["New Technology"] == new_technology),
@@ -270,44 +248,55 @@ def get_capex_values(
                         technology in FURNACE_GROUP_DICT["blast_furnace"]
                         and new_technology in FURNACE_GROUP_DICT["dri-bof"]
                     ):
-                        if (
-                            technology == "Avg BF-BOF"
-                            or technology == "BAT BF-BOF"
-                            and new_technology == "DRI-Melt-BOF"
-                            or new_technology == "DRI-Melt-BOF_100% zero-C H2"
-                        ):  # check H2 assumption with Rafal
-                            switch_capex_value = (
-                                capex_generator(capex_dict_ref, "DRI-EAF", year)[
-                                    "greenfield"
+                        if new_technology== "DRI-Melt-BOF+CCUS":
+                            switch_capex_value=(
+                                capex_generator(capex_dict, new_technology, year)[
+                                    'greenfield'
                                 ]
-                                - capex_generator(capex_dict_ref, "EAF", year)[
-                                    "greenfield"
-                                ]
+                                -460/4
                             )
                             df_temp.loc[
-                                (df_temp["Start Technology"] == technology)
-                                & (df_temp["New Technology"] == new_technology),
-                                "value",
-                            ] = switch_capex_value
+                            (df_temp["Start Technology"] == technology)
+                            & (df_temp["New Technology"] == new_technology),
+                            "value",
+                        ] = switch_capex_value
 
-                        elif (
-                            technology == "Avg BF-BOF"
-                            or technology == "BAT BF-BOF"
-                            or technology == "BAT BF-BOF_bio PCI"
-                            or technology == "BAT BF-BOF_H2 PCI"
-                            and new_technology == "DRI-Melt-BOF+CCUS"
-                        ):
-                            switch_capex_value = (
-                                capex_generator(capex_dict_ref, new_technology, year)[
-                                    "greenfield"
+                        elif new_technology == 'DRI-Melt-BOF' or new_technology =='DRI-Melt-BOF_100% zero-C H2':
+                            switch_capex_value=(
+                                capex_generator(capex_dict, 'DRI-EAF', year)[
+                                    'greenfield'
+                                ]-
+                                capex_generator(capex_dict, 'EAF', year)[
+                                    'greenfield'
                                 ]
-                                - 460 / 4
                             )
                             df_temp.loc[
-                                (df_temp["Start Technology"] == technology)
-                                & (df_temp["New Technology"] == new_technology),
-                                "value",
-                            ] = switch_capex_value
+                            (df_temp["Start Technology"] == technology)
+                            & (df_temp["New Technology"] == new_technology),
+                            "value",
+                        ] = switch_capex_value
+                    elif (
+                        technology in FURNACE_GROUP_DICT['dri-eaf']
+                        and new_technology in FURNACE_GROUP_DICT['eaf-advanced']
+                    ):
+                        switch_capex_value=(
+                            capex_generator(capex_dict, new_technology, year)[
+                                'greenfield'
+                            ]-
+                            (
+                            capex_generator(capex_dict, 'EAF', year)[
+                                'greenfield'
+                            ]-
+                            capex_generator(capex_dict, 'EAF', year)[
+                                'brownfield'
+                            ]
+                            )
+                        )
+                        df_temp.loc[
+                            (df_temp["Start Technology"] == technology)
+                            & (df_temp["New Technology"] == new_technology),
+                            "value",
+                        ] = switch_capex_value
 
                     else:
                         switch_capex_value = capex_generator(
