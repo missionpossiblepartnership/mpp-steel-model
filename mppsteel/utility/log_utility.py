@@ -9,7 +9,7 @@ from pathlib import Path
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 
-from mppsteel.model_config import LOG_PATH
+from mppsteel.config.model_config import LOG_PATH
 
 LOG_FORMATTER = logging.Formatter(
     "%(asctime)s — %(name)s — %(levelname)s — %(message)s"

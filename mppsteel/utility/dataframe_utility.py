@@ -9,7 +9,7 @@ from mppsteel.utility.location_utility import get_region_from_country_code
 
 from mppsteel.utility.file_handling_utility import read_pickle_folder
 
-from mppsteel.model_config import (
+from mppsteel.config.model_config import (
     PKL_DATA_INTERMEDIATE,
     RESULTS_REGIONS_TO_MAP,
 )

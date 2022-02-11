@@ -13,7 +13,7 @@ from mppsteel.data_loading.reg_steel_demand_formatter import steel_demand_getter
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.model_config import (
+from mppsteel.config.model_config import (
     MODEL_YEAR_END,
     MODEL_YEAR_START,
     PKL_DATA_FINAL,
@@ -22,7 +22,7 @@ from mppsteel.model_config import (
     INVESTMENT_CYCLE_DURATION_YEARS,
     STEEL_PLANT_LIFETIME_YEARS,
 )
-from mppsteel.utility.reference_lists import TECH_REFERENCE_LIST
+from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
 
 logger = get_logger("Cost of Steelmaking")
 
@@ -330,7 +330,7 @@ def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize: bool = 
     )
 
     if serialize:
-        logger.info(f"-- Serializing dataframes")
+        logger.info("-- Serializing dataframes")
         serialize_file(cos_data, PKL_DATA_FINAL, "cost_of_steelmaking")
         serialize_file(lcos_data, PKL_DATA_FINAL, "levelised_cost_of_steelmaking")
     return {"cos_data": cos_data, "lcos_data": lcos_data}

@@ -11,15 +11,15 @@ from mppsteel.utility.dataframe_utility import return_furnace_group
 from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
 from mppsteel.data_loading.reg_steel_demand_formatter import extend_steel_demand
 
-from mppsteel.model_config import (
+from mppsteel.config.model_config import (
     MODEL_YEAR_START,
     PKL_DATA_IMPORTS,
     PKL_DATA_INTERMEDIATE,
 )
 
-from mppsteel.model_scenarios import TECH_SWITCH_SCENARIOS, SOLVER_LOGICS
+from mppsteel.config.model_scenarios import TECH_SWITCH_SCENARIOS, SOLVER_LOGICS
 
-from mppsteel.utility.reference_lists import (
+from mppsteel.config.reference_lists import (
     SWITCH_DICT,
     TECHNOLOGY_STATES,
     FURNACE_GROUP_DICT,

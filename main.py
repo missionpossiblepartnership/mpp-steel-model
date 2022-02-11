@@ -7,11 +7,11 @@ from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.file_handling_utility import create_folders_if_nonexistant
 from mppsteel.utility.function_timer_utility import TIME_CONTAINER
 
-from mppsteel.model_config import FOLDERS_TO_CHECK_IN_ORDER
+from mppsteel.config.model_config import FOLDERS_TO_CHECK_IN_ORDER
 
-from mppsteel.model_scenarios import DEFAULT_SCENARIO, SCENARIO_SETTINGS, SCENARIO_OPTIONS
+from mppsteel.config.model_scenarios import DEFAULT_SCENARIO, SCENARIO_SETTINGS, SCENARIO_OPTIONS
 
-from mppsteel.model_grouping import *
+from mppsteel.config.model_grouping import *
 
 logger = get_logger("Main Model Code")
 

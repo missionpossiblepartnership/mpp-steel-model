@@ -28,7 +28,7 @@ from mppsteel.utility.file_handling_utility import (
 from mppsteel.utility.dataframe_utility import melt_and_index
 
 # Get model parameters
-from mppsteel.model_config import (
+from mppsteel.config.model_config import (
     MODEL_YEAR_END,
     PKL_DATA_IMPORTS,
     PKL_DATA_INTERMEDIATE,

@@ -7,7 +7,7 @@ from mppsteel.utility.file_handling_utility import extract_data, serialize_df_di
 from mppsteel.utility.function_timer_utility import timer_func
 
 # Get model parameters
-from mppsteel.model_config import (
+from mppsteel.config.model_config import (
     IMPORT_DATA_PATH,
     PKL_DATA_IMPORTS,
     PE_MODEL_FILENAME_DICT,

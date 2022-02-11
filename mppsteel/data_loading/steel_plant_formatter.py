@@ -21,7 +21,7 @@ from mppsteel.utility.file_handling_utility import (
     extract_data,
 )
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
+from mppsteel.config.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
 from mppsteel.validation.data_import_tests import STEEL_PLANT_DATA_SCHEMA
 
 # Create logger

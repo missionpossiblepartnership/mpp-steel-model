@@ -8,13 +8,13 @@ from mppsteel.utility.file_handling_utility import serialize_file
 from mppsteel.utility.function_timer_utility import timer_func
 
 # Get model parameters
-from mppsteel.model_config import (
+from mppsteel.config.model_config import (
     PKL_DATA_INTERMEDIATE,
     MODEL_YEAR_END,
     MODEL_YEAR_START,
 )
 
-from mppsteel.model_scenarios import CARBON_TAX_SCENARIOS, GREEN_PREMIUM_SCENARIOS
+from mppsteel.config.model_scenarios import CARBON_TAX_SCENARIOS, GREEN_PREMIUM_SCENARIOS
 from mppsteel.utility.log_utility import get_logger
 
 # Create logger

@@ -5,7 +5,7 @@ from typing import Union, Tuple
 import pandas as pd
 from tqdm import tqdm
 
-from mppsteel.model_config import (
+from mppsteel.config.model_config import (
     AVERAGE_LEVEL_OF_CAPACITY,
     MODEL_YEAR_START,
     MODEL_YEAR_END,
@@ -13,7 +13,7 @@ from mppsteel.model_config import (
     PKL_DATA_FINAL,
 )
 
-from mppsteel.utility.reference_lists import LOW_CARBON_TECHS
+from mppsteel.config.reference_lists import LOW_CARBON_TECHS
 
 from mppsteel.model.solver import (
     load_materials,

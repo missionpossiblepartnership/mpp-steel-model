@@ -5,8 +5,8 @@ from itertools import zip_longest
 import pandas as pd
 import plotly.express as px
 
-from mppsteel.model_config import PKL_DATA_FINAL
-from mppsteel.utility.reference_lists import MPP_COLOR_LIST, TECH_REFERENCE_LIST
+from mppsteel.config.model_config import PKL_DATA_FINAL
+from mppsteel.config.reference_lists import MPP_COLOR_LIST, TECH_REFERENCE_LIST
 from mppsteel.results.investments import create_inv_stats
 
 from mppsteel.utility.file_handling_utility import read_pickle_folder

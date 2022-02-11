@@ -40,7 +40,7 @@ from mppsteel.results.global_metaresults import metaresults_flow
 from mppsteel.results.investments import investment_results
 from mppsteel.graphs.graph_production import create_graphs
 
-from mppsteel.model_config import (
+from mppsteel.config.model_config import (
     MODEL_YEAR_END,
     OUTPUT_FOLDER,
     PKL_DATA_FINAL,

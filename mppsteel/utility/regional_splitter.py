@@ -8,7 +8,7 @@ import numpy as np
 from mppsteel.utility.file_handling_utility import read_pickle_folder
 from mppsteel.utility.log_utility import get_logger
 
-from mppsteel.model_config import PKL_DATA_INTERMEDIATE
+from mppsteel.config.model_config import PKL_DATA_INTERMEDIATE
 
 # Create logger
 logger = get_logger("Regional Splitter")

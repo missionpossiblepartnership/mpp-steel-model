@@ -4,8 +4,8 @@ from typing import Union
 import pandas as pd
 import plotly.express as px
 
-from mppsteel.model_config import PKL_DATA_FINAL
-from mppsteel.utility.reference_lists import TECH_REFERENCE_LIST
+from mppsteel.config.model_config import PKL_DATA_FINAL
+from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
 
 from mppsteel.utility.file_handling_utility import read_pickle_folder
 from mppsteel.utility.log_utility import get_logger

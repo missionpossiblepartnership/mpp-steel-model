@@ -4,7 +4,7 @@ import pandas as pd
 from tqdm import tqdm
 from tqdm.auto import tqdm as tqdma
 
-from mppsteel.model_config import (
+from mppsteel.config.model_config import (
     AVERAGE_LEVEL_OF_CAPACITY,
     MODEL_YEAR_START,
     PKL_DATA_INTERMEDIATE,
@@ -49,10 +49,7 @@ def global_metaresults_calculator(
     ) / 2
 
     def initial_capacity_assignor(year: int):
-        if 2020 <= year <= 2022:
-            return steel_capacity_years[str(year)]
-        else:
-            return 0
+        return steel_capacity_years[str(year)] if 2020 <= year <= 2022 else 0
 
     def potential_extra_capacity(capacity_value: float, steel_demand_value: float):
         excess_demand_check = steel_demand_value - (
@@ -145,7 +142,7 @@ def metaresults_flow(scenario_dict: dict, serialize: bool = False):
     Returns:
         [type]: [description]
     """
-    logger.info(f"- Starting Production Results Model Flow")
+    logger.info("- Starting Production Results Model Flow")
     steel_demand_df = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "regional_steel_demand_formatted", "df"
     )
@@ -166,6 +163,6 @@ def metaresults_flow(scenario_dict: dict, serialize: bool = False):
     )
 
     if serialize:
-        logger.info(f"-- Serializing dataframes")
+        logger.info("-- Serializing dataframes")
         serialize_file(global_metaresults, PKL_DATA_FINAL, "global_metaresults")
     return global_metaresults

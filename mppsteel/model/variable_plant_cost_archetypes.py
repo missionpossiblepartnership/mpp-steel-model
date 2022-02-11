@@ -3,14 +3,14 @@
 import pandas as pd
 from tqdm import tqdm
 
-from mppsteel.model_config import (
+from mppsteel.config.model_config import (
     MODEL_YEAR_END,
     PKL_DATA_IMPORTS,
     MODEL_YEAR_START,
     PKL_DATA_INTERMEDIATE,
 )
 
-from mppsteel.model_scenarios import (
+from mppsteel.config.model_scenarios import (
     COST_SCENARIO_MAPPER,
     GRID_DECARBONISATION_SCENARIOS,
     BIOMASS_SCENARIOS,

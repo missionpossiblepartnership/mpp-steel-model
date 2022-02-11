@@ -4,22 +4,17 @@ from typing import Union
 import pandas as pd
 
 from mppsteel.utility.file_handling_utility import read_pickle_folder
-
-from mppsteel.model_config import PKL_DATA_INTERMEDIATE, TECH_MORATORIUM_DATE
-
-from mppsteel.utility.reference_lists import (
+from mppsteel.config.model_config import PKL_DATA_INTERMEDIATE, TECH_MORATORIUM_DATE
+from mppsteel.config.reference_lists import (
     SWITCH_DICT,
     TECHNOLOGY_PHASES,
     TECHNOLOGY_STATES,
     RESOURCE_CONTAINER_REF,
 )
-
 from mppsteel.data_loading.data_interface import (
     ccs_co2_getter,
 )
-
 from mppsteel.data_loading.pe_model_formatter import bio_constraint_getter
-
 from mppsteel.data_loading.reg_steel_demand_formatter import steel_demand_getter
 from mppsteel.utility.log_utility import get_logger
 

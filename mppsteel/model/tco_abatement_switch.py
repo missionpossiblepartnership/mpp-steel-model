@@ -15,8 +15,8 @@ from mppsteel.utility.utils import enumerate_iterable
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
-from mppsteel.utility.reference_lists import LOW_CARBON_TECHS, SWITCH_DICT
-from mppsteel.model_config import (
+from mppsteel.config.reference_lists import LOW_CARBON_TECHS, SWITCH_DICT
+from mppsteel.config.model_config import (
     DISCOUNT_RATE,
     MODEL_YEAR_END,
     MODEL_YEAR_START,

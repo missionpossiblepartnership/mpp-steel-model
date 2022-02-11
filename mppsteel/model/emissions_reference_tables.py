@@ -22,14 +22,14 @@ from mppsteel.data_loading.pe_model_formatter import (
 
 from mppsteel.data_loading.data_interface import load_business_cases
 
-from mppsteel.model_config import (
+from mppsteel.config.model_config import (
     MODEL_YEAR_END,
     MODEL_YEAR_START,
     PKL_DATA_IMPORTS,
     PKL_DATA_INTERMEDIATE,
 )
 
-from mppsteel.utility.reference_lists import TECH_REFERENCE_LIST, SWITCH_DICT
+from mppsteel.config.reference_lists import TECH_REFERENCE_LIST, SWITCH_DICT
 
 from mppsteel.data_loading.data_interface import (
     scope1_emissions_getter,
@@ -39,7 +39,7 @@ from mppsteel.data_loading.data_interface import (
 
 from mppsteel.utility.transform_units import transform_units
 
-from mppsteel.model_scenarios import (
+from mppsteel.config.model_scenarios import (
     COST_SCENARIO_MAPPER,
     GRID_DECARBONISATION_SCENARIOS,
 )

@@ -4,10 +4,10 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 import numpy_financial as npf
-from mppsteel.utility.reference_lists import TECH_REFERENCE_LIST
+from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
 
 from mppsteel.utility.utils import cast_to_float
-from mppsteel.model_config import PKL_DATA_INTERMEDIATE
+from mppsteel.config.model_config import PKL_DATA_INTERMEDIATE
 from mppsteel.utility.dataframe_utility import column_sorter
 from mppsteel.utility.location_utility import get_region_from_country_code
 from mppsteel.utility.file_handling_utility import read_pickle_folder

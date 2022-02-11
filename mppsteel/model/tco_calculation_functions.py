@@ -12,11 +12,11 @@ from mppsteel.model.emissions_reference_tables import get_s2_emissions
 
 from mppsteel.utility.utils import enumerate_iterable
 
-from mppsteel.model_config import (
+from mppsteel.config.model_config import (
     MODEL_YEAR_END,
     DISCOUNT_RATE,
 )
-from mppsteel.utility.reference_lists import SWITCH_DICT
+from mppsteel.config.reference_lists import SWITCH_DICT
 from mppsteel.utility.log_utility import get_logger
 
 logger = get_logger("TCO Calculation Functions")

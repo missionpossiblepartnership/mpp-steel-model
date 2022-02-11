@@ -17,13 +17,13 @@ from mppsteel.utility.file_handling_utility import (
 
 from mppsteel.utility.log_utility import get_logger
 
-from mppsteel.model_config import (
+from mppsteel.config.model_config import (
     IMPORT_DATA_PATH,
     PKL_DATA_IMPORTS,
     PKL_DATA_INTERMEDIATE,
 )
 
-from mppsteel.utility.reference_lists import (
+from mppsteel.config.reference_lists import (
     TECH_REFERENCE_LIST,
     FURNACE_GROUP_DICT,
     TECHNOLOGY_PROCESSES,

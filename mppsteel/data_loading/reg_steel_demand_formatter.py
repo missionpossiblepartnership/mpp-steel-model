@@ -3,14 +3,14 @@
 import pandas as pd
 import pandera as pa
 
-from mppsteel.model_config import (
+from mppsteel.config.model_config import (
     PKL_DATA_IMPORTS,
     PKL_DATA_INTERMEDIATE,
     MODEL_YEAR_END,
 )
 from mppsteel.utility.utils import create_list_permutations
 from mppsteel.utility.timeseries_extender import full_model_flow
-from mppsteel.model_scenarios import STEEL_DEMAND_SCENARIO_MAPPER
+from mppsteel.config.model_scenarios import STEEL_DEMAND_SCENARIO_MAPPER
 from mppsteel.utility.dataframe_utility import melt_and_index
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.location_utility import match_country, get_unique_countries, get_countries_from_group

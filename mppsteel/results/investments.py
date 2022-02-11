@@ -3,7 +3,7 @@
 import pandas as pd
 from tqdm import tqdm
 
-from mppsteel.model_config import (
+from mppsteel.config.model_config import (
     MODEL_YEAR_START,
     MODEL_YEAR_END,
     PKL_DATA_INTERMEDIATE,

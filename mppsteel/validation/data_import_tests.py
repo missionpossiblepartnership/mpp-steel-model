@@ -6,8 +6,8 @@ from pandera import DataFrameSchema, Column, Index, MultiIndex, Check
 from pandera.typing import DataFrame, Series
 
 from mppsteel.utility.file_handling_utility import read_pickle_folder
-from mppsteel.model_config import PKL_DATA_IMPORTS
-from mppsteel.utility.reference_lists import TECH_REFERENCE_LIST
+from mppsteel.config.model_config import PKL_DATA_IMPORTS
+from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
 
 # Strict w/ filter
 # Transforming Schema: add_columns() , remove_columns(), update_columns(), rename_columns(), set_index(), and reset_index()

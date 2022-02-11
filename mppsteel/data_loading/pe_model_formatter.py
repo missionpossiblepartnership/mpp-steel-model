@@ -3,7 +3,7 @@
 import pandas as pd
 import pandera as pa
 
-from mppsteel.model_config import (
+from mppsteel.config.model_config import (
     PKL_DATA_IMPORTS,
     PKL_DATA_INTERMEDIATE,
     MODEL_YEAR_END,
@@ -23,7 +23,7 @@ from mppsteel.utility.location_utility import (
 from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
 
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.utility.reference_lists import EU_COUNTRIES
+from mppsteel.config.reference_lists import EU_COUNTRIES
 from mppsteel.validation.shared_inputs_tests import (
     BIO_CONSTRAINT_MODEL_SCHEMA,
     BIO_PRICE_MODEL_SCHEMA,

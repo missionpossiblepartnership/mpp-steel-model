@@ -10,7 +10,7 @@ from mppsteel.utility.dataframe_utility import create_line_through_points
 from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
 from mppsteel.utility.log_utility import get_logger
 
-from mppsteel.model_config import (
+from mppsteel.config.model_config import (
     PKL_DATA_IMPORTS,
     PKL_DATA_INTERMEDIATE,
     SWITCH_CAPEX_DATA_POINTS,
@@ -18,7 +18,7 @@ from mppsteel.model_config import (
     MODEL_YEAR_START,
 )
 
-from mppsteel.utility.reference_lists import (
+from mppsteel.config.reference_lists import (
     FURNACE_GROUP_DICT,
     TECH_REFERENCE_LIST,
     SWITCH_DICT,
@@ -150,7 +150,7 @@ def get_capex_values(
                         else:  # bio PCI or H2PCI
                             if technology == "Avg BF-BOF":
                                 switch_capex_value = (
-                                    capex_generator(capex_dict, "BAT BF-BOF", year)[
+                                    capex_generator(capex_dict_ref, "BAT BF-BOF", year)[
                                     'brownfield'
                                     ]
                                 )
@@ -250,7 +250,7 @@ def get_capex_values(
                     ):
                         if new_technology== "DRI-Melt-BOF+CCUS":
                             switch_capex_value=(
-                                capex_generator(capex_dict, new_technology, year)[
+                                capex_generator(capex_dict_ref, new_technology, year)[
                                     'greenfield'
                                 ]
                                 -460/4
@@ -263,10 +263,10 @@ def get_capex_values(
 
                         elif new_technology == 'DRI-Melt-BOF' or new_technology =='DRI-Melt-BOF_100% zero-C H2':
                             switch_capex_value=(
-                                capex_generator(capex_dict, 'DRI-EAF', year)[
+                                capex_generator(capex_dict_ref, 'DRI-EAF', year)[
                                     'greenfield'
                                 ]-
-                                capex_generator(capex_dict, 'EAF', year)[
+                                capex_generator(capex_dict_ref, 'EAF', year)[
                                     'greenfield'
                                 ]
                             )
@@ -280,14 +280,14 @@ def get_capex_values(
                         and new_technology in FURNACE_GROUP_DICT['eaf-advanced']
                     ):
                         switch_capex_value=(
-                            capex_generator(capex_dict, new_technology, year)[
+                            capex_generator(capex_dict_ref, new_technology, year)[
                                 'greenfield'
                             ]-
                             (
-                            capex_generator(capex_dict, 'EAF', year)[
+                            capex_generator(capex_dict_ref, 'EAF', year)[
                                 'greenfield'
                             ]-
-                            capex_generator(capex_dict, 'EAF', year)[
+                            capex_generator(capex_dict_ref, 'EAF', year)[
                                 'brownfield'
                             ]
                             )

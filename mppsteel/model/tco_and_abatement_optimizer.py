@@ -6,7 +6,7 @@ import numpy as np
 
 from mppsteel.utility.log_utility import get_logger
 
-from mppsteel.model_config import (
+from mppsteel.config.model_config import (
     TCO_RANK_1_SCALER,
     TCO_RANK_2_SCALER,
     ABATEMENT_RANK_2,
