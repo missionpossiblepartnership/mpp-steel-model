@@ -54,13 +54,12 @@ logger = get_logger("Main Model Code")
 def stdout_question(
     count_iter: int, scenario_type: str, scenario_options: dict, default_dict: dict
 ) -> str:
-    query = f"""
+    return f"""
     Scenario Option {count_iter+1}/{len(scenario_options)}: {scenario_type}
     Default value: {default_dict[scenario_type]}.
     To keep default, leave blank and press ENTER, else enter a different value from the options presented.
     ---> Options {scenario_options[scenario_type]}
     """
-    return query
 
 
 def get_inputted_scenarios(scenario_options: dict, default_scenario: dict) -> dict:

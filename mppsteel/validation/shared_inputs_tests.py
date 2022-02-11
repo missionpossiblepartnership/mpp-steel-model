@@ -116,6 +116,8 @@ CCUS_STORAGE_FACTOR = DataFrameSchema(
 
 
 def shared_inputs_tests():
+    """Example data tests
+    """
     power_model = read_pickle_folder(PKL_DATA_IMPORTS, "power_model", "dict")
     hydrogen_model = read_pickle_folder(PKL_DATA_IMPORTS, "hydrogen_model", "dict")
     bio_model = read_pickle_folder(PKL_DATA_IMPORTS, "bio_model", "dict")
