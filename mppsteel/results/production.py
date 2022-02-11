@@ -179,7 +179,7 @@ def production_stats_generator(
                     * business_case_getter(
                         standardised_business_cases, row.technology, material_category
                     )
-                    / 3.6
+                    
                 )
             else:
                 df_c.loc[
@@ -198,7 +198,7 @@ def production_stats_generator(
 
     # Convert Electricity & Hydrogen from Twh to Pj
     for material in ["electricity", "hydrogen"]:
-        df_c[material] = df_c[material] / 3.6
+        df_c[material] = df_c[material] * 3.6
 
     return df_c
 
