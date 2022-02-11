@@ -14,10 +14,8 @@ from tqdm.auto import tqdm as tqdma
 from mppsteel.utility.utils import enumerate_iterable
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
-
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.validation.data_import_tests import STEEL_BUSINESS_CASES_SCHEMA
-
 from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
 
 from mppsteel.utility.reference_lists import (
@@ -34,14 +32,6 @@ from mppsteel.utility.reference_lists import (
 
 # Create logger
 logger = get_logger("Business Case Standarisation")
-
-
-# For Data Manipulation
-import pprint
-from copy import deepcopy
-
-from tqdm import tqdm
-
 
 def create_tech_processes_list() -> dict:
     basic_bof_processes = [

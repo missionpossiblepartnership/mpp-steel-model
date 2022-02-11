@@ -45,12 +45,20 @@ from mppsteel.data_loading.standardise_business_cases import (
 # Create logger
 logger = get_logger("Business Case Tests")
 
-return_strings = lambda x: [y for y in x if isinstance(y, str)]
-
-
 def create_full_process_summary(bc_process_df: pd.DataFrame) -> pd.DataFrame:
+    """A DataFrame containing the fully processed business cases for each technology.
+
+    Args:
+        bc_process_df (pd.DataFrame): A DataFrame containing the processes contained in the business cases.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the combined process summaries for each Technology.
+    """
+    return_strings = lambda x: [y for y in x if isinstance(y, str)]
+    # Create a list of materials as a reference
     material_list = return_strings(bc_process_df["material_category"].unique())
     main_container = []
+    # Loop through each technology and material
     for technology in tqdm(
         TECH_REFERENCE_LIST,
         total=len(TECH_REFERENCE_LIST),
@@ -67,18 +75,43 @@ def create_full_process_summary(bc_process_df: pd.DataFrame) -> pd.DataFrame:
     return pd.concat(main_container).reset_index(drop=True)
 
 
-def master_getter(df, materials_ref, tech, material, rounding=3) -> float:
+def master_getter(df: pd.DataFrame, materials_ref: list, tech: str, material: str, rounding: int = 3) -> float:
+    """A getter function for the master reference technology process summary DataFrame.
+
+    Args:
+        df (pd.DataFrame): The preprocessed Process summary DataFrame.
+        materials_ref (list): A list of potential materials as a reference.
+        tech (str): The technology to reference
+        material (str): The material to reference.
+        rounding (int, optional): The figure to round DataFrame values. Defaults to 3.
+
+    Returns:
+        float: The value based on the parameters inputted to the function.
+    """
     if material in materials_ref:
         return round(df.loc[tech, material].values[0], rounding)
     return 0
 
 
 def process_inspector(
-    df: pd.DataFrame, excel_bc_summary: pd.DataFrame, rounding=3
+    df: pd.DataFrame, excel_bc_summary: pd.DataFrame, rounding: int = 3
 ) -> pd.DataFrame:
+    """Compares a DataFrame to the Excel Business Case Summaries.
+
+    Args:
+        df (pd.DataFrame): The DataFrame containing the fully processed business cases.
+        excel_bc_summary (pd.DataFrame): The reference sheet that will be compared against a `df`.
+        rounding (int, optional): The figure to round DataFrame values. Defaults to 3.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the columns that verify matches against a reference DataFrame.
+    """
     df_c = df.copy()
+    # Create empty column references.
     df_c["ref_value"] = ""
     df_c["matches_ref"] = ""
+    
+    # Create a reference of materials.
     materials_ref = excel_bc_summary.index.get_level_values(1).unique()
 
     def value_mapper(row, enum_dict) -> pd.DataFrame:
@@ -90,21 +123,32 @@ def process_inspector(
             rounding,
         )
         calculated_value = round(row[enum_dict["value"]], rounding)
-        if calculated_value == ref_value:
-            row[enum_dict["matches_ref"]] = 1
-        else:
-            row[enum_dict["matches_ref"]] = 0
+        row[enum_dict["matches_ref"]] = 1 if calculated_value == ref_value else 0
         row[enum_dict["ref_value"]] = ref_value
+        return row
 
-    tqdma.pandas(desc="Prrocess Inspector")
+    tqdma.pandas(desc="Process Inspector")
     enumerated_cols = enumerate_iterable(df_c.columns)
+
+    # Apply the vectorized checker functions 
     df_c = df_c.progress_apply(
         value_mapper, enum_dict=enumerated_cols, axis=1, raw=True
     )
     return df_c
 
 
-def inspector_getter(df, technology, material=None, process=None) -> pd.DataFrame:
+def inspector_getter(df: pd.DataFrame, technology: str, material: str = None, process: str = None) -> pd.DataFrame:
+    """A getter function for the Process Inspector.
+
+    Args:
+        df (pd.DataFrame): The DataFrame generated from the `Process Inspector` function
+        technology (str): The technology you want to subset.
+        material (str, optional): The material you want to subset. Defaults to None.
+        process (str, optional): The process you want to subset. Defaults to None.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the values based on the parameters entered.
+    """
     row_order = ["process_factor_value", "value", "ref_value", "matches_ref"]
     df_c = df.copy()
     df_c.set_index(["technology", "material", "stage", "process"], inplace=True)
@@ -119,8 +163,20 @@ def inspector_getter(df, technology, material=None, process=None) -> pd.DataFram
 
 
 def get_summary_dict_from_idf(
-    df, technology, material, function_order=None, rounding=3
+    df: pd.DataFrame, technology: str, material: str, function_order: list = None, rounding: int = 3
 ) -> pd.DataFrame:
+    """Creates a summary the Inspector DataFrame created from 
+
+    Args:
+        df (pd.DataFrame): A DataFrame based on the Inspector DataFrame created by `Process Inspector`.
+        technology (str): The technology you would like to subset.
+        material (str): The material you would like to subset.
+        function_order (list, optional): The order of the process function formatters you would like to use to sort the values. Defaults to None.
+        rounding (int, optional): The figure to round DataFrame values. Defaults to 3.
+
+    Returns:
+        pd.DataFrame: The DataFrame you would like to subset for.
+    """
     if not function_order:
         function_order = [
             "Initial Creation",
@@ -145,20 +201,39 @@ def get_summary_dict_from_idf(
     )
 
 
-def all_process_values(dfi, tech, material, rounding=3) -> dict:
-    cont_dict = {}
+def all_process_values(dfi: pd.DataFrame, tech: str, material: str, rounding: int = 3) -> dict:
+    """Creates a reference dictionary that summaries the material usage for all processes for a specified technology.
+
+    Args:
+        dfi (pd.DataFrame): A DataFrame created by the `Process Inspector` function.
+        tech (str): The technology you want to summarise.
+        material (str): The material you want to summarise.
+        rounding (int, optional): The figure to round DataFrame values. Defaults to 3.
+
+    Returns:
+        dict: A dictionary containing the processes and values you want to summarise.
+    """
     df = inspector_getter(dfi, tech, material).copy()["value"]
-    for stage in df.index.get_level_values(0).unique():
-        cont_dict[stage] = df.loc[stage].round(rounding).to_dict()
-    return cont_dict
+    return {
+        stage: df.loc[stage].round(rounding).to_dict()
+        for stage in df.index.get_level_values(0).unique()
+    }
 
 
 def inspector_df_flow(bc_master_df: pd.DataFrame) -> pd.DataFrame:
-    logger.info(f"Running all model flows")
+    """Creates the process inspector DataFrame from the raw business cases import and the master reference inspector DataFrame.
+
+    Args:
+        bc_master_df (pd.DataFrame): [description]
+
+    Returns:
+        pd.DataFrame: [description]
+    """
+    logger.info("Running all model flows")
+    bc_master_c = bc_master_df.copy()
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     create_full_process_summary_df = create_full_process_summary(bc_processes)
-    bc_master_c = bc_master_df.copy()
     return process_inspector(create_full_process_summary_df, bc_master_c)
 
 
@@ -166,9 +241,18 @@ def check_matches(
     i_df: pd.DataFrame,
     materials_ref: list,
     technology: str,
-    file_obj=None,
+    file_obj = None,
     rounding: int = 3,
 ) -> None:
+    """Checks matches from the Process Inspector DataFrame as summarised them in a written file based on `file_obj`.
+
+    Args:
+        i_df (pd.DataFrame): The Process Inspector DataFrame.
+        materials_ref (list): The materials reference list.
+        technology (str): Th technology you want to create the summary for.
+        file_obj ([type], optional): The file object you want to write the outputs to. Will not write to file if nothing is passed. Defaults to None.
+        rounding (int, optional): The figure to round DataFrame values. Defaults to 3.
+    """
     logger.info(f"-- Printing results for {technology}")
     process_prod_factor_mapper = create_production_factors(
         technology, FURNACE_GROUP_DICT, HARD_CODED_FACTORS
@@ -350,31 +434,50 @@ def check_matches(
 def write_tech_report_to_file(
     df_i: pd.DataFrame, materials_ref: pd.Index, technology: str, folder_path: str
 ) -> None:
+    """Writes a singular technology report from the `check matches DataFrame to file.
+
+    Args:
+        df_i (pd.DataFrame): The Process Inspector DataFrame.
+        materials_ref (pd.Index): The list of materials you want to run checks for.
+        technology (str): The technology you want to create the match report for.
+        folder_path (str): The folder path you want to save the report text file to.
+    """
     logger.info(f"-- {technology} test")
     file_path = f"{folder_path}/{technology}.txt"
-    f = open(file_path, "w", encoding="utf-8")
-    check_matches(df_i, materials_ref, technology, file_obj=f)
-    f.close()
+    with open(file_path, "w", encoding="utf-8") as f:
+        check_matches(df_i, materials_ref, technology, file_obj=f)
 
 
 @timer_func
 def create_bc_test_df(serialize: bool) -> None:
-    logger.info(f"Creating business case tests")
-    business_case_master = extract_data(
-        IMPORT_DATA_PATH, "Business Cases Excel Master", "csv"
-    )
-    bc_master = (
-        business_case_master.drop(labels=["Type of metric", "Unit"], axis=1)
-        .melt(id_vars=["Material"], var_name="Technology")
-        .set_index(["Technology", "Material"])
-        .copy()
-    )
-    df_inspector = inspector_df_flow(bc_master)
+    """Creates a `Process Inspector` DataFrame for use in completing checks.
+
+    Args:
+        serialize (bool): A flag to serialize the Process Inspector Dataframe to a pickle file.
+    """
+    logger.info("Creating business case tests")
     if serialize:
+        business_case_master = extract_data(
+            IMPORT_DATA_PATH, "Business Cases Excel Master", "csv"
+        )
+        bc_master = (
+            business_case_master.drop(labels=["Type of metric", "Unit"], axis=1)
+            .melt(id_vars=["Material"], var_name="Technology")
+            .set_index(["Technology", "Material"])
+            .copy()
+        )
+        df_inspector = inspector_df_flow(bc_master)
         serialize_file(df_inspector, PKL_DATA_INTERMEDIATE, "business_case_test_df")
 
 
 def test_all_technology_business_cases(folder_path: str) -> None:
+    """Runs a test for all technology business cases by created the `Process Inspector` DataFrame
+    Writes all tests to file at the specified `folder_path`.
+
+
+    Args:
+        folder_path (str): The path where you want to save the text technology reports.
+    """
     logger.info(f"Writing business case tests to path: {folder_path}")
     business_case_master = extract_data(
         IMPORT_DATA_PATH, "Business Cases Excel Master", "csv"

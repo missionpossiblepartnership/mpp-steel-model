@@ -9,6 +9,7 @@ from tqdm import tqdm
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import return_furnace_group
 from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
+from mppsteel.data_loading.reg_steel_demand_formatter import extend_steel_demand
 
 from mppsteel.model_config import (
     MODEL_YEAR_START,
@@ -72,7 +73,7 @@ def return_best_tech(
 ) -> Union[str, dict]:
     # Valid Switches
     combined_available_list = [
-        key for key in SWITCH_DICT.keys() if key in SWITCH_DICT[base_tech]
+        key for key in SWITCH_DICT if key in SWITCH_DICT[base_tech]
     ]
 
     # Transitional switches
