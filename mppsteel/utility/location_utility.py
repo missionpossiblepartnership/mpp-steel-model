@@ -1,5 +1,6 @@
 """Utility library for managing location"""
 
+import itertools
 from collections import namedtuple
 
 import pandas as pd
@@ -125,3 +126,45 @@ def get_region_from_country_code(
     raise AttributeError(
         f"Schema: {schema} is not an attribute of {country_code} CountryMetadata object. Choose from the following options: {options}"
     )
+
+
+def get_unique_countries(country_arrays) -> list:
+    """Gets a unique list of countries from a list of arrays of countries.
+
+    Args:
+        country_arrays ([type]): An array of countries.
+
+    Returns:
+        list: A list containing the unique countries from a list of lists.
+    """
+    b_set = {tuple(x) for x in country_arrays}
+    b_list = [list(x) for x in b_set if x]
+    return list(itertools.chain(*b_list))
+
+
+def get_countries_from_group(
+    country_ref: pd.DataFrame, grouping: str, group: str, exc_list: list = None
+) -> list:
+    """Returns the countries of a schema group.
+
+    Args:
+        country_ref (pd.DataFrame): A DataFrame containing the countries and region groupings.
+        grouping (str): The regional schema you want to map
+        group (str): The specific region you want to get the countries from.
+        exc_list (list, optional): A flag to select the countries not in the group selected in `group`. Defaults to None.
+
+    Returns:
+        list: A list of countries either in `group` or not in `group` depending on the `exc_list` flag.
+    """
+    df_c = country_ref[["ISO-alpha3 code", grouping]].copy()
+    code_list = (
+        df_c.set_index([grouping, "ISO-alpha3 code"])
+        .sort_index()
+        .loc[group]
+        .index.unique()
+        .to_list()
+    )
+    if exc_list:
+        exc_codes = [match_country(country) for country in exc_list]
+        return list(set(code_list).difference(exc_codes))
+    return code_list

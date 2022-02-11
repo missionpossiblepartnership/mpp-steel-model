@@ -14,10 +14,8 @@ from tqdm.auto import tqdm as tqdma
 from mppsteel.utility.utils import enumerate_iterable
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
-
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.validation.data_import_tests import STEEL_BUSINESS_CASES_SCHEMA
-
 from mppsteel.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
 
 from mppsteel.utility.reference_lists import (
@@ -35,15 +33,12 @@ from mppsteel.utility.reference_lists import (
 # Create logger
 logger = get_logger("Business Case Standarisation")
 
-
-# For Data Manipulation
-import pprint
-from copy import deepcopy
-
-from tqdm import tqdm
-
-
 def create_tech_processes_list() -> dict:
+    """Creates a reference of the processes for each technology.
+
+    Returns:
+        dict: A dictionary with a mapping of technologies to processes (list).
+    """
     basic_bof_processes = [
         "Coke Production",
         "Sintering",
@@ -145,6 +140,15 @@ def create_tech_processes_list() -> dict:
 def create_hardcoded_exceptions(
     hard_coded_dict: dict, furnace_group_dict: dict
 ) -> list:
+    """Adds hard coded factors related to certain furnace groups.
+
+    Args:
+        hard_coded_dict (dict): A dictionary with furnace groups that have hard coded factors.
+        furnace_group_dict (dict): A dictionary mapping each furnace group to the technologies within the group.
+
+    Returns:
+        list: A list of hard coded factors.
+    """
     hard_coded_factor_list = []
     for furnace_group in hard_coded_dict:
         hard_coded_factor_list.extend(furnace_group_dict[furnace_group])
@@ -152,8 +156,16 @@ def create_hardcoded_exceptions(
 
 
 def furnace_group_from_tech(furnace_group_dict: dict) -> dict:
+    """Creates a dictionary that maps each technology to a furnace group.
+
+    Args:
+        furnace_group_dict (dict): A dictionary mapping technologies to furnace groups.
+
+    Returns:
+        dict: A dictionary mapping furnace groups to technologies.
+    """
     tech_container = {}
-    for group in furnace_group_dict.keys():
+    for group in furnace_group_dict.keys(): 
         tech_list = furnace_group_dict[group]
         for tech in tech_list:
             tech_container[tech] = group
@@ -164,6 +176,14 @@ def furnace_group_from_tech(furnace_group_dict: dict) -> dict:
 def business_case_formatter_splitter(
     df: pd.DataFrame,
 ) -> Union[pd.DataFrame, pd.DataFrame]:
+    """Formats the business cases dataframe and splits it into parameters and processes.
+
+    Args:
+        df (pd.DataFrame): The initial Business Cases loaded from excel.
+
+    Returns:
+        Union[pd.DataFrame, pd.DataFrame]: Returns two DataFrames, the parameters and the processes.
+    """
     df_c = df.copy()
     df_c = df_c.melt(
         id_vars=[
@@ -186,7 +206,7 @@ def business_case_formatter_splitter(
 
 
 def tech_process_getter(
-    df,
+    df: pd.DataFrame,
     technology: str,
     process: str,
     step: str = None,
@@ -194,10 +214,24 @@ def tech_process_getter(
     process_detail: str = None,
     full_ref: bool = False,
 ) -> pd.DataFrame:
+    """A getter for the Process Business Cases.
+
+    Args:
+        df (pd.DataFrame): The Process Business Cases DataFrame.
+        technology (str): The Technology you want to get value(s) for.
+        process (str): The process you want to get value(s) for.
+        step (str, optional): The step you want to get value(s) for. Defaults to None.
+        material (str, optional): The material you want to get value(s) for. Defaults to None.
+        process_detail (str, optional): The process_detail you want to get value(s) for. Defaults to None.
+        full_ref (bool, optional): Returns all the columns in the returned DataFrame. Defaults to False.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the value(s) requested from the parameters.
+    """
+
     df_c = df.copy()
-    full_ref_cols = ["technology", "step", "material_category", "value"]
     if full_ref:
-        choice_cols = full_ref_cols
+        choice_cols = ["technology", "step", "material_category", "value"]
     # ALL
     if step and material and process_detail:
         return df_c[
@@ -257,7 +291,17 @@ def tech_process_getter(
     return full_ref_df
 
 
-def tech_parameter_getter(df, technology, parameter) -> float:
+def tech_parameter_getter(df: pd.DataFrame, technology: str, parameter: str) -> float:
+    """[summary]
+
+    Args:
+        df (pd.DataFrame): The Parameter Business Cases DataFrame.
+        technology (str): The technology that you want values for.
+        parameter (str): The parameter that you want values for.
+
+    Returns:
+        float: The value requested via the function parameters.
+    """
     df_c = df.copy()
     return df_c[(df_c["technology"] == technology) & (df_c["step"] == parameter)][
         "value"
@@ -265,7 +309,15 @@ def tech_parameter_getter(df, technology, parameter) -> float:
 
 
 def replace_units(df: pd.DataFrame, units_dict: dict) -> pd.DataFrame:
-    df_c = df.copy()
+    """Maps values to a DataFrame using a dictionary.
+
+    Args:
+        df (pd.DataFrame): The DataFrame containing the 
+        units_dict (dict): The dictionary containing the units you want to map.
+
+    Returns:
+        pd.DataFrame: The DataFrame with the updated units column.
+    """
 
     def value_mapper(row, enum_dict):
         if row[enum_dict["material_category"]] in units_dict.keys():
@@ -275,6 +327,7 @@ def replace_units(df: pd.DataFrame, units_dict: dict) -> pd.DataFrame:
         return row
 
     tqdma.pandas(desc="Replace Units")
+    df_c = df.copy()
     enumerated_cols = enumerate_iterable(df_c.columns)
     df_c = df_c.progress_apply(
         value_mapper, enum_dict=enumerated_cols, axis=1, raw=True
@@ -288,6 +341,17 @@ def create_mini_process_dfs(
     process_mapper: dict,
     factor_value_dict: dict,
 ) -> dict:
+    """Splits the Business Cases into mini process DataFrames and wraps them in a dictionary.
+
+    Args:
+        df (pd.DataFrame): The Process Business Cases DataFrame.
+        technology_name (str): The Technology you want to split the DataFrame for.
+        process_mapper (dict): A dictionary that maps technologies to their processes.
+        factor_value_dict (dict): A dictionary that maps processes to their initial factor values.
+
+    Returns:
+        dict: A dictionary containing the split DataFrames.
+    """
     df_c = df.copy()
     df_dict = {}
     for process in process_mapper[technology_name]:
@@ -298,14 +362,32 @@ def create_mini_process_dfs(
 
 
 def format_combined_df(df: pd.DataFrame, units_dict: dict) -> pd.DataFrame:
+    """Formats a DataFrame that has been recombined.
+
+    Args:
+        df (pd.DataFrame): The Process Business Cases DataFrame.
+        units_dict (dict): The dictionary containing the units you want to map.
+
+    Returns:
+        pd.DataFrame: The formatted DataFrame.
+    """
     df_c = df.copy()
-    df_c = replace_units(df_c, units_dict)
-    return df_c
+    return replace_units(df_c, units_dict)
 
 
 def sum_product_ef(
     df: pd.DataFrame, ef_dict: dict, materials_to_exclude: list = None
 ) -> float:
+    """Creates the sum product of materials.
+
+    Args:
+        df (pd.DataFrame): The Process Business Cases DataFrame.
+        ef_dict (dict): A dictionary containing values that map to emissions factors.
+        materials_to_exclude (list, optional): A list of materials to exclude from the product sum. Defaults to None.
+
+    Returns:
+        float: A sum product of material emissions.
+    """
     df_c = df.copy()
     df_c["material_emissions"] = ""
 
@@ -341,6 +423,17 @@ def sum_product_ef(
 def get_all_steam_values(
     df: pd.DataFrame, technology: str, process_list: list, factor_dict: dict
 ) -> list:
+    """Gets all steam values for a technology based on a list of specified processes.
+
+    Args:
+        df (pd.DataFrame): The Process Business Cases DataFrame.
+        technology (str): The technology you want to retrieve steam values for.
+        process_list (list): A list of processes you want to get steam values for.
+        factor_dict (dict): A dictionary containing a mapping of processes to factors.
+
+    Returns:
+        list: A list of all the steam values for the parameters entered.
+    """
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     steam_value_list = []
@@ -364,6 +457,18 @@ def get_all_electricity_values(
     factor_mapper: dict = [],
     as_dict: bool = False,
 ) -> Union[dict, list]:
+    """[summary]
+
+    Args:
+        df (pd.DataFrame): The Process Business Cases DataFrame.
+        technology (str): The technology you want to retrieve electricity values for.
+        process_list (list): A list of processes you want to get electricity values for.
+        factor_mapper (dict, optional): A dictionary mapping processes to factors. Defaults to [].
+        as_dict (bool, optional): Flag to return a dictionary rather than the default list. Defaults to False.
+
+    Returns:
+        Union[dict, list]: A dictionary containing a mapping of processes to values OR a list containing all the electricity values.
+    """
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     electricity_value_list = []
@@ -417,6 +522,16 @@ def get_all_electricity_values(
 def create_production_factors(
     technology: str, furnace_group_dict: dict, hard_coded_factors: dict
 ) -> dict:
+    """Creates a production factor dictionary specific for a technology based on conditional logic.
+
+    Args:
+        technology (str): The technology you want to retrieve values for.
+        furnace_group_dict (dict): A dictionary mapping furnace groups to technologies
+        hard_coded_factors (dict): A dictionary mapping processes that have hard coded factors.
+
+    Returns:
+        dict: A dictionary containing a mapping of process factors to fatcor values.
+    """
 
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
@@ -649,6 +764,17 @@ def create_production_factors(
 def limestone_df_editor(
     df_dict: dict, technology: str, furnace_group_dict: dict, factor_dict: dict
 ) -> dict:
+    """Modifies the material usage values for the limestone process.
+
+    Args:
+        df_dict (dict): A dictionary containing a mapping of processes to process DataFrames.
+        technology (str): The technology you want to modify values for.
+        furnace_group_dict (dict): The dictionary mapping furnace groups to technologies.
+        factor_dict (dict): A dictionary containing mappings of processes to process factors values.
+
+    Returns:
+        dict: A modified dictionary of processes to process DataFrames for a given technology.
+    """
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     df_dict_c = df_dict.copy()
@@ -712,8 +838,20 @@ def limestone_df_editor(
 
 
 def fix_ccs_factors(
-    r_dict, factor_dict: dict, technology: str, furnace_group_dict: dict, ef_dict: dict
+    r_dict: dict, factor_dict: dict, technology: str, furnace_group_dict: dict, ef_dict: dict
 ) -> dict:
+    """Modifies the factor values for the CCS process.
+
+    Args:
+        r_dict (dict): A dictionary containing a mapping of processes to process DataFrames.
+        factor_dict (dict): A dictionary containing mappings of processes to process factors values.
+        technology (str): The technology you want to modify values for.
+        furnace_group_dict (dict): The dictionary mapping furnace groups to technologies.
+        ef_dict (dict): An emissions factor dictionary.
+
+    Returns:
+        dict: A modified dictionary of processes to process DataFrames for a given technology.
+    """
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     factor_dict_c = factor_dict.copy()
@@ -834,8 +972,20 @@ def fix_ccs_factors(
 
 
 def fix_ccs_bat_ccus_factors(
-    r_dict, factor_dict: dict, technology: str, furnace_group_dict: dict, ef_dict: dict
+    r_dict: dict, factor_dict: dict, technology: str, furnace_group_dict: dict, ef_dict: dict
 ) -> dict:
+    """Modifies the factor values for the CCS BAT & CCUS processes.
+
+    Args:
+        r_dict (dict): A dictionary containing a mapping of processes to process DataFrames.
+        factor_dict (dict): A dictionary containing mappings of processes to process factors values.
+        technology (str): The technology you want to modify values for.
+        furnace_group_dict (dict): The dictionary mapping furnace groups to technologies.
+        ef_dict (dict): An emissions factor dictionary.
+
+    Returns:
+        dict: A modified dictionary of processes to process DataFrames for a given technology.
+    """
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     factor_dict_c = factor_dict.copy()
@@ -880,8 +1030,20 @@ def fix_ccs_bat_ccus_factors(
 
 
 def fix_ccu_factors(
-    r_dict, factor_dict: dict, technology: str, furnace_group_dict: dict, ef_dict: dict
+    r_dict: dict, factor_dict: dict, technology: str, furnace_group_dict: dict, ef_dict: dict
 ) -> dict:
+    """Modifies the factor values for the CCU process.
+
+    Args:
+        r_dict (dict): A dictionary containing a mapping of processes to process DataFrames.
+        factor_dict (dict): A dictionary containing mappings of processes to process factors values.
+        technology (str): The technology you want to modify values for.
+        furnace_group_dict (dict): The dictionary mapping furnace groups to technologies.
+        ef_dict (dict): An emissions factor dictionary.
+
+    Returns:
+        dict: A modified dictionary of processes to process DataFrames for a given technology.
+    """
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     factor_dict_c = factor_dict.copy()
@@ -934,6 +1096,18 @@ def ccs_df_editor(
     factor_dict: dict,
     ef_dict: dict,
 ) -> dict:
+    """Modifies the material usage values for the CCS process.
+
+    Args:
+        df_dict (dict): A dictionary containing a mapping of processes to process DataFrames.
+        technology (str): The technology you want to modify values for.
+        furnace_group_dict (dict): The dictionary mapping furnace groups to technologies.
+        factor_dict (dict): A dictionary containing mappings of processes to process factors values.
+        ef_dict (dict): An emissions factor dictionary.
+
+    Returns:
+        dict: A modified dictionary of processes to process DataFrames for a given technology.
+    """
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     df_dict_c = df_dict.copy()
@@ -957,12 +1131,12 @@ def ccs_df_editor(
         )
 
         # Compression Electricity Value
-        if technology in ["BAT BF-BOF+CCUS", "DRI-EAF+CCUS", "Smelting Reduction+CCUS"]:
+        if technology in {"BAT BF-BOF+CCUS", "DRI-EAF+CCUS", "Smelting Reduction+CCUS"}:
             ccs_df.loc[(ccs_df["process_detail"] == "Compression"), "value"] = (
                 captured_co2_factored * compression_electricity
             )
 
-        if technology in ["DRI-Melt-BOF+CCUS"]:
+        if technology in {"DRI-Melt-BOF+CCUS"}:
             remelter_heating_efficiency = tech_parameter_getter(
                 bc_parameters, technology, "Efficiency of remelter heating"
             )
@@ -972,7 +1146,7 @@ def ccs_df_editor(
                 * remelter_heating_efficiency
             )
 
-        if technology in ["BAT BF-BOF+BECCUS"]:
+        if technology in {"BAT BF-BOF+BECCUS"}:
             electricity_share_factor = tech_parameter_getter(
                 bc_parameters,
                 technology,
@@ -985,10 +1159,10 @@ def ccs_df_editor(
             )
 
         # Reboiler duty: Natural Gas / Electricity Value
-        if technology in ["Smelting Reduction+CCUS"]:
+        if technology in {"Smelting Reduction+CCUS"}:
             ccs_df.loc[(ccs_df["material_category"] == "Natural gas"), "value"] = 0
 
-        if technology in ["DRI-EAF+CCUS"]:
+        if technology in {"DRI-EAF+CCUS"}:
             curr_ng_val = tech_process_getter(
                 bc_processes,
                 technology,
@@ -1007,7 +1181,7 @@ def ccs_df_editor(
                 "material_category",
             ] = "Electricity"
 
-        if technology in ["BAT BF-BOF+BECCUS", "BAT BF-BOF+CCUS"]:
+        if technology in {"BAT BF-BOF+BECCUS", "BAT BF-BOF+CCUS"}:
             ef_dict_c = ef_dict.copy()
             ef_dict_c["Biomass"] = 95
             ef_sum_product_small = sum_product_ef(
@@ -1021,7 +1195,7 @@ def ccs_df_editor(
                 (ccs_df["material_category"] == "Natural gas"), "material_category"
             ] = "Electricity"
 
-        if technology in ["DRI-Melt-BOF+CCUS"]:
+        if technology in {"DRI-Melt-BOF+CCUS"}:
             selected_processes_df = concat_process_dfs(
                 df_dict_c, ["Pelletisation", "Shaft Furnace", "Remelt"]
             )
@@ -1036,7 +1210,7 @@ def ccs_df_editor(
                 (ccs_df["material_category"] == "Natural gas"), "material_category"
             ] = "Electricity"
 
-        if technology in ["BAT BF-BOF+CCUS"]:
+        if technology in {"BAT BF-BOF+CCUS"}:
             selected_processes_df = concat_process_dfs(df_dict_c, ["Blast Furnace"])
             ef_sum_product = sum_product_ef(
                 selected_processes_df, ef_dict, ["Electricity"]
@@ -1046,7 +1220,7 @@ def ccs_df_editor(
             )
 
         # Remove last value for smelting reduction
-        if technology in ["Smelting Reduction+CCUS"]:
+        if technology in {"Smelting Reduction+CCUS"}:
             ccs_df = ccs_df[1:]
 
         df_dict_c["CCS"] = ccs_df
@@ -1061,6 +1235,18 @@ def ccu_df_editor(
     factor_dict: dict,
     ef_dict: dict,
 ) -> dict:
+    """Modifies the material usage values for the CCU process.
+
+    Args:
+        df_dict (dict): A dictionary containing a mapping of processes to process DataFrames.
+        technology (str): The technology you want to modify values for.
+        furnace_group_dict (dict): The dictionary mapping furnace groups to technologies.
+        factor_dict (dict): A dictionary containing mappings of processes to process factors values.
+        ef_dict (dict): An emissions factor dictionary.
+
+    Returns:
+        dict: A modified dictionary of processes to process DataFrames for a given technology.
+    """
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     df_dict_c = df_dict.copy()
@@ -1117,7 +1303,18 @@ def self_gen_df_editor(
     factor_dict: dict,
     tech_processes_dict: dict,
 ) -> dict:
+    """Modifies the material usage values for the Self Generation of Electiricty process.
 
+    Args:
+        df_dict (dict): A dictionary containing a mapping of processes to process DataFrames.
+        technology (str): The technology you want to modify values for.
+        furnace_group_dict (dict): The dictionary mapping furnace groups to technologies.
+        factor_dict (dict): A dictionary containing mappings of processes to process factors values.
+        tech_processes_dict (dict): A mapping of technologies to corresponding processes.
+
+    Returns:
+        dict: A modified dictionary of processes to process DataFrames for a given technology.
+    """
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     df_dict_c = df_dict.copy()
@@ -1263,6 +1460,15 @@ def self_gen_df_editor(
 
 
 def concat_process_dfs(df_dict: pd.DataFrame, process_list: list) -> pd.DataFrame:
+    """Concatenates all process DataFrames into one DataFrame.
+
+    Args:
+        df_dict (pd.DataFrame): A dictionary of process DataFrames for a technology.
+        process_list (list): A list of processes contained in the DataFrame dictionary.
+
+    Returns:
+        pd.DataFrame: A combined DataFrame.
+    """
     df_list = []
     for process in process_list:
         df_list.append(df_dict[process])
@@ -1274,8 +1480,18 @@ def fix_exceptions(
     technology: str,
     furnace_group_dict: dict,
     factor_dict: dict,
-    process_dict: dict,
 ) -> dict:
+    """Modifies the material usage values for the Self Generation of Electiricty process.
+
+    Args:
+        df_dict (dict): A dictionary containing a mapping of processes to process DataFrames.
+        technology (str): The technology you want to modify values for.
+        furnace_group_dict (dict): The dictionary mapping furnace groups to technologies.
+        factor_dict (dict): A dictionary containing mappings of processes to process factors values.
+
+    Returns:
+        dict: A modified dictionary of processes to process DataFrames for a given technology.
+    """
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     df_dict_c = df_dict.copy()
@@ -1672,6 +1888,19 @@ def get_material_values(
     stage: str,
     factor_map: dict,
 ) -> pd.DataFrame:
+    """Aggregates material usage across a Process DataFrame to create a summary of usage.
+
+    Args:
+        values_dict (dict): A dictionary process DataFrames.
+        tech_processes (dict): A dictionary of technologies to processes.
+        technology (str): The technology you want to collate values for.
+        material (str): The material you want to collate values for.
+        stage (str): The process stage you want to collate values for.
+        factor_map (dict): A dictionary of processes to factors.
+
+    Returns:
+        pd.DataFrame: A DataFrame of the material values based on inputted parameters.
+    """
     cols_ref = [
         "technology",
         "process",
@@ -1689,15 +1918,19 @@ def get_material_values(
             container.append(
                 [technology, process, material, stage, value, process_factor]
             )
-    row_container = []
-    for row in container:
-        if row:
-            row_dict = dict(zip(cols_ref, row))
-            row_container.append(row_dict)
+    row_container = [dict(zip(cols_ref, row)) for row in container if row]
     return pd.DataFrame(data=row_container)
 
 
-def switch_ironore_and_pellets(df_dict: dict) -> pd.DataFrame:
+def switch_ironore_and_pellets(df_dict: dict) -> dict:
+    """Switches the values of Iron Ore and Pellets for Shaft Furnace processes.
+
+    Args:
+        df_dict (dict): A dictionary of Process DataFrames.
+
+    Returns:
+        dict: A dictionary of the processed DataFrames.
+    """
 
     df_dict_c = df_dict.copy()
     if "Shaft Furnace" in df_dict_c.keys():
@@ -1707,13 +1940,21 @@ def switch_ironore_and_pellets(df_dict: dict) -> pd.DataFrame:
         sf_df.loc[sf_df["material_category"].eq("Iron ore"), "value"] = pellets_val
         sf_df.loc[sf_df["material_category"].eq("Pellets"), "value"] = iron_ore_val
         df_dict_c["Shaft Furnace"] = sf_df
-
     return df_dict_c
 
 
 def full_model_flow(
     technology: str, material: str = None
 ) -> Union[pd.DataFrame, pd.DataFrame]:
+    """Completes the full standardisation processing flow for a technology.
+
+    Args:
+        technology (str): The technology you want to fully preprocess.
+        material (str, optional): A material you want to specifically process the Business Cases for. Defaults to None.
+
+    Returns:
+        Union[pd.DataFrame, pd.DataFrame]: Returns a combined DataFrame of the material usage and a Material Usage DataFrame.
+    """
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "business_cases")
     bc_parameters, bc_processes = business_case_formatter_splitter(business_cases)
     s1_emissions_factors = read_pickle_folder(PKL_DATA_IMPORTS, "s1_emissions_factors")
@@ -1776,7 +2017,6 @@ def full_model_flow(
             technology,
             FURNACE_GROUP_DICT,
             process_prod_factor_mapper,
-            TECHNOLOGY_PROCESSES,
         )
         df_container.append(
             get_material_values(
@@ -1894,7 +2134,6 @@ def full_model_flow(
             technology,
             FURNACE_GROUP_DICT,
             process_prod_factor_mapper,
-            TECHNOLOGY_PROCESSES,
         )
         process_prod_factor_mapper = fix_ccs_bat_ccus_factors(
             reformated_dict_c,
@@ -1937,6 +2176,14 @@ def full_model_flow(
 
 
 def generate_full_consumption_table(technology_list: list) -> pd.DataFrame:
+    """Creates a full consumption table reference of technology material usage.
+
+    Args:
+        technology_list (list): A list of technologies to fully standardise and combine into one DataFrame.
+
+    Returns:
+        pd.DataFrame: A DataFrame with the full list of summarised material usage of each technoloy in `technology_list`
+    """
     logger.info("- Generating the full resource consumption table")
     summary_df_list = []
     for technology in technology_list:
@@ -1945,14 +2192,6 @@ def generate_full_consumption_table(technology_list: list) -> pd.DataFrame:
     df = pd.concat(summary_df_list)
     df.drop(labels=["process", "process_detail", "step"], axis=1, inplace=True)
     return df.groupby(["material_category", "technology", "unit"]).sum().reset_index()
-
-
-def concat_process_dfs(df_dict: pd.DataFrame, process_list: list) -> pd.DataFrame:
-    df_list = []
-    for process in process_list:
-        df_list.append(df_dict[process])
-    concat_df = pd.concat(df_list)
-    return concat_df
 
 
 @timer_func

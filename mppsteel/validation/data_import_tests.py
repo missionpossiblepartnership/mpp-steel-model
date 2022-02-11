@@ -215,6 +215,8 @@ STEEL_BUSINESS_CASES_SCHEMA = DataFrameSchema(
 
 
 def import_data_tests():
+    """Example data tests.
+    """
     country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref")
     COUNTRY_REF_SCHEMA.validate(country_ref)
 
