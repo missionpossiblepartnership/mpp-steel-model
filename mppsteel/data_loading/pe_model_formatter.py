@@ -302,7 +302,7 @@ def format_pe_data(serialize: bool = False) -> dict:
     Returns:
         dict: Dictionary of the Power & Energy data.
     """
-    logger.info("Initiating fulll format flow for all models")
+    logger.info("Initiating full format flow for all models")
     country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
     power = full_model_getter_flow("power", country_ref)
     hydrogen = full_model_getter_flow("hydrogen", country_ref)

@@ -32,9 +32,9 @@ def timeseries_generator(
     """Function that generates a timeseries based on particular logic
 
     Args:
-        timeseries_type (str): Defines the timeseries to produce. Options: Biomass, Carbon Tax
-        start_year (int): Defines the start date of the timeseries
-        end_year (int): Defines the end date of the timeseries
+        timeseries_type (str): Defines the timeseries to produce. Options: Biomass, Carbon Tax.
+        start_year (int): Defines the start date of the timeseries.
+        end_year (int): Defines the end date of the timeseries.
         end_value (float): Defines the terminal value of the timeseries.
         start_value (float, optional): Defines the starting value of the timeseries. Defaults to 0.
         units (str, optional): [description]. Define units of the timeseries values. Defaults to ''.
@@ -101,7 +101,7 @@ def generate_timeseries(serialize: bool = False, scenario_dict: dict = None) -> 
         serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
 
     Returns:
-        dict: A dict containing dataframes with the following keys: 'biomass', 'carbon_tax', 'electricity'
+        dict: A dict containing dataframes with the following keys: 'biomass', 'carbon_tax', 'electricity'.
     """
 
     carbon_tax_scenario_values = CARBON_TAX_SCENARIOS[
