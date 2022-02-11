@@ -10,9 +10,9 @@ from mppsteel.model_config import (
     PKL_DATA_INTERMEDIATE,
     PKL_DATA_IMPORTS,
     NET_ZERO_TARGET,
-    NET_ZERO_VARIANCE,
-    INVESTMENT_CYCLE_LENGTH,
-    INVESTMENT_CYCLE_VARIANCE,
+    NET_ZERO_VARIANCE_YEARS,
+    INVESTMENT_CYCLE_DURATION_YEARS,
+    INVESTMENT_CYCLE_DURATION_YEARS,
     INVESTMENT_OFFCYCLE_BUFFER_TOP,
     INVESTMENT_OFFCYCLE_BUFFER_TAIL,
 )
@@ -29,12 +29,12 @@ def calculate_investment_years(
     op_start_year: int,
     cutoff_start_year: int = MODEL_YEAR_START,
     cutoff_end_year: int = MODEL_YEAR_END,
-    inv_intervals: int = INVESTMENT_CYCLE_LENGTH,
+    inv_intervals: int = INVESTMENT_CYCLE_DURATION_YEARS,
 ) -> list:
     x = op_start_year
     decision_years = []
     unique_investment_interval = inv_intervals + random.randrange(
-        -INVESTMENT_CYCLE_VARIANCE, INVESTMENT_CYCLE_VARIANCE, 1
+        -INVESTMENT_CYCLE_DURATION_YEARS, INVESTMENT_CYCLE_DURATION_YEARS, 1
     )
     while x < cutoff_end_year:
         if x < cutoff_start_year:
@@ -54,7 +54,7 @@ def add_off_cycle_investment_years(
     range_list = []
 
     def net_zero_year_bring_forward(year: int) -> int:
-        if year in range(NET_ZERO_TARGET + 1, NET_ZERO_TARGET + NET_ZERO_VARIANCE + 1):
+        if year in range(NET_ZERO_TARGET + 1, NET_ZERO_TARGET + NET_ZERO_VARIANCE_YEARS + 1):
             bring_forward_date = NET_ZERO_TARGET - 1
             logger.info(f"Investment Cycle Brought Forward to {bring_forward_date}")
             return bring_forward_date

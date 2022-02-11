@@ -19,8 +19,8 @@ from mppsteel.model_config import (
     PKL_DATA_FINAL,
     PKL_DATA_INTERMEDIATE,
     DISCOUNT_RATE,
-    INVESTMENT_CYCLE_LENGTH,
-    STEEL_PLANT_LIFETIME,
+    INVESTMENT_CYCLE_DURATION_YEARS,
+    STEEL_PLANT_LIFETIME_YEARS,
 )
 from mppsteel.utility.reference_lists import TECH_REFERENCE_LIST
 
@@ -87,7 +87,7 @@ def apply_cos(
         steel_demand, year, steel_scenario, "crude", "World"
     )
     discount_rate = DISCOUNT_RATE
-    relining_year_span = INVESTMENT_CYCLE_LENGTH
+    relining_year_span = INVESTMENT_CYCLE_DURATION_YEARS
 
     # cuf = steel_demand_value / row.capacity
     relining_cost = 0
@@ -121,8 +121,8 @@ def apply_lcos(
     variable_cost = v_costs.loc[row.country_code, row.year, row.technology]["cost"]
     other_opex_cost = capex_costs["other_opex"].loc[row.technology, row.year]["value"]
     discount_rate = DISCOUNT_RATE
-    relining_year_span = INVESTMENT_CYCLE_LENGTH
-    life_of_plant = STEEL_PLANT_LIFETIME
+    relining_year_span = INVESTMENT_CYCLE_DURATION_YEARS
+    life_of_plant = STEEL_PLANT_LIFETIME_YEARS
     greenfield_cost = 0
 
     renovation_cost = calculate_cc(

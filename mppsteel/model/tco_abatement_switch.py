@@ -22,7 +22,7 @@ from mppsteel.model_config import (
     MODEL_YEAR_START,
     PKL_DATA_INTERMEDIATE,
     PKL_DATA_IMPORTS,
-    INVESTMENT_CYCLE_LENGTH,
+    INVESTMENT_CYCLE_DURATION_YEARS,
 )
 
 from mppsteel.utility.log_utility import get_logger
@@ -84,7 +84,7 @@ def tco_regions_ref_generator(
                     calculated_s1_emissivity,
                     country_ref_dict,
                     capex_df,
-                    INVESTMENT_CYCLE_LENGTH,
+                    INVESTMENT_CYCLE_DURATION_YEARS,
                     electricity_cost_scenario,
                     grid_scenario,
                     hydrogen_cost_scenario,
@@ -123,7 +123,7 @@ def create_full_steel_plant_ref(eur_usd_rate: float) -> pd.DataFrame:
     def value_mapper(row, enum_dict: dict):
         start_year = row[enum_dict["year"]]
         gp_arr = np.array([])
-        year_range = range(start_year, start_year + INVESTMENT_CYCLE_LENGTH + 1)
+        year_range = range(start_year, start_year + INVESTMENT_CYCLE_DURATION_YEARS + 1)
         for year in year_range:
             year_loop_val = min(MODEL_YEAR_END, year)
             green_premium_value = calculate_green_premium(
@@ -191,7 +191,7 @@ def map_region_tco_to_plants(
         opex = float(row["capex_value"] + row["discounted_opex"])
         if row.switch_tech in LOW_CARBON_TECHS:
             opex -= float(row["discounted_green_premium"])
-        row["tco"] = float(opex / INVESTMENT_CYCLE_LENGTH)
+        row["tco"] = float(opex / INVESTMENT_CYCLE_DURATION_YEARS)
         return row
 
     combined_df["tco"] = 0
@@ -272,7 +272,7 @@ def emissivity_abatement(combined_emissivity: pd.DataFrame, scope: str) -> pd.Da
                         switch_tech,
                         "combined",
                         emissivity_mapper,
-                        INVESTMENT_CYCLE_LENGTH,
+                        INVESTMENT_CYCLE_DURATION_YEARS,
                     )
                     entry = {
                         "year": year,

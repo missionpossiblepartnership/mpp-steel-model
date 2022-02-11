@@ -33,7 +33,7 @@ from mppsteel.model_config import (
     PKL_DATA_IMPORTS,
     PKL_DATA_INTERMEDIATE,
     EMISSIONS_FACTOR_SLAG,
-    ENERGY_DENSITY_MET_COAL,
+    ENERGY_DENSITY_MET_COAL_MJ_KG,
 )
 
 # Create logger
