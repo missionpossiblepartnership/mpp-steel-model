@@ -1,5 +1,0 @@
-from mppsteel.validation.data_import_tests import import_data_tests
-from mppsteel.validation.shared_inputs_tests import shared_inputs_tests
-
-import_data_tests()
-shared_inputs_tests()

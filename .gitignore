@@ -137,6 +137,7 @@ dmypy.json
 
 # tests
 mppsteel/tests/business_case_tests
+pandera_testing.py
 
 # pickle files
 mppsteel/data/pkl_data
