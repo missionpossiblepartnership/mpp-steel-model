@@ -20,6 +20,17 @@ def investment_line_chart(
     save_filepath: str = None,
     ext: str = "png",
 ) -> px.line:
+    """Creates a line graph showing the level of investment across all technologies.
+
+    Args:
+        group (str, optional): The group you want: 'global' OR 'regional'. Defaults to "global".
+        operation (str, optional): The operation you want to perform on the DataFrame 'sum' or 'cumsum'. Defaults to "cumsum".
+        save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
+        ext (str, optional): The extension of the image you are creating. Defaults to "png".
+
+    Returns:
+        px.line: A plotly express line graph.
+    """
     investment_results = read_pickle_folder(PKL_DATA_FINAL, "investment_results", "df")
     data = create_inv_stats(
         investment_results, results=group, operation=operation, agg=False
@@ -40,6 +51,15 @@ def investment_line_chart(
 
 
 def investment_per_tech(save_filepath: str = None, ext: str = "png") -> px.bar:
+    """Creates a bar graph showing the level of investment per technology.
+
+    Args:
+        save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
+        ext (str, optional): The extension of the image you are creating. Defaults to "png".
+
+    Returns:
+        px.bar: A Plotly express bar chart.
+    """
     investment_results = read_pickle_folder(PKL_DATA_FINAL, "investment_results", "df")
     tech_investment = (
         investment_results.groupby(["end_tech", "region_wsa_region"])
@@ -65,3 +85,5 @@ def investment_per_tech(save_filepath: str = None, ext: str = "png") -> px.bar:
 
     if save_filepath:
         fig_.write_image(f"{save_filepath}.{ext}")
+
+    return fig_

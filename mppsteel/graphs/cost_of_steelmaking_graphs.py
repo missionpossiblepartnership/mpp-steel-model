@@ -16,6 +16,17 @@ from mppsteel.graphs.plotly_graphs import bar_chart
 def get_lcos_lowest_vals(
     df: pd.DataFrame, chosen_year: int, value_col: str
 ) -> Union[pd.DataFrame, dict]:
+    """Gets the lowest regional Levelised Cost of Steelmaking values for a specified year.
+
+    Args:
+        df (pd.DataFrame): The DataFrame containing the LCOS.
+        chosen_year (int): The year you want to calculate the LCOS for.
+        value_col (str): The column containing the values with the LCOS.
+
+    Returns:
+        Union[pd.DataFrame, dict]: Returns the subsetted DataFrame with the lowest costs and 
+        also a dictionary with the delta values between the lowest and highest cost regions.
+    """
     df_c = df.copy()
     df_c.rename(
         mapper={"levelised_cost_of_steelmaking": value_col}, axis=1, inplace=True
@@ -42,6 +53,16 @@ def get_lcos_lowest_vals(
 
 
 def assign_country_deltas(df: pd.DataFrame, delta_dict: dict) -> pd.DataFrame:
+    """Assigns the delta values to each respective dictionary
+
+    Args:
+        df (pd.DataFrame): A DataFrame containing the lowest region cost values.
+        delta_dict (dict): A dictionary containing the delta values between low and high.
+
+    Returns:
+        pd.DataFrame: A DataFrame with a new column `LCOS delta` containing the delat for each technology between
+        the lowest and highest cost values.
+    """
     df_c = df.copy()
     tech_values = df_c.index.get_level_values(0).unique()
     for technology in tech_values:
@@ -54,6 +75,16 @@ def assign_country_deltas(df: pd.DataFrame, delta_dict: dict) -> pd.DataFrame:
 def lcos_graph(
     chosen_year: int = 2030, save_filepath: str = None, ext: str = "png"
 ) -> px.bar:
+    """Creates a bar graph for the Levelised Cost of Steelmaking.
+
+    Args:
+        chosen_year (int, optional): The year you want to calculate the LCOS for. Defaults to 2030.
+        save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
+        ext (str, optional): The extension of the image you are creating. Defaults to "png".
+
+    Returns:
+        px.bar: A Plotly express bar chart.
+    """
 
     lcos_data = read_pickle_folder(
         PKL_DATA_FINAL, "levelised_cost_of_steelmaking", "df"

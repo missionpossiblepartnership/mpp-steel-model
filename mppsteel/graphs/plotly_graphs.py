@@ -36,22 +36,6 @@ SCENARIO_COLOURS = {
 }
 
 
-def line_graph(
-    df: pd.DataFrame,
-    x: str,
-    y: str,
-    title: str,
-    save_filepath: str = None,
-    ext: str = "png",
-) -> px.line:
-    fig_ = px.line(df, x=x, y=y, title=title)
-
-    if save_filepath:
-        fig_.write_image(f"{save_filepath}.{ext}")
-
-    return fig_
-
-
 def line_chart(
     data: pd.DataFrame,
     x: str,
@@ -65,6 +49,24 @@ def line_chart(
     save_filepath: str = None,
     ext: str = "png",
 ) -> px.line:
+    """Creates a plotly express line graph based on parameters inputted into the model.
+
+    Args:
+        data (pd.DataFrame): The DataFrame you want to model.
+        x (str): The column containing the X axis data.
+        y (str): The column containing the Y axis data.
+        color (str): The column containing the values that will distinguish the colors in the graph.
+        name (str): The graph title.
+        x_axis (str): The title of the X axis.
+        y_axis (str): The title of the Y axis.
+        text (str, optional): A description of the graph. Defaults to None.
+        color_discrete_map (dict, optional): A mapping of color values to specific values. Defaults to None.
+        save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
+        ext (str, optional): The extension of the image file. Defaults to "png".
+
+    Returns:
+        px.line: A plotly express line graph.
+    """
     ## this need to be updated to account for multiple facets https://github.com/plotly/plotly.py/issues/2545
     fig_ = px.line(
         data, x=x, y=y, color=color, text=text, color_discrete_map=color_discrete_map
@@ -131,6 +133,23 @@ def area_chart(
     save_filepath: str = None,
     ext: str = "png",
 ) -> px.area:
+    """Creates a plotly express area graph based on parameters inputted into the model.
+
+    Args:
+        data (pd.DataFrame): The DataFrame you want to model.
+        x (str): The column containing the X axis data.
+        y (str): The column containing the Y axis data.
+        color (str): The column containing the values that will distinguish the colors in the graph.
+        name (str): The graph title.
+        x_axis (str): The title of the X axis.
+        y_axis (str): The title of the Y axis.
+        hoverdata (type): Data that appears on hover mode.
+        save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
+        ext (str, optional): The extension of the image file. Defaults to "png".
+
+    Returns:
+        px.area: A plotly express area graph.
+    """
     fig_ = px.area(
         data,
         x=x,
@@ -148,7 +167,7 @@ def area_chart(
         hovermode="x unified",
         plot_bgcolor="white",
         xaxis=dict(
-            # title_text=x_axis,
+            title_text=x_axis,
             titlefont=dict(family="Arial", size=14, color="black"),
             tickfont=dict(family="Arial", size=14, color="black"),
             title_standoff=10,
@@ -202,6 +221,23 @@ def bar_chart(
     yaxis_title: str = "",
     legend_text: str = "",
 ) -> px.bar:
+    """Creates a plotly express bar graph based on parameters inputted into the model.
+
+    Args:
+        data (pd.DataFrame): The DataFrame you want to model.
+        x (str): The column containing the X axis data.
+        y (str): The column containing the Y axis data.
+        color (str): The column containing the values that will distinguish the colors in the graph.
+        color_discrete_map (dict, optional): A mapping of color values to specific values. Defaults to None.
+        array_order (list, optional): Defines an optional order for the bars to appear. Defaults to None.
+        title_text (str, optional): The graph title. Defaults to "".
+        xaxis_title (str, optional): The title of the X axis. Defaults to "".
+        yaxis_title (str, optional): The title of the Y axis. Defaults to "".
+        legend_text (str, optional): The text for the title of the legend. Defaults to "".
+
+    Returns:
+        px.bar: A plotly express bar graph.
+    """
 
     fig_ = px.bar(
         data,
@@ -283,7 +319,25 @@ def bar_chart_vertical(
     save_filepath: str = None,
     ext: str = "png",
 ) -> px.bar:
+    """Creates a plotly express bar graph based on parameters inputted into the model.
 
+    Args:
+        data (pd.DataFrame): The DataFrame you want to model.
+        x (str): The column containing the X axis data.
+        y (str): The column containing the Y axis data.
+        facet_row (str): The column containing the values to split the graph into facets.
+        color (str): The column containing the values that will distinguish the colors in the graph.
+        color_discrete_map (dict, optional): A mapping of color values to specific values. Defaults to None.
+        x_text (str): The title of the X axis.
+        y_text (str): The title of the Y axis.
+        title_text (str, optional): The graph title. Defaults to "".
+        text (str, optional): A description of the graph. Defaults to None.
+        save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
+        ext (str, optional): The extension of the image file. Defaults to "png".
+
+    Returns:
+        px.bar: A plotly express area graph.
+    """
     fig_ = px.bar(
         data,
         x=x,
@@ -325,7 +379,7 @@ def bar_chart_vertical(
         linecolor="grey",
     )
     fig_.update_yaxes(
-        title_text=None,
+        title_text=y_text,
         titlefont=dict(family="Arial", size=12, color="black"),
         tickfont=dict(family="Arial", size=10, color="black"),
         title_standoff=3,

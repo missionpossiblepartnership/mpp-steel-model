@@ -16,6 +16,15 @@ from mppsteel.graphs.plotly_graphs import bar_chart
 def format_cot_graph(
     df: pd.DataFrame, regions: list = None, resource_list: list = None
 ) -> pd.DataFrame:
+    """Formats the Consumption over time graph to create a DataFrame ready to be used to create graphs.
+    Args:
+        df (pd.DataFrame): A DataFrame containing the Production data.
+        regions (list, optional): A list of regions you want to subset the DataFrame with. Defaults to None.
+        resource_list (list, optional): A list of resources you want to subset the DataFrame with. Defaults to None.
+
+    Returns:
+        pd.DataFrame: A subsetted DataFrame.
+    """
     df_c = df.copy()
     df_c = pd.melt(
         df,
@@ -43,6 +52,16 @@ def format_cot_graph(
 def consumption_over_time_graph(
     regions: list = None, save_filepath: str = None, ext: str = "png"
 ) -> px.bar:
+    """Generates a Graph showing the consumption over time of a material resource.
+
+    Args:
+        regions (list, optional): The regions you want to graph. Defaults to None.
+        save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
+        ext (str, optional): The extension of the image you are creating. Defaults to "png".
+
+    Returns:
+        px.bar: A Plotly express bar chart.
+    """
 
     resources = [
         "biomass",

@@ -27,10 +27,22 @@ BAR_CHART_ORDER = {
     "Region Cost Delta": "#F2F2F2",
 }
 
-
 def return_capex_values(
     capex_dict: dict, year: str, investment_cycle: int, discount_rate: float
 ) -> pd.DataFrame:
+    """This function takes in a dictionary of capex values, a year, an investment cycle, and a discount
+    rate. It returns a dataframe of the capex values for the year, discounted to the investment cycle.
+
+    Args:
+        capex_dict (dict): A dictionary containing the capex values for each technology.
+        year (str): The year for which we want to calculate the capex values.
+        investment_cycle (int): The length of the investment cycle.
+        discount_rate (float): The discount rate used to calculated the present values.
+
+    Returns:
+        pd.DataFrame: A dataframe with the following columns: greenfield_capex, brownfield_capex, other_opex, renovation_capex.
+    """
+
     brownfield_values = capex_dict["brownfield"].xs(key=year, level="Year").copy()
     greenfield_values = capex_dict["greenfield"].xs(key=year, level="Year").copy()
     other_opex_values = capex_dict["other_opex"].xs(key=year, level="Year").copy()
@@ -54,6 +66,15 @@ def return_capex_values(
 
 
 def add_opex_values(vdf: pd.DataFrame, co_df: pd.DataFrame) -> pd.DataFrame:
+    """Adds opex values to the variable costs DataFrame as an additional column.
+
+    Args:
+        vdf (pd.DataFrame): The variable costs DataFrame you want to modify.
+        co_df (pd.DataFrame): The Capex DataFrame.
+
+    Returns:
+        pd.DataFrame: The updated variable costs dataframe with the other opex values.
+    """
     vdf_c = vdf.copy()
     tech_values = vdf_c.index.get_level_values(0).unique()
     for technology in tech_values:
@@ -65,6 +86,15 @@ def add_opex_values(vdf: pd.DataFrame, co_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def add_capex_values(vdf: pd.DataFrame, co_df: pd.DataFrame) -> pd.DataFrame:
+    """Adds capex values to the variable costs DataFrame as additional columns.
+
+    Args:
+        vdf (pd.DataFrame): The variable costs DataFrame you want to use.
+        co_df (pd.DataFrame): The Capex DataFrame.
+
+    Returns:
+        pd.DataFrame: The updated variable costs dataframe with the capex valuess.
+    """
     vdf_c = vdf.copy()
     tech_values = vdf_c.index.get_level_values(0).unique()
     country_values = vdf_c.index.get_level_values(2).unique()
@@ -78,6 +108,15 @@ def add_capex_values(vdf: pd.DataFrame, co_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def get_country_deltas(df: pd.DataFrame) -> Union[pd.DataFrame, dict]:
+    """Gets the lowest regional Levelised Cost of Steelmaking values.
+
+    Args:
+        df (pd.DataFrame): The DataFrame containing the costs.
+
+    Returns:
+        Union[pd.DataFrame, dict]: Returns the subsetted DataFrame with the lowest costs and 
+        also a dictionary with the delta values between the lowest and highest cost regions.
+    """
     df["cost"] = df["cost"].apply(lambda x: cast_to_float(x))
     df_s = df.reset_index()
     df_c = df.groupby(["technology", "country_code"]).sum()
@@ -104,6 +143,16 @@ def get_country_deltas(df: pd.DataFrame) -> Union[pd.DataFrame, dict]:
 
 
 def assign_country_deltas(df: pd.DataFrame, delta_dict: dict) -> pd.DataFrame:
+    """Assigns the delta values to each respective dictionary.
+
+    Args:
+        df (pd.DataFrame): A DataFrame containing the lowest region cost values.
+        delta_dict (dict): A dictionary containing the delta values between low and high.
+
+    Returns:
+        pd.DataFrame: A DataFrame with a new column `LCOS delta` containing the delat for each technology between
+        the lowest and highest cost values.
+    """
     df_c = df.copy()
     tech_values = df_c.index.get_level_values(0).unique()
     country_values = df_c.index.get_level_values(2).unique()
@@ -116,6 +165,11 @@ def assign_country_deltas(df: pd.DataFrame, delta_dict: dict) -> pd.DataFrame:
 
 
 def create_capex_opex_split_data() -> pd.DataFrame:
+    """Creates a DataFrame split by cost type for the purpose of creating a graph.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the split of costs and the associated metadata.
+    """
     capex_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "capex_dict", "df")
     vcsmb = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "variable_costs_regional_material_breakdown", "df"
@@ -161,6 +215,15 @@ def create_capex_opex_split_data() -> pd.DataFrame:
 
 
 def opex_capex_graph(save_filepath: str = None, ext: str = "png") -> px.bar:
+    """Creates a bar graph for the Opex Capex split graph.
+
+    Args:
+        save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
+        ext (str, optional): The extension of the image you are creating. Defaults to "png".
+
+    Returns:
+        px.bar: A plotly express bar chart.
+    """
     final_opex_capex_dataset = create_capex_opex_split_data()
     final_opex_capex_dataset_c = column_sorter(
         final_opex_capex_dataset, "cost_type", BAR_CHART_ORDER.keys()
