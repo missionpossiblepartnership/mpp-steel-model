@@ -26,18 +26,19 @@ def global_metaresults_calculator(
     tech_capacity_df: pd.DataFrame,
     production_results_df: pd.DataFrame,
     steel_demand_scenario: str,
-    year_end,
-):
-    """[summary]
+    year_end: int,
+) -> pd.DataFrame:
+    """_summary_
 
     Args:
-        steel_market_df (pd.DataFrame): [description]
-        tech_capacity_df (pd.DataFrame): [description]
-        production_results_df (pd.DataFrame): [description]
-        year_end ([type]): [description]
+        steel_market_df (pd.DataFrame): The DataFrame of Steel Demand values.
+        tech_capacity_df (pd.DataFrame): The DataFrame of Technology Capacity values.
+        production_results_df (pd.DataFrame): The Production Stats Results DataFrame.
+        steel_demand_scenario (str): Specifies the steel demand scenario.
+        year_end (int): Specifies the model end year.
 
     Returns:
-        [type]: [description]
+        pd.DataFrame: A DataFrame containing all of the Metaresults for the model run.
     """
     # Initial Steel capacity values
     logger.info(f"- Generating Global Metaresults")
@@ -133,14 +134,15 @@ def global_metaresults_calculator(
 
 
 @timer_func
-def metaresults_flow(scenario_dict: dict, serialize: bool = False):
-    """[summary]
+def metaresults_flow(scenario_dict: dict, serialize: bool = False) -> pd.DataFrame:
+    """Complete Metaresults flow to generate the Investment Results references DataFrame.
 
     Args:
-        serialize (bool, optional): [description]. Defaults to False.
+        scenario_dict (dict): A dictionary with scenarios key value mappings from the current model execution.
+        serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
 
     Returns:
-        [type]: [description]
+        pd.DataFrame: A DataFrame containing the Metaresults.
     """
     logger.info("- Starting Production Results Model Flow")
     steel_demand_df = read_pickle_folder(
@@ -158,7 +160,7 @@ def metaresults_flow(scenario_dict: dict, serialize: bool = False):
         steel_demand_scenario,
         max_solver_year,
     )
-    add_results_metadata(
+    global_metaresults = add_results_metadata(
         global_metaresults, scenario_dict, include_regions=False, single_line=True
     )
 

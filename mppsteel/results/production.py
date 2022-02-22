@@ -47,15 +47,16 @@ def generate_production_stats(
     steel_demand_scenario: str,
     year_end: int,
 ) -> pd.DataFrame:
-    """[summary]
+    """Creates new columns for production, capacity_utilisation and a check for whether the technology is a low carbon tech.
 
     Args:
-        tech_capacity_df (pd.DataFrame): [description]
-        steel_df (pd.DataFrame): [description]
-        year_end (int): [description]
+        tech_capacity_df (pd.DataFrame): A DataFrame containing the capacities of each steel plant
+        steel_df (pd.DataFrame): A DataFrame containing the steel demand data.
+        steel_demand_scenario (str): The secnario for the steel demand.
+        year_end (int): The year that the model ends.
 
     Returns:
-        [type]: [description]
+        pd.DataFrame: A DataFrame containing the new columns: produciton, capacity_utilization, and low_carbon_tech
     """
     logger.info(f"- Generating Production Results from capacity")
     df_list = []
@@ -77,10 +78,10 @@ def generate_production_stats(
 
 
 def tech_capacity_splits() -> Tuple[pd.DataFrame, int]:
-    """[summary]
+    """Create a DataFrame containing the technologies and capacities for every plant in every year.
 
     Returns:
-        [type]: [description]
+        Tuple[pd.DataFrame, int]: A tuple containing the combined DataFrame and the last model year.
     """
     logger.info(f"- Generating Capacity split DataFrame")
     tech_capacities_dict = create_plant_capacities_dict()
@@ -132,12 +133,14 @@ def tech_capacity_splits() -> Tuple[pd.DataFrame, int]:
 def production_stats_generator(
     production_df: pd.DataFrame, as_summary: bool = False
 ) -> pd.DataFrame:
-    """[summary]
+    """Generate the consumption of resources for each plant in each year depending on the technologies used.
+
     Args:
-        production_df (pd.DataFrame): [description]
-        as_summary (bool, optional): [description]. Defaults to False.
+        production_df (pd.DataFrame): A DataFrame containing the production stats for each plant in each year.
+        as_summary (bool, optional): A boolean flag that will aggregate the results if set to True. Defaults to False.
+
     Returns:
-        [type]: [description]
+        pd.DataFrame: A DataFrame with each resource usage stat included as a column.
     """
     logger.info(f"- Generating Production Stats")
     df_c = production_df.copy()
@@ -148,7 +151,6 @@ def production_stats_generator(
     # Create columns
     for colname in material_dict_mapper.values():
         df_c[colname] = 0
-    # df_c['power'] = 0
 
     # Create values
     for row in tqdm(
@@ -188,10 +190,6 @@ def production_stats_generator(
                     standardised_business_cases, row.technology, material_category
                 )
 
-        # Create power column
-        # electricity_value = business_case_getter(standardised_business_cases, row.technology, 'Electricity')
-        # df_c.loc[row.Index, 'power'] = row.production * electricity_value / 3.6
-
     df_c["bioenergy"] = df_c["biomass"] + df_c["biomethane"]
     if as_summary:
         return df_c.groupby(["year", "technology"]).sum()
@@ -206,12 +204,14 @@ def production_stats_generator(
 def generate_production_emission_stats(
     production_df: pd.DataFrame, as_summary: bool = False
 ) -> pd.DataFrame:
-    """[summary]
+    """Generates a DataFrame with the emissions generated for S1, S2 & S3.
+
     Args:
-        production_df (pd.DataFrame): [description]
-        as_summary (bool, optional): [description]. Defaults to False.
+        production_df (pd.DataFrame): A DataFrame containing the production stats for each plant in each year.
+        as_summary (bool, optional): A boolean flag that will aggregate the results if set to True. Defaults to False.
+
     Returns:
-        [type]: [description]
+        pd.DataFrame: A DataFrame with each emission scope included as a column.
     """
     logger.info(f"- Generating Production Emission Stats")
     calculated_emissivity_combined = read_pickle_folder(
@@ -255,6 +255,16 @@ def generate_production_emission_stats(
 
 
 def business_case_getter(df: pd.DataFrame, tech: str, material: str) -> float:
+    """Get business case usage values from a DataFrame.
+
+    Args:
+        df (pd.DataFrame): The standardised and summarised business cases.
+        tech (str): The technology that you want to get values for.
+        material (str): The material that you want to get values for.
+
+    Returns:
+        float: The business case value that requested via the function arguments.
+    """
     if material in df[(df["technology"] == tech)]["material_category"].unique():
         return df[(df["technology"] == tech) & (df["material_category"] == material)][
             "value"
@@ -263,14 +273,24 @@ def business_case_getter(df: pd.DataFrame, tech: str, material: str) -> float:
 
 
 def get_tech_choice(tc_dict: dict, year: int, plant_name: str) -> str:
+    """Return a technology choice for a given plant in a given year.
+
+    Args:
+        tc_dict (dict): Dictionary containing all technology choices for every plant across every year.
+        year (int): The year you want the technology choice for.
+        plant_name (str): The name of the plant
+
+    Returns:
+        str: The technology choice requested via the function arguments.
+    """
     return tc_dict[str(year)][plant_name]
 
 
 def load_materials_mapper() -> dict:
-    """[summary]
+    """A mapper for material names to material names to be used as dataframe column references.
 
     Returns:
-        [type]: [description]
+        dict: A dictionary containing a mapping of original material names to column reference material names.
     """
     materials = load_materials()
     material_col_names = [material.lower().replace(" ", "_") for material in materials]
@@ -279,15 +299,16 @@ def load_materials_mapper() -> dict:
 
 @timer_func
 def production_results_flow(scenario_dict: dict, serialize: bool = False) -> dict:
-    """[summary]
+    """Production results flow to create the Production resource usage DataFrame and the Production Emissions DataFrame.
 
     Args:
-        serialize (bool, optional): [description]. Defaults to False.
+        scenario_dict (dict): A dictionary with scenarios key value mappings from the current model execution.
+        serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
 
     Returns:
-        [type]: [description]
+        dict: A dictionary containing the two DataFrames.
     """
-    logger.info(f"- Starting Production Results Model Flow")
+    logger.info("- Starting Production Results Model Flow")
     steel_demand_df = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "regional_steel_demand_formatted", "df"
     )
@@ -310,7 +331,7 @@ def production_results_flow(scenario_dict: dict, serialize: bool = False) -> dic
             )
 
     if serialize:
-        logger.info(f"-- Serializing dataframes")
+        logger.info("-- Serializing dataframes")
         serialize_file(
             results_dict["production_resource_usage"],
             PKL_DATA_FINAL,
