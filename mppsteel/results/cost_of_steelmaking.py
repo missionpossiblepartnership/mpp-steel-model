@@ -28,19 +28,35 @@ logger = get_logger("Cost of Steelmaking")
 
 
 def create_region_plant_ref(df: pd.DataFrame, region_string: str) -> dict:
-    region_dict = {}
-    for region in df[region_string].unique():
-        region_dict[region] = list(
+    """Creates a mapping of plants to a region(s) of interest.
+
+    Args:
+        df (pd.DataFrame): The Plant DataFrame.
+        region_string (str): The region(s) you want to map.
+
+    Returns:
+        dict: A dictionary containing a mapping of region to plant names
+    """
+    return {region: list(
             df[df[region_string] == region]["plant_name"].unique()
-        )
-    return region_dict
+        ) for region in df[region_string].unique()}
 
 
 def extract_dict_values(
-    main_dict: dict, key_to_extract: str, reference_dict: dict = None, ref: str = None
+    main_dict: dict, key_to_extract: str, reference_dict: dict = None, ref_key: str = None
 ) -> float:
-    if reference_dict and ref:
-        ref_list = reference_dict[ref]
+    """Extracts dictionary values based on function arguments passed (multi-nested dict). final values must be numerical.
+    Args:
+        main_dict (dict): The main dictionary you want to extract values from.
+        key_to_extract (str): The specific dictionary key you want to extract values for (when dictionary has multiple levels).
+        reference_dict (dict, optional): A reference dictionary containing metadata about the keys in main_dict. Defaults to None.
+        ref_key (str, optional): A reference key for the reference_dict. Defaults to None.
+
+    Returns:
+        float: A summation of the values in the dictionary.
+    """
+    if reference_dict and ref_key:
+        ref_list = reference_dict[ref_key]
         return sum(
             [
                 main_dict[key][key_to_extract]
@@ -52,18 +68,31 @@ def extract_dict_values(
 
 
 def calculate_cc(
-    capex_df: pd.DataFrame,
+    capex_dict: dict,
     year: int,
     year_span: range,
     technology: str,
     discount_rate: float,
     cost_type: str,
 ) -> float:
+    """Calculates the capital charges from a capex DataFrame reference and inputted function arguments.
+
+    Args:
+        capex_dict (dict): A dictionary containing the Capex values for Greenfield, Brownfield and Other Opex values.
+        year (int): The year you want to calculate the capital charge for.
+        year_span (range): The year span for the capital charge values (used in the PV calculation).
+        technology (str): The technology you want to calculate the capital charge for.
+        discount_rate (float): The discount rate to apply to the capital charge amounts.
+        cost_type (str): The cost you want to calculate `brownfield` or `greenfield`.
+
+    Returns:
+        float: The capital charge value.
+    """
     year_range = range(year, year + year_span)
     value_arr = np.array([])
     for eval_year in year_range:
         year_loop_val = min(MODEL_YEAR_END, eval_year)
-        value = capex_df[cost_type].loc[technology, year_loop_val]["value"]
+        value = capex_dict[cost_type].loc[technology, year_loop_val]["value"]
         value_arr = np.append(value_arr, value)
     return npf.npv(discount_rate, value_arr)
 
@@ -71,16 +100,31 @@ def calculate_cc(
 def apply_cos(
     row,
     year: int,
-    cap_dict: dict,
+    plant_df: pd.DataFrame,
     v_costs: pd.DataFrame,
     capex_costs: dict,
     steel_demand: pd.DataFrame,
-    steel_scenario: pd.DataFrame,
+    steel_scenario: str,
     capital_charges: bool,
 ) -> float:
+    """Applies the Cost of Steelmaking function to a given row in a DataFrame.
 
-    primary_capacity = cap_dict[row.plant_name]["primary_capacity"]
-    secondary_capacity = cap_dict[row.plant_name]["secondary_capacity"]
+    Args:
+        row (_type_): A vectorized DataFrame row from .apply function.
+        year (int): The current year.
+        plant_df (dict): A DataFrame containing the steel plant metadata.
+        v_costs (pd.DataFrame): A DataFrame containing the variable costs for each technology across each year and region.
+        capex_costs (dict): A dictionary containing the Capex values for Greenfield, Brownfield and Other Opex values.
+        steel_demand (pd.DataFrame): A DataFrame containing the steel demand value timeseries.
+        steel_scenario (str): A string containing the scenario to be used in the steel.
+        capital_charges (bool): A boolean flag to toggle the capital charges function.
+
+    Returns:
+        float: The cost of Steelmaking value to be applied.
+    """
+
+    primary_capacity = plant_df[row.plant_name]["primary_capacity"]
+    secondary_capacity = plant_df[row.plant_name]["secondary_capacity"]
     variable_cost = v_costs.loc[row.country_code, year, row.technology]["cost"]
     other_opex_cost = capex_costs["other_opex"].loc[row.technology, year]["value"]
     steel_demand_value = steel_demand_getter(
@@ -118,6 +162,17 @@ def apply_cos(
 def apply_lcos(
     row, v_costs: pd.DataFrame, capex_costs: dict, include_greenfield: bool = True
 ):
+    """Applies the Levelized Cost of Steelmaking function to a given row in a DataFrame.
+
+    Args:
+        row (_type_): A vectorized DataFrame row from .apply function.
+        v_costs (pd.DataFrame): A DataFrame containing the variable costs for each technology across each year and region.
+        capex_costs (dict): A dictionary containing the Capex values for Greenfield, Brownfield and Other Opex values.
+        include_greenfield (bool, optional): A boolean flag to toggle the greenfield specific calculations. Defaults to True.
+
+    Returns:
+        _type_: An amended vectorized DataFrame row from .apply function.
+    """
     variable_cost = v_costs.loc[row.country_code, row.year, row.technology]["cost"]
     other_opex_cost = capex_costs["other_opex"].loc[row.technology, row.year]["value"]
     discount_rate = DISCOUNT_RATE
@@ -159,6 +214,23 @@ def cost_of_steelmaking(
     regional: bool = False,
     capital_charges: bool = False,
 ) -> dict:
+    """Applies the cost of steelmaking function to the Production Stats DataFrame.
+
+    Args:
+        production_stats (pd.DataFrame): A DataFrame containing the Production Stats.
+        variable_costs (pd.DataFrame): A DataFrame containing the variable costs for each technology across each year and region.
+        capex_df (pd.DataFrame): A dictionary containing the Capex values for Greenfield, Brownfield and Other Opex values.
+        steel_demand (pd.DataFrame): A DataFrame containing the steel demand value timeseries.
+        capacities_dict (dict): A dictionary containing the initial capacities of each plant.
+        steel_scenario (str): A string containing the scenario to be used in the steel. Defaults to "bau".
+        region_group (str, optional): Determines which regional schema to use if the `regional` flag is set to `True`. Defaults to "region_wsa_region".
+        regional (bool, optional): Boolean flag to determine whether to calculate the Cost of Steelmaking at the regional level or the global level. Defaults to False.
+        capital_charges (bool): A boolean flag to toggle the capital charges function. Defaults to False.
+
+    Returns:
+        dict: A dictionary containing each year and the Cost of Steelmaking values.
+    """
+        
 
     regions = production_stats[region_group].unique()
     years = production_stats["year"].unique()
@@ -218,11 +290,21 @@ def cost_of_steelmaking(
     return dict(zip(years, cos_year_list))
 
 
-def dict_to_df(df: pd.DataFrame, region_group: str, cc: bool = False) -> pd.DataFrame:
+def dict_to_df(df_values_dict: dict, region_group: str, cc: bool = False) -> pd.DataFrame:
+    """Turns a dictionary of of cost of steelmaking values into a DataFrame.
+
+    Args:
+        df_values_dict (dict): A dictionary containing each year and the Cost of Steelmaking values.
+        region_group (str): Determines which regional schema to use.
+        cc (bool, optional): Determines whether the cost of steelmaking column will include a reference to the capital charges. Defaults to False.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the Cost of Steelmaking values.
+    """
     value_col = "cost_of_steelmaking"
     if cc:
         value_col = f"{value_col}_with_cc"
-    df_c = pd.DataFrame(df).transpose().copy()
+    df_c = pd.DataFrame(df_values_dict).transpose().copy()
     df_c = df_c.reset_index().rename(mapper={"index": "year"}, axis=1)
     df_c = df_c.melt(id_vars=["year"], var_name=region_group, value_name=value_col)
     return df_c.set_index(["year", region_group]).sort_values(
@@ -239,6 +321,19 @@ def create_cost_of_steelmaking_data(
     demand_scenario: str,
     region_group: str,
 ) -> pd.DataFrame:
+    """Generates a DataFrame containing two value columns: one with standard cost of steelmaking, and cost of steelmaking with capital charges.
+    Args:
+        production_df (pd.DataFrame): A DataFrame containing the Production Stats.
+        variable_costs_df (pd.DataFrame): A DataFrame containing the variable costs for each technology across each year and region.
+        capex_ref (dict): A dictionary containing the Capex values for Greenfield, Brownfield and Other Opex values.
+        steel_demand_df (pd.DataFrame): A DataFrame containing the steel demand value timeseries.
+        capacities_ref (dict): A dictionary containing the initial capacities of each plant.
+        demand_scenario (str): A string containing the scenario to be used in the steel. Defaults to "bau".
+        region_group (str, optional): Determines which regional schema to use if the `regional` flag is set to `True`. Defaults to "region_wsa_region".
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the new columns.
+    """
 
     standard_cos = cost_of_steelmaking(
         production_df,
@@ -267,6 +362,14 @@ def create_cost_of_steelmaking_data(
 
 
 def create_df_reference(cols_to_create: list) -> pd.DataFrame:
+    """Creates a DataFrame reference for the Cost of Steel making values to be inserted.
+
+    Args:
+        cols_to_create (list): A list of columns to create and set initial values for.
+
+    Returns:
+        pd.DataFrame: A DataFrame reference.
+    """
     steel_plant_df = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df"
     )
@@ -288,6 +391,15 @@ def create_df_reference(cols_to_create: list) -> pd.DataFrame:
 def create_levelised_cost_of_steelmaking(
     variable_costs: pd.DataFrame, capex_ref: dict, include_greenfield=True
 ) -> pd.DataFrame:
+    """Generate a DataFrame with Levelised Cost of Steelmaking values.
+    Args:
+        variable_costs (pd.DataFrame): A DataFrame containing the variable costs for each technology across each year and region.
+        capex_ref (dict): A dictionary containing the Capex values for Greenfield, Brownfield and Other Opex values.
+        include_greenfield (bool, optional): A boolean flag to toggle the greenfield specific calculations. Defaults to True.
+
+    Returns:
+        pd.DataFrame: A DataFrane with Levelised Cost of Steelmaking values.
+    """
     lev_cost_of_steel = create_df_reference(["levelised_cost_of_steelmaking"])
     tqdma.pandas(desc="Applying Lev. Steel")
     lev_cost_of_steel = lev_cost_of_steel.progress_apply(
@@ -301,7 +413,16 @@ def create_levelised_cost_of_steelmaking(
 
 
 @timer_func
-def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize: bool = False):
+def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize: bool = False) -> dict:
+    """Full flow to create the Cost of Steelmaking and the Levelized Cost of Steelmaking DataFrames.
+
+    Args:
+        scenario_dict (dict): A dictionary with scenarios key value mappings from the current model execution.
+        serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
+
+    Returns:
+        dict: A dictionary with the Cost of Steelmaking DataFrame and the Levelized Cost of Steelmaking DataFrame.
+    """
     capacities_dict = create_plant_capacities_dict()
     variable_costs_regional = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "variable_costs_regional", "df"
