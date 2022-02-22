@@ -337,9 +337,17 @@ def combine_emissivity(
     total_emissivity["s1_emissivity"] = ""
     total_emissivity["s3_emissivity"] = ""
     country_codes = total_emissivity.index.get_level_values(1).unique()
+
+    total_emissivity.reset_index()
+    total_emissivity['region']=get_region_from_country_code(
+        country_code, "rmi_region", country_ref_dict
+    )
+    
+    total_emissivity.set_index(["year", "country_code", "technology"])
+    
     technologies = total_emissivity.index.get_level_values(2).unique()
     year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
-    for year in tqdm(year_range, total=len(year_range), desc="S2 Emissivity Reference"):
+    for year in tqdm(year_range, total=len(year_range), desc="s1 and s3 value assigning"):
         for country_code in country_codes:
             for technology in technologies:
                 total_emissivity.loc[
@@ -357,7 +365,7 @@ def combine_emissivity(
     # change_column_order
     new_col_order = move_cols_to_front(
         total_emissivity,
-        ["s1_emissivity", "s2_emissivity", "s3_emissivity", "combined_emissivity"],
+        ["region","s1_emissivity", "s2_emissivity", "s3_emissivity", "combined_emissivity"],
     )
     return total_emissivity[new_col_order].reset_index()
 
