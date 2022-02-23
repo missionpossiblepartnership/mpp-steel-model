@@ -37,6 +37,13 @@ from mppsteel.data_loading.data_interface import (
     carbon_tax_getter,
 )
 
+from mppsteel.utility.location_utility import (
+    country_mapping_fixer,
+    country_matcher,
+    match_country,
+    get_region_from_country_code,
+)
+
 from mppsteel.utility.transform_units import transform_units
 
 from mppsteel.config.model_scenarios import (
@@ -333,15 +340,18 @@ def combine_emissivity(
     s1_ref: pd.DataFrame, s2_ref: pd.DataFrame, s3_ref: pd.DataFrame
 ) -> pd.DataFrame:
     logger.info("Combining S2 Emissions with S1 & S3 emissivity")
+    country_ref_dict = read_pickle_folder(
+        PKL_DATA_INTERMEDIATE, "country_reference_dict", "df"
+    )
     total_emissivity = s2_ref.set_index(["year", "country_code", "technology"]).copy()
     total_emissivity["s1_emissivity"] = ""
     total_emissivity["s3_emissivity"] = ""
     country_codes = total_emissivity.index.get_level_values(1).unique()
 
     total_emissivity.reset_index()
-    total_emissivity['region']=get_region_from_country_code(
-        country_code, "rmi_region", country_ref_dict
-    )
+    total_emissivity['region']= (total_emissivity['country_code'].apply(lambda x: get_region_from_country_code(
+        x, "rmi_region", country_ref_dict
+    )))
     
     total_emissivity.set_index(["year", "country_code", "technology"])
     
