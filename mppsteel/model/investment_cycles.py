@@ -12,7 +12,7 @@ from mppsteel.config.model_config import (
     NET_ZERO_TARGET,
     NET_ZERO_VARIANCE_YEARS,
     INVESTMENT_CYCLE_DURATION_YEARS,
-    INVESTMENT_CYCLE_DURATION_YEARS,
+    INVESTMENT_CYCLE_VARIANCE_YEARS,
     INVESTMENT_OFFCYCLE_BUFFER_TOP,
     INVESTMENT_OFFCYCLE_BUFFER_TAIL,
 )
@@ -34,7 +34,7 @@ def calculate_investment_years(
     x = op_start_year
     decision_years = []
     unique_investment_interval = inv_intervals + random.randrange(
-        -INVESTMENT_CYCLE_DURATION_YEARS, INVESTMENT_CYCLE_DURATION_YEARS, 1
+        -INVESTMENT_CYCLE_VARIANCE_YEARS, INVESTMENT_CYCLE_VARIANCE_YEARS, 1
     )
     while x < cutoff_end_year:
         if x < cutoff_start_year:
