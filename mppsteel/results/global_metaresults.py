@@ -128,7 +128,7 @@ def global_metaresults_calculator(
     )
     df["scrap_consumption"] = [
         production_results_df.loc[year]["scrap"].sum() for year in year_range
-    ]
+    ] * 1000
     df["scrap_avail_above_cons"] = df["scrap_availability"] - df["scrap_consumption"]
     return df
 
