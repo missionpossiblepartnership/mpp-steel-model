@@ -34,7 +34,7 @@ from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.utils import enumerate_iterable
 from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
-
+from mppsteel.utility.location_utility import get_region_from_country_code
 from mppsteel.utility.log_utility import get_logger
 
 # Create logger
@@ -58,22 +58,32 @@ def generate_production_stats(
     Returns:
         pd.DataFrame: A DataFrame containing the new columns: produciton, capacity_utilization, and low_carbon_tech
     """
-    logger.info(f"- Generating Production Results from capacity")
+    logger.info("- Generating Production Results from capacity")
+    country_reference_dict = read_pickle_folder(
+        PKL_DATA_INTERMEDIATE, "country_reference_dict", "df"
+    )
     df_list = []
     year_range = range(MODEL_YEAR_START, year_end + 1)
+    tech_capacity_df["low_carbon_tech"] = tech_capacity_df["technology"].apply(
+        lambda tech: "Y" if tech in LOW_CARBON_TECHS else "N"
+    )
+    tech_capacity_df["region"] = tech_capacity_df["country_code"].apply(
+        lambda x: get_region_from_country_code(x, "wsa_region", country_reference_dict)
+    )
+    regions = tech_capacity_df['region'].unique()
     for year in tqdm(year_range, total=len(year_range), desc="Production Stats"):
         df = tech_capacity_df[tech_capacity_df["year"] == year].copy()
-        capacity_sum = df["capacity"].sum()
-        steel_demand = steel_demand_getter(
-            steel_df, year, steel_demand_scenario, "crude", "World"
-        )
-        # This calculates production!!!
-        df["production"] = (df["capacity"] / capacity_sum) * steel_demand
-        df["capacity_utilization"] = (steel_demand / 1000) / df["capacity"]
-        df["low_carbon_tech"] = df["technology"].apply(
-            lambda tech: "Y" if tech in LOW_CARBON_TECHS else "N"
-        )
-        df_list.append(df)
+        # Regional production split
+        for region in regions:
+            df_r = df[df["region"] == region].copy()
+            regional_capacity_sum = df_r["capacity"].sum()
+            regional_steel_demand_values = df_r['country_code'].apply(lambda country_code: steel_demand_getter(
+                steel_df, year, steel_demand_scenario, "crude", country_code
+            ))
+            # This calculates production!!!
+            df_r["production"] = (df_r["capacity"] / regional_capacity_sum) * regional_steel_demand_values
+            df_r["capacity_utilization"] = (regional_steel_demand_values / 1000) / df_r["capacity"]
+            df_list.append(df_r)
     return pd.concat(df_list).reset_index(drop=True)
 
 
