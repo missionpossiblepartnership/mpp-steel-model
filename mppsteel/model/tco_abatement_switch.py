@@ -25,6 +25,13 @@ from mppsteel.config.model_config import (
     INVESTMENT_CYCLE_DURATION_YEARS,
 )
 
+from mppsteel.utility.location_utility import (
+    country_mapping_fixer,
+    country_matcher,
+    match_country,
+    get_region_from_country_code,
+)
+
 from mppsteel.utility.log_utility import get_logger
 
 logger = get_logger("TCO & Abatement switches")
@@ -287,6 +294,9 @@ def emissivity_abatement(combined_emissivity: pd.DataFrame, scope: str) -> pd.Da
 
 @timer_func
 def tco_presolver_reference(scenario_dict, serialize: bool = False) -> pd.DataFrame:
+    country_ref_dict = read_pickle_folder(
+        PKL_DATA_INTERMEDIATE, "country_reference_dict", "df"
+    )
     electricity_cost_scenario = scenario_dict["electricity_cost_scenario"]
     grid_scenario = scenario_dict["grid_scenario"]
     hydrogen_cost_scenario = scenario_dict["hydrogen_cost_scenario"]
@@ -297,9 +307,9 @@ def tco_presolver_reference(scenario_dict, serialize: bool = False) -> pd.DataFr
     tco_summary = opex_capex_reference_data.copy()
     tco_summary["tco"] = tco_summary["discounted_opex"] + tco_summary["capex_value"]
     tco_summary["tco"] = tco_summary["tco"] / INVESTMENT_CYCLE_DURATION_YEARS
-    tco_summary['region']= get_region_from_country_code(
-        country_code, "rmi_region", country_ref_dict
-    )
+    tco_summary['region']= tco_summary['country_code'].apply(lambda x: get_region_from_country_code(
+        x, "rmi_region", country_ref_dict
+    ))
     steel_plant_ref = create_full_steel_plant_ref(eur_usd_rate)
     tco_reference_data = map_region_tco_to_plants(
         steel_plant_ref, opex_capex_reference_data
