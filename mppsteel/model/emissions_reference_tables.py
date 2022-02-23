@@ -81,7 +81,7 @@ def apply_emissions(
                 s1_emissivity_factors, resource
             )
             # S1 emissions without process emissions or CCS/CCU
-            row[enum_dict["S1"]] = resource_consumed * emission_unit_value / 1000
+            row[enum_dict["S1"]] = resource_consumed * emission_unit_value
         else:
             row[enum_dict["S1"]] = 0
 
