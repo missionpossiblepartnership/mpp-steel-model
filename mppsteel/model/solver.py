@@ -15,6 +15,9 @@ from mppsteel.config.model_config import (
     MODEL_YEAR_START,
     PKL_DATA_IMPORTS,
     PKL_DATA_INTERMEDIATE,
+    INVESTMENT_CYCLE_DURATION_YEARS,
+    INVESTMENT_OFFCYCLE_BUFFER_TOP,
+    INVESTMENT_OFFCYCLE_BUFFER_TAIL
 )
 
 from mppsteel.config.model_scenarios import TECH_SWITCH_SCENARIOS, SOLVER_LOGICS
@@ -99,6 +102,11 @@ def return_best_tech(
         year < tech_avail_from_dict[base_tech]
     ):
         combined_available_list.append(base_tech)
+
+    if transitional_switch_only:
+        # Adjust tco values based on transistional switch years
+        tco_reference_data['tco'] = tco_reference_data['tco'] * INVESTMENT_CYCLE_DURATION_YEARS / (
+            INVESTMENT_CYCLE_DURATION_YEARS - (INVESTMENT_OFFCYCLE_BUFFER_TOP + INVESTMENT_OFFCYCLE_BUFFER_TAIL))
 
     if enforce_constraints:
         # Constraints checks

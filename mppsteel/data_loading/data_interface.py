@@ -182,7 +182,7 @@ def scope1_emissions_getter(df: pd.DataFrame, metric: str, as_ton: bool = True) 
     """
     df_c = df.copy()
     df_c.set_index(["Metric"], inplace=True)
-    values = df_c.loc[metric]["Value"] 
+    values = df_c.loc[metric]["Value"]
     if as_ton:
         return values / 1000
     return values
