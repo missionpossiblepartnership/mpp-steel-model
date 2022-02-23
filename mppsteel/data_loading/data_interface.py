@@ -84,7 +84,7 @@ def modify_scope3_ef_1(
     scope3df_index = df_c.set_index(["Category", "Fuel", "Unit"])
     scope3df_index.loc[
         "Scope 3 Emissions Factor", "Slag", "ton CO2eq / ton slag"
-    ] = slag_values
+    ] = slag_values/1000 #from [t CO2/ t slag] to [t CO2/ kg slag] see standardized BC
     met_coal_values = scope3df_index.loc[
         "Scope 3 Emissions Factor", "Met coal", "MtCO2eq / PJ"
     ].apply(lambda x: x * met_coal_density)
