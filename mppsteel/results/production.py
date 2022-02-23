@@ -194,8 +194,8 @@ def production_stats_generator(
     if as_summary:
         return df_c.groupby(["year", "technology"]).sum()
 
-    # Convert Electricity & Hydrogen from Twh to Pj
-    for material in ["electricity", "hydrogen"]:
+    # Convert Hydrogen from Twh to Pj
+    for material in ["hydrogen"]:
         df_c[material] = df_c[material] * 3.6
 
     return df_c
