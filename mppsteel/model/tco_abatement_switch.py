@@ -296,6 +296,7 @@ def tco_presolver_reference(scenario_dict, serialize: bool = False) -> pd.DataFr
     )
     tco_summary = opex_capex_reference_data.copy()
     tco_summary["tco"] = tco_summary["discounted_opex"] + tco_summary["capex_value"]
+    tco_summary["tco"] = tco_summary["tco"] / INVESTMENT_CYCLE_DURATION_YEARS
     tco_summary['region']= get_region_from_country_code(
         country_code, "rmi_region", country_ref_dict
     )
