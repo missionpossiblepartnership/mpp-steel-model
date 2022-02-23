@@ -169,19 +169,23 @@ def carbon_tax_getter(df: pd.DataFrame, year: int) -> float:
     return df_c.loc[year]["value"]
 
 
-def scope1_emissions_getter(df: pd.DataFrame, metric: str) -> float:
+def scope1_emissions_getter(df: pd.DataFrame, metric: str, as_ton: bool = True) -> float:
     """Function to get the Scope 1 Emissions value at a particular year.
 
     Args:
         df (pd.DataFrame): The DataFrame containing the Scope 1 Emissions metrics and values.
         metric (str): The metric you are querying.
+        as_ton (bool): Convert from kg to ton. Defaults to True.
 
     Returns:
         float: The value of the Scope 1 Emission Metric at a particular year.
     """
     df_c = df.copy()
     df_c.set_index(["Metric"], inplace=True)
-    return df_c.loc[metric]["Value"]
+    values = df_c.loc[metric]["Value"] / 1000
+    if as_ton:
+        return values / 1000
+    return values
 
 
 def ccs_co2_getter(df: pd.DataFrame, metric: str, year: int) -> float:
