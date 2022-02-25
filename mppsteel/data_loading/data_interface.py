@@ -349,7 +349,7 @@ def generate_preprocessed_emissions_data(
         PKL_DATA_IMPORTS, "s3_emissions_factors_1"
     )
     final_scope3_ef_df = modify_scope3_ef_1(
-        s3_emissions_factors_1, slag_new_values, ENERGY_DENSITY_MET_COAL
+        s3_emissions_factors_1, slag_new_values, ENERGY_DENSITY_MET_COAL_MJ_KG
     )
     if serialize:
         serialize_file(commodities_df, PKL_DATA_INTERMEDIATE, "commodities_df")
