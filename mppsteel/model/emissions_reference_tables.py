@@ -348,12 +348,12 @@ def combine_emissivity(
     total_emissivity["s3_emissivity"] = ""
     country_codes = total_emissivity.index.get_level_values(1).unique()
 
-    total_emissivity.reset_index()
-    total_emissivity['region']= (total_emissivity['country_code'].apply(lambda x: get_region_from_country_code(
+    total_emissivity.reset_index(inplace=True)
+    total_emissivity['region']= total_emissivity['country_code'].apply(lambda x: get_region_from_country_code(
         x, "rmi_region", country_ref_dict
-    )))
+    ))
     
-    total_emissivity.set_index(["year", "country_code", "technology"])
+    total_emissivity.set_index(["year", "country_code", "technology"], inplace=True)
     
     technologies = total_emissivity.index.get_level_values(2).unique()
     year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
