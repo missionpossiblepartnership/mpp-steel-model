@@ -1,7 +1,7 @@
 """Script that creates the price and emissions tables."""
 
 # For Data Manipulation
-from typing import Tuple
+from typing import Tuple, Union
 import pandas as pd
 
 from tqdm import tqdm
@@ -55,16 +55,30 @@ from mppsteel.config.model_scenarios import (
 logger = get_logger("Emissions Reference")
 
 
-def apply_emissions(
+def generate_s1_s3_emissions(
     df: pd.DataFrame,
     single_year: int = None,
     year_end: int = 2021,
     s1_emissivity_factors: pd.DataFrame = None,
     s3_emissivity_factors: pd.DataFrame = None,
     carbon_tax_df: pd.DataFrame = None,
-    non_standard_dict: dict = None,
     scope: str = "1",
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Creates a DataFrame with emissivity for S1, S2 & S3 for each technology.
+    Multiples the emissivity values by the standardized business cases.
+
+    Args:
+        df (pd.DataFrame): The standardised business cases DataFrame.
+        single_year (int, optional): A single year that you want to calculate emissivity for. Defaults to None.
+        year_end (int, optional): The last year that you want to calculate emissivity for. Defaults to 2021.
+        s1_emissivity_factors (pd.DataFrame, optional): Emissions Factors for S1. Defaults to None.
+        s3_emissivity_factors (pd.DataFrame, optional): Emissions Factors for S3. Defaults to None.
+        carbon_tax_df (pd.DataFrame, optional): Calculates the Carbon Tax for each technology based on emissions. Defaults to None.
+        scope (str, optional): Define which emissivity scope you want to return. Defaults to "1".
+
+    Returns:
+        Tuple[pd.DataFrame, pd.DataFrame]: A DataFrame of the emissivity per scope and a carbon tax DataFrame.
+    """
 
     # Create resources reference list
     s1_emissivity_resources = s1_emissivity_factors["Metric"].unique().tolist()
@@ -151,19 +165,28 @@ def apply_emissions(
         .copy()
     )
     carbon_df.rename(mapper={"emissions": "value"}, axis=1, inplace=True)
-    emissions_df = (
+    emissivity_df = (
         combined_df.loc[combined_df["scope"] != "carbon_cost"]
         .reset_index(drop=True)
         .copy()
     )
 
-    return emissions_df, carbon_df
+    return emissivity_df, carbon_df
 
 
-def create_emissions_ref_dict(df: pd.DataFrame, tech_ref_list: list) -> dict:
+def create_emissions_ref_dict(df: pd.DataFrame, tech_list: list) -> dict:
+    """Creates a reference to technologies, resources and emissions for a predefined list of technologies and resources.
+
+    Args:
+        df (pd.DataFrame): The standardised business cases DataFrame.
+        tech_list (list): A list of technologies that you want to create the emissions reference for.
+
+    Returns:
+        dict: A dictionary of technology, resources and emissions.
+    """
     value_ref_dict = {}
     resource_list = ["Process emissions", "Captured CO2", "Used CO2"]
-    for technology in tech_ref_list:
+    for technology in tech_list:
         resource_dict = {}
         for resource in resource_list:
             try:
@@ -181,6 +204,17 @@ def create_emissions_ref_dict(df: pd.DataFrame, tech_ref_list: list) -> dict:
 def full_emissions(
     df: pd.DataFrame, emissions_exceptions_dict: dict, tech_list: list
 ) -> pd.DataFrame:
+    """Combines regular emissions with process emissions and ccs/ccu emissions to get a complete
+    emissions reference for a list of technologies.
+
+    Args:
+        df (pd.DataFrame): The standardised business cases DataFrame.
+        emissions_exceptions_dict (dict): A dictionary of technology, resources and emissions.
+        tech_list (list): The technologies you want to retrieve full emissions reference for.
+
+    Returns:
+        pd.DataFrame: A DataFrame of the emissivity per scope and a carbon tax DataFrame. 
+    """
 
     df_c = df.copy()
     for year in df_c.index.get_level_values(0).unique().values:
@@ -200,14 +234,19 @@ def full_emissions(
 def generate_emissions_dataframe(
     df: pd.DataFrame, year_end: int
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Creates the base of an emissions DataFrame based on S1 and S3 emissions.
+    Args:
+        df (pd.DataFrame): The standardised business cases DataFrame.
+        year_end (int): The last model year.
 
-    # S1 emissions covers the Green House Gas (GHG) emissions that a company makes directly
+    Returns:
+        Tuple[pd.DataFrame, pd.DataFrame]: A DataFrame of the emissivity per scope and a carbon tax DataFrame.
+    """
+
+    # S1 emissions covers the Green House Gas (GHG) emissions that a company makes directly.
     s1_emissivity_factors = read_pickle_folder(
         PKL_DATA_IMPORTS, "s1_emissions_factors", "df"
     )
-
-    # Scope 2 Emissions: These are the emissions it makes indirectly
-    # like when the electricity or energy it buys for heating and cooling buildings
 
     # S3 emissions: all the emissions associated, not with the company itself,
     # but that the organisation is indirectly responsible for, up and down its value chain.
@@ -217,7 +256,7 @@ def generate_emissions_dataframe(
 
     non_standard_dict_ref = create_emissions_ref_dict(df, TECH_REFERENCE_LIST)
 
-    emissions, carbon = apply_emissions(
+    emissions, carbon = generate_s1_s3_emissions(
         df=df.copy(),
         year_end=year_end,
         s1_emissivity_factors=s1_emissivity_factors,
@@ -241,6 +280,25 @@ def get_s2_emissions(
     grid_scenario: str,
     hydrogen_cost_scenario: str,
 ) -> float:
+    """_summary_
+
+    Args:
+        power_model (dict): The power model outputs dictionary.
+        hydrogen_model (dict): The hydrogen model outputs dictionary.
+        business_cases (pd.DataFrame): The standardised business cases DataFrame.
+        country_ref_dict (dict): A reference to the countries for mapping purposes.
+        year (int): The year to retrieve S2 emissions for.
+        country_code (str): The country code to retrieve S2 values for.
+        technology (str): The technology to retrieve S2 emissions for.
+        electricity_cost_scenario (str): The electricity cost scenario to subset the power model.
+        grid_scenario (str): The electricity grid scenario to subset the power model.
+        hydrogen_cost_scenario (str): The hydrogen cost scenario to subset the power model.
+
+    Returns:
+        float: The S2 emission value for a particular year technology, region and scenario inputs.
+    """
+    # Scope 2 Emissions: These are the emissions it makes indirectly
+    # like when the electricity or energy it buys for heating and cooling buildings
 
     electricity_cost_scenario = COST_SCENARIO_MAPPER[electricity_cost_scenario]
     grid_scenario = GRID_DECARBONISATION_SCENARIOS[grid_scenario]
@@ -290,6 +348,16 @@ def get_s2_emissions(
 def regional_s2_emissivity(
     electricity_cost_scenario: str, grid_scenario: str, hydrogen_cost_scenario: str
 ) -> pd.DataFrame:
+    """Creates a DataFrame for S2 emissivity reference for each region.
+
+    Args:
+        electricity_cost_scenario (str): The electricity cost scenario to subset the power model.
+        grid_scenario (str): The electricity grid scenario to subset the power model.
+        hydrogen_cost_scenario (str): The hydrogen cost scenario to subset the power model.
+
+    Returns:
+        pd.DataFrame: A DataFrame with the S2 emissivity values for each country within a reference of steel plants.
+    """
     b_df = load_business_cases()
     power_model_formatted = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "power_model_formatted", "df"
@@ -332,13 +400,22 @@ def regional_s2_emissivity(
                     "s2_emissivity": value,
                 }
                 df_list.append(entry)
-    combined_df = pd.DataFrame(df_list)
-    return combined_df
+    return pd.DataFrame(df_list)
 
 
 def combine_emissivity(
     s1_ref: pd.DataFrame, s2_ref: pd.DataFrame, s3_ref: pd.DataFrame
 ) -> pd.DataFrame:
+    """Combines scope 1, scope 2 and scope 3 DataFrames into a combined DataFrame.
+
+    Args:
+        s1_ref (pd.DataFrame): Scope 1 DataFrame
+        s2_ref (pd.DataFrame): Scope 2 DataFrame
+        s3_ref (pd.DataFrame): Scope3 DataFrame
+
+    Returns:
+        pd.DataFrame: A DataFrame with scopes 1, 2 and 3 data.
+    """
     logger.info("Combining S2 Emissions with S1 & S3 emissivity")
     country_ref_dict = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "country_reference_dict", "df"
@@ -382,23 +459,43 @@ def combine_emissivity(
 
 def emissivity_getter(
     df_ref: pd.DataFrame, year: int, country_code: str, technology: str, scope: str
-) -> float:
+) -> Union[pd.DataFrame, float]:
+    """A getter function for the combined emissions DataFrame.
+
+    Args:
+        df_ref (pd.DataFrame): The combined S1, S2 & S3 emissions DataFrame reference.
+        year (int): The requested year.
+        country_code (str): The requested region (varies S2 emissions).
+        technology (str): The requested technology.
+        scope (str): The requested scope level of the emissions.
+
+    Returns:
+        Union[pd.DataFrame, float]: A float value of the emissions based on the scope specified as a parameter. 
+    """
     year = min(2050, year)
+    if scope not in {"s1", "s2", "s3"}:
+        return df_ref.loc[year, country_code, technology]["combined_emissivity"]
     emissivity_mapper = {
         "s1": "s1_emissivity",
         "s2": "s2_emissivity",
         "s3": "s3_emissivity",
     }
-    if scope in ["s1", "s2", "s3"]:
-        return df_ref.loc[year, country_code, technology][emissivity_mapper[scope]]
-    else:
-        return df_ref.loc[year, country_code, technology]["combined_emissivity"]
+    return df_ref.loc[year, country_code, technology][emissivity_mapper[scope]]
 
 
 @timer_func
 def generate_emissions_flow(
     scenario_dict: dict, serialize: bool = False
 ) -> pd.DataFrame:
+    """Complete flow for createing the emissivity reference for Scopes 1, 2 & 3.
+
+    Args:
+        scenario_dict (dict): A dictionary with scenarios key value mappings from the current model execution.
+        serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
+
+    Returns:
+        pd.DataFrame: The combined S1, S2 & S3 emissions DataFrame reference. 
+    """
     business_cases_summary = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "standardised_business_cases", "df"
     )
