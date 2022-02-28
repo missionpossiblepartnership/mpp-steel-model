@@ -57,17 +57,17 @@ def get_capex_values(
     capex_dict_ref: dict,
     single_year: int = None,
     year_end: int = 2021,
-) -> dict:
+) -> pd.DataFrame:
     """Assign values to the a DataFrame based on start and potential switching technology.
 
     Args:
-        df_switching_dict (dict): A dictionary with each technology as the key
+        df_switching_dict (dict): A dictionary with each technology as the key.
         capex_dict_ref (dict): A dictionary with greenfield, brownfield and other_opex values for each technology.
 
     Returns:
-        dict: A dictionary with vales
+        pd.DataFrame: A dictionary with capex values for each technology.
     """
-    logger.info("Gnerating the capex values for each technology")
+    logger.info("Generating the capex values for each technology")
     df_dict_c = df_switching_dict.copy()
     # Hard coded values.
     hard_coded_capex_values = create_line_through_points(SWITCH_CAPEX_DATA_POINTS)
@@ -323,13 +323,13 @@ def get_capex_values(
 
 @timer_func
 def create_capex_timeseries(serialize: bool = False) -> pd.DataFrame:
-    """Runs through the flow to create a capex dictionary.
+    """Complete flow to create a capex dictionary.
 
     Args:
         serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
 
     Returns:
-        pd.DataFrame: A DataFrame with all of the potential switches.
+        pd.DataFrame: A DataFrame with all of the potential technology capex switches.
     """
     logger.info("Creating the base switching dict")
     switching_dict = create_switching_dfs(TECH_REFERENCE_LIST)
