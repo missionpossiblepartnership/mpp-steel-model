@@ -67,13 +67,16 @@ def return_best_tech(
     plant_name: str,
     country_code: str,
     steel_demand_scenario: str,
-    base_tech: str = "",
+    base_tech: str = None,
     tech_moratorium: bool = False,
     transitional_switch_only: bool = False,
     enforce_constraints: bool = False,
     material_usage_dict_container: dict = None,
     return_material_container: bool = True,
 ) -> Union[str, dict]:
+    if not base_tech:
+        raise ValueError(f'Issue with base tech: {plant_name}: {year}')
+
     # Valid Switches
     combined_available_list = [
         key for key in SWITCH_DICT if key in SWITCH_DICT[base_tech]
@@ -211,6 +214,7 @@ def choose_technology(
         .set_index(["year", "plant_name", "base_tech"])
         .copy()
     )
+    print(tco_slim)
     steel_plant_abatement_switches = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "emissivity_abatement_switches", "df"
     )
