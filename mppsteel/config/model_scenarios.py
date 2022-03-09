@@ -39,7 +39,7 @@ BIOMASS_SCENARIOS = {
 
 CCUS_SCENARIOS = {"high": "high", "low": "low"}
 
-SOLVER_LOGICS = {"rank": "ranked", "scale": "scaled", 'bins': 'scale_bins'}
+SOLVER_LOGICS = {"rank": "ranked", "scale": "scaled", 'bins': 'scaled_bins'}
 
 SCENARIO_SETTINGS = {
     "tech_moratorium": [True, False],
