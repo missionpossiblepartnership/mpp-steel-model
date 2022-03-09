@@ -39,7 +39,7 @@ BIOMASS_SCENARIOS = {
 
 CCUS_SCENARIOS = {"high": "high", "low": "low"}
 
-SOLVER_LOGICS = {"rank": "ranked", "scale": "scaled"}
+SOLVER_LOGICS = {"rank": "ranked", "scale": "scaled", 'bins': 'scale_bins'}
 
 SCENARIO_SETTINGS = {
     "tech_moratorium": [True, False],
@@ -70,7 +70,7 @@ DEFAULT_SCENARIO = {
     "ccus_cost_scenario": "low",  # low / average
     "steel_demand_scenario": "average",  # bau / average / high
     "tech_switch_scenario": "equal_weight",  # max_abatement / lowest_cost / equal_weight
-    "solver_logic": "scale",  # scale / rank
+    "solver_logic": "scale",  # scale / rank / bins
 }
 TECH_MORATORIUM = {
     'tech_moratorium': True, 

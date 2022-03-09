@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 
 from mppsteel.utility.log_utility import get_logger
+from mppsteel.utility.utils import create_bin_rank_dict, return_bin_rank
 
 from mppsteel.config.model_config import (
     TCO_RANK_1_SCALER,
@@ -177,7 +178,7 @@ def get_best_choice(
         str: The best technology choice for a given year.
     """
     # Scaling algorithm
-    if solver_logic == "scaled":
+    if solver_logic in {"scaled", "scaled_bins"}:
         # Calculate minimum scaled values
         tco_values = min_ranker(
             df=tco_df,
@@ -206,13 +207,27 @@ def get_best_choice(
             return start_tech
         # Scale the data
         tco_values_scaled = tco_values.copy()
-        tco_values_scaled["tco_scaled"] = scale_data(tco_values_scaled["tco"])
+
+        if solver_logic == 'scaled':
+            tco_values_scaled["tco_scaled"] = scale_data(tco_values_scaled["tco"])
+        elif solver_logic == 'scaled_bins':
+            binned_rank_dict = create_bin_rank_dict(tco_values_scaled['tco'], len(technology_list))
+            tco_values_scaled["tco_scaled"] = tco_values_scaled['tco'].apply(
+                lambda x: return_bin_rank(x, bin_dict=binned_rank_dict))
+
         tco_values_scaled.drop(columns=tco_values_scaled.columns.difference(["tco_scaled"]), axis=1, inplace=True)
 
         abatement_values_scaled = abatement_values.copy()
-        abatement_values_scaled["abatement_scaled"] = scale_data(
-            abatement_values_scaled["abated_combined_emissivity"], reverse=True
-        )
+
+        if solver_logic == 'scaled':
+            abatement_values_scaled["abatement_scaled"] = scale_data(
+                abatement_values_scaled["abated_combined_emissivity"], reverse=True
+            )
+        elif solver_logic == 'scaled_bins':
+            binned_rank_dict = create_bin_rank_dict(tco_values_scaled['abated_combined_emissivity'], len(technology_list), reverse=True)
+            tco_values_scaled["abatement_scaled"] = tco_values_scaled['abated_combined_emissivity'].apply(
+                lambda x: return_bin_rank(x, bin_dict=binned_rank_dict))
+    
         abatement_values_scaled.drop(columns=
             abatement_values_scaled.columns.difference(["abatement_scaled"]), axis=1, inplace=True
         )

@@ -2,6 +2,8 @@
 import itertools
 import sys
 
+import numpy as np
+
 from collections.abc import Iterable
 from datetime import datetime
 from typing import Union, Iterable as it
@@ -111,3 +113,48 @@ def cast_to_float(val: Union[float, int, Iterable]) -> float:
         return val
     elif isinstance(val, Iterable):
         return float(val.sum())
+
+
+def create_bin_rank_dict(data: np.array, bins: int = 10, reverse: bool = False, rounding: int = 3) -> dict:
+    """Create a dictionary of bin value: bin rank key: value pairs.
+
+    Args:
+        data (np.array): The data that you want to create bins for.
+        bins (int, optional): The number of bins you want to create. Defaults to 10.
+        reverse (bool, optional): Reverse the enumeration of the bins (descending rather than ascending order). Defaults to False.
+        rounding (int, optional): Optionally round the numbers for the bin groups. Defaults to 3.
+
+    Returns:
+        dict: A dictionary of bin value: bin rank.
+    """
+    bins = np.linspace(data.min(), data.max(), bins)
+    digitized = np.digitize(data, bins)
+    new_data_list = [data[digitized == i].mean() for i in range(1, len(bins))]
+    new_data_list = [round(x, rounding) for x in new_data_list]
+    if reverse:
+        new_data_list.reverse()
+    return enumerate_iterable(new_data_list)
+
+
+def return_bin_rank(x: float, bin_dict: dict) -> float:
+    """Return the matching bin rank from a bin_rank dictionary created in the `bin_rank_dict` function.
+
+    Args:
+        x (float): The raw value to check against the bin_dict
+        bin_dict (dict): The bin_rank_dict object.
+
+    Raises:
+        ValueError: Raises error if the value entered if the value `x` is outside of the bin_dict range.
+
+    Returns:
+        float: Returns a float of the rank value.
+    """
+    bin_dict_vals = list(bin_dict.keys())
+    if x < bin_dict_vals[0]:
+        raise ValueError(f'Value provided {x} is smaller than the initial bin size {bin_dict_vals[0]}')
+    elif x > bin_dict_vals[-1]:
+        raise ValueError(f'Value provided {x} is bigger than the last bin size {bin_dict_vals[-1]}')
+    else:
+        for val in bin_dict_vals:
+            if x <= val:
+                return bin_dict[val]
