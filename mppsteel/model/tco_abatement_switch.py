@@ -40,6 +40,16 @@ logger = get_logger("TCO & Abatement switches")
 def tco_regions_ref_generator(
     electricity_cost_scenario: str, grid_scenario: str, hydrogen_cost_scenario: str
 ) -> pd.DataFrame:
+    """Creates a summary of TCO values for each technology and region.
+
+    Args:
+        electricity_cost_scenario (str): The scenario that determines the electricity cost from the shared model.
+        grid_scenario (str): The scenario that determines the grid decarbonisation cost from the shared model.
+        hydrogen_cost_scenario (str): The scenario that determines the hydrogen cost from the shared model.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the components necessary to calculate TCO (not including green premium).
+    """
 
     carbon_tax_df = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "carbon_tax_timeseries", "df"
@@ -101,6 +111,15 @@ def tco_regions_ref_generator(
 
 
 def create_full_steel_plant_ref(eur_usd_rate: float) -> pd.DataFrame:
+    """Creates a DataFrame reference to be used to map TCO values created via the `tco_regions_ref_generator` function.
+    This function generates all of the necessary columns and precalculates green premium values.
+
+    Args:
+        eur_usd_rate (float): The conversion rate from EUR to USD based on a scenario input.
+
+    Returns:
+        pd.DataFrame: A reference DataFrame containing the necessary columns to map to TCO values.
+    """
     logger.info(
         "Adding Green Premium Values and year and technology index to steel plant data"
     )
@@ -179,6 +198,15 @@ def create_full_steel_plant_ref(eur_usd_rate: float) -> pd.DataFrame:
 def map_region_tco_to_plants(
     steel_plant_ref: pd.DataFrame, opex_capex_ref: pd.DataFrame
 ) -> pd.DataFrame:
+    """Maps the regional TCO values generated in `tco_regions_ref_generator` to the Plant Reference table generated in `create_full_steel_plant_ref`.
+
+    Args:
+        steel_plant_ref (pd.DataFrame): A steel plant DataFrame reference.
+        opex_capex_ref (pd.DataFrame): A DataFrame containing opex and capex reference values.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing all the components necessary to calculate TCO.
+    """
     logger.info("Mapping Regional emissions dict to plants")
 
     opex_capex_ref_c = opex_capex_ref.reset_index(drop=True).copy()
@@ -247,6 +275,15 @@ def get_abatement_difference(
 
 
 def emissivity_abatement(combined_emissivity: pd.DataFrame, scope: str) -> pd.DataFrame:
+    """Creates a emissivity abatement reference DataFrame based on an emissivity input DataFrame. 
+
+    Args:
+        combined_emissivity (pd.DataFrame): A combined emissivity DataFrame containing data on scopes 1, 2, 3 and combined emissivity per technology and region.
+        scope (str): The scope you want to create emission abatement for.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing emissivity abatement potential for each possible technology switch.
+    """
     logger.info(
         "Getting all Emissivity Abatement combinations for all technology switches"
     )
@@ -294,6 +331,17 @@ def emissivity_abatement(combined_emissivity: pd.DataFrame, scope: str) -> pd.Da
 
 @timer_func
 def tco_presolver_reference(scenario_dict, serialize: bool = False) -> pd.DataFrame:
+    """Complete flow to create two reference TCO DataFrames.
+    The first DataFrame `tco_summary` create contains only TCO summary data on a regional level (not plant level).
+    The second DataFrame `tco_reference_data` contains the full TCO reference data on a plant level, including green premium calculations. 
+
+    Args:
+        scenario_dict (dict): A dictionary with scenarios key value mappings from the current model execution.
+        serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the complete TCO reference DataFrame (including green premium values).
+    """
     country_ref_dict = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "country_reference_dict", "df"
     )
@@ -318,7 +366,7 @@ def tco_presolver_reference(scenario_dict, serialize: bool = False) -> pd.DataFr
         tco_reference_data, scenario_dict, single_line=True
     )
     if serialize:
-        logger.info(f"-- Serializing dataframe")
+        logger.info("-- Serializing dataframe")
         serialize_file(
             tco_summary, PKL_DATA_INTERMEDIATE, "tco_summary_data"
         )  # This version does not incorporate green premium
@@ -330,6 +378,15 @@ def tco_presolver_reference(scenario_dict, serialize: bool = False) -> pd.DataFr
 def abatement_presolver_reference(
     scenario_dict, serialize: bool = False
 ) -> pd.DataFrame:
+    """Complete flow required to create the emissivity abatement presolver reference table.
+
+    Args:
+        scenario_dict (dict): A dictionary with scenarios key value mappings from the current model execution.
+        serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the emissivity abatement values.
+    """
     logger.info("Running Abatement Reference Sheet")
     calculated_emissivity_combined = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "calculated_emissivity_combined", "df"
@@ -341,7 +398,7 @@ def abatement_presolver_reference(
         emissivity_abatement_switches, scenario_dict, single_line=True
     )
     if serialize:
-        logger.info(f"-- Serializing dataframe")
+        logger.info("-- Serializing dataframe")
         serialize_file(
             emissivity_abatement_switches,
             PKL_DATA_INTERMEDIATE,

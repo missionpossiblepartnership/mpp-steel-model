@@ -23,16 +23,27 @@ logger = get_logger("Solver Constraints")
 
 
 def map_technology_state(tech: str) -> str:
+    """Returns the technology phase according to a technology phases dictionary.
+
+    Args:
+        tech (str): The technology you want to return the technology phase for.
+
+    Returns:
+        str: The technology phase of `tech`.
+    """
     for tech_state in TECHNOLOGY_PHASES.keys():
         if tech in TECHNOLOGY_PHASES[tech_state]:
             return tech_state
 
 
 def read_and_format_tech_availability(df: pd.DataFrame) -> pd.DataFrame:
-    """[summary]
+    """Formats the technology availability DataFrame.
+
+    Args:
+        df (pd.DataFrame): A Technology availability DataFrame.
 
     Returns:
-        [type]: [description]
+        pd.DataFrame: A formatted technology availability DataFrame.
     """
     df_c = df.copy()
     df_c.columns = [col.lower().replace(" ", "_") for col in df_c.columns]
@@ -64,13 +75,14 @@ def tech_availability_check(
     """[summary]
 
     Args:
-        tech_df (pd.DataFrame): [description]
-        technology (str): [description]
-        year (int): [description]
-        tech_moratorium (bool, optional): [description]. Defaults to False.
+        tech_df (pd.DataFrame): A formatted tech availability DataFrame.
+        technology (str): The technology to check availability for.
+        year (int): The year to check whether a specified `technology` is available or not.
+        tech_moratorium (bool, optional): Boolean flag that determines whether a specified technology is available or not. Defaults to False.
+        default_year_unavailable (int): Determines the default year a given technology will not be available from - will be altered according to function logic.
 
     Returns:
-        bool: [description]
+        bool: A boolean that determines whether a specified `technology` is available in the specified `year`.
     """
     row = tech_df.loc[technology]
     year_available_from = row.loc["year_available_from"]
@@ -90,29 +102,11 @@ def tech_availability_check(
         return False
 
 
-def plant_closure_check(
-    utilization_rate: float, cutoff: float, current_tech: str
-) -> str:
-    """[summary]
-
-    Args:
-        utilization_rate (float): [description]
-        cutoff (float): [description]
-        current_tech (str): [description]
-
-    Returns:
-        [type]: [description]
-    """
-    if utilization_rate < cutoff:
-        return "Close plant"
-    return current_tech
-
-
 def create_plant_capacities_dict() -> dict:
-    """[summary]
+    """Generates a dictionary that contains each steel plants primary and secondary capacity.
 
     Returns:
-        [type]: [description]
+        dict: A diction containing the plant name as the key and the capacity values + technology in 2020 as dict values.
     """
     steel_plant_df = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df"
@@ -132,15 +126,15 @@ def create_plant_capacities_dict() -> dict:
 def calculate_primary_and_secondary(
     tech_capacities: dict, plant: str, tech: str
 ) -> float:
-    """[summary]
+    """Sums primary and secondary capacity if the technology is EAF, otherwise returns the primary capacity value.
 
     Args:
-        tech_capacities (dict): [description]
-        plant (str): [description]
-        tech (str): [description]
+        tech_capacities (dict): A dictionary containing plant: capacity/inital tech key:value pairs.
+        plant (str): The plant name you want to calculate primary and secondary capacity for.
+        tech (str): The technology you want to calculate primary and secondary capacity for.
 
     Returns:
-        [type]: [description]
+        float: The capacity value given the paramaters inputted to the function.
     """
     if tech == "EAF":
         return (
@@ -153,15 +147,15 @@ def calculate_primary_and_secondary(
 def material_usage_summary(
     business_case_df: pd.DataFrame, material: str, technology: str = ""
 ) -> Union[float, pd.DataFrame]:
-    """[summary]
+    """Summaries the amount of a given material used by a certain technology.
 
     Args:
-        business_case_df (pd.DataFrame): [description]
-        material (str): [description]
-        technology (str, optional): [description]. Defaults to ''.
+        business_case_df (pd.DataFrame): Standardised business cases DataFrame.
+        material (str): The material that you want to summarise the material usage for.
+        technology (str, optional): Optional parameter to return the material value for a given technology. Defaults to "".
 
     Returns:
-        [type]: [description]
+        Union[float, pd.DataFrame]: Returns a float if the `technology` value is specified, otherwise returns a DataFrame.
     """
     if technology:
         try:
@@ -181,13 +175,13 @@ def material_usage_summary(
 
 
 def total_plant_capacity(plant_cap_dict: dict) -> float:
-    """[summary]
+    """Returns the total capacity of all plants listed in the `plant_cap_dict` dictionary.
 
     Args:
-        plant_cap_dict (dict): [description]
+        plant_cap_dict (dict): A dictionary containing plant: capacity/inital tech key:value pairs.
 
     Returns:
-        [type]: [description]
+        float: Float value of the summation of all plant capacities using the `calculate_primary_and_secondary` function.
     """
     all_capacities = [
         calculate_primary_and_secondary(
@@ -208,23 +202,25 @@ def material_usage_calc(
     country_code: str,
     year: float,
     tech: str,
-    material: str,
+    materials_to_check: list,
     steel_demand_scenario: str,
 ) -> float:
-    """[summary]
+    """Calculates the amount of materials used as a factor of total production. 
 
     Args:
-        plant_capacities (dict): [description]
-        steel_plant_df (pd.DataFrame): [description]
-        business_cases (pd.DataFrame): [description]
-        materials_list (list): [description]
-        plant_name (str): [description]
-        year (float): [description]
-        tech (str): [description]
-        material (str): [description]
+        plant_capacities (dict): A dictionary containing plant: capacity/inital tech key:value pairs.
+        steel_demand_df (pd.DataFrame): Steel Demand timeseries.
+        business_cases (pd.DataFrame): Standardised business cases.
+        materials_list (list): List of materials you want to track material usage for
+        plant_name (str): The name of the plant you want material usage for.
+        country_code (str): The country code of the plant.
+        year (float): The year to get material usage values for.
+        tech (str): The technology you want to get material usage values for.
+        materials_to_check (list): material to check -> FIX THIS not used!
+        steel_demand_scenario (str): The scenario for steel demand `bau` or `high circ`.
 
     Returns:
-        [type]: [description]
+        float: The material usage value to be used.
     """
 
     plant_capacity = (
@@ -239,8 +235,7 @@ def material_usage_calc(
     for material in materials_list:
         usage_value = material_usage_summary(business_cases, material, tech)
         material_list.append(usage_value)
-    material_usage = projected_production * sum(material_list)
-    return material_usage
+    return projected_production * sum(material_list)
 
 
 def plant_tech_resource_checker(
@@ -261,25 +256,28 @@ def plant_tech_resource_checker(
     material_usage_dict: dict = None,
     output_type: str = "excluded",
 ) -> list:
-    """[summary]
+    """Checks the amout of forecasted material usage against the amount of the resource available and assigns the technology test results to included or excluded lists as outputs.
 
     Args:
-        plant_name (str): [description]
-        base_tech (str): [description]
-        year (int): [description]
-        steel_demand_df (pd.DataFrame): [description]
-        business_cases (pd.DataFrame): [description]
-        bio_constraint_model (pd.DataFrame): [description]
-        ccs_co2_df (pd.DataFrame): [description]
-        materials_list (list): [description]
-        tech_material_dict (dict): [description]
-        resource_container_ref (dict): [description]
-        plant_capacities (dict): [description]
-        material_usage_dict (dict, optional): [description]. Defaults to {}.
-        output_type (str, optional): [description]. Defaults to 'excluded'.
+        plant_name (str): The plant name
+        base_tech (str): The base technology
+        year (int): The year to check material usage for
+        steel_demand_df (pd.DataFrame): Steel Demand timeseries
+        steel_plant_df (pd.DataFrame): Steel Plant DataFrame
+        steel_demand_scenario (str): The scenario for steel demand `bau` or `high circ`.
+        business_cases (pd.DataFrame): Standardised business cases DataFrame.
+        bio_constraint_model (pd.DataFrame): The Bio Constraint DataFrame Model.
+        ccs_co2_df (pd.DataFrame): The CCS CO2 Timeseries constraint DataFrame
+        materials_list (list): A list of materials to run usage checks against.
+        tech_material_dict (dict): The technology material dictionary
+        resource_container_ref (dict): A dictionary that captures the current iteration of the resource usage.
+        plant_capacities (dict): A dictionary containing plant: capacity/inital tech key:value pairs.
+        available_tech_list (list, optional): The list of valid technologies to asses material usage stats for. Defaults to None.
+        material_usage_dict (dict, optional): A state dictionary container used to store the latest material usage stats. Defaults to None.
+        output_type (str, optional): The output type of the list generated 'excluded' only returns excluded technologies. 'included' only returns valid technologies. Defaults to "excluded".
 
     Returns:
-        [type]: [description]
+        list: A list containing either the technologies that passed or failed the material usage calculations.
     """
 
     tech_list = SWITCH_DICT[base_tech]
@@ -389,13 +387,13 @@ def plant_tech_resource_checker(
 
 
 def create_new_material_usage_dict(resource_container_ref: dict) -> dict:
-    """[summary]
+    """Creates a new empty material usage dictionary for use in a new year.
 
     Args:
-        resource_container_ref (dict): [description]
+        resource_container_ref (dict): A dictionary with values as resource names that are the materials you want to track usage for.
 
     Returns:
-        [type]: [description]
+        dict: A dictionary with material name: empty list key: value pairs.
     """
     return {material_key: [] for material_key in resource_container_ref.values()}
 
@@ -411,19 +409,21 @@ def material_usage_per_plant(
     year: float,
     steel_demand_scenario: str,
 ) -> pd.DataFrame:
-    """[summary]
+    """Creates a reference to the total material usage per plant. 
 
     Args:
-        plant_list (list): [description]
-        technology_list (list): [description]
-        business_cases (pd.DataFrame): [description]
-        plant_capacities (dict): [description]
-        steel_demand_df (pd.DataFrame): [description]
-        materials_list (list): [description]
-        year (float): [description]
+        plant_list (list): The list of plants that you want to check material usage for. 
+        technology_list (list): The list of technologies that you want to check material usage for.
+        business_cases (pd.DataFrame): Standardised business cases DataFrame.
+        steel_plant_df (pd.DataFrame): Steel Plant DataFrame.
+        plant_capacities (dict): A dictionary containing plant: capacity/inital tech key:value pairs.
+        steel_demand_df (pd.DataFrame): Steel Demand DataFrame.
+        materials_list (list): Materials that you want to check usage for.
+        year (float): The year you want to check material usage for.
+        steel_demand_scenario (str): The scenario for steel demand `bau` or `high circ`.
 
     Returns:
-        [type]: [description]
+        pd.DataFrame: Returns a material usage DataFrame split on a plant level.
     """
     df_list = []
     zipped_data = zip(plant_list, technology_list)
@@ -448,13 +448,13 @@ def material_usage_per_plant(
 
 
 def load_resource_usage_dict(yearly_usage_df: pd.DataFrame) -> dict:
-    """[summary]
+    """Returns a resource usage dictionary.
 
     Args:
-        yearly_usage_df (pd.DataFrame): [description]
+        yearly_usage_df (pd.DataFrame): A DataFrame based on the years usage of materials.
 
     Returns:
-        [type]: [description]
+        dict: Returns a preloaded resource usage dictionary.
     """
     resource_usage_dict = create_new_material_usage_dict(RESOURCE_CONTAINER_REF)
     resource_usage_dict["biomass"] = list(

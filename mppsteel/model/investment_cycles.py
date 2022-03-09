@@ -31,17 +31,26 @@ def calculate_investment_years(
     cutoff_end_year: int = MODEL_YEAR_END,
     inv_intervals: int = INVESTMENT_CYCLE_DURATION_YEARS,
 ) -> list:
+    """Creates a list of investment decision years for a plant based on inputted parameters that determine the decision years.
+
+    Args:
+        op_start_year (int): The operating start year of the plant.
+        cutoff_start_year (int, optional): The initial year of the model. Defaults to MODEL_YEAR_START.
+        cutoff_end_year (int, optional): The last year of the model. Defaults to MODEL_YEAR_END.
+        inv_intervals (int, optional): The standard interval of the investment decision cycle for plants. Defaults to INVESTMENT_CYCLE_DURATION_YEARS.
+
+    Returns:
+        list: A list of investment decision years.
+    """
     x = op_start_year
     decision_years = []
     unique_investment_interval = inv_intervals + random.randrange(
         -INVESTMENT_CYCLE_VARIANCE_YEARS, INVESTMENT_CYCLE_VARIANCE_YEARS, 1
     )
     while x < cutoff_end_year:
-        if x < cutoff_start_year:
-            x += unique_investment_interval
-        elif x >= cutoff_start_year:
+        if x >= cutoff_start_year:
             decision_years.append(x)
-            x += unique_investment_interval
+        x += unique_investment_interval
     return decision_years
 
 
@@ -50,10 +59,28 @@ def add_off_cycle_investment_years(
     start_buff: int,
     end_buff: int,
 ) -> list:
+    """Adds a set of off-cycle investment years to an investment decision list.
+
+    Args:
+        main_investment_cycle (list): The list of main investment decision years.
+        start_buff (int): Determines the minimum number of years after a main investment decision until an off-cycle investment can be made.
+        end_buff (int): Determines the number of years prior to the next investment decision that signifies the cutoff point that off-cycle investment decisions can no longer be made.
+
+    Returns:
+        list: An enhanced investment decision cycle list including off-cycle range objects representing potential off-cycle switches.
+    """
     inv_cycle_length = len(main_investment_cycle)
     range_list = []
 
     def net_zero_year_bring_forward(year: int) -> int:
+        """Determines whether an investment year should be brought forward to be within the acceptable range to become net zero.
+
+        Args:
+            year (int): The year to be considered for a readjustment.
+
+        Returns:
+            int: The adjusted year that is within the net zero target range.
+        """
         if year in range(NET_ZERO_TARGET + 1, NET_ZERO_TARGET + NET_ZERO_VARIANCE_YEARS + 1):
             bring_forward_date = NET_ZERO_TARGET - 1
             logger.info(f"Investment Cycle Brought Forward to {bring_forward_date}")
@@ -77,6 +104,14 @@ def add_off_cycle_investment_years(
 
 
 def apply_investment_years(year_value: int) -> list:
+    """Formats the operating start date column values from and applies the calculate_investment_years function.
+
+    Args:
+        year_value (int): The raw operating start date column from plant data.
+
+    Returns:
+        list: The list of investment decision years.
+    """
     if pd.isna(year_value):
         return calculate_investment_years(MODEL_YEAR_START)
     elif "(anticipated)" in str(year_value):
@@ -92,6 +127,16 @@ def apply_investment_years(year_value: int) -> list:
 def create_investment_cycle_reference(
     plant_names: list, investment_years: list, year_end: int
 ) -> pd.DataFrame:
+    """Creates an Investment cycle DataFrame from a plant DataFrame, and a list of main cycle and off-cycle investment years.
+
+    Args:
+        plant_names (list): A list of plant names.
+        investment_years (list): A list of investment years - main cycle years as integers, transitional switch year ranges as range objects.
+        year_end (int): The last year of the model.
+
+    Returns:
+        pd.DataFrame: _description_
+    """
     logger.info("Creating the investment cycle reference table")
     zipped_plant_investments = zip(plant_names, investment_years)
     year_range = range(MODEL_YEAR_START, year_end + 1)
@@ -120,6 +165,14 @@ def create_investment_cycle_reference(
 
 
 def create_investment_cycle(steel_plant_df: pd.DataFrame) -> pd.DataFrame:
+    """Full flow to create the investment decision cycle reference DataFrame.
+
+    Args:
+        steel_plant_df (pd.DataFrame): Steel Plant DataFrame.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the Complete Investment Decision Cycle Reference.
+    """
     logger.info("Creating investment cycle")
     investment_years = steel_plant_df["start_of_operation"].apply(
         lambda year: apply_investment_years(year)
@@ -139,13 +192,13 @@ def create_investment_cycle(steel_plant_df: pd.DataFrame) -> pd.DataFrame:
 
 @timer_func
 def investment_cycle_flow(serialize: bool = False) -> pd.DataFrame:
-    """[summary]
+    """Inintiates the complete investment cycle flow and serializes the resulting DataFrame.
 
     Args:
-        serialize (bool, optional): [description]. Defaults to False.
+        serialize (bool, optional): Flag to only serialize the DataFrame to a pickle file and not return a DataFrame. Defaults to False.
 
     Returns:
-        [type]: [description]
+        pd.DataFrame: A DataFrame containing the Complete Investment Decision Cycle Reference.
     """
     steel_plants_aug = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df"
@@ -153,9 +206,8 @@ def investment_cycle_flow(serialize: bool = False) -> pd.DataFrame:
     plant_investment_cycles = create_investment_cycle(steel_plants_aug)
 
     if serialize:
-        logger.info(f"-- Serializing Investment Cycle Reference")
+        logger.info("-- Serializing Investment Cycle Reference")
         serialize_file(
             plant_investment_cycles, PKL_DATA_INTERMEDIATE, "plant_investment_cycles"
         )
-        return
     return plant_investment_cycles

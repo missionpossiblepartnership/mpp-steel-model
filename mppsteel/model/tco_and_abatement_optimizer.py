@@ -18,10 +18,28 @@ logger = get_logger("TCO & Abataement Optimsation Functions")
 
 
 def normalise_data(arr: np.array) -> np.array:
+    """Given an array, normalise it by subtracting the minimum value and dividing by the range.
+
+    Args:
+        arr (np.array): The array to normalise.
+
+    Returns:
+        np.array: The normalised data.
+    """
+
     return (arr - np.min(arr)) / (np.max(arr) - np.min(arr))
 
 
 def scale_data(df: pd.DataFrame, reverse: bool = False) -> pd.DataFrame:
+    """It normalises the data.
+
+    Args:
+        df (pd.DataFrame): The dataframe to be scaled
+        reverse (bool, optional): If True, reverse the normalization. Defaults to False.
+
+    Returns:
+        pd.DataFrame: A dataframe with the same shape as the input dataframe, but with values scaled between 0 and 1.
+    """
     df_c = df.copy()
     if reverse:
         df_c = 1 - normalise_data(df_c.values)
@@ -32,6 +50,17 @@ def scale_data(df: pd.DataFrame, reverse: bool = False) -> pd.DataFrame:
 
 @lru_cache(maxsize=250000)
 def tco_ranker_logic(x: float, min_value: float) -> int:
+    """If the value is greater than the minimum value times a scaler, return a rank of 3. If the value is
+    greater than the minimum value times another scaler, return a rank of 2. Otherwise, return a rank of 1.
+
+    Args:
+        x (float): The value to be ranked.
+        min_value (float): The minimum value of the metric.
+
+    Returns:
+        int: A number between 1 and 3.
+    """
+
     if min_value is None:  # check for this
         # print('NoneType value')
         return 1
@@ -45,6 +74,15 @@ def tco_ranker_logic(x: float, min_value: float) -> int:
 
 @lru_cache(maxsize=250000)
 def abatement_ranker_logic(x: float) -> int:
+    """Given a value, return a rank.
+
+    Args:
+        x (float): The value of the parameter to be ranked.
+
+    Returns:
+        int: The abatement rank for each row.
+    """
+
     if x < ABATEMENT_RANK_3:
         return 3
     elif x < ABATEMENT_RANK_2:
@@ -63,11 +101,23 @@ def min_ranker(
     plant_name: str = None,
     rank: bool = False,
 ) -> pd.DataFrame:
+    """Sorts (and optionally ranks) each technology from a given list for the purpose of choosing a best technology.
 
-    data_type_col_mapper = {
-        "tco": "tco_rank_score",
-        "abatement": "abatement_rank_score",
-    }
+    Args:
+        df (pd.DataFrame): A DataFrame containing either tco values or emission abatement values.
+        value_col (str): The column name containing the values of the DataFrame provided in `df`.
+        data_type (str): The type of data contained in `df`.
+        year (int): The year you want to rank the technologies for.
+        country_code (str): The country code of the plant you want to rank technologies for.
+        start_tech (str): The starting technology for the plant.
+        plant_name (str, optional): The name of the plant. Defaults to None.
+        rank (bool, optional): Decide whether to assign custom ranking logic to the technologies. Defaults to False.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the sorted list of each technology for a given plant and technology.
+    """
+
+
     if data_type == "tco":
         df_subset = df.loc[year, plant_name, start_tech].copy()
     elif data_type == "abatement":
@@ -75,6 +125,10 @@ def min_ranker(
     if len(df_subset) == 1:
         df_subset = df_subset.reset_index().set_index("switch_tech")
         if rank:
+            data_type_col_mapper = {
+                "tco": "tco_rank_score",
+                "abatement": "abatement_rank_score",
+            }
             df_subset[data_type_col_mapper[data_type]] = 1
         return df_subset
     df_subset = df_subset.reset_index().set_index("switch_tech")
@@ -104,6 +158,22 @@ def get_best_choice(
     weighting_dict: dict,
     technology_list: list,
 ) -> str:
+    """Returns the best technology choice from a list of potential logic according to the paramter settings provided in the function.
+
+    Args:
+        tco_df (pd.DataFrame): The TCO reference DataFrame.
+        emissions_df (pd.DataFrame): The emissions abatement reference DataFrame.
+        country_code (str): The country code you want to select a DataFrame for.
+        plant_name (str): The name of the plant you want to optimise your selection for.
+        year (int): The year you want to pick the best technology for.
+        start_tech (str): The starting technology for the plant in the given year.
+        solver_logic (str): Determines the algorithm used to pick the best technology.
+        weighting_dict (dict): A dictionary containing the weighting scenario of lowest cost vs. emission abatement.
+        technology_list (list): A list of technologies that represent valid technology switches.
+
+    Returns:
+        str: The best technology choice for a given year.
+    """
     # Scaling algorithm
     if solver_logic == "scaled":
         # Calculate minimum scaled values

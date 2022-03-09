@@ -43,10 +43,11 @@ logger = get_logger("Variable Plant Cost Archetypes")
 
 
 def generate_feedstock_dict() -> dict:
-    """[summary]
+    """Creates a feedstock dictionary that combines all non-energy model commodities into one dictionary.
+    The dictionary has a pairing of the commodity name and the price.
 
     Returns:
-        [type]: [description]
+        dict: A dictionary containing the pairing of feedstock name and price.
     """
     commodities_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, "commodities_df", "df")
     feedstock_prices = read_pickle_folder(PKL_DATA_IMPORTS, "feedstock_prices", "df")
@@ -72,13 +73,18 @@ def plant_variable_costs(
     biomass_cost_scenario: str,
     ccus_cost_scenario: str,
 ) -> pd.DataFrame:
-    """[summary]
+    """Creates a DataFrame reference of each plant's variable cost.
 
     Args:
-        year_end (int): [description]
+        year_end (int): The year the model is projected until.
+        electricity_cost_scenario (str): The scenario that determines the electricity cost from the shared model.
+        grid_decarb_scenario (str): The scenario that determines the grid decarbonisation cost from the shared model.
+        hydrogen_cost_scenario (str): The scenario that determines the hydrogen cost from the shared model.
+        biomass_cost_scenario (str): The scenario that determines the biomass cost from the shared model.
+        ccus_cost_scenario (str): The scenario that determines the ccus cost from the shared model.
 
     Returns:
-        [type]: [description]
+        pd.DataFrame: A DataFrame containing each plant's variable costs.
     """
     df_list = []
 
@@ -155,19 +161,27 @@ def generate_variable_costs(
     biomass_cost_scenario: str = "",
     ccus_cost_scenario: str = "",
 ) -> pd.DataFrame:
-    """[summary]
+    """Generates a DataFrame based on variable cost parameters for a particular region passed to it.
 
     Args:
-        business_cases_df (pd.DataFrame): [description]
-        plant_iteration (list, optional): [description]. Defaults to None.
-        year_end (int, optional): [description]. Defaults to None.
-        feedstock_dict (dict, optional): [description]. Defaults to None.
-        static_energy_df (pd.DataFrame, optional): [description]. Defaults to None.
-        electricity_df (pd.DataFrame, optional): [description]. Defaults to None.
-        hydrogen_df (pd.DataFrame, optional): [description]. Defaults to None.
+        business_cases_df (pd.DataFrame): A DataFrame of standardised variable costs.
+        country_code (str): The country code that you want to get energy assumption prices for.
+        ng_flag (int): A flag for whether a particular country contains natural gas
+        year_end (int, optional): The year the model is projected until. Defaults to None.
+        feedstock_dict (dict, optional): A dictionary containing feedstock resources and prices. Defaults to None.
+        static_energy_df (pd.DataFrame, optional): A DataFrame containing static energy prices. Defaults to None.
+        power_df (pd.DataFrame, optional): The shared MPP Power assumptions model. Defaults to None.
+        hydrogen_df (pd.DataFrame, optional): The shared MPP Hydrogen assumptions model. Defaults to None.
+        bio_df (pd.DataFrame, optional): The shared MPP Bio assumptions model. Defaults to None.
+        ccus_df (pd.DataFrame, optional): The shared MPP CCUS assumptions model. Defaults to None.
+        electricity_cost_scenario (str): The scenario that determines the electricity cost from the shared model.
+        grid_decarb_scenario (str): The scenario that determines the grid decarbonisation cost from the shared model.
+        hydrogen_cost_scenario (str): The scenario that determines the hydrogen cost from the shared model.
+        biomass_cost_scenario (str): The scenario that determines the biomass cost from the shared model.
+        ccus_cost_scenario (str): The scenario that determines the ccus cost from the shared model.
 
     Returns:
-        pd.DataFrame: [description]
+        pd.DataFrame: A DataFrame containing variable costs for a particular region.
     """
 
     df_list = []
@@ -310,13 +324,14 @@ def generate_variable_costs(
 def format_variable_costs(
     variable_cost_df: pd.DataFrame, group_data: bool = True
 ) -> pd.DataFrame:
-    """[summary]
+    """Formats a Variable Costs DataFrame generated via the plant_variable_costs function.
 
     Args:
-        variable_cost_df (pd.DataFrame): [description]
+        variable_cost_df (pd.DataFrame): A DataFrame generated from the plant_variable_costs function.
+        group_data (bool, optional): Boolean flag that groups data by "country_code", "year", "technology". Defaults to True.
 
     Returns:
-        [type]: [description]
+        pd.DataFrame: A formatted variable costs DataFrame.
     """
 
     df_c = variable_cost_df.copy()
@@ -354,13 +369,14 @@ def format_variable_costs(
 def generate_variable_plant_summary(
     scenario_dict: dict, serialize: bool = False
 ) -> pd.DataFrame:
-    """[summary]
+    """The complete flow for creating variable costs.
 
     Args:
-        serialize (bool, optional): [description]. Defaults to False.
+        scenario_dict (dict): A dictionary with scenarios key value mappings from the current model execution.
+        serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
 
     Returns:
-        [type]: [description]
+        pd.DataFrame: A DataFrame containing the variable plant results.
     """
     electricity_cost_scenario = scenario_dict["electricity_cost_scenario"]
     grid_scenario = scenario_dict["grid_scenario"]
@@ -381,7 +397,7 @@ def generate_variable_plant_summary(
     )
 
     if serialize:
-        logger.info(f"-- Serializing dataframes")
+        logger.info("-- Serializing dataframes")
         serialize_file(
             variable_costs_summary, PKL_DATA_INTERMEDIATE, "variable_costs_regional"
         )

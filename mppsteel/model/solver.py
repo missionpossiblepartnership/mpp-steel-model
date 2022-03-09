@@ -1,7 +1,7 @@
 """Main solving script for deciding investment decisions."""
 from typing import Union
 from operator import itemgetter
-from typing import Tuple
+from typing import Tuple, Union
 
 import pandas as pd
 from tqdm import tqdm
@@ -74,6 +74,39 @@ def return_best_tech(
     material_usage_dict_container: dict = None,
     return_material_container: bool = True,
 ) -> Union[str, dict]:
+    """Function generates the best technology choice from a number of key data and scenario inputs.
+
+    Args:
+        tco_reference_data (pd.DataFrame): DataFrame containing all TCO components by plant, technology and year.
+        abatement_reference_data (pd.DataFrame): DataFrame containing all Emissions Abatement components by plant, technology and year.
+        solver_logic (str): Scenario setting that decides the logic used to choose the best technology `scaled`, `ranked` or `bins`.
+        proportions_dict (dict): Scenario seeting that decides the weighting given to TCO or Emissions Abatement in the technology selector part of the solver logic.
+        steel_demand_df (pd.DataFrame): A Steel Demand Timeseries. 
+        steel_plant_df (pd.DataFrame): A Steel Plant DataFrame.
+        business_cases (pd.DataFrame): Standardised Business Cases.
+        biomass_df (pd.DataFrame): The Shared Assumptions Biomass Constraints DataFrame.
+        ccs_co2_df (pd.DataFrame): CCS / CO2 Constraints DataFrame
+        tech_availability (pd.DataFrame): Technology Availability DataFrame
+        tech_avail_from_dict (dict): _description_
+        plant_capacities (dict): A dictionary containing plant: capacity/inital tech key:value pairs.
+        materials_list (list): List of materials to track the usage for.
+        year (int): The current model year to get the best technology for.
+        plant_name (str): The plant name.
+        country_code (str): The country code related to the plant.
+        steel_demand_scenario (str): Scenario that determines the Steel Demand Timeseries. Defaults to "bau".
+        base_tech (str, optional): The current base technology. Defaults to None.
+        tech_moratorium (bool, optional): Scenario setting that determines if the tech moratorium should be active. Defaults to False.
+        transitional_switch_only (bool, optional): Scenario setting that determines if transitional switches are allowed. Defaults to False.
+        enforce_constraints (bool, optional): Scenario setting that determines if constraints are enforced within the model. Defaults to False.
+        material_usage_dict_container (dict, optional): Dictionary container object that is used to track the material usage within the application. Defaults to None.
+        return_material_container (bool, optional): Boolean switch that enables the `material_usage_dict_container` to be reused. Defaults to True.
+
+    Raises:
+        ValueError: If there is no base technology selected, a ValueError is raised because this provides the foundation for choosing a switch technology.
+
+    Returns:
+        Union[str, dict]: Returns the best technology as a string, and optionally the `material_usage_dict_container` if the `return_material_container` switch is activated.
+    """
     if not base_tech:
         raise ValueError(f'Issue with base tech: {plant_name}: {year}')
 
@@ -158,16 +191,23 @@ def choose_technology(
     trans_switch_scenario: str = True,
     tech_switch_scenario: dict = {"tco": 0.6, "emissions": 0.4},
 ) -> dict:
-    """[summary]
+    """Function containing the entire solver decision logic flow.
+    1) In each year, the solver splits the plants into technology switchers, and non-switchers.
+    2) The solver extracts the prior year technology of the non-switchers and assumes this is the current technology of the siwtchers.
+    3) All switching plants are then sent through the `return_best_tech` function that decides the best technology depending on the switch type (main cycle or transitional switch).
+    4) All results are saved to a dictionary which is outputted at the end of the year loop.
 
     Args:
-        year_end (int): [description]
-        rank_only (bool, optional): [description]. Defaults to False.
-        tech_moratorium (bool, optional): [description]. Defaults to False.
-        error_plant (str, optional): [description]. Defaults to ''.
+        year_end (int): The last model run year.
+        solver_logic (str): Scenario setting that decides the logic used to choose the best technology `scaled`, `ranked` or `bins`. 
+        tech_moratorium (bool, optional): Scenario setting that determines if the tech moratorium should be active. Defaults to False.
+        enforce_constraints (bool, optional): Scenario setting that determines if constraints are enforced within the model. Defaults to False.
+        steel_demand_scenario (str): Scenario that determines the Steel Demand Timeseries. Defaults to "bau".
+        trans_switch_scenario (bool, optional): Scenario setting that determines if trasnitional switches are allowed. Defaults to False.
+        tech_switch_scenario (_type_, optional): _description_. Defaults to {"tco": 0.6, "emissions": 0.4}.
 
     Returns:
-        [type]: [description]
+        dict: A dictionary containing the best technology resuls. Organised as year: plant: best tech.
     """
 
     logger.info("Creating Steel plant df")
@@ -214,7 +254,7 @@ def choose_technology(
         .set_index(["year", "plant_name", "base_tech"])
         .copy()
     )
-    print(tco_slim)
+
     steel_plant_abatement_switches = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "emissivity_abatement_switches", "df"
     )
@@ -380,16 +420,16 @@ def choose_technology(
 
 def extract_tech_plant_switchers(
     inv_cycle_ref: pd.DataFrame, year: int, combined_output: bool = True
-) -> Tuple[list, list]:
-    """[summary]
+) -> Union[list, Tuple[list, list]]:
+    """Extracts the list of plants that are due for a main cycle switch or a transitional switch in a given year according to an investment cycle DataFrame.
 
     Args:
-        inv_cycle_ref (pd.DataFrame): [description]
-        year (int): [description]
-        combined_output (bool, optional): [description]. Defaults to True.
+        inv_cycle_ref (pd.DataFrame): DataFrame containing the investment cycle reference for each plant.
+        year (int): The year to extract the plant switchers for.
+        combined_output (bool, optional): Boolean switch that determines whether to return a combined list of switching plants or a tuple of two lists. Defaults to True.
 
     Returns:
-        [type]: [description]
+        Union[list, Tuple[list, list]]: Returns a single list of main cycle switchers and transitional switchers if `combined_output` if set to True, else a tuple of the two lists.
     """
     main_switchers = []
     trans_switchers = []
@@ -412,14 +452,15 @@ def extract_tech_plant_switchers(
 
 @timer_func
 def solver_flow(scenario_dict: dict, year_end: int, serialize: bool = False) -> dict:
-    """[summary]
+    """Initiates the complete solver flow and serializes the ouptuts.
 
     Args:
-        year_end (int): [description]
-        serialize (bool, optional): [description]. Defaults to False.
+        scenario_dict (dict): A dictionary with scenarios key value mappings from the current model execution.
+        year_end (int): The last year of the model run.
+        serialize (bool, optional): Flag to only serialize the DataFrame to a pickle file and not return a DataFrame. Defaults to False.
 
     Returns:
-        [type]: [description]
+        dict: A dictionary containing the best technology resuls. Organised as year: plant: best tech.
     """
 
     tech_choice_dict = choose_technology(
@@ -435,6 +476,6 @@ def solver_flow(scenario_dict: dict, year_end: int, serialize: bool = False) -> 
     )
 
     if serialize:
-        logger.info(f"-- Serializing dataframes")
+        logger.info("-- Serializing dataframes")
         serialize_file(tech_choice_dict, PKL_DATA_INTERMEDIATE, "tech_choice_dict")
     return tech_choice_dict
