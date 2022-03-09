@@ -14,7 +14,7 @@ from mppsteel.config.model_config import (
 )
 
 # Create logger
-logger = get_logger("TCO & Abataement Optimsation Functions")
+logger = get_logger("TCO & Abatement Optimsation Functions")
 
 
 def normalise_data(arr: np.array) -> np.array:
@@ -26,8 +26,7 @@ def normalise_data(arr: np.array) -> np.array:
     Returns:
         np.array: The normalised data.
     """
-
-    return (arr - np.min(arr)) / (np.max(arr) - np.min(arr))
+    return arr / np.linalg.norm(arr)
 
 
 def scale_data(df: pd.DataFrame, reverse: bool = False) -> pd.DataFrame:
@@ -42,10 +41,8 @@ def scale_data(df: pd.DataFrame, reverse: bool = False) -> pd.DataFrame:
     """
     df_c = df.copy()
     if reverse:
-        df_c = 1 - normalise_data(df_c.values)
-    else:
-        df_c = normalise_data(df_c.values)
-    return df_c
+        return 1 - normalise_data(df_c.values)
+    return normalise_data(df_c.values)
 
 
 @lru_cache(maxsize=250000)
@@ -116,9 +113,10 @@ def min_ranker(
     Returns:
         pd.DataFrame: A DataFrame containing the sorted list of each technology for a given plant and technology.
     """
-
-
     if data_type == "tco":
+        if np.isinf(df['tco'].values).any():
+            raise ValueError(f'Check 1:  TCO values contain inf value(s). Base tech {start_tech}')
+
         df_subset = df.loc[year, plant_name, start_tech].copy()
     elif data_type == "abatement":
         df_subset = df.loc[year, country_code, start_tech].copy()
@@ -133,6 +131,10 @@ def min_ranker(
         return df_subset
     df_subset = df_subset.reset_index().set_index("switch_tech")
     df_subset.sort_values(value_col, ascending=True, inplace=True)
+
+    if np.isinf(df_subset[value_col].values).any():
+        raise ValueError(f'Check 2: TCO values contain inf value(s). Base tech {start_tech}, {df_subset}')
+
     if rank:
         if data_type == "tco":
             min_value = df_subset[value_col].min()
@@ -203,16 +205,19 @@ def get_best_choice(
         if len(tco_values) < 2:
             return start_tech
         # Scale the data
-        tco_values["tco_scaled"] = scale_data(tco_values["tco"])
-        tco_values.drop(tco_values.columns.difference(["tco_scaled"]), 1, inplace=True)
-        abatement_values["abatement_scaled"] = scale_data(
-            abatement_values["abated_combined_emissivity"], reverse=True
+        tco_values_scaled = tco_values.copy()
+        tco_values_scaled["tco_scaled"] = scale_data(tco_values_scaled["tco"])
+        tco_values_scaled.drop(columns=tco_values_scaled.columns.difference(["tco_scaled"]), axis=1, inplace=True)
+
+        abatement_values_scaled = abatement_values.copy()
+        abatement_values_scaled["abatement_scaled"] = scale_data(
+            abatement_values_scaled["abated_combined_emissivity"], reverse=True
         )
-        abatement_values.drop(
-            abatement_values.columns.difference(["abatement_scaled"]), 1, inplace=True
+        abatement_values_scaled.drop(columns=
+            abatement_values_scaled.columns.difference(["abatement_scaled"]), axis=1, inplace=True
         )
         # Join the abatement and tco data and calculate an overall score using the weightings
-        combined_scales = tco_values.join(abatement_values)
+        combined_scales = tco_values_scaled.join(abatement_values_scaled)
         combined_scales["overall_score"] = (
             combined_scales["tco_scaled"] * weighting_dict["tco"]
         ) + (combined_scales["abatement_scaled"] * weighting_dict["emissions"])
@@ -242,12 +247,12 @@ def get_best_choice(
         )
         tco_values = tco_values.filter(items=technology_list, axis=0)
         abatement_values = abatement_values.filter(items=technology_list, axis=0)
-        tco_values.drop(
-            tco_values.columns.difference(["tco_rank_score"]), 1, inplace=True
+        tco_values.drop(columns=
+            tco_values.columns.difference(["tco_rank_score"]), axis=1, inplace=True
         )
-        abatement_values.drop(
+        abatement_values.drop(columns=
             abatement_values.columns.difference(["abatement_rank_score"]),
-            1,
+            axis=1,
             inplace=True,
         )
         combined_ranks = tco_values.join(abatement_values)

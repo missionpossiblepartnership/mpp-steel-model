@@ -237,6 +237,11 @@ def abatement_switch_reference(scenario_dict: dict) -> None:
 def production_flow(scenario_dict: dict) -> None:
     production_results_flow(scenario_dict, serialize=True)
 
+def cos_flow(scenario_dict: dict) -> None:
+    generate_cost_of_steelmaking_results(scenario_dict, serialize=True)
+
+def global_metaresults_flow(scenario_dict: dict):
+    metaresults_flow(scenario_dict, serialize=True)
 
 def investment_flow(scenario_dict: dict) -> None:
     investment_results(scenario_dict, serialize=True)
@@ -345,6 +350,18 @@ parser.add_argument(
     action="store_true",
     help="Runs the investments script directly",
 )  # investment_flow
+parser.add_argument(
+    "-u",
+    "--cos",
+    action="store_true",
+    help="Runs the cost of steelmaking script directly",
+)  # cost of steelmaking
+parser.add_argument(
+    "-k",
+    "--metaresults",
+    action="store_true",
+    help="Runs the global metaresults script directly",
+)  # cost of steelmaking
 parser.add_argument(
     "-x", "--ta", action="store_true", help="Runs the tco and abatement scripts only"
 )  # tco_and_abatement_calculations

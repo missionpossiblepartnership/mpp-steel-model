@@ -98,6 +98,12 @@ if __name__ == "__main__":
     if args.production:
         production_flow(scenario_dict=scenario_args)
 
+    if args.cos:
+        cos_flow(scenario_dict=scenario_args)
+
+    if args.metaresults:
+        global_metaresults_flow(scenario_dict=scenario_args)
+
     if args.investment:
         investment_flow(scenario_dict=scenario_args)
 

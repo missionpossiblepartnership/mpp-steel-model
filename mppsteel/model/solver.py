@@ -1,9 +1,10 @@
 """Main solving script for deciding investment decisions."""
+import math
 from typing import Union
-from operator import itemgetter
 from typing import Tuple, Union
 
 import pandas as pd
+import numpy as np
 from tqdm import tqdm
 
 from mppsteel.utility.function_timer_utility import timer_func
@@ -107,8 +108,13 @@ def return_best_tech(
     Returns:
         Union[str, dict]: Returns the best technology as a string, and optionally the `material_usage_dict_container` if the `return_material_container` switch is activated.
     """
+    tco_ref_data = tco_reference_data.copy()
+
     if not base_tech:
-        raise ValueError(f'Issue with base tech: {plant_name}: {year}')
+        raise ValueError(f'Issue with base_tech not existing: {plant_name} | {year} | {base_tech}')
+
+    if not isinstance(base_tech, str):
+        raise ValueError(f'Issue with base_tech not being a string: {plant_name} | {year} | {base_tech}')
 
     # Valid Switches
     combined_available_list = [
@@ -141,7 +147,7 @@ def return_best_tech(
 
     if transitional_switch_only:
         # Adjust tco values based on transistional switch years
-        tco_reference_data['tco'] = tco_reference_data['tco'] * INVESTMENT_CYCLE_DURATION_YEARS / (
+        tco_ref_data['tco'] = tco_ref_data['tco'] * INVESTMENT_CYCLE_DURATION_YEARS / (
             INVESTMENT_CYCLE_DURATION_YEARS - (INVESTMENT_OFFCYCLE_BUFFER_TOP + INVESTMENT_OFFCYCLE_BUFFER_TAIL))
 
     if enforce_constraints:
@@ -166,7 +172,7 @@ def return_best_tech(
         )
 
     best_choice = get_best_choice(
-        tco_reference_data,
+        tco_ref_data,
         abatement_reference_data,
         country_code,
         plant_name,
@@ -176,6 +182,9 @@ def return_best_tech(
         proportions_dict,
         combined_available_list,
     )
+
+    if not isinstance(best_choice, str):
+        raise ValueError(f'Issue with get_best_choice function returning a nan: {plant_name} | {year} | {combined_available_list}')
 
     if return_material_container:
         return best_choice, material_usage_dict_container

@@ -100,7 +100,7 @@ def calculate_cc(
 def apply_cos(
     row,
     year: int,
-    plant_df: pd.DataFrame,
+    cap_dict: dict,
     v_costs: pd.DataFrame,
     capex_costs: dict,
     steel_demand: pd.DataFrame,
@@ -112,7 +112,7 @@ def apply_cos(
     Args:
         row (_type_): A vectorized DataFrame row from .apply function.
         year (int): The current year.
-        plant_df (dict): A DataFrame containing the steel plant metadata.
+        cap_dict (dict): A DataFrame containing the steel plant metadata.
         v_costs (pd.DataFrame): A DataFrame containing the variable costs for each technology across each year and region.
         capex_costs (dict): A dictionary containing the Capex values for Greenfield, Brownfield and Other Opex values.
         steel_demand (pd.DataFrame): A DataFrame containing the steel demand value timeseries.
@@ -123,8 +123,8 @@ def apply_cos(
         float: The cost of Steelmaking value to be applied.
     """
 
-    primary_capacity = plant_df[row.plant_name]["primary_capacity"]
-    secondary_capacity = plant_df[row.plant_name]["secondary_capacity"]
+    primary_capacity = cap_dict[row.plant_name]["primary_capacity"]
+    secondary_capacity = cap_dict[row.plant_name]["secondary_capacity"]
     variable_cost = v_costs.loc[row.country_code, year, row.technology]["cost"]
     other_opex_cost = capex_costs["other_opex"].loc[row.technology, year]["value"]
     steel_demand_value = steel_demand_getter(
