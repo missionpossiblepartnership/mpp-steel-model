@@ -62,7 +62,7 @@ def generate_s1_s3_emissions(
     s1_emissivity_factors: pd.DataFrame = None,
     s3_emissivity_factors: pd.DataFrame = None,
     carbon_tax_df: pd.DataFrame = None,
-    scope: str = "1",
+    carbon_tax_scope: str = "1",
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Creates a DataFrame with emissivity for S1, S2 & S3 for each technology.
     Multiples the emissivity values by the standardized business cases.
@@ -74,7 +74,7 @@ def generate_s1_s3_emissions(
         s1_emissivity_factors (pd.DataFrame, optional): Emissions Factors for S1. Defaults to None.
         s3_emissivity_factors (pd.DataFrame, optional): Emissions Factors for S3. Defaults to None.
         carbon_tax_df (pd.DataFrame, optional): Calculates the Carbon Tax for each technology based on emissions. Defaults to None.
-        scope (str, optional): Define which emissivity scope you want to return. Defaults to "1".
+        carbon_tax_scope (str, optional): Define which emissivity scope you want to return the carbon tax row for. Defaults to "1".
 
     Returns:
         Tuple[pd.DataFrame, pd.DataFrame]: A DataFrame of the emissivity per scope and a carbon tax DataFrame.
@@ -119,10 +119,10 @@ def generate_s1_s3_emissions(
         else:
             carbon_tax_unit = 0
 
-        if scope == "1":
+        if carbon_tax_scope == "1":
             S1_value = row[enum_dict["S1"]]
             row[enum_dict["carbon_cost"]] = S1_value * carbon_tax_unit
-        elif scope == "2&3":
+        elif carbon_tax_scope == "2&3":
             S2_value = row[enum_dict["S2"]]
             S3_value = row[enum_dict["S3"]]
             row[enum_dict["carbon_cost"]] = (S2_value + S3_value) * carbon_tax_unit
@@ -254,15 +254,12 @@ def generate_emissions_dataframe(
         PKL_DATA_INTERMEDIATE, "final_scope3_ef_df", "df"
     )
 
-    non_standard_dict_ref = create_emissions_ref_dict(df, TECH_REFERENCE_LIST)
-
     emissions, carbon = generate_s1_s3_emissions(
         df=df.copy(),
         year_end=year_end,
         s1_emissivity_factors=s1_emissivity_factors,
         s3_emissivity_factors=s3_emissivity_factors,
-        non_standard_dict=non_standard_dict_ref,
-        scope="1",
+        carbon_tax_scope="1",
     )
 
     return emissions, carbon
