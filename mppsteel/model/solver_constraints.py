@@ -227,7 +227,7 @@ def material_usage_calc(
         calculate_primary_and_secondary(plant_capacities, plant_name, tech) / 1000
     )
     steel_demand = steel_demand_getter(
-        steel_demand_df, year, steel_demand_scenario, "crude", country_code
+        steel_demand_df, year, steel_demand_scenario, "crude", country_code=country_code
     )
     capacity_sum = total_plant_capacity(plant_capacities)
     projected_production = (plant_capacity / capacity_sum) * steel_demand
@@ -318,7 +318,7 @@ def plant_tech_resource_checker(
             if material_check in ["Scrap", "Scrap EAF"]:
                 material_ref = "Scrap"
                 material_capacity = steel_demand_getter(
-                    steel_demand_df, year, steel_demand_scenario, "crude", country_code
+                    steel_demand_df, year, steel_demand_scenario, "crude", country_code=country_code
                 )
                 materials_to_check = ["Scrap"]
 
@@ -436,7 +436,7 @@ def material_usage_per_plant(
             "country_code"
         ].values[0]
         steel_demand = steel_demand_getter(
-            steel_demand_df, year, steel_demand_scenario, "crude", plant_country
+            steel_demand_df, year, steel_demand_scenario, "crude", country_code=plant_country
         )
         projected_production = (plant_capacity / capacity_sum) * steel_demand
         df = pd.DataFrame(index=materials_list, columns=["value"])

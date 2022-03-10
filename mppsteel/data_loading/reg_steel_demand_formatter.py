@@ -1,5 +1,6 @@
 """Formats Regional Steel Demand and defines getter function"""
 
+import logging
 import pandas as pd
 import pandera as pa
 
@@ -61,10 +62,12 @@ def steel_demand_creator(df: pd.DataFrame, rmi_matcher: dict) -> pd.DataFrame:
         lambda x: steel_demand_region_assignor(x, country_ref, rmi_matcher)
     )
 
+    df_c.columns = [col.lower() for col in df_c.columns]
+
     return melt_and_index(df_c, 
-        id_vars=["Metric", "Region", "Scenario", "country_code"], 
+        id_vars=["metric", "region", "scenario", "country_code"], 
         var_name=["year"], 
-        index=["year", "Scenario", "Metric"])
+        index=["year", "scenario", "metric"])
 
 
 @timer_func
@@ -91,17 +94,23 @@ def steel_demand_getter(
     year: int,
     scenario: str,
     metric: str,
-    country_code: str,
+    region: str = None,
+    country_code: str = None,
+    force_default: bool = True,
+    default_region: str = "World",
     default_country: str = "GBL",
 ) -> float:
-    """A getter function for the regional steel demand data.
+    """A getter function for the regional steel demand data. 
 
     Args:
         df (pd.DataFrame): The DataFrame containing the preprocessed Regional Steel Demand data.
         year (int): The year of the demand data you want.
         scenario (str): The scenario you want to access (BAU or High Circ or average).
         metric (str): The metric you want to access (crude or scrap).
-        country_code (str): The country code you want to get the data for.
+        region (str): The region you want to get the data for. Either region OR country_code should be entered, not both. Defaults to None.
+        country_code (str): The country code you want to get the data for. Either region OR country_code should be entered, not both. Defaults to None.
+        force_default (bool): If True, will defer to defaults if incorrect region or country codes are entered. If False, invalid entries will raise an error. Defaults to True.
+        default_region (str, optional): The default region you want to get the data for. Defaults to "World" for global.
         default_country (str, optional): The default country you want to get the data for. Defaults to "GBL" for global.
 
     Returns:
@@ -109,37 +118,60 @@ def steel_demand_getter(
     """
     df_c = df.copy()
     # define country list based on the data_type
+    region_list = list(df_c["region"].unique())
     country_list = get_unique_countries(df_c["country_code"].values)
-    metric_mapper = {
-        "crude": "Crude steel demand",
-        "scrap": "Scrap availability",
-    }
 
+    if not region and not country_code:
+        raise AttributeError('Neither `region` or `country_code` attributes were entered. Enter a valid option for one.')
     # Apply country check and use default
-    if country_code in country_list:
-        df_c = df_c[df_c["country_code"].str.contains(country_code, regex=False)]
-    else:
-        df_c = df_c[df_c["country_code"].str.contains(default_country, regex=False)]
+
+    if region and country_code:
+        raise AttributeError('You entered both region and country_code attributes were entered. Enter a valid option for one.')
+
+    if region:
+        if region in region_list:
+            df_c = df_c[df_c["region"].str.contains(region, regex=False)]
+        elif force_default:
+            logger.warn(f'Invalid region string entered: {region}. Reverting to default region: {default_region}. Valid entries here: {region_list}.')
+            df_c = df_c[df_c["region"].str.contains(default_region, regex=False)]
+        else:
+            AttributeError(f'You entered an incorrect region. Valid entries here: {region_list}.')
+
+    if country_code:
+        if country_code in country_list:
+            df_c = df_c[df_c["country_code"].str.contains(country_code, regex=False)]
+        elif force_default:
+            logger.warn(f'Invalid country string entered: {country_code}. Reverting to default country_code: {default_country}. Valid entries here: {country_list}.')
+            df_c = df_c[df_c["country_code"].str.contains(default_country, regex=False)]
+        else:
+            AttributeError(f'You entered an incorrect country_code. Valid entries here: {country_list}.')
+
     # Cap year at 2050
     year = min(MODEL_YEAR_END, year)
     # Apply subsets
     # Scenario: BAU, High Circ, average
     # Metric: crude, scrap
     scenario_entry = STEEL_DEMAND_SCENARIO_MAPPER[scenario]
+
+    metric_mapper = {
+        "crude": "Crude steel demand",
+        "scrap": "Scrap availability",
+    }
+
     if scenario_entry == "average":
         df1_val = df_c.xs(
             (str(year), "BAU", metric_mapper[metric]),
-            level=["year", "Scenario", "Metric"],
+            level=["year", "scenario", "metric"],
         ).value.values[0]
         df2_val = df_c.xs(
             (str(year), "High Circ", metric_mapper[metric]),
-            level=["year", "Scenario", "Metric"],
+            level=["year", "scenario", "metric"],
         ).value.values[0]
         return (df1_val + df2_val) / 2
     else:
         df_c = df_c.xs(
             (str(year), scenario_entry, metric_mapper[metric]),
-            level=["year", "Scenario", "Metric"],
+            level=["year", "scenario", "metric"],
         )
         df_c.reset_index(drop=True, inplace=True)
         # Return the value figure
@@ -185,7 +217,7 @@ def extend_steel_demand(year_end: int) -> pd.DataFrame:
                 (global_demand["Steel Type"] == steel_type)
                 & (global_demand["Scenario"] == scenario)
             ],
-            year_value_col_dict={"year": "Year", "value": "Value"},
+            year_value_col_dict={"year": "year", "value": "value"},
             static_value_override_dict={
                 "Source": "RMI + Model Extension beyond 2050",
                 "Excel Tab": "Extended from Excel",

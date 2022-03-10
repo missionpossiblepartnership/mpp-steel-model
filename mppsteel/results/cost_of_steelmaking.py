@@ -93,7 +93,7 @@ def apply_cos(
     variable_cost = v_costs.loc[row.country_code, year, row.technology]["cost"]
     other_opex_cost = capex_costs["other_opex"].loc[row.technology, year]["value"]
     steel_demand_value = steel_demand_getter(
-        steel_demand, year, steel_scenario, "crude", "World"
+        steel_demand, year, steel_scenario, "crude", region="World"
     )
     discount_rate = DISCOUNT_RATE
     relining_year_span = INVESTMENT_CYCLE_DURATION_YEARS

@@ -78,7 +78,7 @@ def generate_production_stats(
             df_r = df[df["region"] == region].copy()
             regional_capacity_sum = df_r["capacity"].sum()
             regional_steel_demand_values = df_r['country_code'].apply(lambda country_code: steel_demand_getter(
-                steel_df, year, steel_demand_scenario, "crude", country_code
+                steel_df, year, steel_demand_scenario, "crude", country_code=country_code
             ))
             # This calculates production!!!
             df_r["production"] = (df_r["capacity"] / regional_capacity_sum) * regional_steel_demand_values
