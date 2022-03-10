@@ -219,6 +219,15 @@ def adjust_capacity_values(df: pd.DataFrame) -> pd.DataFrame:
     df_c["combined_capacity"] = (
         df_c["primary_capacity_2020"] + df_c["secondary_capacity_2020"]
     )
+
+    def total_capacity_value_mapper(row):
+        if row['technology_in_2020'] == 'EAF':
+            return row['primary_capacity_2020'] + row['secondary_capacity_2020']
+        return row['primary_capacity_2020']
+    df_c["total_capacity"] = df_c.progress_apply(
+        total_capacity_value_mapper,
+        axis=1
+    )
     return df_c
 
 
@@ -275,6 +284,9 @@ def apply_countries_to_steel_plants(
     )
     steel_plants["region"] = steel_plants["country_code"].apply(
         lambda x: get_region_from_country_code(x, "wsa_region", country_reference_dict)
+    )
+    steel_plants["rmi_region"] = steel_plants["country_code"].apply(
+        lambda x: get_region_from_country_code(x, "rmi_region", country_reference_dict)
     )
     return steel_plants
 
