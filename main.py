@@ -4,7 +4,7 @@ from datetime import datetime
 from itertools import product
 
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.utility.file_handling_utility import create_folders_if_nonexistant
+from mppsteel.utility.file_handling_utility import create_folders_if_nonexistant, serialize_df_dict
 from mppsteel.utility.function_timer_utility import TIME_CONTAINER
 
 from mppsteel.config.model_config import FOLDERS_TO_CHECK_IN_ORDER
@@ -85,6 +85,9 @@ if __name__ == "__main__":
 
     if args.variable_costs:
         generate_variable_plant_summary(scenario_dict=scenario_args, serialize=True)
+
+    if args.levelized_cost:
+        lcost_flow()
 
     if args.results_and_output:
         results_and_output(scenario_dict=scenario_args, dated_output_folder=True, timestamp=timestamp)

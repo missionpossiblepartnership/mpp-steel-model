@@ -29,6 +29,7 @@ from mppsteel.model.investment_cycles import investment_cycle_flow
 from mppsteel.model.variable_plant_cost_archetypes import (
     generate_variable_plant_summary,
 )
+from mppsteel.model.levelized_cost import generate_levelized_cost_results
 from mppsteel.model.solver import solver_flow
 from mppsteel.model.tco_abatement_switch import (
     tco_presolver_reference,
@@ -96,7 +97,7 @@ def data_preprocessing_phase(scenario_dict: dict) -> None:
     create_capex_timeseries(serialize=True)
     investment_cycle_flow(serialize=True)
     generate_variable_plant_summary(scenario_dict, serialize=True)
-
+    generate_levelized_cost_results(serialize=True)
 
 def model_presolver(scenario_dict: dict) -> None:
     tco_presolver_reference(scenario_dict, serialize=True)
@@ -125,6 +126,7 @@ def model_outputs_phase(new_folder: bool = False, timestamp: str = "") -> None:
     pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, "steel_plants_processed")
     pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, "capex_switching_df")
     pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, "calculated_emissivity_combined")
+    pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, "levelized_cost")
     pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, "emissivity_abatement_switches")
     pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, "tco_summary_data")
     pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, "tco_reference_data")
@@ -250,6 +252,8 @@ def investment_flow(scenario_dict: dict) -> None:
 def get_emissivity() -> None:
     generate_emissions_flow(False)
 
+def lcost_flow() -> None:
+    generate_levelized_cost_results(serialize=True)
 
 parser = argparse.ArgumentParser(
     description="The MPP Python Steel Model Command Line Interface", add_help=False
@@ -321,8 +325,14 @@ parser.add_argument(
     "-v",
     "--variable_costs",
     action="store_true",
-    help="Runs the variable costs sumary script directly",
+    help="Runs the variable costs summary script directly",
 )  # generate_variable_plant_summary
+parser.add_argument(
+    "-l",
+    "--levelized_cost",
+    action="store_true",
+    help="Runs the levelized cost script directly",
+)  # lcost_flow
 parser.add_argument(
     "-t",
     "--results_and_output",

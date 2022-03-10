@@ -19,7 +19,7 @@ from mppsteel.graphs.plotly_graphs import (
 
 from mppsteel.graphs.opex_capex_graph import opex_capex_graph
 from mppsteel.graphs.consumption_over_time import consumption_over_time_graph
-from mppsteel.graphs.cost_of_steelmaking_graphs import lcos_graph
+from mppsteel.graphs.cost_of_steelmaking_graphs import lcost_graph
 from mppsteel.graphs.investment_graph import investment_line_chart, investment_per_tech
 
 # Create logger
@@ -344,21 +344,21 @@ def create_cot_graph(regions: list = None, filepath: str = None) -> px.bar:
     return consumption_over_time_graph(regions=regions, save_filepath=filename)
 
 
-def create_lcos_graph(chosen_year: int, filepath: str = None) -> px.bar:
-    """Creates a bar graph for the Levelised Cost of Steelmaking.
+def create_lcost_graph(chosen_year: int, filepath: str = None) -> px.bar:
+    """Creates a bar graph for the Levelised Cost.
 
     Args:
-        chosen_year (int): The year you want to set the LCOS values in the graph.
+        chosen_year (int): The year you want to set the Lcost values in the graph.
         filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
 
     Returns:
         px.bar: A plotly express bar graph.
     """
-    filename = "levelised_cost_of_steelmaking"
-    logger.info(f"Levelised Cost of Steelmaking Output: {filename}")
+    filename = "levelised_cost"
+    logger.info(f"Levelised Cost Output: {filename}")
     if filepath:
         filename = f"{filepath}/{filename}"
-    return lcos_graph(chosen_year=chosen_year, save_filepath=filename)
+    return lcost_graph(chosen_year=chosen_year, save_filepath=filename)
 
 
 @timer_func
@@ -399,4 +399,4 @@ def create_graphs(filepath: str) -> None:
 
     create_cot_graph(filepath=filepath)
 
-    create_lcos_graph(2030, filepath=filepath)
+    create_lcost_graph(2030, filepath=filepath)
