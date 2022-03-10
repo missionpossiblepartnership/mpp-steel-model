@@ -1,10 +1,8 @@
 """Main solving script for deciding investment decisions."""
-import math
 from typing import Union
 from typing import Tuple, Union
 
 import pandas as pd
-import numpy as np
 from tqdm import tqdm
 
 from mppsteel.utility.function_timer_utility import timer_func
@@ -80,7 +78,7 @@ def return_best_tech(
     Args:
         tco_reference_data (pd.DataFrame): DataFrame containing all TCO components by plant, technology and year.
         abatement_reference_data (pd.DataFrame): DataFrame containing all Emissions Abatement components by plant, technology and year.
-        solver_logic (str): Scenario setting that decides the logic used to choose the best technology `scaled`, `ranked` or `bins`.
+        solver_logic (str): Scenario setting that decides the logic used to choose the best technology `scale`, `ranke` or `bins`.
         proportions_dict (dict): Scenario seeting that decides the weighting given to TCO or Emissions Abatement in the technology selector part of the solver logic.
         steel_demand_df (pd.DataFrame): A Steel Demand Timeseries. 
         steel_plant_df (pd.DataFrame): A Steel Plant DataFrame.
