@@ -255,6 +255,9 @@ def get_emissivity() -> None:
 def lcost_flow() -> None:
     generate_levelized_cost_results(serialize=True)
 
+def inv_cycle_flow() -> None:
+    investment_cycle_flow(serialize=True)
+
 parser = argparse.ArgumentParser(
     description="The MPP Python Steel Model Command Line Interface", add_help=False
 )
@@ -383,4 +386,7 @@ parser.add_argument(
 )  # abatement_switch_reference
 parser.add_argument(
     "-j", "--emissivity", action="store_true", help="Runs the emissivity script only"
+)  # get_emissivity
+parser.add_argument(
+    "-m", "--investment_cycle", action="store_true", help="Runs the investment_cycle script only"
 )  # get_emissivity
