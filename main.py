@@ -122,4 +122,7 @@ if __name__ == "__main__":
     if args.emissivity:
         abatement_switch_reference(scenario_dict=scenario_args)
 
+    if args.investment_cycle:
+        inv_cycle_flow()
+
     TIME_CONTAINER.return_time_container()

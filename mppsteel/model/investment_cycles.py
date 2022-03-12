@@ -183,11 +183,15 @@ def create_investment_cycle(steel_plant_df: pd.DataFrame) -> pd.DataFrame:
         )
         for inv_year in investment_years
     ]
-    return create_investment_cycle_reference(
+
+    investment_dict = dict(zip(steel_plant_df["plant_name"].values, investment_years_inc_off_cycle))
+
+    investment_df = create_investment_cycle_reference(
         steel_plant_df["plant_name"].values,
         investment_years_inc_off_cycle,
         MODEL_YEAR_END,
     )
+    return investment_df, investment_dict
 
 
 @timer_func
@@ -203,11 +207,14 @@ def investment_cycle_flow(serialize: bool = False) -> pd.DataFrame:
     steel_plants_aug = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df"
     )
-    plant_investment_cycles = create_investment_cycle(steel_plants_aug)
+    investment_df, investment_dict = create_investment_cycle(steel_plants_aug)
 
     if serialize:
         logger.info("-- Serializing Investment Cycle Reference")
         serialize_file(
-            plant_investment_cycles, PKL_DATA_INTERMEDIATE, "plant_investment_cycles"
+            investment_df, PKL_DATA_INTERMEDIATE, "plant_investment_cycles"
         )
-    return plant_investment_cycles
+        serialize_file(
+            investment_dict, PKL_DATA_INTERMEDIATE, "investment_dict"
+        )
+    return investment_df
