@@ -434,8 +434,8 @@ def hydrogen_data_getter(
     country_ref_dict: dict,
     default_country: str = "USA",
     variable: str = "H2 price",
-    cost_scenario: str = "Baseline",
-    prod_scenario: str = "On-site, dedicated VREs",
+    cost_scenario: str = "Min",
+    prod_scenario: str = "Utility plant, dedicated VREs",
     as_GJ: bool = True,
 ) -> float:
     """A getter function for the formatted Hydrogen model.
