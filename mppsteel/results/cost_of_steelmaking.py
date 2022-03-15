@@ -1,28 +1,23 @@
 """Calculation Functions used to derive various forms of Cost of Steelmaking."""
 
 import pandas as pd
-import numpy as np
 import numpy_financial as npf
 
 from tqdm import tqdm
-from tqdm.auto import tqdm as tqdma
 
-from mppsteel.model.solver import create_plant_capacities_dict
+from mppsteel.data_loading.steel_plant_formatter import create_plant_capacities_dict
 from mppsteel.data_loading.reg_steel_demand_formatter import steel_demand_getter
+from mppsteel.model.levelized_cost import calculate_cc
 
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.config.model_config import (
-    MODEL_YEAR_END,
-    MODEL_YEAR_START,
     PKL_DATA_FINAL,
     PKL_DATA_INTERMEDIATE,
     DISCOUNT_RATE,
     INVESTMENT_CYCLE_DURATION_YEARS,
-    STEEL_PLANT_LIFETIME_YEARS,
 )
-from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
 
 logger = get_logger("Cost of Steelmaking")
 
@@ -67,36 +62,6 @@ def extract_dict_values(
     return sum([main_dict[key][key_to_extract] for key in main_dict])
 
 
-def calculate_cc(
-    capex_dict: dict,
-    year: int,
-    year_span: range,
-    technology: str,
-    discount_rate: float,
-    cost_type: str,
-) -> float:
-    """Calculates the capital charges from a capex DataFrame reference and inputted function arguments.
-
-    Args:
-        capex_dict (dict): A dictionary containing the Capex values for Greenfield, Brownfield and Other Opex values.
-        year (int): The year you want to calculate the capital charge for.
-        year_span (range): The year span for the capital charge values (used in the PV calculation).
-        technology (str): The technology you want to calculate the capital charge for.
-        discount_rate (float): The discount rate to apply to the capital charge amounts.
-        cost_type (str): The cost you want to calculate `brownfield` or `greenfield`.
-
-    Returns:
-        float: The capital charge value.
-    """
-    year_range = range(year, year + year_span)
-    value_arr = np.array([])
-    for eval_year in year_range:
-        year_loop_val = min(MODEL_YEAR_END, eval_year)
-        value = capex_dict[cost_type].loc[technology, year_loop_val]["value"]
-        value_arr = np.append(value_arr, value)
-    return npf.npv(discount_rate, value_arr)
-
-
 def apply_cos(
     row,
     year: int,
@@ -128,7 +93,7 @@ def apply_cos(
     variable_cost = v_costs.loc[row.country_code, year, row.technology]["cost"]
     other_opex_cost = capex_costs["other_opex"].loc[row.technology, year]["value"]
     steel_demand_value = steel_demand_getter(
-        steel_demand, year, steel_scenario, "crude", "World"
+        steel_demand, year, steel_scenario, "crude", region="World"
     )
     discount_rate = DISCOUNT_RATE
     relining_year_span = INVESTMENT_CYCLE_DURATION_YEARS
@@ -157,50 +122,6 @@ def apply_cos(
     result_2 = npf.pmt(discount_rate, relining_year_span, gf_value) / steel_demand_value
 
     return result_1 - result_2
-
-
-def apply_lcos(
-    row, v_costs: pd.DataFrame, capex_costs: dict, include_greenfield: bool = True
-):
-    """Applies the Levelized Cost of Steelmaking function to a given row in a DataFrame.
-
-    Args:
-        row (_type_): A vectorized DataFrame row from .apply function.
-        v_costs (pd.DataFrame): A DataFrame containing the variable costs for each technology across each year and region.
-        capex_costs (dict): A dictionary containing the Capex values for Greenfield, Brownfield and Other Opex values.
-        include_greenfield (bool, optional): A boolean flag to toggle the greenfield specific calculations. Defaults to True.
-
-    Returns:
-        _type_: An amended vectorized DataFrame row from .apply function.
-    """
-    variable_cost = v_costs.loc[row.country_code, row.year, row.technology]["cost"]
-    other_opex_cost = capex_costs["other_opex"].loc[row.technology, row.year]["value"]
-    discount_rate = DISCOUNT_RATE
-    relining_year_span = INVESTMENT_CYCLE_DURATION_YEARS
-    life_of_plant = STEEL_PLANT_LIFETIME_YEARS
-    greenfield_cost = 0
-
-    renovation_cost = calculate_cc(
-        capex_costs,
-        row.year,
-        relining_year_span,
-        row.technology,
-        discount_rate,
-        "brownfield",
-    )
-    if include_greenfield:
-        greenfield_cost = calculate_cc(
-            capex_costs,
-            row.year,
-            life_of_plant,
-            row.technology,
-            discount_rate,
-            "greenfield",
-        )
-    row["levelised_cost_of_steelmaking"] = (
-        other_opex_cost + variable_cost + renovation_cost + greenfield_cost
-    )
-    return row
 
 
 def cost_of_steelmaking(
@@ -361,57 +282,6 @@ def create_cost_of_steelmaking_data(
     return standard_cos_d.join(cc_cos_d)
 
 
-def create_df_reference(cols_to_create: list) -> pd.DataFrame:
-    """Creates a DataFrame reference for the Cost of Steel making values to be inserted.
-
-    Args:
-        cols_to_create (list): A list of columns to create and set initial values for.
-
-    Returns:
-        pd.DataFrame: A DataFrame reference.
-    """
-    steel_plant_df = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df"
-    )
-    country_codes = steel_plant_df["country_code"].unique()
-    init_cols = ["year", "country_code", "technology"]
-    df_list = []
-    year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
-    for year in year_range:
-        for country_code in country_codes:
-            for technology in TECH_REFERENCE_LIST:
-                entry = dict(zip(init_cols, [year, country_code, technology]))
-                df_list.append(entry)
-    combined_df = pd.DataFrame(df_list)
-    for column in cols_to_create:
-        combined_df[column] = ""
-    return combined_df
-
-
-def create_levelised_cost_of_steelmaking(
-    variable_costs: pd.DataFrame, capex_ref: dict, include_greenfield=True
-) -> pd.DataFrame:
-    """Generate a DataFrame with Levelised Cost of Steelmaking values.
-    Args:
-        variable_costs (pd.DataFrame): A DataFrame containing the variable costs for each technology across each year and region.
-        capex_ref (dict): A dictionary containing the Capex values for Greenfield, Brownfield and Other Opex values.
-        include_greenfield (bool, optional): A boolean flag to toggle the greenfield specific calculations. Defaults to True.
-
-    Returns:
-        pd.DataFrame: A DataFrane with Levelised Cost of Steelmaking values.
-    """
-    lev_cost_of_steel = create_df_reference(["levelised_cost_of_steelmaking"])
-    tqdma.pandas(desc="Applying Lev. Steel")
-    lev_cost_of_steel = lev_cost_of_steel.progress_apply(
-        apply_lcos,
-        v_costs=variable_costs,
-        capex_costs=capex_ref,
-        include_greenfield=include_greenfield,
-        axis=1,
-    )
-    return lev_cost_of_steel
-
-
 @timer_func
 def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize: bool = False) -> dict:
     """Full flow to create the Cost of Steelmaking and the Levelized Cost of Steelmaking DataFrames.
@@ -423,7 +293,6 @@ def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize: bool = 
     Returns:
         dict: A dictionary with the Cost of Steelmaking DataFrame and the Levelized Cost of Steelmaking DataFrame.
     """
-    capacities_dict = create_plant_capacities_dict()
     variable_costs_regional = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "variable_costs_regional", "df"
     )
@@ -434,6 +303,10 @@ def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize: bool = 
     production_resource_usage = read_pickle_folder(
         PKL_DATA_FINAL, "production_resource_usage", "df"
     )
+    modified_plant_df = read_pickle_folder(
+        PKL_DATA_INTERMEDIATE, "modified_plant_df", "df"
+    )
+    capacities_dict = create_plant_capacities_dict(modified_plant_df)
     steel_demand_scenario = scenario_dict["steel_demand_scenario"]
 
     cos_data = create_cost_of_steelmaking_data(
@@ -446,12 +319,7 @@ def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize: bool = 
         "region_wsa_region",
     )
 
-    lcos_data = create_levelised_cost_of_steelmaking(
-        variable_costs_regional, capex_dict, include_greenfield=True
-    )
-
     if serialize:
         logger.info("-- Serializing dataframes")
         serialize_file(cos_data, PKL_DATA_FINAL, "cost_of_steelmaking")
-        serialize_file(lcos_data, PKL_DATA_FINAL, "levelised_cost_of_steelmaking")
-    return {"cos_data": cos_data, "lcos_data": lcos_data}
+    return cos_data

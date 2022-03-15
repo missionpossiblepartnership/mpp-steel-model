@@ -217,11 +217,11 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
     plant_investment_cycles = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "plant_investment_cycles", "df"
     )
-    steel_plant_df = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df"
+    plant_result_df = read_pickle_folder(
+        PKL_DATA_INTERMEDIATE, "plant_result_df", "df"
     )
     plant_names_and_country_codes = zip(
-        steel_plant_df["plant_name"].values, steel_plant_df["country_code"].values
+        plant_result_df["plant_name"].values, plant_result_df["country_code"].values
     )
     production_resource_usage = read_pickle_folder(
         PKL_DATA_FINAL, "production_resource_usage", "df"
@@ -232,7 +232,7 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
     data_container = []
     for plant_name, country_code in tqdm(
         plant_names_and_country_codes,
-        total=len(steel_plant_df),
+        total=len(plant_result_df),
         desc="Steel Plant Investments",
     ):
         for year in year_range:

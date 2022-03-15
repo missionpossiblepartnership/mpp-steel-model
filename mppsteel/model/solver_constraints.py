@@ -16,6 +16,9 @@ from mppsteel.data_loading.data_interface import (
 )
 from mppsteel.data_loading.pe_model_formatter import bio_constraint_getter
 from mppsteel.data_loading.reg_steel_demand_formatter import steel_demand_getter
+from mppsteel.data_loading.steel_plant_formatter import (
+    calculate_primary_and_secondary, total_plant_capacity
+)
 from mppsteel.utility.log_utility import get_logger
 
 # Create logger
@@ -102,48 +105,6 @@ def tech_availability_check(
         return False
 
 
-def create_plant_capacities_dict() -> dict:
-    """Generates a dictionary that contains each steel plants primary and secondary capacity.
-
-    Returns:
-        dict: A diction containing the plant name as the key and the capacity values + technology in 2020 as dict values.
-    """
-    steel_plant_df = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df"
-    )
-    plant_capacities = {}
-    for row in steel_plant_df.itertuples():
-        plant_name = row.plant_name
-        row = {
-            "2020_tech": row.technology_in_2020,
-            "primary_capacity": row.primary_capacity_2020,
-            "secondary_capacity": row.secondary_capacity_2020,
-        }
-        plant_capacities[plant_name] = row
-    return plant_capacities
-
-
-def calculate_primary_and_secondary(
-    tech_capacities: dict, plant: str, tech: str
-) -> float:
-    """Sums primary and secondary capacity if the technology is EAF, otherwise returns the primary capacity value.
-
-    Args:
-        tech_capacities (dict): A dictionary containing plant: capacity/inital tech key:value pairs.
-        plant (str): The plant name you want to calculate primary and secondary capacity for.
-        tech (str): The technology you want to calculate primary and secondary capacity for.
-
-    Returns:
-        float: The capacity value given the paramaters inputted to the function.
-    """
-    if tech == "EAF":
-        return (
-            tech_capacities[plant]["secondary_capacity"]
-            + tech_capacities[plant]["primary_capacity"]
-        )
-    return tech_capacities[plant]["primary_capacity"]
-
-
 def material_usage_summary(
     business_case_df: pd.DataFrame, material: str, technology: str = ""
 ) -> Union[float, pd.DataFrame]:
@@ -172,25 +133,6 @@ def material_usage_summary(
         .sum()
         .loc[material]
     )
-
-
-def total_plant_capacity(plant_cap_dict: dict) -> float:
-    """Returns the total capacity of all plants listed in the `plant_cap_dict` dictionary.
-
-    Args:
-        plant_cap_dict (dict): A dictionary containing plant: capacity/inital tech key:value pairs.
-
-    Returns:
-        float: Float value of the summation of all plant capacities using the `calculate_primary_and_secondary` function.
-    """
-    all_capacities = [
-        calculate_primary_and_secondary(
-            plant_cap_dict, plant, plant_cap_dict[plant]["2020_tech"]
-        )
-        for plant in plant_cap_dict
-    ]
-    all_capacities = [x for x in all_capacities if str(x) != "nan"]
-    return sum(all_capacities)
 
 
 def material_usage_calc(
@@ -227,7 +169,7 @@ def material_usage_calc(
         calculate_primary_and_secondary(plant_capacities, plant_name, tech) / 1000
     )
     steel_demand = steel_demand_getter(
-        steel_demand_df, year, steel_demand_scenario, "crude", country_code
+        steel_demand_df, year, steel_demand_scenario, "crude", country_code=country_code
     )
     capacity_sum = total_plant_capacity(plant_capacities)
     projected_production = (plant_capacity / capacity_sum) * steel_demand
@@ -318,7 +260,7 @@ def plant_tech_resource_checker(
             if material_check in ["Scrap", "Scrap EAF"]:
                 material_ref = "Scrap"
                 material_capacity = steel_demand_getter(
-                    steel_demand_df, year, steel_demand_scenario, "crude", country_code
+                    steel_demand_df, year, steel_demand_scenario, "crude", country_code=country_code
                 )
                 materials_to_check = ["Scrap"]
 
@@ -436,13 +378,16 @@ def material_usage_per_plant(
             "country_code"
         ].values[0]
         steel_demand = steel_demand_getter(
-            steel_demand_df, year, steel_demand_scenario, "crude", plant_country
+            steel_demand_df, year, steel_demand_scenario, "crude", country_code=plant_country
         )
         projected_production = (plant_capacity / capacity_sum) * steel_demand
         df = pd.DataFrame(index=materials_list, columns=["value"])
         for material in materials_list:
             usage_value = material_usage_summary(business_cases, material, tech)
-            df.loc[material, "value"] = projected_production * usage_value
+            try:
+                df.loc[material, "value"] = projected_production * usage_value
+            except ValueError:
+                raise ValueError(f'material: {material} | plant: {plant_name} | tech: {tech} | production: {projected_production}')
         df_list.append(df)
     return pd.concat(df_list).reset_index().groupby(["index"]).sum()
 

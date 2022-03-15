@@ -390,4 +390,6 @@ def load_materials() -> list:
     Returns:
         list: A list of all untque materials in the business cases.
     """
-    return load_business_cases()["material_category"].unique()
+    materials_list = load_business_cases()["material_category"].unique().tolist()
+    materials_list.remove('0…')
+    return materials_list

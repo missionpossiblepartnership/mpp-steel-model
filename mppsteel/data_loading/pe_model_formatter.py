@@ -66,7 +66,6 @@ POWER_HYDROGEN_COUNTRY_MAPPER = {
     "NAFTA": "US",
     "India": "India",
     "Japan, South Korea, Taiwan": "China",
-    "Japan. South Korea, and Taiwan": "China",
     "South and central Americas": "India",
     "South and Central America": "India",
     "Middle East ": "India",

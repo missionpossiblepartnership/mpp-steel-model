@@ -81,7 +81,7 @@ def global_metaresults_calculator(
     # Assign initial values
     df["steel_demand"] = df["year"].apply(
         lambda year: steel_demand_getter(
-            steel_market_df, year, steel_demand_scenario, "crude", "World"
+            steel_market_df, year, steel_demand_scenario, "crude", region="World"
         )
     )
     df["steel_capacity"] = df["year"].apply(lambda x: initial_capacity_assignor(x))
@@ -123,7 +123,7 @@ def global_metaresults_calculator(
     ).round(3)
     df["scrap_availability"] = df["year"].apply(
         lambda year: steel_demand_getter(
-            steel_market_df, year, steel_demand_scenario, "crude", "World"
+            steel_market_df, year, steel_demand_scenario, "crude", region="World"
         )
     )
     df["scrap_consumption"] = [
