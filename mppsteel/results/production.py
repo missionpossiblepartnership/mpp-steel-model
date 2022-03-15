@@ -18,10 +18,10 @@ from mppsteel.config.reference_lists import LOW_CARBON_TECHS
 from mppsteel.model.solver import (
     load_materials,
     load_business_cases,
-    create_plant_capacities_dict,
 )
-
-from mppsteel.model.solver_constraints import calculate_primary_and_secondary
+from mppsteel.data_loading.steel_plant_formatter import (
+    create_plant_capacities_dict, calculate_primary_and_secondary
+    )
 
 from mppsteel.data_loading.reg_steel_demand_formatter import steel_demand_getter
 from mppsteel.data_loading.steel_plant_formatter import map_plant_id_to_df
@@ -94,25 +94,25 @@ def tech_capacity_splits() -> Tuple[pd.DataFrame, int]:
         Tuple[pd.DataFrame, int]: A tuple containing the combined DataFrame and the last model year.
     """
     logger.info(f"- Generating Capacity split DataFrame")
-    tech_capacities_dict = create_plant_capacities_dict()
+    plant_result_df = read_pickle_folder(
+        PKL_DATA_INTERMEDIATE, "plant_result_df", "df"
+    )
+    capacities_dict = create_plant_capacities_dict(plant_result_df)
     tech_choices_dict = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "tech_choice_dict", "df"
     )
-    steel_plant_df = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df"
-    )
     steel_plant_dict = dict(
-        zip(steel_plant_df["plant_name"].values, steel_plant_df["country_code"].values)
+        zip(plant_result_df["plant_name"].values, plant_result_df["country_code"].values)
     )
     max_year = max([int(year) for year in tech_choices_dict])
-    steel_plants = tech_capacities_dict.keys()
+    steel_plants = capacities_dict.keys()
     year_range = range(MODEL_YEAR_START, max_year + 1)
     df_list = []
 
     def value_mapper(row, enum_dict):
         row[enum_dict["capacity"]] = (
             calculate_primary_and_secondary(
-                tech_capacities_dict,
+                capacities_dict,
                 row[enum_dict["plant_name"]],
                 row[enum_dict["technology"]],
             )

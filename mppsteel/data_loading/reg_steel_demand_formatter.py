@@ -132,7 +132,7 @@ def steel_demand_getter(
         if region in region_list:
             df_c = df_c[df_c["region"].str.contains(region, regex=False)]
         elif force_default:
-            logger.warn(f'Invalid region string entered: {region}. Reverting to default region: {default_region}. Valid entries here: {region_list}.')
+            print(f'Invalid region string entered: {region}. Reverting to default region: {default_region}. Valid entries here: {region_list}.')
             df_c = df_c[df_c["region"].str.contains(default_region, regex=False)]
         else:
             AttributeError(f'You entered an incorrect region. Valid entries here: {region_list}.')
@@ -141,16 +141,18 @@ def steel_demand_getter(
         if country_code in country_list:
             df_c = df_c[df_c["country_code"].str.contains(country_code, regex=False)]
         elif force_default:
-            logger.warn(f'Invalid country string entered: {country_code}. Reverting to default country_code: {default_country}. Valid entries here: {country_list}.')
+            print(f'Invalid country string entered: {country_code}. Reverting to default country_code: {default_country}.')
             df_c = df_c[df_c["country_code"].str.contains(default_country, regex=False)]
         else:
             AttributeError(f'You entered an incorrect country_code. Valid entries here: {country_list}.')
 
     # Cap year at 2050
+    MODEL_YEAR_END = 2050
     year = min(MODEL_YEAR_END, year)
     # Apply subsets
     # Scenario: BAU, High Circ, average
     # Metric: crude, scrap
+    STEEL_DEMAND_SCENARIO_MAPPER = STEEL_DEMAND_SCENARIO_MAPPER = {"bau": "BAU", "high": "High Circ", "average": "average"}
     scenario_entry = STEEL_DEMAND_SCENARIO_MAPPER[scenario]
 
     metric_mapper = {

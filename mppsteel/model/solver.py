@@ -1,4 +1,5 @@
 """Main solving script for deciding investment decisions."""
+from copy import deepcopy
 from typing import Union
 from typing import Tuple, Union
 
@@ -6,9 +7,11 @@ import pandas as pd
 from tqdm import tqdm
 
 from mppsteel.utility.function_timer_utility import timer_func
+from mppsteel.utility.plant_container_class import PlantIdContainer
 from mppsteel.utility.dataframe_utility import return_furnace_group
 from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
 from mppsteel.data_loading.reg_steel_demand_formatter import extend_steel_demand
+from mppsteel.model.investment_cycles import create_investment_cycle
 
 from mppsteel.config.model_config import (
     MODEL_YEAR_START,
@@ -31,17 +34,19 @@ from mppsteel.config.reference_lists import (
 )
 
 from mppsteel.data_loading.data_interface import load_materials, load_business_cases
+from mppsteel.data_loading.steel_plant_formatter import create_plant_capacities_dict
 
 from mppsteel.model.solver_constraints import (
     tech_availability_check,
     read_and_format_tech_availability,
     plant_tech_resource_checker,
-    create_plant_capacities_dict,
     material_usage_per_plant,
     load_resource_usage_dict,
 )
 
 from mppsteel.model.tco_and_abatement_optimizer import get_best_choice
+from mppsteel.model.plant_open_close import open_close_flow, return_modified_plants
+
 from mppsteel.utility.log_utility import get_logger
 
 # Create logger
@@ -223,7 +228,11 @@ def choose_technology(
     investment_year_ref = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "plant_investment_cycles", "df"
     )
-
+    investment_dict = read_pickle_folder(
+        PKL_DATA_INTERMEDIATE, "investment_dict", "dict"
+    )
+    investment_year_ref_c = investment_year_ref.copy()
+    investment_dict_c = deepcopy(investment_dict)
     # Constraint data
     bio_constraint_model = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "bio_constraint_model_formatted", "df"
@@ -239,7 +248,6 @@ def choose_technology(
         zip(tech_availability["Technology"], tech_availability["Year available from"])
     )
     tech_availability = read_and_format_tech_availability(tech_availability)
-    plant_capacities_dict = create_plant_capacities_dict()
 
     # TCO & Abatement Data
     tco_reference_data = read_pickle_folder(
@@ -279,9 +287,13 @@ def choose_technology(
         .copy()
     )
 
+    # Initialize plant container
+    PlantIDC = PlantIdContainer()
+    model_plant_df = plant_df.copy()
+    PlantIDC.add_steel_plant_ids(model_plant_df)
+    
     # General Reference data
     business_cases = load_business_cases()
-    all_plant_names = plant_df["plant_name"].copy()
 
     year_range = range(MODEL_YEAR_START, year_end + 1)
     current_plant_choices = {}
@@ -290,15 +302,29 @@ def choose_technology(
         logger.info(f"Running investment decisions for {year}")
         current_plant_choices[str(year)] = {}
 
-        switchers = extract_tech_plant_switchers(investment_year_ref, year)
+        open_close_dict = open_close_flow(PlantIDC, model_plant_df, current_plant_choices, investment_dict_c, year)
+        
+        model_plant_df = open_close_dict['plant_df']
+        all_plant_names = model_plant_df["plant_name"].copy()
+
+        plant_capacities_dict = create_plant_capacities_dict(model_plant_df)
+
+        current_plant_choices = open_close_dict['tech_choice_dict']
+
+        new_open_plants = return_modified_plants(model_plant_df, year, 'open')
+        new_investment_df, new_investment_dict = create_investment_cycle(new_open_plants)
+        investment_year_ref_c = investment_year_ref_c.reset_index().merge(new_investment_df.reset_index())
+        investment_year_ref_c.set_index(['year', 'switch_type'], inplace=True)
+        investment_dict_c = {**investment_dict_c, **new_investment_dict}
+        switchers = extract_tech_plant_switchers(investment_year_ref_c, year)
         non_switchers = list(set(all_plant_names).difference(switchers))
 
         switchers_df = (
-            plant_df.set_index(["plant_name"]).drop(non_switchers).reset_index()
+            model_plant_df.set_index(["plant_name"]).drop(non_switchers).reset_index()
         )
         switchers_df.rename({"index": "plant_name"}, axis=1, inplace=True)
         non_switchers_df = (
-            plant_df.set_index(["plant_name"]).drop(switchers).reset_index()
+            model_plant_df.set_index(["plant_name"]).drop(switchers).reset_index()
         )
         non_switchers_df.rename({"index": "plant_name"}, axis=1, inplace=True)
 
@@ -312,7 +338,7 @@ def choose_technology(
             non_switchers,
             technologies,
             business_cases,
-            plant_df,
+            model_plant_df,
             plant_capacities_dict,
             steel_demand_df,
             materials,
@@ -322,7 +348,8 @@ def choose_technology(
         material_usage_dict = load_resource_usage_dict(yearly_usage)
         logger.info(f"-- Running investment decisions for Non Switching Plants")
         for plant_name in non_switchers:
-            if year == 2020:
+            year_founded = non_switchers_df[non_switchers_df['plant_name'] == plant_name]['start_of_operation'].values[0]
+            if (year == 2020) or (year == year_founded):
                 tech_in_2020 = non_switchers_df[
                     non_switchers_df["plant_name"] == plant_name
                 ]["technology_in_2020"].values[0]
@@ -336,8 +363,9 @@ def choose_technology(
         for plant in switchers_df.itertuples():
             plant_name = plant.plant_name
             country_code = plant.country_code
+            year_founded = plant.start_of_operation
 
-            if year == 2020:
+            if (year == 2020) or (year == year_founded):
                 tech_in_2020 = switchers_df[switchers_df["plant_name"] == plant_name][
                     "technology_in_2020"
                 ].values[0]
@@ -351,7 +379,7 @@ def choose_technology(
 
             else:
                 switch_type = (
-                    investment_year_ref.reset_index()
+                    investment_year_ref_c.reset_index()
                     .set_index(["year", "plant_name"])
                     .loc[year, plant_name]
                     .values[0]
@@ -364,7 +392,7 @@ def choose_technology(
                         solver_logic,
                         tech_switch_scenario,
                         steel_demand_df,
-                        plant_df,
+                        model_plant_df,
                         business_cases,
                         bio_constraint_model,
                         ccs_co2,
@@ -396,7 +424,7 @@ def choose_technology(
                         solver_logic,
                         tech_switch_scenario,
                         steel_demand_df,
-                        plant_df,
+                        model_plant_df,
                         business_cases,
                         bio_constraint_model,
                         ccs_co2,
@@ -422,7 +450,7 @@ def choose_technology(
                         # print(f'{plant_name} kept its current tech {current_tech} in transitional year {year}')
                         pass
                     current_plant_choices[str(year)][plant_name] = best_choice_tech
-    return current_plant_choices
+    return {'tech_choice_dict': current_plant_choices, 'plant_result_df': model_plant_df}
 
 
 def extract_tech_plant_switchers(
@@ -459,7 +487,7 @@ def extract_tech_plant_switchers(
 
 @timer_func
 def solver_flow(scenario_dict: dict, year_end: int, serialize: bool = False) -> dict:
-    """Initiates the complete solver flow and serializes the ouptuts.
+    """Initiates the complete solver flow and serializes the outputs. Tracks all technology choices and plant changes.
 
     Args:
         scenario_dict (dict): A dictionary with scenarios key value mappings from the current model execution.
@@ -467,10 +495,10 @@ def solver_flow(scenario_dict: dict, year_end: int, serialize: bool = False) -> 
         serialize (bool, optional): Flag to only serialize the DataFrame to a pickle file and not return a DataFrame. Defaults to False.
 
     Returns:
-        dict: A dictionary containing the best technology resuls. Organised as year: plant: best tech.
+        dict: A dictionary containing the best technology results and the resultant steel plants. tech_choice_dict is organised as year: plant: best tech.
     """
 
-    tech_choice_dict = choose_technology(
+    results_dict = choose_technology(
         year_end=year_end,
         solver_logic=SOLVER_LOGICS[scenario_dict["solver_logic"]],
         tech_moratorium=scenario_dict["tech_moratorium"],
@@ -484,5 +512,6 @@ def solver_flow(scenario_dict: dict, year_end: int, serialize: bool = False) -> 
 
     if serialize:
         logger.info("-- Serializing dataframes")
-        serialize_file(tech_choice_dict, PKL_DATA_INTERMEDIATE, "tech_choice_dict")
-    return tech_choice_dict
+        serialize_file(results_dict['tech_choice_dict'], PKL_DATA_INTERMEDIATE, "tech_choice_dict")
+        serialize_file(results_dict['plant_result_df'], PKL_DATA_INTERMEDIATE, "plant_result_df")
+    return results_dict

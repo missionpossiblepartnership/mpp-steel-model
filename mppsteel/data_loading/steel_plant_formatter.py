@@ -231,6 +231,64 @@ def adjust_capacity_values(df: pd.DataFrame) -> pd.DataFrame:
     return df_c
 
 
+def create_plant_capacities_dict(plant_df: pd.DataFrame) -> dict:
+    """Generates a dictionary that contains each steel plants primary and secondary capacity.
+
+    Returns:
+        dict: A diction containing the plant name as the key and the capacity values + technology in 2020 as dict values.
+    """
+    plant_capacities = {}
+    for row in plant_df.itertuples():
+        plant_name = row.plant_name
+        row = {
+            "2020_tech": row.technology_in_2020,
+            "primary_capacity": row.primary_capacity_2020,
+            "secondary_capacity": row.secondary_capacity_2020,
+        }
+        plant_capacities[plant_name] = row
+    return plant_capacities
+
+
+def calculate_primary_and_secondary(
+    tech_capacities: dict, plant: str, tech: str
+) -> float:
+    """Sums primary and secondary capacity if the technology is EAF, otherwise returns the primary capacity value.
+
+    Args:
+        tech_capacities (dict): A dictionary containing plant: capacity/inital tech key:value pairs.
+        plant (str): The plant name you want to calculate primary and secondary capacity for.
+        tech (str): The technology you want to calculate primary and secondary capacity for.
+
+    Returns:
+        float: The capacity value given the paramaters inputted to the function.
+    """
+    if tech == "EAF":
+        return (
+            tech_capacities[plant]["secondary_capacity"]
+            + tech_capacities[plant]["primary_capacity"]
+        )
+    return tech_capacities[plant]["primary_capacity"]
+
+
+def total_plant_capacity(plant_cap_dict: dict) -> float:
+    """Returns the total capacity of all plants listed in the `plant_cap_dict` dictionary.
+
+    Args:
+        plant_cap_dict (dict): A dictionary containing plant: capacity/inital tech key:value pairs.
+
+    Returns:
+        float: Float value of the summation of all plant capacities using the `calculate_primary_and_secondary` function.
+    """
+    all_capacities = [
+        calculate_primary_and_secondary(
+            plant_cap_dict, plant, plant_cap_dict[plant]["2020_tech"]
+        )
+        for plant in plant_cap_dict
+    ]
+    all_capacities = [x for x in all_capacities if str(x) != "nan"]
+    return sum(all_capacities)
+
+
 def map_plant_id_to_df(
     df: pd.DataFrame, plant_identifier: str, reverse: bool = False
 ) -> pd.DataFrame:

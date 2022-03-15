@@ -5,7 +5,7 @@ import numpy_financial as npf
 
 from tqdm import tqdm
 
-from mppsteel.model.solver import create_plant_capacities_dict
+from mppsteel.data_loading.steel_plant_formatter import create_plant_capacities_dict
 from mppsteel.data_loading.reg_steel_demand_formatter import steel_demand_getter
 from mppsteel.model.levelized_cost import calculate_cc
 
@@ -293,7 +293,6 @@ def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize: bool = 
     Returns:
         dict: A dictionary with the Cost of Steelmaking DataFrame and the Levelized Cost of Steelmaking DataFrame.
     """
-    capacities_dict = create_plant_capacities_dict()
     variable_costs_regional = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "variable_costs_regional", "df"
     )
@@ -304,6 +303,10 @@ def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize: bool = 
     production_resource_usage = read_pickle_folder(
         PKL_DATA_FINAL, "production_resource_usage", "df"
     )
+    modified_plant_df = read_pickle_folder(
+        PKL_DATA_INTERMEDIATE, "modified_plant_df", "df"
+    )
+    capacities_dict = create_plant_capacities_dict(modified_plant_df)
     steel_demand_scenario = scenario_dict["steel_demand_scenario"]
 
     cos_data = create_cost_of_steelmaking_data(

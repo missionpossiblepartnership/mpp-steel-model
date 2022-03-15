@@ -3,6 +3,7 @@
 import random
 import pandas as pd
 from tqdm import tqdm
+from copy import deepcopy
 
 from mppsteel.config.model_config import (
     MODEL_YEAR_START,
@@ -87,7 +88,11 @@ def add_off_cycle_investment_years(
             return bring_forward_date
         return year
 
-    # For inv_cycle_length = 1
+    # For inv_cycle_length = 0
+    if inv_cycle_length == 0:
+        return range_list
+
+    # For inv_cycle_length >= 1
     first_year = net_zero_year_bring_forward(main_investment_cycle[0])
     range_list.append(first_year)
 
@@ -176,14 +181,15 @@ def create_investment_cycle(steel_plant_df: pd.DataFrame) -> pd.DataFrame:
     logger.info("Creating investment cycle")
     investment_years = steel_plant_df["start_of_operation"].apply(
         lambda year: apply_investment_years(year)
-    )
-    investment_years_inc_off_cycle = [
-        add_off_cycle_investment_years(
-            inv_year, INVESTMENT_OFFCYCLE_BUFFER_TOP, INVESTMENT_OFFCYCLE_BUFFER_TAIL
-        )
-        for inv_year in investment_years
-    ]
-
+    ).tolist()
+    investment_years_inc_off_cycle = deepcopy(investment_years)
+    if len(investment_years) > 0:
+        investment_years_inc_off_cycle = [
+            add_off_cycle_investment_years(
+                inv_year, INVESTMENT_OFFCYCLE_BUFFER_TOP, INVESTMENT_OFFCYCLE_BUFFER_TAIL
+            )
+            for inv_year in investment_years
+        ]
     investment_dict = dict(zip(steel_plant_df["plant_name"].values, investment_years_inc_off_cycle))
 
     investment_df = create_investment_cycle_reference(
