@@ -336,9 +336,9 @@ def get_s2_emissions(
         electricity_consumption = bcases[bcases["material_category"] == "Electricity"][
             "value"
         ].values[0]
-
-    return ((h2_emissions / 1000) * hydrogen_consumption) + (
-        transform_units(electricity_emissions, "mwh_gj", "larger") * electricity_consumption
+#((h2_emissions / 1000) * hydrogen_consumption) -> remember to put H2-related emissions in scope 3 (in case we do gray/blue)
+    return (
+        electricity_emissions * electricity_consumption
     )
 
 
