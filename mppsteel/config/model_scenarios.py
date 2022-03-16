@@ -29,8 +29,8 @@ CARBON_TAX_SCENARIOS = {
 }
 
 GRID_DECARBONISATION_SCENARIOS = {
-    "high": "Accelerated ",
-    "low": "Central",
+    "low": "Accelerated ",
+    "high": "Central",
 }
 
 BIOMASS_SCENARIOS = {
@@ -165,4 +165,10 @@ ABATEMENT_HIGH_CIRC_SCENARIO = {
 
 SCENARIO_OPTIONS = {
     "default": DEFAULT_SCENARIO,
+    'tech_moratorium': TECH_MORATORIUM,
+    'carbon_cost': CARBON_COST,
+    'baseline_scenario': BAU_SCENARIO,
+    'baseline_high_circ': BAU_HIGH_CIRC_SCENARIO,
+    'abatement': ABATEMENT_SCENARIO,
+    'fastest_abatement': ABATEMENT_HIGH_CIRC_SCENARIO
 }
