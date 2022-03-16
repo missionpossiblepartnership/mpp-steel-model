@@ -374,6 +374,9 @@ def create_graphs(filepath: str) -> None:
     production_emissions = read_pickle_folder(
         PKL_DATA_FINAL, "production_emissions", "df"
     )
+    tco_ref = read_pickle_folder(
+        PKL_DATA_INTERMEDIATE, "tco_summary_data", "df"
+    )
 
     steel_production_area_chart(production_emissions, filepath)
     resource_line_charts(
@@ -400,3 +403,7 @@ def create_graphs(filepath: str) -> None:
     create_cot_graph(filepath=filepath)
 
     create_lcost_graph(2030, filepath=filepath)
+
+    for year in [2020,2030,2040,2050]:
+        for reg in ['China', 'NAFTA', 'India','Europe', None]:
+            generate_tco_charts(tco_ref, year,reg,'Avg BF-BOF', filepath=filepath)
