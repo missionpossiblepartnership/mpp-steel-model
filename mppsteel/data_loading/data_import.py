@@ -123,6 +123,11 @@ def load_data(serialize: bool = False) -> dict:
         IMPORT_DATA_PATH, "Regional Steel Demand", "csv"
     )
 
+    # WSA data
+    wsa_production = extract_data(
+        IMPORT_DATA_PATH, "WSA World Steel in Figures 2021", "xlsx", 1
+    )
+
     # Import Price and Emissions Models
     power_model = get_pe_model_data("power")
     hydrogen_model = get_pe_model_data("hydrogen")
@@ -150,6 +155,7 @@ def load_data(serialize: bool = False) -> dict:
         "hydrogen_model": hydrogen_model,
         "bio_model": bio_model,
         "ccus_model": ccus_model,
+        "wsa_production": wsa_production,
     }
 
     if serialize:
