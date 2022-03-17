@@ -21,7 +21,8 @@ from mppsteel.graphs.opex_capex_graph import opex_capex_graph
 from mppsteel.graphs.consumption_over_time import consumption_over_time_graph
 from mppsteel.graphs.cost_of_steelmaking_graphs import lcost_graph
 from mppsteel.graphs.investment_graph import investment_line_chart, investment_per_tech
-
+from mppsteel.graphs.emissions_per_tech import generate_emissivity_charts
+from mppsteel.graphs.tco_graph import generate_tco_charts
 # Create logger
 logger = get_logger("Graph Production")
 

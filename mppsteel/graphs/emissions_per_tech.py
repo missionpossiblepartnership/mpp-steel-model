@@ -2,6 +2,7 @@ from itertools import zip_longest
 
 import pandas as pd
 import plotly.express as px
+import numpy as np
 
 from mppsteel.config.model_config import PKL_DATA_FINAL
 from mppsteel.config.model_config import PKL_DATA_INTERMEDIATE
