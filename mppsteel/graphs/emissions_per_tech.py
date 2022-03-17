@@ -1,3 +1,17 @@
+from itertools import zip_longest
+
+import pandas as pd
+import plotly.express as px
+
+from mppsteel.config.model_config import PKL_DATA_FINAL
+from mppsteel.config.model_config import PKL_DATA_INTERMEDIATE
+from mppsteel.config.reference_lists import MPP_COLOR_LIST
+
+from mppsteel.utility.log_utility import get_logger
+from mppsteel.utility.file_handling_utility import read_pickle_folder
+
+from mppsteel.graphs.plotly_graphs import bar_chart
+
 def generate_emissivity_charts (df: pd.DataFrame, year: int = None, region: str = None, scope: str= None, filepath: str = None):
     """generates bar chart with emissions [t CO2/ t steel] per technology. Displays scope1, scope2, scope2 or combination of scopes
 
