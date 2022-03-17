@@ -377,6 +377,9 @@ def create_graphs(filepath: str) -> None:
     tco_ref = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "tco_summary_data", "df"
     )
+    calculated_emissivity_combined_df = read_pickle_folder(
+        PKL_DATA_INTERMEDIATE, "calculated_emissivity_combined", "df"
+    )
 
     steel_production_area_chart(production_emissions, filepath)
     resource_line_charts(
@@ -400,10 +403,21 @@ def create_graphs(filepath: str) -> None:
 
     create_investment_per_tech_graph(filepath=filepath)
 
-    create_cot_graph(filepath=filepath)
+    for reg in [None, 'China', 'India', 'EU + UK', 'USMCA']:
+        create_cot_graph(filepath=filepath)
 
     create_lcost_graph(2030, filepath=filepath)
 
     for year in [2020,2030,2040,2050]:
         for reg in ['China', 'NAFTA', 'India','Europe', None]:
             generate_tco_charts(tco_ref, year,reg,'Avg BF-BOF', filepath=filepath)
+
+    for yrs in [2020,2030,2050]:
+        for reg in ['China','India','Europe','NAFTA']:
+            for scope in ['s2_emissivity', 'combined']:
+                generate_emissivity_charts(calculated_emissivity_combined_df, yrs, reg, scope, filepath=filepath)
+
+    for yrs in [2020,2030,2050]:
+        for reg in ['China']:
+            for scope in ['s1_emissivity', 's3_emissivity']:
+                generate_emissivity_charts(calculated_emissivity_combined_df, yrs, reg, scope, filepath=filepath)
