@@ -24,7 +24,7 @@ logger = get_logger("Regional Steel Demand Formatter")
 
 RMI_MATCHER = {
     "Japan, South Korea, and Taiwan": ["JPN", "KOR", "TWN"],
-    "World": ["GBL"],
+    "World": ["RoW"],
 }
 
 
@@ -97,7 +97,7 @@ def steel_demand_getter(
     region: str = None,
     country_code: str = None,
     force_default: bool = True,
-    default_region: str = "World",
+    default_region: str = "RoW",
     default_country: str = "GBL",
 ) -> float:
     """A getter function for the regional steel demand data. 

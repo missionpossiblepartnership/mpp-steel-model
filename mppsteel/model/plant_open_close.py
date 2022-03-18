@@ -71,119 +71,35 @@ def agg_plant_capacity(plant_df: pd.DataFrame, avg: bool = False, region_string:
     region_capacity_dict = {}
     regions = plant_df_c[region_string].unique()
     for region in regions:
-        plants = plant_df_c[plant_df[region_string] == region]['plant_name']
-        all_capacities = [
-            calculate_primary_and_secondary(
-                plant_capacity_dict, plant, plant_capacity_dict[plant]["2020_tech"]
-            )
-            for plant in plants
-        ]
-        capacities_list = [x for x in all_capacities if str(x) != "nan"]
-        
-        final_stat = sum(capacities_list)
+        plant_capacities = plant_df_c[plant_df[region_string] == region]['combined_capacity']
+        final_stat = plant_capacities.sum()
         if avg:
-            final_stat = final_stat / len(capacities_list)
+            final_stat = plant_capacities.mean()
         region_capacity_dict[region] = round(final_stat, 3)
         
-    region_capacity_dict['Middle East'] = region_capacity_dict['Middle East'] + region_capacity_dict['Middle East ']
-    region_capacity_dict.pop('Middle East ', None)
+    region_capacity_dict['Middle East'] = region_capacity_dict['Middle East']
     return region_capacity_dict
 
 
-def create_regional_plant_capacity_dict(plant_df: pd.DataFrame, as_avg: bool = False, rounding: int = 3):
+def create_plant_capacity_dict(plant_df: pd.DataFrame, as_avg: bool = False, rounding: int = 3, as_mt: bool = False):
+    logger.info('Deriving plant capacity statistics')
     plant_df_c = plant_df.copy()
-    df = plant_df_c[['rmi_region', 'total_capacity']].groupby(['rmi_region'])
+    df = plant_df_c[['rmi_region', 'combined_capacity']].groupby(['rmi_region'])
     if as_avg:
         df = df.mean().round(rounding).reset_index()
     else:
         df = df.sum().round(rounding).reset_index()
-    return dict(zip(df['rmi_region'], df['total_capacity']))
+    dict_obj = dict(zip(df['rmi_region'], df['combined_capacity']))
+    if as_mt:
+        return {region: value / 1000 for region, value in dict_obj.items()}
+    return dict_obj
 
 
-def regional_capacity_utilization_factor(supply_value: float, demand_value: float, rounding: bool = 3):
-    if demand_value >= supply_value:
+def regional_capacity_utilization_factor(capacity_value: float, demand_value: float, rounding: bool = 3):
+    if demand_value >= capacity_value:
         return 1
-    return round(supply_value / demand_value, rounding)
+    return round(capacity_value / demand_value, rounding)
 
-
-def supply_demand_gap(
-    demand_df: pd.DataFrame, plant_df: pd.DataFrame, year: int, region: str = 'World', 
-    demand_scenario: str = 'average', demand_metric: str = 'crude',
-    rounding: int = 2, print_summary: bool = False, all_regions: bool = False, as_df: bool = False):
-    
-    # SUBSETTING & VALIDATION
-    supply_dict_agg = agg_plant_capacity(plant_df)
-    supply_dict_avg = agg_plant_capacity(plant_df, avg=True)
-    valid_regions = list(demand_df['region'].unique())
-    
-    results_dict = {}
-    
-    region_list = [region,]
-    if all_regions:
-        region_list = valid_regions
-        
-    for region in region_list:
-        
-        if region in valid_regions:
-            demand = steel_demand_getter(demand_df, year=year, scenario=demand_scenario, metric=demand_metric, region=region)
-            if region == 'World':
-                supply_agg = sum(supply_dict_agg.values())
-                supply_avg = np.mean(list((supply_dict_avg.values())))
-            else:
-                supply_agg = supply_dict_agg[region]
-                supply_avg = supply_dict_avg[region]
-        else:
-            raise AttributeError(f'Invalid region entered. You entered {region}. Possible options are: {valid_regions}')
-
-        # FIX UNITS
-        supply_agg = round(supply_agg / 1000, rounding)  # Initially Kt
-        supply_avg = round(supply_avg / 1000, rounding)  # Initially Kt @ 100% utilization
-        demand = round(demand, rounding) # Initially Mt
-        balance_value = round(supply_agg - demand, rounding)
-        new_plants_required = math.ceil(-balance_value / supply_avg)
-        utilization = regional_capacity_utilization_factor(supply_agg, demand)
-
-        # BALANCES
-        balance_str = ''
-        if balance_value < 0:
-            balance_str = 'Undersupply'
-        elif balance_value > 0:
-            balance_str = 'Oversupply'
-        else:
-            balance_str = 'BALANCED'
-
-        # PRINT RESULTS
-        if print_summary:
-            print(f'=============== RESULTS FOR {region} =================')
-            print(f'{region} Demand: {demand} Mt')
-            print(f'{region} Supply: {supply_agg} Mt')
-            print(f'{balance_str} of {balance_value} Mt')
-            print(f'Utilization Rate: {utilization}')
-            print(f'Avg plant size in {region}: {supply_avg} Mt')
-            print(f'Plants required in {region}: {new_plants_required}')
-            
-        # RETURN RESULTS
-        results = {
-            'year': year,
-            'region': region,
-            'supply_agg': supply_agg,
-            'demand': demand,
-            'balance': balance_value,
-            'utilization_rate': utilization,
-            'supply_avg': supply_avg,
-            'plants_required': new_plants_required,
-            'unit': 'Mt',
-        }
-        
-        if not all_regions:
-            return results
-        
-        results_dict[region] = results
-        
-    if as_df:
-        return pd.DataFrame(results_dict.values()).set_index(['year', 'region'])
-
-    return results_dict
 
 def get_xcost_from_region(lcost_df: pd.DataFrame, year: int, region: str = None, value_type: str = 'min'):
     lcost_df_c = lcost_df.copy()
@@ -202,7 +118,7 @@ def get_xcost_from_region(lcost_df: pd.DataFrame, year: int, region: str = None,
         return lcost_df_c_s['levelised_cost'].idxmax()
 
 
-def current_plant_year(inv_dict: pd.DataFrame, plant: str, current_year: int, last_inv_year: int = None, cycle_length: int = 20):
+def current_plant_year(inv_dict: pd.DataFrame, plant: str, current_year: int, cycle_length: int = 20):
     main_cycle_years = [yr for yr in inv_dict[plant] if isinstance(yr, int)]
     first_inv_year = main_cycle_years[0]
     if len(main_cycle_years) == 2:
@@ -238,17 +154,16 @@ def current_plant_year(inv_dict: pd.DataFrame, plant: str, current_year: int, la
 
 
 def new_plant_metadata(
-    plant_container: PlantIdContainer, plant_df: pd.DataFrame,
+    plant_container: PlantIdContainer, gap_analysis_df: pd.DataFrame,
     levelized_cost_df: pd.DataFrame, country_df: pd.DataFrame, ng_mapper: dict,
     year: int, region: str = None, low_cost_region: bool = False):
 
-    reg_cap_avg = create_regional_plant_capacity_dict(plant_df, as_avg=True)
     if region and low_cost_region:
         raise AttributeError('You entered a value for `region` and set `low_cost_region` to true. Select ONE or the other, NOT both.')
     new_id = plant_container.generate_plant_id(add_to_container=True)
     if low_cost_region:
         region = get_xcost_from_region(levelized_cost_df, year=year, value_type='min')
-    regional_capacity = reg_cap_avg[region]
+    capacity_value = gap_analysis_df.loc[year, region]['avg_plant_capacity'] * 1000
     country_specific_mapper = {'China': 'CHN', 'India': 'IND'}
     if region in country_specific_mapper:
         assigned_country = country_specific_mapper[region]
@@ -262,43 +177,10 @@ def new_plant_metadata(
         'start_of_operation': year,
         'country_code': assigned_country,
         'cheap_natural_gas': ng_mapper[assigned_country],
-        'total_capacity': regional_capacity,
+        'combined_capacity': capacity_value,
         'rmi_region': region
     }
 
-def current_plant_year(inv_dict: pd.DataFrame, plant: str, current_year: int, last_inv_year: int = None, cycle_length: int = 20):
-    main_cycle_years = [yr for yr in inv_dict[plant] if isinstance(yr, int)]
-    first_inv_year = main_cycle_years[0]
-    if len(main_cycle_years) == 2:
-        second_inv_year = main_cycle_years[1]
-        cycle_length = second_inv_year - first_inv_year
-
-    trans_years = [yr for yr in inv_dict[plant] if isinstance(yr, range)]
-    if trans_years:
-        first_trans_years = list(trans_years[0])
-        potential_start_date = first_trans_years[0]
-        if current_year in first_trans_years:
-            return current_year - potential_start_date
-
-    if current_year < first_inv_year:
-        potential_start_date = first_inv_year - cycle_length
-        return current_year - potential_start_date
-        
-    if len(main_cycle_years) == 1:
-        if current_year >= first_inv_year:
-            return current_year - first_inv_year
-
-    if len(main_cycle_years) == 2:
-        if current_year >= first_inv_year <= second_inv_year:
-            if not trans_years:
-                return current_year - first_inv_year
-            else:
-                if current_year in first_trans_years:
-                    return current_year - potential_start_date
-                else:
-                    return current_year - second_inv_year
-        elif current_year > second_inv_year:
-            return current_year - second_inv_year
 
 
 def return_oldest_plant(inv_dict: dict, current_year: int, plant_list: list = None):
@@ -317,22 +199,6 @@ def tc_dict_editor(tc_dict: dict, year: int, plant: str, tech: str):
     tc_dict_c = deepcopy(tc_dict)
     tc_dict_c[str(year)][plant] = tech
     return tc_dict_c
-
-def update_sd_df(df: pd.DataFrame, high_rate: float, low_rate: float):
-    df_c = df.copy()
-    
-    def util_mapper(row):
-        if row['balance'] > 0:
-            return low_rate
-        elif row['balance'] <= 0:
-            return high_rate
-    df_c['desired_utilization'] = df_c.apply(util_mapper, axis=1)
-    
-    def plant_required_mapper(row):
-        return math.ceil(row['plants_required'] * row['desired_utilization'])
-    df_c['updated_plants_required'] = df_c.apply(plant_required_mapper, axis=1)
-
-    return df_c
 
 
 def return_modified_plants(ocp_df: pd.DataFrame, year: int, change_type: str = 'open'):
@@ -359,40 +225,166 @@ def return_capacity_value(total_capacity: float, tech: str, return_type: str):
     return total_capacity
 
 
+def production_demand_gap(
+    demand_df: pd.DataFrame, plant_df: pd.DataFrame, util_dict: dict, year: int, 
+    region: str = 'World', demand_scenario: str = 'average', demand_metric: str = 'crude',
+    regional_capacity: bool = False, rounding: int = 2, print_summary: bool = False, all_regions: bool = False, 
+    as_df: bool = False, capacity_util_max: float = 0.95, capacity_util_min: float = 0.6):
+    
+    logger.info(f'Defining the production demand gap for {year}')
+    util_dict_c = deepcopy(util_dict)
+    # SUBSETTING & VALIDATION
+    capacity_dict_agg = create_plant_capacity_dict(plant_df, as_mt=True)
+    capacity_dict_avg = create_plant_capacity_dict(plant_df, as_avg=True, as_mt=True)
+    avg_plant_global_capacity = np.mean(list(capacity_dict_avg.values()))
+    util_dict_c['World'] = np.mean(list(util_dict_c.values()))
+
+    valid_regions = list(demand_df['region'].unique())
+    results_container = {}
+    region_list = [region,]
+    if all_regions:
+        region_list = valid_regions
+
+    for region in region_list:
+        if region in valid_regions:
+            initial_utilization = util_dict_c[region]
+            demand = steel_demand_getter(demand_df, year=year, scenario=demand_scenario, metric=demand_metric, region=region)
+            if region == 'World':
+                capacity_agg = sum(list(capacity_dict_agg.values()))
+            else:
+                capacity_agg = capacity_agg = capacity_dict_agg[region]
+                avg_plant_region_capacity = capacity_dict_avg[region]
+
+        else:
+            raise AttributeError(f'Invalid region entered. You entered {region}. Possible options are: {valid_regions}')
+    
+        avg_plant_capacity_value = avg_plant_global_capacity
+        if regional_capacity:
+            avg_plant_capacity_value = avg_plant_region_capacity
+
+        new_capacity_required = 0
+        excess_capacity = 0
+        new_plants_required = 0
+        plants_to_close = 0
+        new_total_capacity = deepcopy(capacity_agg)
+
+        initial_min_utilization_reqiured = demand / capacity_agg
+        new_min_utilization_required = 0
+        
+        if capacity_util_min < initial_min_utilization_reqiured < capacity_util_max:
+            new_min_utilization_required = util_dict_c[region]
+
+        if initial_min_utilization_reqiured < capacity_util_min:
+            excess_capacity = (capacity_agg * capacity_util_min) - demand
+            plants_to_close = math.ceil(excess_capacity / avg_plant_capacity_value)
+            new_total_capacity = new_total_capacity - (plants_to_close * avg_plant_capacity_value)
+            new_min_utilization_required = demand / new_total_capacity
+            new_min_utilization_required = max(new_min_utilization_required, capacity_util_min)
+
+        if initial_min_utilization_reqiured > capacity_util_max:
+            new_capacity_required = demand - (capacity_agg * capacity_util_max)
+            new_plants_required = math.ceil(new_capacity_required / avg_plant_capacity_value)
+            new_total_capacity = new_total_capacity + (new_plants_required * avg_plant_capacity_value)
+            new_min_utilization_required = demand / new_total_capacity
+            new_min_utilization_required = min(new_min_utilization_required, capacity_util_max)
+        
+        util_dict_c[region] = new_min_utilization_required
+        util_dict_c['World'] = round(np.mean(list(util_dict_c.values())), rounding)
+        initial_utilized_capacity = capacity_agg * initial_utilization
+        new_utilized_capacity = new_total_capacity * new_min_utilization_required
+        initial_balance_value = initial_utilized_capacity - demand
+        new_balance_value = new_utilized_capacity - demand
+
+        # PRINT RESULTS
+        if print_summary:
+            print(f'=============== RESULTS FOR {region} =================')
+            print(f'{region} Demand: {demand} Mt')
+            print(f'{region} Initial Production: {initial_utilized_capacity} Mt')
+            print(f'Initial Utilization Rate: {initial_utilization}')
+            print(f'Initial balance: {initial_balance_value} Mt')
+            print(f'Avg. plant capacity in {region}: {avg_plant_capacity_value} Mt')
+            print(f'Plants required in {region}: {new_plants_required}')
+            print(f'Plants to close in {region}: {plants_to_close}')
+            print(f'Total new capacity in {region}: {new_total_capacity}')
+            print(f'New utilization rate in {region}: {new_min_utilization_required}')
+            print(f'New Production {region}: {new_utilized_capacity}')
+            print(f'New balance {region}: {new_balance_value}')
+            
+
+        # RETURN RESULTS
+        results = {
+            'year': year,
+            'region': region,
+            'capacity': capacity_agg,
+            'initial_utilized_capacity': initial_utilized_capacity,
+            'demand': demand,
+            'initial_balance': initial_balance_value,
+            'initial_utilization': initial_utilization,
+            'avg_plant_capacity': avg_plant_capacity_value,
+            'new_capacity_required': new_capacity_required,
+            'plants_required': new_plants_required,
+            'plants_to_close': plants_to_close,
+            'new_total_capacity': new_total_capacity,
+            'new_utilized_capacity': new_utilized_capacity,
+            'new_balance': new_balance_value,
+            'new_utilization': new_min_utilization_required,
+            'unit': 'Mt',
+        }
+
+        if not all_regions:
+            return results
+
+        results_container[region] = results
+        
+
+    if as_df:
+        results_container = pd.DataFrame(results_container.values()).set_index(['year', 'region']).round(rounding)
+
+    return {'results': results_container, 'utilization_dict': util_dict_c}
+
 def open_close_plants(
     demand_df: pd.DataFrame, steel_plant_df: pd.DataFrame, lev_cost_df: pd.DataFrame, country_df: pd.DataFrame,
-    inv_dict: dict, tc_dict_ref: dict, ng_mapper: dict, plant_id_container: PlantIdContainer, year: int, 
+    util_dict: dict, inv_dict: dict, tc_dict_ref: dict, ng_mapper: dict, plant_id_container: PlantIdContainer, year: int, 
     open_plant_util_cutoff: float = CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
     close_plant_util_cutoff: float = CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION
 ):
+
+    logger.info(f'Iterating through the open close loops for {year}')
+
     steel_plant_df_c = steel_plant_df.copy()
     tc_dict_ref_c = deepcopy(tc_dict_ref)
+    util_dict_c = deepcopy(util_dict)
 
     # YEAR LOOP
-    supply_demand_df = supply_demand_gap(demand_df, steel_plant_df, year, all_regions=True, as_df=True)
-    supply_demand_df = update_sd_df(supply_demand_df, open_plant_util_cutoff, close_plant_util_cutoff)
-    regions = list(supply_demand_df.index.get_level_values(1).unique())
+    gap_analysis = production_demand_gap(
+        demand_df, steel_plant_df, util_dict_c, year, all_regions=True, as_df=True, 
+        capacity_util_max=open_plant_util_cutoff, capacity_util_min=close_plant_util_cutoff
+        )
+    gap_analysis_df = gap_analysis['results']
+
+    regions = list(gap_analysis_df.index.get_level_values(1).unique())
     regions.remove('World')
 
     # REGION LOOP
     for region in tqdm(regions, total=len(regions), desc=f'Open Close Plants for {year}'):
-        sd_df_c = supply_demand_df.loc[year, region].copy()
-        plants_required = sd_df_c['updated_plants_required']
+        sd_df_c = gap_analysis_df.loc[year, region].copy()
+        plants_required = sd_df_c['plants_required']
+        plants_to_close = sd_df_c['plants_to_close']
 
         # OPEN PLANT
         if plants_required > 0:
             for _ in range(plants_required):
-                new_plant_meta = new_plant_metadata(plant_id_container, steel_plant_df_c, lev_cost_df, country_df, ng_mapper, year=year, region=region)
+                new_plant_meta = new_plant_metadata(plant_id_container, gap_analysis_df, lev_cost_df, country_df, ng_mapper, year=year, region=region)
                 steel_plant_df_c = create_new_plant(steel_plant_df_c, new_plant_meta)
                 xcost_tech = get_xcost_from_region(lev_cost_df, year=year, region=region, value_type='min')
                 idx_open = steel_plant_df_c.index[steel_plant_df_c['plant_id'] == new_plant_meta['plant_id']].tolist()[0]
-                steel_plant_df_c.loc[idx_open, 'primary_capacity_2020'] = return_capacity_value(new_plant_meta['total_capacity'], xcost_tech, 'primary') 
-                steel_plant_df_c.loc[idx_open, 'secondary_capacity_2020'] = return_capacity_value(new_plant_meta['total_capacity'], xcost_tech, 'secondary')
+                steel_plant_df_c.loc[idx_open, 'primary_capacity_2020'] = return_capacity_value(new_plant_meta['combined_capacity'], xcost_tech, 'primary') 
+                steel_plant_df_c.loc[idx_open, 'secondary_capacity_2020'] = return_capacity_value(new_plant_meta['combined_capacity'], xcost_tech, 'secondary')
                 steel_plant_df_c.loc[idx_open, 'technology_in_2020'] = xcost_tech
                 tc_dict_ref_c = tc_dict_editor(tc_dict_ref_c, year, new_plant_meta['plant_name'], xcost_tech)
         
         # CLOSE PLANT
-        if plants_required < 0:
+        if plants_to_close > 0:
             closed_list = []
             for _ in range(abs(plants_required)):
                 plant_list = return_plants_from_region(steel_plant_df, region)
@@ -403,23 +395,52 @@ def open_close_plants(
                     pass
                 else:
                     tc_dict_ref_c = tc_dict_editor(tc_dict_ref_c, year, plant_to_close, 'Close plant')
-    return {'tech_choice_dict': tc_dict_ref_c, 'plant_df': steel_plant_df_c}
+
+    return {'tech_choice_dict': tc_dict_ref_c, 'plant_df': steel_plant_df_c, 'util_dict': gap_analysis['utilization_dict']}
 
 
-def open_close_flow(plant_container: PlantIdContainer, plant_df: pd.DataFrame, tech_choice_dict: dict, investment_dict: dict, year: int) -> str:
+def format_wsa_production_data(df, as_dict: bool = False):
+    logger.info('Formatting WSA production data for 2020')
+    df_c = df.copy()
+    df_c = df_c.melt(id_vars=['WSA_Region','RMI_Region','Country','Metric','Unit'], var_name='year')
+    df_c = df_c[df_c['year'] == 2020]
+    df_c.columns = [col.lower() for col in df_c.columns]
+    df_c = df_c.groupby(['rmi_region', 'year']).sum().reset_index()
+    if as_dict:
+        return dict(zip(df_c['rmi_region'], df_c['value']))
+    return df_c
+
+def return_utilization(prod_dict: dict, cap_dict: dict, value_cap: float = None):
+    util_dict = {}
+    for region in prod_dict:
+        val = round(prod_dict[region] / cap_dict[region], 2)
+        if value_cap:
+            val = min(val, value_cap)
+        util_dict[region] = val
+    return util_dict
+
+def create_wsa_2020_utilization_dict():
+    logger.info('Creating the utilization dictionary for 2020.')
+    wsa_production = read_pickle_folder(PKL_DATA_IMPORTS, "wsa_production", "df")
+    steel_plants_processed = read_pickle_folder(PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df")
+    wsa_2020_production_dict = format_wsa_production_data(wsa_production, as_dict=True)
+    capacity_dict = create_plant_capacity_dict(steel_plants_processed, as_mt=True)
+    return return_utilization(wsa_2020_production_dict, capacity_dict, value_cap=1)
+
+def open_close_flow(plant_container: PlantIdContainer, plant_df: pd.DataFrame, tech_choice_dict: dict, investment_dict: dict, util_dict: dict, year: int) -> str:
     logger.info(f'Running open close decisions for {year}')
     country_df = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
-    country_df_f = country_df_formatter(country_df)
     steel_plants_processed = read_pickle_folder(PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df")
-    ng_mapper = ng_flag_mapper(steel_plants_processed, country_df_f)
     regional_steel_demand_formatted = read_pickle_folder(PKL_DATA_INTERMEDIATE, "regional_steel_demand_formatted", "df")
     country_reference_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "country_reference_dict", "df")
     levelized_cost = read_pickle_folder(PKL_DATA_INTERMEDIATE, "levelized_cost", "df")
+    country_df_f = country_df_formatter(country_df)
+    ng_mapper = ng_flag_mapper(steel_plants_processed, country_df_f)
     levelized_cost["region"] = levelized_cost["country_code"].apply(
             lambda x: get_region_from_country_code(x, "rmi_region", country_reference_dict)
     )
     
     return open_close_plants(
-        regional_steel_demand_formatted, plant_df, levelized_cost, 
-        country_df, investment_dict, tech_choice_dict, ng_mapper, plant_container, year
+        regional_steel_demand_formatted, plant_df, levelized_cost, country_df, util_dict,
+        investment_dict, tech_choice_dict, ng_mapper, plant_container, year
     )

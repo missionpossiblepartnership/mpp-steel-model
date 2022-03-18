@@ -55,6 +55,7 @@ SCENARIO_SETTINGS = {
     "steel_demand_scenario": STEEL_DEMAND_SCENARIO_MAPPER.keys(),
     "tech_switch_scenario": TECH_SWITCH_SCENARIOS.keys(),
     "solver_logic": SOLVER_LOGICS.keys(),
+    "trade_active": [True, False],
 }
 
 DEFAULT_SCENARIO = {
@@ -71,6 +72,7 @@ DEFAULT_SCENARIO = {
     "steel_demand_scenario": "average",  # bau / average / high
     "tech_switch_scenario": "equal_weight",  # max_abatement / lowest_cost / equal_weight
     "solver_logic": "scale",  # scale / rank / bins
+    "trade_active": False, # bool
 }
 TECH_MORATORIUM = {
     'tech_moratorium': True, 
@@ -85,7 +87,8 @@ TECH_MORATORIUM = {
     'ccus_cost_scenario': 'low', 
     'steel_demand_scenario': 'bau', 
     'tech_switch_scenario': 'lowest_cost', 
-    'solver_logic': 'rank' 
+    'solver_logic': 'rank' ,
+    'trade_active': False,
 }
 CARBON_COST = {
     'tech_moratorium': False, 
@@ -100,7 +103,8 @@ CARBON_COST = {
     'ccus_cost_scenario': 'low', 
     'steel_demand_scenario': 'bau', 
     'tech_switch_scenario': 'lowest_cost', 
-    'solver_logic': 'rank' 
+    'solver_logic': 'rank',
+    'trade_active': False,
 }
 BAU_SCENARIO = {
     'tech_moratorium': False, 
@@ -115,7 +119,8 @@ BAU_SCENARIO = {
     'ccus_cost_scenario': 'low', 
     'steel_demand_scenario': 'bau',
     'tech_switch_scenario': 'lowest_cost', 
-    'solver_logic': 'rank' 
+    'solver_logic': 'rank',
+    'trade_active': False,
 }
 BAU_HIGH_CIRC_SCENARIO = {
     'tech_moratorium': False, 
@@ -130,7 +135,8 @@ BAU_HIGH_CIRC_SCENARIO = {
     'ccus_cost_scenario': 'low', 
     'steel_demand_scenario': 'high', 
     'tech_switch_scenario': 'lowest_cost', 
-    'solver_logic': 'rank' 
+    'solver_logic': 'rank',
+    'trade_active': False,
 }
 ABATEMENT_SCENARIO = {
     'tech_moratorium': False, 
@@ -142,10 +148,11 @@ ABATEMENT_SCENARIO = {
     'grid_scenario': 'high', 
     'hydrogen_cost_scenario': 'average', 
     'biomass_cost_scenario': 'average', 
-    'ccus_cost_scenario': 'low', 
+    'ccus_cost_scenario': 'low',
     'steel_demand_scenario': 'bau', 
     'tech_switch_scenario': 'max_abatement',
-    'solver_logic': 'rank' 
+    'solver_logic': 'rank',
+    'trade_active': False,
 }
 ABATEMENT_HIGH_CIRC_SCENARIO = {
     'tech_moratorium': False, 
@@ -160,7 +167,8 @@ ABATEMENT_HIGH_CIRC_SCENARIO = {
     'ccus_cost_scenario': 'low', 
     'steel_demand_scenario': 'high', 
     'tech_switch_scenario': 'max_abatement',
-    'solver_logic': 'rank' 
+    'solver_logic': 'rank',
+    'trade_active': False,
 }
 
 SCENARIO_OPTIONS = {
