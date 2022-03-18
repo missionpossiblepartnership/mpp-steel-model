@@ -240,3 +240,8 @@ def expand_melt_and_sort_years(df: pd.DataFrame, year_pairs: List[tuple]) -> pd.
     years = [year_col for year_col in df_c.columns if isinstance(year_col, int)]
     df_c = df_c.melt(id_vars=set(df_c.columns).difference(set(years)), var_name="year")
     return df_c.sort_values(by=["year"], axis=0)
+
+def convert_currency_col(df: pd.DataFrame, curr_col: str, conversion_rate: float) -> pd.DataFrame:
+    df_c = df.copy()
+    df_c[curr_col] = df_c[curr_col] * conversion_rate
+    return df_c
