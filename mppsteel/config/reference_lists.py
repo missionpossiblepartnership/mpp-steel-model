@@ -595,3 +595,11 @@ GRAPH_CAPEX_OPEX_DICT_SPLIT = {
     "BF Capex": ["BF Capex"],  # with WACC over 20 years
     "GF Capex": ["GF Capex"],  # with WACC over 20 years
 }
+
+GRAPH_COL_ORDER = [
+    "Avg BF-BOF", "BAT BF-BOF", "DRI-EAF", "BAT BF-BOF_H2 PCI", "BAT BF-BOF_bio PCI",
+    "DRI-EAF_50% bio-CH4", "DRI-EAF_50% green H2", "DRI-Melt-BOF", "Smelting Reduction",
+    "BAT BF-BOF+CCUS", "BAT BF-BOF+CCU", "BAT BF-BOF+BECCUS", "DRI-EAF+CCUS",
+    "DRI-EAF_100% green H2", "DRI-Melt-BOF+CCUS", "DRI-Melt-BOF_100% zero-C H2", "Electrolyzer-EAF",
+    "Electrowinning-EAF", "Smelting Reduction+CCUS", "EAF"
+]

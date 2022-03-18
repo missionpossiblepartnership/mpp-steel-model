@@ -6,14 +6,17 @@ import numpy as np
 
 from mppsteel.config.model_config import PKL_DATA_FINAL
 from mppsteel.config.model_config import PKL_DATA_INTERMEDIATE
-from mppsteel.config.reference_lists import MPP_COLOR_LIST
+from mppsteel.config.reference_lists import MPP_COLOR_LIST, GRAPH_COL_ORDER
 
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.file_handling_utility import read_pickle_folder
 
 from mppsteel.graphs.plotly_graphs import bar_chart
 
-def generate_emissivity_charts (df: pd.DataFrame, year: int = None, region: str = None, scope: str= None, save_filepath: str = None, ext: str = "png"):
+def generate_emissivity_charts (
+    df: pd.DataFrame, year: int = None, region: str = None, 
+    scope: str= None, save_filepath: str = None, ext: str = "png"
+):
     """generates bar chart with emissions [t CO2/ t steel] per technology. Displays scope1, scope2, scope2 or combination of scopes
 
     Args:
@@ -27,89 +30,53 @@ def generate_emissivity_charts (df: pd.DataFrame, year: int = None, region: str 
         _type_: _description_
     """
     df_c=df.copy()
-    df_c=df_c.groupby(['technology', 'year', 'region'], as_index=False).agg({'s1_emissivity': np.mean,
-                                                                        's2_emissivity': np.mean,
-                                                                        's3_emissivity': np.mean,
-                                                                        'combined_emissivity': np.mean})
-    df_c=pd.melt(df_c, id_vars=['year', 'region', 'technology'], value_vars=['s1_emissivity','s2_emissivity','s3_emissivity','combined_emissivity'], var_name='metric')
-    print(df_c)
-    sorter=["Avg BF-BOF","BAT BF-BOF","DRI-EAF",
-    "BAT BF-BOF_H2 PCI","BAT BF-BOF_bio PCI","DRI-EAF_50% bio-CH4","DRI-EAF_50% green H2","DRI-Melt-BOF","Smelting Reduction",
-    "BAT BF-BOF+CCUS","BAT BF-BOF+CCU","BAT BF-BOF+BECCUS","DRI-EAF+CCUS","DRI-EAF_100% green H2","DRI-Melt-BOF+CCUS","DRI-Melt-BOF_100% zero-C H2","Electrolyzer-EAF","Electrowinning-EAF","Smelting Reduction+CCUS",
-    "EAF"]
-    sorterIndex = dict(zip(sorter, range(len(sorter))))
-        
-    
-    if scope == 's1_emissivity':
-        df_c =df_c.loc[(df_c['region']==(region))& (df_c['year']== year)] #Note: Scope 1 emissivity only depends on the technology, not on the region
-        print(df_c)
-        df_c=df_c.loc[(df_c['metric']==scope)]
-        print(df_c)
-        df_c['tech_order']=df_c['technology'].map(sorterIndex)
-        df_c.sort_values(['tech_order'], ascending=True, inplace=True)
-        df_c.drop('tech_order',1, inplace=True)
-        
-        t=f'{scope}, in {year}'
-        c= 'technology'
-        
-    elif scope == 's2_emissivity':
-        df_c =df_c.loc[(df_c['region']==(region))& (df_c['year']== year)] #Note: Scope 1 emissivity only depends on the technology, not on the region
-        print(df_c)
-        df_c=df_c.loc[(df_c['metric']==scope)]
-        print(df_c)
-        df_c['tech_order']=df_c['technology'].map(sorterIndex)
-        df_c.sort_values(['tech_order'], ascending=True, inplace=True)
-        df_c.drop('tech_order',1, inplace=True)
-        
-        t=f'{scope}, in {year}'
-        c= 'technology'
-        
-    elif scope == 's3_emissivity':
-        df_c =df_c.loc[(df_c['region']==(region))& (df_c['year']== year)] #Note: Scope 1 emissivity only depends on the technology, not on the region
-        print(df_c)
-        df_c=df_c.loc[(df_c['metric']==scope)]
-        print(df_c)
-        df_c['tech_order']=df_c['technology'].map(sorterIndex)
-        df_c.sort_values(['tech_order'], ascending=True, inplace=True)
-        df_c.drop('tech_order',1, inplace=True)
-        
-        t=f'{scope}, in {year}'
-        c= 'technology'
-        
-    elif scope== 's1+s2' :
-        df_c =df_c.loc[(df_c['region']== region)& (df_c['year']==(year))] #Note: Scope 2 emissivity depends on the technolog and region
-        print(df_c)
-        df_c=df_c.loc[(df_c['metric']=='s1_emissivity')|(df_c['metric']=='s2_emissivity')]
-        print(df_c)
-        df_c['tech_order']=df_c['technology'].map(sorterIndex)
-        df_c.sort_values(['tech_order'], ascending=True, inplace=True)
-        df_c.drop('tech_order',1, inplace=True)
-        print(df_c)
-        t=f'{scope}, in {region}, in {year}'
-        c='metric'
-        
+    df_c=df_c.groupby(['technology', 'year', 'region'], as_index=False).agg(
+        {
+            's1_emissivity': np.mean,
+            's2_emissivity': np.mean,
+            's3_emissivity': np.mean,
+            'combined_emissivity': np.mean
+        }
+    )
+    df_c=pd.melt(df_c, id_vars=['year', 'region', 'technology'], value_vars=[
+        's1_emissivity','s2_emissivity','s3_emissivity','combined_emissivity'], var_name='metric')
+    sorterIndex = dict(zip(GRAPH_COL_ORDER, range(len(GRAPH_COL_ORDER))))
+    # Note: Scope 1 emissivity only depends on the technology, not on the region
+    # Note: Scope 2 emissivity depends on the technolog and region
+
+    df_c =df_c.loc[
+        (df_c['region'] == region) & (df_c['year'] == year)
+        ] 
+    if scope in {'s1_emissivity', 's2_emissivity', 's3_emissivity'}:
+        df_c =df_c.loc[df_c['metric'] == scope]
+        text = f'{scope}, in {year}'
+        color = 'technology'
+
+    elif scope == 's1+s2' :
+        df_c = df_c.loc[(df_c['metric']=='s1_emissivity') | (df_c['metric']=='s2_emissivity')]
+        text = f'{scope}, in {region}, in {year}'
+        color = 'metric'
+
     elif scope == 'combined':
-        df_c =df_c.loc[(df_c['region']== region)& (df_c['year']==(year))] #Note: Scope 2 emissivity depends on the technolog and region
-        print(df_c)
-        df_c=df_c.loc[(df_c['metric']=='s1_emissivity')|(df_c['metric']=='s2_emissivity')|(df_c['metric']=='s3_emissivity')]
-        print(df_c)
-        df_c['tech_order']=df_c['technology'].map(sorterIndex)
-        df_c.sort_values(['tech_order'], ascending=True, inplace=True)
-        df_c.drop('tech_order',1, inplace=True)
-        print(df_c)
-        t=f'{scope}, in {region}, in {year}'
-        c='metric'
+        df_c=df_c.loc[(df_c['metric'] == 's1_emissivity') | (df_c['metric'] == 's2_emissivity') | (df_c['metric'] == 's3_emissivity')]
+        text = f'{scope}, in {region}, in {year}'
+        color = 'metric'
+
+    df_c['tech_order'] = df_c['technology'].map(sorterIndex)
+    df_c.sort_values(['tech_order'], ascending=True, inplace=True)
+    df_c.drop('tech_order', 1, inplace=True)
         
     fig_= px.bar(
         df_c,
-        x='technology',
-        y='value',
-        color= c,
-        text_auto='.2f',
-        labels={'value': '[t CO2/t steel]'},
-        title= t
-        
+        x = 'technology',
+        y = 'value',
+        color = color,
+        text_auto = '.2f',
+        labels = {'value': '[t CO2/t steel]'},
+        title = text
     )
+
     if save_filepath:
         fig_.write_image(f"{save_filepath}.{ext}")
+
     return fig_
