@@ -25,7 +25,9 @@ from mppsteel.utility.file_handling_utility import (
     serialize_file,
     extract_data,
 )
-from mppsteel.utility.dataframe_utility import melt_and_index
+from mppsteel.utility.dataframe_utility import (
+    melt_and_index, convert_currency_col
+    )
 
 # Get model parameters
 from mppsteel.config.model_config import (
@@ -34,6 +36,7 @@ from mppsteel.config.model_config import (
     PKL_DATA_INTERMEDIATE,
     EMISSIONS_FACTOR_SLAG,
     ENERGY_DENSITY_MET_COAL_MJ_KG,
+    EUR_USD_CONVERSION_DEFAULT
 )
 
 # Create logger
@@ -140,16 +143,23 @@ def capex_dictionary_generator(
     Returns:
         dict: A dictionary of the formatted capex and opex dataframes.
     """
-    return {
-        "greenfield": melt_and_index(
+    gf_df = melt_and_index(
             greenfield_df, ["Technology"], "Year", ["Technology", "Year"]
-        ),
-        "brownfield": melt_and_index(
+        )
+    bf_df = melt_and_index(
             brownfield_df, ["Technology"], "Year", ["Technology", "Year"]
-        ),
-        "other_opex": melt_and_index(
+        )
+    oo_df = melt_and_index(
             other_df, ["Technology"], "Year", ["Technology", "Year"]
-        ),
+        )
+    gf_df = convert_currency_col(gf_df, 'value', EUR_USD_CONVERSION_DEFAULT)
+    bf_df = convert_currency_col(bf_df, 'value', EUR_USD_CONVERSION_DEFAULT)
+    oo_df = convert_currency_col(oo_df, 'value', EUR_USD_CONVERSION_DEFAULT)
+    
+    return {
+        "greenfield": gf_df,
+        "brownfield": bf_df,
+        "other_opex": oo_df,
     }
 
 

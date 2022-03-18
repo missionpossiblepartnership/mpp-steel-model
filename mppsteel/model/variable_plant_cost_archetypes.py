@@ -4,6 +4,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from mppsteel.config.model_config import (
+    EUR_USD_CONVERSION_DEFAULT,
     MODEL_YEAR_END,
     PKL_DATA_IMPORTS,
     MODEL_YEAR_START,
@@ -24,6 +25,7 @@ from mppsteel.utility.utils import enumerate_iterable, cast_to_float
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
 from mppsteel.utility.log_utility import get_logger
+from mppsteel.utility.dataframe_utility import convert_currency_col
 
 from mppsteel.data_loading.data_interface import (
     commodity_data_getter,
@@ -51,6 +53,7 @@ def generate_feedstock_dict() -> dict:
     """
     commodities_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, "commodities_df", "df")
     feedstock_prices = read_pickle_folder(PKL_DATA_IMPORTS, "feedstock_prices", "df")
+    feedstock_prices = convert_currency_col(feedstock_prices, 'Value', EUR_USD_CONVERSION_DEFAULT)
     commodities_dict = commodity_data_getter(commodities_df)
     commodity_dictname_mapper = {
         "plastic": "Plastic waste",
