@@ -529,6 +529,7 @@ def generate_emissions_flow(
     )
 
     if serialize:
+        serialize_file(em_exc_ref_dict, PKL_DATA_INTERMEDIATE, "em_exc_ref_dict")
         serialize_file(s1_emissivity, PKL_DATA_INTERMEDIATE, "calculated_s1_emissivity")
         serialize_file(s3_emissivity, PKL_DATA_INTERMEDIATE, "calculated_s3_emissivity")
         serialize_file(s2_emissivity, PKL_DATA_INTERMEDIATE, "calculated_s2_emissivity")

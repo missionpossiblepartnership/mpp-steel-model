@@ -834,6 +834,30 @@ def limestone_df_editor(
             limestone_df = limestone_df.append(new_row, ignore_index=True)
             df_dict_c["Limestone"] = limestone_df
 
+    if technology in furnace_group_dict["dri-bof"]:
+        limestone_df = df_dict_c["Limestone"].copy()
+        bof_lime = (
+            tech_process_getter(
+                bc_processes, technology, "Limestone", step="BOF lime"
+            )
+            * factor_dict["Basic Oxygen Steelmaking + Casting"]
+        )
+        limestone_df.loc[limestone_df["step"] == "BOF lime", "value"] = bof_lime
+
+        new_row = {
+            "process": "Limestone",
+            "process_detail": "",
+            "step": "Process emissions",
+            "material_category": "Process emissions",
+            "unit": "t CO2 / t LS",
+            "technology": technology,
+            "value": bof_lime * 0.75 / 1000,
+        }
+        limestone_df = limestone_df.append(new_row, ignore_index=True)
+        df_dict_c["Limestone"] = limestone_df
+
+        print(limestone_df)
+
     return df_dict_c
 
 

@@ -120,7 +120,7 @@ if __name__ == "__main__":
         abatement_switch_reference(scenario_dict=scenario_args)
 
     if args.emissivity:
-        abatement_switch_reference(scenario_dict=scenario_args)
+        generate_emissions_flow(scenario_dict=scenario_args, serialize=True)
 
     if args.investment_cycle:
         inv_cycle_flow()
