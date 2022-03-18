@@ -42,6 +42,7 @@ from mppsteel.results.investments import investment_results
 from mppsteel.graphs.graph_production import create_graphs
 
 from mppsteel.config.model_config import (
+    EUR_USD_CONVERSION_DEFAULT,
     MODEL_YEAR_END,
     OUTPUT_FOLDER,
     PKL_DATA_FINAL,
@@ -73,9 +74,16 @@ def get_inputted_scenarios(scenario_options: dict, default_scenario: dict) -> di
     return inputted_scenario_args
 
 
-def add_currency_rates_to_scenarios(scenario_dict: dict) -> dict:
-    scenario_dict["eur_usd"] = get_currency_rate("eur", "usd")
-    scenario_dict["usd_eur"] = get_currency_rate("usd", "eur")
+def add_currency_rates_to_scenarios(scenario_dict: dict, live: bool = False) -> dict:
+    eur_usd = EUR_USD_CONVERSION_DEFAULT
+    usd_eur = 1 / EUR_USD_CONVERSION_DEFAULT
+    if live:
+        eur_usd = get_currency_rate("eur", "usd")
+        usd_eur = get_currency_rate("usd", "eur")
+
+    scenario_dict["eur_usd"] = eur_usd
+    scenario_dict["usd_eur"] = usd_eur
+
     return scenario_dict
 
 
@@ -91,7 +99,7 @@ def data_import_stage() -> None:
 def data_preprocessing_phase(scenario_dict: dict) -> None:
     generate_timeseries(serialize=True, scenario_dict=scenario_dict)
     steel_plant_processor(serialize=True, remove_non_operating_plants=True)
-    create_capex_opex_dict(serialize=True)
+    create_capex_opex_dict(scenario_dict=scenario_dict, serialize=True)
     generate_preprocessed_emissions_data(serialize=True)
     generate_emissions_flow(scenario_dict=scenario_dict, serialize=True)
     create_capex_timeseries(serialize=True)

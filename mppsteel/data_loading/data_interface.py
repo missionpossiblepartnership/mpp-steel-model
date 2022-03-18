@@ -131,7 +131,8 @@ def capex_generator(
 
 @pa.check_input(CAPEX_OPEX_PER_TECH_SCHEMA)
 def capex_dictionary_generator(
-    greenfield_df: pd.DataFrame, brownfield_df: pd.DataFrame, other_df: pd.DataFrame
+    greenfield_df: pd.DataFrame, brownfield_df: pd.DataFrame, 
+    other_df: pd.DataFrame, eur_usd: float = EUR_USD_CONVERSION_DEFAULT
 ) -> dict:
     """A dictionary of greenfield, brownfield and other_opex.
 
@@ -152,9 +153,9 @@ def capex_dictionary_generator(
     oo_df = melt_and_index(
             other_df, ["Technology"], "Year", ["Technology", "Year"]
         )
-    gf_df = convert_currency_col(gf_df, 'value', EUR_USD_CONVERSION_DEFAULT)
-    bf_df = convert_currency_col(bf_df, 'value', EUR_USD_CONVERSION_DEFAULT)
-    oo_df = convert_currency_col(oo_df, 'value', EUR_USD_CONVERSION_DEFAULT)
+    gf_df = convert_currency_col(gf_df, 'value', eur_usd)
+    bf_df = convert_currency_col(bf_df, 'value', eur_usd)
+    oo_df = convert_currency_col(oo_df, 'value', eur_usd)
     
     return {
         "greenfield": gf_df,
@@ -311,7 +312,7 @@ def scope3_ef_getter(df: pd.DataFrame, fuel: str, year: str) -> float:
     df_c.set_index(["Fuel", "Year"], inplace=True)
     return df_c.loc[fuel, year]["value"]
 
-def create_capex_opex_dict(serialize: bool = False) -> dict:
+def create_capex_opex_dict(scenario_dict: dict, serialize: bool = False) -> dict:
     """Creates a Dictionary containing Greenfield, Brownfield and Opex values.
 
     Args:
@@ -320,11 +321,12 @@ def create_capex_opex_dict(serialize: bool = False) -> dict:
     Returns:
         dict: A dictionary containing the capex/opex values.
     """
+    eur_usd_rate = scenario_dict['eur_usd']
     greenfield_capex_df = read_pickle_folder(PKL_DATA_IMPORTS, "greenfield_capex")
     brownfield_capex_df = read_pickle_folder(PKL_DATA_IMPORTS, "brownfield_capex")
     other_opex_df = read_pickle_folder(PKL_DATA_IMPORTS, "other_opex")
     capex_dict = capex_dictionary_generator(
-        greenfield_capex_df, brownfield_capex_df, other_opex_df
+        greenfield_capex_df, brownfield_capex_df, other_opex_df, eur_usd_rate
     )
     if serialize:
         serialize_file(capex_dict, PKL_DATA_INTERMEDIATE, "capex_dict")

@@ -44,7 +44,7 @@ from mppsteel.data_loading.pe_model_formatter import (
 logger = get_logger("Variable Plant Cost Archetypes")
 
 
-def generate_feedstock_dict() -> dict:
+def generate_feedstock_dict(eur_usd_rate: float = EUR_USD_CONVERSION_DEFAULT) -> dict:
     """Creates a feedstock dictionary that combines all non-energy model commodities into one dictionary.
     The dictionary has a pairing of the commodity name and the price.
 
@@ -53,7 +53,7 @@ def generate_feedstock_dict() -> dict:
     """
     commodities_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, "commodities_df", "df")
     feedstock_prices = read_pickle_folder(PKL_DATA_IMPORTS, "feedstock_prices", "df")
-    feedstock_prices = convert_currency_col(feedstock_prices, 'Value', EUR_USD_CONVERSION_DEFAULT)
+    feedstock_prices = convert_currency_col(feedstock_prices, 'Value', eur_usd_rate)
     commodities_dict = commodity_data_getter(commodities_df)
     commodity_dictname_mapper = {
         "plastic": "Plastic waste",
@@ -75,6 +75,7 @@ def plant_variable_costs(
     hydrogen_cost_scenario: str,
     biomass_cost_scenario: str,
     ccus_cost_scenario: str,
+    eur_usd_rate: float
 ) -> pd.DataFrame:
     """Creates a DataFrame reference of each plant's variable cost.
 
@@ -115,7 +116,7 @@ def plant_variable_costs(
     static_energy_prices = read_pickle_folder(
         PKL_DATA_IMPORTS, "static_energy_prices", "df"
     )[["Metric", "Year", "Value"]]
-    feedstock_dict = generate_feedstock_dict()
+    feedstock_dict = generate_feedstock_dict(eur_usd_rate)
     business_cases = load_business_cases()
 
     for country_code in tqdm(
@@ -386,6 +387,7 @@ def generate_variable_plant_summary(
     hydrogen_cost_scenario = scenario_dict["hydrogen_cost_scenario"]
     biomass_cost_scenario = scenario_dict["biomass_cost_scenario"]
     ccus_cost_scenario = scenario_dict["ccus_cost_scenario"]
+    eur_usd_rate = scenario_dict["eur_usd"]
     variable_costs = plant_variable_costs(
         MODEL_YEAR_END,
         electricity_cost_scenario,
@@ -393,6 +395,7 @@ def generate_variable_plant_summary(
         hydrogen_cost_scenario,
         biomass_cost_scenario,
         ccus_cost_scenario,
+        eur_usd_rate
     )
     variable_costs_summary = format_variable_costs(variable_costs)
     variable_costs_summary_material_breakdown = format_variable_costs(
