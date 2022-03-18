@@ -306,7 +306,7 @@ def choose_technology(
     for year in tqdm(year_range, total=len(year_range), desc="Years"):
         logger.info(f"Running investment decisions for {year}")
         current_plant_choices[str(year)] = {}
-
+        logger.info(f'Starting the open close flow for {year}')
         open_close_dict = open_close_flow(PlantIDC, model_plant_df, current_plant_choices, investment_dict_c, util_dict_c, year)
         
         model_plant_df = open_close_dict['plant_df']
@@ -315,7 +315,7 @@ def choose_technology(
         
         all_plant_names = model_plant_df["plant_name"].copy()
         plant_capacities_dict = create_plant_capacities_dict(model_plant_df)
-
+        logger.info(f'Creating investment cycle for new plants')
         new_open_plants = return_modified_plants(model_plant_df, year, 'open')
         new_investment_df, new_investment_dict = create_investment_cycle(new_open_plants)
         investment_year_ref_c = investment_year_ref_c.reset_index().merge(new_investment_df.reset_index())
