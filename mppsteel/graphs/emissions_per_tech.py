@@ -13,7 +13,7 @@ from mppsteel.utility.file_handling_utility import read_pickle_folder
 
 from mppsteel.graphs.plotly_graphs import bar_chart
 
-def generate_emissivity_charts (df: pd.DataFrame, year: int = None, region: str = None, scope: str= None, filepath: str = None):
+def generate_emissivity_charts (df: pd.DataFrame, year: int = None, region: str = None, scope: str= None, save_filepath: str = None, ext: str = "png"):
     """generates bar chart with emissions [t CO2/ t steel] per technology. Displays scope1, scope2, scope2 or combination of scopes
 
     Args:
@@ -26,11 +26,6 @@ def generate_emissivity_charts (df: pd.DataFrame, year: int = None, region: str 
     Returns:
         _type_: _description_
     """
-    region_list= region
-    
-    region_list = ', '.join(region_list)
-    
-    
     df_c=df.copy()
     df_c=df_c.groupby(['technology', 'year', 'region'], as_index=False).agg({'s1_emissivity': np.mean,
                                                                         's2_emissivity': np.mean,

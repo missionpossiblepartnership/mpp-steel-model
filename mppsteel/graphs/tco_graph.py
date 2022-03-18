@@ -14,9 +14,7 @@ from mppsteel.graphs.plotly_graphs import bar_chart
 
 def generate_tco_charts (df: pd.DataFrame, year: int = None, region: str = None, tech: str=None, save_filepath: str = None, ext: str = "png"):
     
-    region_list= region
 
-    region_list = ', '.join(region_list)
     
     df_c=df.copy()
     
