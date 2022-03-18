@@ -25,15 +25,15 @@ class PlantIdContainer:
             self.id_container.remove(plant_id)
             print(f'Plant ID removed {plant_id}')
 
-    def generate_plant_id(self, add_to_container: bool = False, chars: list = string.digits, n: int = 5):
-        rand_id = 'MPP' + ''.join(random.choice(chars) for _ in range(n))
-        match_state = True
-        while match_state:
-            if rand_id not in self.id_container:
+    def generate_plant_id(self, add_to_container: bool = False):
+        unmatched = True
+        while unmatched:
+            new_id = generate_plant_id()
+            if new_id not in self.id_container:
                 if add_to_container:
-                    self.add_id(rand_id)    
-                match_state = False
-        return rand_id
+                    self.add_id(new_id)
+                unmatched = False
+        return new_id
 
     def return_ids(self) -> None:
         self.remove_duplicate_ids()
@@ -50,3 +50,6 @@ class PlantIdContainer:
 
     def add_steel_plant_ids(self, plant_df: pd.DataFrame):
         plant_df['plant_id'].apply(lambda x: self.add_id(x))
+
+def generate_plant_id(chars: list = string.digits, n: int = 5):
+    return 'MPP' + ''.join(random.choice(chars) for _ in range(n))
