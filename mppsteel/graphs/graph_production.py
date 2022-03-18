@@ -361,6 +361,41 @@ def create_lcost_graph(chosen_year: int, filepath: str = None) -> px.bar:
         filename = f"{filepath}/{filename}"
     return lcost_graph(chosen_year=chosen_year, save_filepath=filename)
 
+def create_tco_graph(df: pd.DataFrame, year: int = None, region: str = None, tech: str=None, filepath: str =None) -> px.bar:
+    """_summary_
+
+    Args:
+        filepath (str, optional): _description_. Defaults to None.
+
+    Returns:
+        px.bar: _description_
+    """
+    logger.info(f"TCO Output: {filename}")
+    if not region:
+        filename = f'TCO in {year}, switching from {tech} to...'
+    filename = f'{region} TCO in {year}, switching from {tech} to...'
+    return generate_tco_charts(tco_ref, year,reg,'Avg BF-BOF', save_filepath=filename)
+
+    def create_emissions_graph(df: pd.DataFrame, year: int = None, region: str = None, scope: str= None, filepath: str =None) -> px.bar:
+        """_summary_
+
+        Args:
+            df (pd.DataFrame): _description_
+            year (int, optional): _description_. Defaults to None.
+            region (str, optional): _description_. Defaults to None.
+            scope (str, optional): _description_. Defaults to None.
+            filepath (str, optional): _description_. Defaults to None.
+
+        Returns:
+            px.bar: _description_
+        """
+        
+        logger.info(f"Emissions_chart: {filename}")
+        if not region:
+            filename = f'emissions_chart {scope}'
+        filename = f'emissions_chart {scope}'
+
+        return generate_emissivity_charts(calculated_emissivity_combined_df, yrs, reg, scope, save_filepath=filename)
 
 @timer_func
 def create_graphs(filepath: str) -> None:
@@ -411,14 +446,14 @@ def create_graphs(filepath: str) -> None:
 
     for year in [2020,2030,2040,2050]:
         for reg in ['China', 'NAFTA', 'India','Europe', None]:
-            generate_tco_charts(tco_ref, year,reg,'Avg BF-BOF', filepath=filepath)
+            create_cot_graph()(tco_ref, year,reg,'Avg BF-BOF', filepath=filepath)
 
     for yrs in [2020,2030,2050]:
         for reg in ['China','India','Europe','NAFTA']:
             for scope in ['s2_emissivity', 'combined']:
-                generate_emissivity_charts(calculated_emissivity_combined_df, yrs, reg, scope, filepath=filepath)
+                create_emissions_graph(calculated_emissivity_combined_df, yrs, reg, scope, filepath=filepath)
 
     for yrs in [2020,2030,2050]:
         for reg in ['China']:
             for scope in ['s1_emissivity', 's3_emissivity']:
-                generate_emissivity_charts(calculated_emissivity_combined_df, yrs, reg, scope, filepath=filepath)
+                create_emissions_graph(calculated_emissivity_combined_df, yrs, reg, scope, filepath=filepath)

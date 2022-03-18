@@ -27,10 +27,7 @@ def generate_emissivity_charts (df: pd.DataFrame, year: int = None, region: str 
         _type_: _description_
     """
     region_list= region
-    if not region:
-        region_list = ['Global']
-        filename = f'emissions_chart {scope}'
-    filename = f'emissions_chart {scope}'
+    
     region_list = ', '.join(region_list)
     
     
@@ -118,6 +115,6 @@ def generate_emissivity_charts (df: pd.DataFrame, year: int = None, region: str 
         title= t
         
     )
-    if filepath:
-        filename = f'{filepath}/{filename}'
+    if save_filepath:
+        fig_.write_image(f"{save_filepath}.{ext}")
     return fig_

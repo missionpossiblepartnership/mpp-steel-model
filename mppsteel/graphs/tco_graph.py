@@ -12,13 +12,10 @@ from mppsteel.utility.file_handling_utility import read_pickle_folder
 
 from mppsteel.graphs.plotly_graphs import bar_chart
 
-def generate_tco_charts (df: pd.DataFrame, year: int = None, region: str = None, tech: str=None, filepath: str = None):
+def generate_tco_charts (df: pd.DataFrame, year: int = None, region: str = None, tech: str=None, save_filepath: str = None, ext: str = "png"):
     
     region_list= region
-    if not region:
-        region_list = ['Global']
-        filename = f'TCO in {year}, switching from {tech} to...'
-    filename = f'{region} TCO in {year}, switching from {tech} to...'
+
     region_list = ', '.join(region_list)
     
     df_c=df.copy()
@@ -67,7 +64,6 @@ def generate_tco_charts (df: pd.DataFrame, year: int = None, region: str = None,
 
     
 
-    if filepath:
-        filename = f"{filepath}/{filename}"
-
+    if save_filepath:
+        fig_.write_image(f"{save_filepath}.{ext}")
     return fig_
