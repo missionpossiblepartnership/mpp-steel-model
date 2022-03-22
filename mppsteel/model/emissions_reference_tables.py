@@ -106,10 +106,9 @@ def generate_s1_s3_emissions(
             emission_unit_value = scope3_ef_getter(
                 s3_emissivity_factors, resource, year
             )
-            if resource == 'Slag':
-                row[enum_dict["S3"]] = resource_consumed * (emission_unit_value * -1)
-            else:
-                row[enum_dict["S3"]] = resource_consumed * emission_unit_value
+            if resource == 'BF slag':
+                emission_unit_value = emission_unit_value * -1
+            row[enum_dict["S3"]] = resource_consumed * emission_unit_value
         else:
             row[enum_dict["S3"]] = 0
 
@@ -140,7 +139,6 @@ def generate_s1_s3_emissions(
         var_name=["scope"],
         value_name="emissions",
     )
-
     return combined_df.reset_index(drop=True).copy()
 
 def create_emissions_ref_dict(df: pd.DataFrame, tech_list: list) -> dict:
@@ -302,7 +300,7 @@ def get_s2_emissions(
         electricity_consumption = bcases[bcases["material_category"] == "Electricity"][
             "value"
         ].values[0]
-#((h2_emissions / 1000) * hydrogen_consumption) -> remember to put H2-related emissions in scope 3 (in case we do gray/blue)
+    #((h2_emissions / 1000) * hydrogen_consumption) -> remember to put H2-related emissions in scope 3 (in case we do gray/blue)
     return (
         electricity_emissions * electricity_consumption
     )
@@ -473,7 +471,7 @@ def generate_emissions_flow(
         .reset_index(drop=True)
     )
     emissions_df = business_cases_summary_c.copy()
-    emissions, carbon = generate_emissions_dataframe(
+    emissions = generate_emissions_dataframe(
         business_cases_summary_c, MODEL_YEAR_END
     )
     emissions_s1_summary = emissions[emissions["scope"] == "S1"]
