@@ -97,9 +97,10 @@ def tech_capacity_splits() -> Tuple[pd.DataFrame, int]:
     plant_result_df = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "plant_result_df", "df"
     )
-    capacities_dict = create_plant_capacities_dict(plant_result_df)
+    #capacities_dict = create_plant_capacities_dict(plant_result_df)
+    capacities_dict = dict(zip(plant_result_df['plant_name'], plant_result_df['combined_capacity']))
     tech_choices_dict = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "tech_choice_dict", "df"
+        PKL_DATA_INTERMEDIATE, "tech_choice_dict", "dict"
     )
     steel_plant_dict = dict(
         zip(plant_result_df["plant_name"].values, plant_result_df["country_code"].values)
@@ -128,7 +129,9 @@ def tech_capacity_splits() -> Tuple[pd.DataFrame, int]:
             lambda plant: get_tech_choice(tech_choices_dict, year, plant)
         )
         enumerated_cols = enumerate_iterable(df.columns)
-        df = df.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
+        # df = df.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
+        df['capacity'] = df['plant_name'].apply(lambda plant_name: capacities_dict[plant_name] / 1000)
+        
         df_list.append(df)
 
     df_combined = pd.concat(df_list)
@@ -223,7 +226,7 @@ def generate_production_emission_stats(
     Returns:
         pd.DataFrame: A DataFrame with each emission scope included as a column.
     """
-    logger.info(f"- Generating Production Emission Stats")
+    logger.info("- Generating Production Emission Stats")
     calculated_emissivity_combined = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "calculated_emissivity_combined", "df"
     )
@@ -293,7 +296,9 @@ def get_tech_choice(tc_dict: dict, year: int, plant_name: str) -> str:
     Returns:
         str: The technology choice requested via the function arguments.
     """
-    return tc_dict[str(year)][plant_name]
+    if plant_name in tc_dict[str(year)]:
+        return tc_dict[str(year)][plant_name]
+    return ''
 
 
 def load_materials_mapper() -> dict:
@@ -322,10 +327,13 @@ def production_results_flow(scenario_dict: dict, serialize: bool = False) -> dic
     steel_demand_df = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "regional_steel_demand_formatted", "df"
     )
-    tech_capacity_df, max_solver_year = tech_capacity_splits()
+    plant_result_df = read_pickle_folder(
+        PKL_DATA_INTERMEDIATE, "plant_result_df", "df"
+    )
+    tech_capacity_df, max_model_year = tech_capacity_splits()
     steel_demand_scenario = scenario_dict["steel_demand_scenario"]
     production_results = generate_production_stats(
-        tech_capacity_df, steel_demand_df, steel_demand_scenario, max_solver_year
+        tech_capacity_df, steel_demand_df, steel_demand_scenario, MODEL_YEAR_END
     )
     production_resource_usage = production_stats_generator(production_results)
     production_emissions = generate_production_emission_stats(production_results)
