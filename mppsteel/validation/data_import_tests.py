@@ -149,7 +149,7 @@ SCOPE3_EF_SCHEMA_1 = DataFrameSchema(
         "Category": Column(str),
         "Fuel": Column(str),
         "Unit": UNIT_COL_TEST,
-        RE_YEAR_COL_TEST: Column(float, regex=True),
+        RE_YEAR_COL_TEST: Column(float, regex=True, nullable=True),
     }
 )
 
