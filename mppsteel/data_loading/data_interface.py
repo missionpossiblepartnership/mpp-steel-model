@@ -95,7 +95,6 @@ def modify_scope3_ef_1(
         "Scope 3 Emissions Factor", "Met coal", "MtCO2eq / PJ"
     ] = met_coal_values
     scope3df_index.reset_index(inplace=True)
-    scope3df_index.head()
     return scope3df_index.melt(id_vars=["Category", "Fuel", "Unit"], var_name="Year")
 
 
