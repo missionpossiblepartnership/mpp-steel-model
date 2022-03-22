@@ -215,7 +215,7 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
         PKL_DATA_INTERMEDIATE, "tech_choice_dict", "df"
     )
     plant_investment_cycles = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "plant_investment_cycles", "df"
+        PKL_DATA_INTERMEDIATE, "investment_cycle_ref_result", "df"
     )
     plant_result_df = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "plant_result_df", "df"
