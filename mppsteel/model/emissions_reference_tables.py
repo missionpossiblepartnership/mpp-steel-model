@@ -61,8 +61,6 @@ def generate_s1_s3_emissions(
     year_end: int = 2021,
     s1_emissivity_factors: pd.DataFrame = None,
     s3_emissivity_factors: pd.DataFrame = None,
-    carbon_tax_df: pd.DataFrame = None,
-    carbon_tax_scope: str = "1",
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Creates a DataFrame with emissivity for S1, S2 & S3 for each technology.
     Multiples the emissivity values by the standardized business cases.
@@ -73,11 +71,9 @@ def generate_s1_s3_emissions(
         year_end (int, optional): The last year that you want to calculate emissivity for. Defaults to 2021.
         s1_emissivity_factors (pd.DataFrame, optional): Emissions Factors for S1. Defaults to None.
         s3_emissivity_factors (pd.DataFrame, optional): Emissions Factors for S3. Defaults to None.
-        carbon_tax_df (pd.DataFrame, optional): Calculates the Carbon Tax for each technology based on emissions. Defaults to None.
-        carbon_tax_scope (str, optional): Define which emissivity scope you want to return the carbon tax row for. Defaults to "1".
 
     Returns:
-        Tuple[pd.DataFrame, pd.DataFrame]: A DataFrame of the emissivity per scope and a carbon tax DataFrame.
+        Tuple[pd.DataFrame, pd.DataFrame]: A DataFrame of the emissivity per scope.
     """
 
     # Create resources reference list
@@ -110,22 +106,12 @@ def generate_s1_s3_emissions(
             emission_unit_value = scope3_ef_getter(
                 s3_emissivity_factors, resource, year
             )
-            row[enum_dict["S3"]] = resource_consumed * emission_unit_value
+            if resource == 'Slag':
+                row[enum_dict["S3"]] = resource_consumed * (emission_unit_value * -1)
+            else:
+                row[enum_dict["S3"]] = resource_consumed * emission_unit_value
         else:
             row[enum_dict["S3"]] = 0
-
-        if carbon_tax_df is not None:
-            carbon_tax_unit = carbon_tax_getter(carbon_tax_df, year)
-        else:
-            carbon_tax_unit = 0
-
-        if carbon_tax_scope == "1":
-            S1_value = row[enum_dict["S1"]]
-            row[enum_dict["carbon_cost"]] = S1_value * carbon_tax_unit
-        elif carbon_tax_scope == "2&3":
-            S2_value = row[enum_dict["S2"]]
-            S3_value = row[enum_dict["S3"]]
-            row[enum_dict["carbon_cost"]] = (S2_value + S3_value) * carbon_tax_unit
 
         return row
 
@@ -138,7 +124,6 @@ def generate_s1_s3_emissions(
         df_c["S1"] = ""
         df_c["S2"] = ""
         df_c["S3"] = ""
-        df_c["carbon_cost"] = ""
 
         tqdma.pandas(desc="Apply Emissions to Technology Resource Usage")
         enumerated_cols = enumerate_iterable(df_c.columns)
@@ -156,23 +141,7 @@ def generate_s1_s3_emissions(
         value_name="emissions",
     )
 
-    if carbon_tax_df:
-        combined_df = combined_df.loc[combined_df["scope"] != "carbon_cost"].copy()
-
-    carbon_df = (
-        combined_df.loc[combined_df["scope"] == "carbon_cost"]
-        .reset_index(drop=True)
-        .copy()
-    )
-    carbon_df.rename(mapper={"emissions": "value"}, axis=1, inplace=True)
-    emissivity_df = (
-        combined_df.loc[combined_df["scope"] != "carbon_cost"]
-        .reset_index(drop=True)
-        .copy()
-    )
-
-    return emissivity_df, carbon_df
-
+    return combined_df.reset_index(drop=True).copy()
 
 def create_emissions_ref_dict(df: pd.DataFrame, tech_list: list) -> dict:
     """Creates a reference to technologies, resources and emissions for a predefined list of technologies and resources.
@@ -254,15 +223,12 @@ def generate_emissions_dataframe(
         PKL_DATA_INTERMEDIATE, "final_scope3_ef_df", "df"
     )
 
-    emissions, carbon = generate_s1_s3_emissions(
+    return generate_s1_s3_emissions(
         df=df.copy(),
         year_end=year_end,
         s1_emissivity_factors=s1_emissivity_factors,
         s3_emissivity_factors=s3_emissivity_factors,
-        carbon_tax_scope="1",
     )
-
-    return emissions, carbon
 
 
 def get_s2_emissions(
@@ -470,6 +436,8 @@ def emissivity_getter(
         Union[pd.DataFrame, float]: A float value of the emissions based on the scope specified as a parameter. 
     """
     year = min(2050, year)
+    if not technology:
+        return 0
     if scope not in {"s1", "s2", "s3"}:
         return df_ref.loc[year, country_code, technology]["combined_emissivity"]
     emissivity_mapper = {
