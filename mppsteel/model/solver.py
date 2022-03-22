@@ -318,7 +318,9 @@ def choose_technology(
         logger.info(f'Creating investment cycle for new plants')
         new_open_plants = return_modified_plants(model_plant_df, year, 'open')
         new_investment_df, new_investment_dict = create_investment_cycle(new_open_plants)
-        investment_year_ref_c = investment_year_ref_c.reset_index().merge(new_investment_df.reset_index())
+        investment_year_ref_c.reset_index(inplace=True)
+        new_investment_df.reset_index(inplace=True)
+        investment_year_ref_c = investment_year_ref_c.merge(new_investment_df)
         investment_year_ref_c.set_index(['year', 'switch_type'], inplace=True)
         investment_dict_c = {**investment_dict_c, **new_investment_dict}
         switchers = extract_tech_plant_switchers(investment_year_ref_c, year)
@@ -455,7 +457,8 @@ def choose_technology(
                         # print(f'{plant_name} kept its current tech {current_tech} in transitional year {year}')
                         pass
                     current_plant_choices[str(year)][plant_name] = best_choice_tech
-    return {'tech_choice_dict': current_plant_choices, 'plant_result_df': model_plant_df}
+    print(investment_year_ref_c)
+    return {'tech_choice_dict': current_plant_choices, 'plant_result_df': model_plant_df, 'investment_cycle_ref_result': investment_year_ref_c}
 
 
 def extract_tech_plant_switchers(
@@ -519,4 +522,5 @@ def solver_flow(scenario_dict: dict, year_end: int, serialize: bool = False) -> 
         logger.info("-- Serializing dataframes")
         serialize_file(results_dict['tech_choice_dict'], PKL_DATA_INTERMEDIATE, "tech_choice_dict")
         serialize_file(results_dict['plant_result_df'], PKL_DATA_INTERMEDIATE, "plant_result_df")
+        serialize_file(results_dict['investment_cycle_ref_result'], PKL_DATA_INTERMEDIATE, "investment_cycle_ref_result")
     return results_dict
