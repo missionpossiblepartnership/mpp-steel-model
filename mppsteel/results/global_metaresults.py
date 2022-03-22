@@ -123,7 +123,7 @@ def global_metaresults_calculator(
     ).round(3)
     df["scrap_availability"] = df["year"].apply(
         lambda year: steel_demand_getter(
-            steel_market_df, year, steel_demand_scenario, "crude", region="World"
+            steel_market_df, year, steel_demand_scenario, "scrap", region="World"
         )
     )
     df["scrap_consumption"] = [
