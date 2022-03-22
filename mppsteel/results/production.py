@@ -204,6 +204,7 @@ def production_stats_generator(
                 )
 
     df_c["bioenergy"] = df_c["biomass"] + df_c["biomethane"]
+    df_c["coal"] = df_c["Met coal"] + df_c["Thermal coal"]
     if as_summary:
         return df_c.groupby(["year", "technology"]).sum()
 
