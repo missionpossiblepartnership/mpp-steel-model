@@ -49,6 +49,10 @@ def pick_random_country_from_region(country_df: pd.DataFrame, region: str): # GE
     country_list = get_countries_from_group(country_df, 'RMI Model Region', region)
     return random.choice(country_list)
 
+def pick_random_country_from_region_subset(plant_df: pd.DataFrame, region: str): # GENERAL FUNCTION
+    country_list = plant_df[plant_df['rmi_region'] == region]['country_code'].unique()
+    return random.choice(country_list)
+
 
 def create_new_plant(plant_df: pd.DataFrame, plant_row_dict: dict):
     base_dict = {col: '' for col in plant_df.columns}
@@ -155,7 +159,7 @@ def current_plant_year(inv_dict: pd.DataFrame, plant: str, current_year: int, cy
 
 def new_plant_metadata(
     plant_container: PlantIdContainer, gap_analysis_df: pd.DataFrame,
-    levelized_cost_df: pd.DataFrame, country_df: pd.DataFrame, ng_mapper: dict,
+    levelized_cost_df: pd.DataFrame, country_df: pd.DataFrame, plant_df: pd.DataFrame, ng_mapper: dict,
     year: int, region: str = None, low_cost_region: bool = False):
 
     if region and low_cost_region:
@@ -168,7 +172,8 @@ def new_plant_metadata(
     if region in country_specific_mapper:
         assigned_country = country_specific_mapper[region]
     else:
-        assigned_country = pick_random_country_from_region(country_df, region)
+        #assigned_country = pick_random_country_from_region(country_df, region)
+        assigned_country = pick_random_country_from_region_subset(plant_df, region)
     return {
         'plant_id': new_id,
         'plant_name': f'New Capacity Plant {new_id}',
@@ -374,7 +379,7 @@ def open_close_plants(
         # OPEN PLANT
         if plants_required > 0:
             for _ in range(plants_required):
-                new_plant_meta = new_plant_metadata(plant_id_container, gap_analysis_df, lev_cost_df, country_df, ng_mapper, year=year, region=region)
+                new_plant_meta = new_plant_metadata(plant_id_container, gap_analysis_df, lev_cost_df, country_df, steel_plant_df_c, ng_mapper, year=year, region=region)
                 steel_plant_df_c = create_new_plant(steel_plant_df_c, new_plant_meta)
                 xcost_tech = get_xcost_from_region(lev_cost_df, year=year, region=region, value_type='min')
                 idx_open = steel_plant_df_c.index[steel_plant_df_c['plant_id'] == new_plant_meta['plant_id']].tolist()[0]
