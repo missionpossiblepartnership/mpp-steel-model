@@ -11,7 +11,7 @@ from mppsteel.utility.plant_container_class import PlantIdContainer
 from mppsteel.utility.dataframe_utility import return_furnace_group
 from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
 from mppsteel.data_loading.reg_steel_demand_formatter import extend_steel_demand
-from mppsteel.model.investment_cycles import create_investment_cycle
+from mppsteel.model.investment_cycles import create_investment_cycle, amend_investment_dict, create_investment_cycle_reference
 
 from mppsteel.config.model_config import (
     MODEL_YEAR_START,
@@ -44,9 +44,10 @@ from mppsteel.model.solver_constraints import (
     load_resource_usage_dict,
 )
 
-from mppsteel.model.tco_and_abatement_optimizer import get_best_choice
+from mppsteel.model.tco_and_abatement_optimizer import get_best_choice, subset_presolver_df
 from mppsteel.model.plant_open_close import (
-    open_close_flow, return_modified_plants, create_wsa_2020_utilization_dict
+    open_close_flow, return_modified_plants, 
+    create_wsa_2020_utilization_dict, create_plant_capacity_dict
 )
 
 from mppsteel.utility.log_utility import get_logger
@@ -195,6 +196,12 @@ def return_best_tech(
         return best_choice, material_usage_dict_container
     return best_choice
 
+def create_investment_cycle_ref_from_dict(inv_dict: dict, year_end: int):
+    return create_investment_cycle_reference(
+        list(inv_dict.keys()), 
+        list(inv_dict.values()),
+        year_end
+    )
 
 def choose_technology(
     year_end: int,
@@ -252,42 +259,15 @@ def choose_technology(
     tech_availability = read_and_format_tech_availability(tech_availability)
 
     # TCO & Abatement Data
-    tco_reference_data = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "tco_reference_data", "df"
+    tco_summary_data = read_pickle_folder(
+        PKL_DATA_INTERMEDIATE, "tco_summary_data", "df"
     )
-    tco_slim = (
-        tco_reference_data[
-            [
-                "year",
-                "plant_id",
-                "plant_name",
-                "base_tech",
-                "switch_tech",
-                "country_code",
-                "tco",
-                "capex_value",
-            ]
-        ]
-        .set_index(["year", "plant_name", "base_tech"])
-        .copy()
-    )
+    tco_slim = subset_presolver_df(tco_summary_data, subset_type='tco_summary')
 
     steel_plant_abatement_switches = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "emissivity_abatement_switches", "df"
     )
-    abatement_slim = (
-        steel_plant_abatement_switches[
-            [
-                "year",
-                "base_tech",
-                "switch_tech",
-                "country_code",
-                "abated_combined_emissivity",
-            ]
-        ]
-        .set_index(["year", "country_code", "base_tech"])
-        .copy()
-    )
+    abatement_slim = subset_presolver_df(steel_plant_abatement_switches, subset_type='abatement')
 
     # Initialize plant container
     PlantIDC = PlantIdContainer()
@@ -302,6 +282,8 @@ def choose_technology(
 
     util_dict = create_wsa_2020_utilization_dict()
     util_dict_c = deepcopy(util_dict)
+
+    capacity_results = {}
 
     for year in tqdm(year_range, total=len(year_range), desc="Years"):
         logger.info(f"Running investment decisions for {year}")
@@ -318,11 +300,8 @@ def choose_technology(
         logger.info(f'Creating investment cycle for new plants')
         new_open_plants = return_modified_plants(model_plant_df, year, 'open')
         new_investment_df, new_investment_dict = create_investment_cycle(new_open_plants)
-        investment_year_ref_c.reset_index(inplace=True)
-        new_investment_df.reset_index(inplace=True)
-        investment_year_ref_c = investment_year_ref_c.merge(new_investment_df)
-        investment_year_ref_c.set_index(['year', 'switch_type'], inplace=True)
         investment_dict_c = {**investment_dict_c, **new_investment_dict}
+        investment_year_ref_c = create_investment_cycle_ref_from_dict(investment_dict_c, year_end)
         switchers = extract_tech_plant_switchers(investment_year_ref_c, year)
         non_switchers = list(set(all_plant_names).difference(switchers))
 
@@ -452,13 +431,20 @@ def choose_technology(
                     )
                     if best_choice_tech != current_tech:
                         # print(f'Transistional switch flipped for {plant_name} in {year} -> {current_tech} to {best_choice_tech}')
-                        pass
+                        investment_dict_c = amend_investment_dict(investment_dict_c, plant_name, year)
                     else:
                         # print(f'{plant_name} kept its current tech {current_tech} in transitional year {year}')
                         pass
                     current_plant_choices[str(year)][plant_name] = best_choice_tech
-    print(investment_year_ref_c)
-    return {'tech_choice_dict': current_plant_choices, 'plant_result_df': model_plant_df, 'investment_cycle_ref_result': investment_year_ref_c}
+        capacity_results[str(year)] = create_plant_capacity_dict(model_plant_df, as_mt=True)
+    investment_year_ref_c = create_investment_cycle_ref_from_dict(investment_dict_c, year_end)
+    return {
+        'tech_choice_dict': current_plant_choices, 
+        'plant_result_df': model_plant_df, 
+        'investment_cycle_ref_result': investment_year_ref_c,
+        'investment_dict_result': investment_dict_c,
+        'capacity_results': capacity_results
+        }
 
 
 def extract_tech_plant_switchers(
@@ -523,4 +509,6 @@ def solver_flow(scenario_dict: dict, year_end: int, serialize: bool = False) -> 
         serialize_file(results_dict['tech_choice_dict'], PKL_DATA_INTERMEDIATE, "tech_choice_dict")
         serialize_file(results_dict['plant_result_df'], PKL_DATA_INTERMEDIATE, "plant_result_df")
         serialize_file(results_dict['investment_cycle_ref_result'], PKL_DATA_INTERMEDIATE, "investment_cycle_ref_result")
+        serialize_file(results_dict['investment_dict_result'], PKL_DATA_INTERMEDIATE, "investment_dict_result")
+        serialize_file(results_dict['capacity_results'], PKL_DATA_INTERMEDIATE, "capacity_results")
     return results_dict
