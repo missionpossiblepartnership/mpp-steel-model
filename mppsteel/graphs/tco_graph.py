@@ -33,6 +33,9 @@ def generate_tco_charts (
         text = f'{region}; TCO in {year}, switching from {tech} to...'
 
     else:
+        df_c = df_c.groupby(
+        ['year','start_technology','end_technology'], 
+        as_index=False).agg({"tco": 'mean'}).round(2)
         text = f'Global; TCO in {year}, switching from {tech} to...'
 
     df_c['switch_tech_rank'] = df_c['end_technology'].map(sorterIndex)
