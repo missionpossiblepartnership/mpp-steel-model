@@ -39,6 +39,7 @@ from mppsteel.results.production import production_results_flow
 from mppsteel.results.cost_of_steelmaking import generate_cost_of_steelmaking_results
 from mppsteel.results.global_metaresults import metaresults_flow
 from mppsteel.results.investments import investment_results
+from mppsteel.results.green_capacity_ratio import generate_gcr_df
 from mppsteel.graphs.graph_production import create_graphs
 
 from mppsteel.config.model_config import (
@@ -121,6 +122,7 @@ def model_results_phase(scenario_dict: dict) -> None:
     generate_cost_of_steelmaking_results(scenario_dict, serialize=True)
     metaresults_flow(scenario_dict, serialize=True)
     investment_results(scenario_dict, serialize=True)
+    generate_gcr_df(scenario_dict, serialize=True)
 
 
 def model_outputs_phase(new_folder: bool = False, timestamp: str = "") -> None:
@@ -145,6 +147,7 @@ def model_outputs_phase(new_folder: bool = False, timestamp: str = "") -> None:
         "production_emissions",
         "global_metaresults",
         "investment_results",
+        'green_capacity_ratio'
     ]
     for pkl_file in pkl_files:
         pickle_to_csv(save_path, PKL_DATA_FINAL, pkl_file)
@@ -397,4 +400,4 @@ parser.add_argument(
 )  # get_emissivity
 parser.add_argument(
     "-m", "--investment_cycle", action="store_true", help="Runs the investment_cycle script only"
-)  # get_emissivity
+)  # investment cycles
