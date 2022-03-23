@@ -110,143 +110,6 @@ def tco_regions_ref_generator(
     return pd.concat(df_list).reset_index(drop=True)
 
 
-def create_full_steel_plant_ref(eur_usd_rate: float) -> pd.DataFrame:
-    """Creates a DataFrame reference to be used to map TCO values created via the `tco_regions_ref_generator` function.
-    This function generates all of the necessary columns and precalculates green premium values.
-
-    Args:
-        eur_usd_rate (float): The conversion rate from EUR to USD based on a scenario input.
-
-    Returns:
-        pd.DataFrame: A reference DataFrame containing the necessary columns to map to TCO values.
-    """
-    logger.info(
-        "Adding Green Premium Values and year and technology index to steel plant data"
-    )
-    green_premium_timeseries = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "green_premium_timeseries", "df"
-    )
-    variable_costs_regional = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "variable_costs_regional", "df"
-    )
-    steel_plants = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df"
-    )
-    steel_plant_ref = steel_plants[
-        ["plant_id", "plant_name", "country_code", "technology_in_2020"]
-    ].copy()
-    year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
-    df_list = []
-    for year in tqdm(
-        year_range, total=len(year_range), desc="Steel Plant TCO Switches: Year Loop"
-    ):
-        sp_c = steel_plant_ref.copy()
-        sp_c["year"] = year
-        df_list.append(sp_c)
-    steel_plant_ref = pd.concat(df_list).reset_index(drop=True)
-    steel_plant_ref["discounted_green_premium"] = ""
-
-    def value_mapper(row, enum_dict: dict):
-        start_year = row[enum_dict["year"]]
-        gp_arr = np.array([])
-        year_range = range(start_year, start_year + INVESTMENT_CYCLE_DURATION_YEARS + 1)
-        for year in year_range:
-            year_loop_val = min(MODEL_YEAR_END, year)
-            green_premium_value = calculate_green_premium(
-                variable_costs_regional,
-                steel_plants,
-                green_premium_timeseries,
-                row[enum_dict["country_code"]],
-                row[enum_dict["plant_name"]],
-                row[enum_dict["technology_in_2020"]],
-                year_loop_val,
-                eur_usd_rate,
-            )
-            gp_arr = np.append(gp_arr, green_premium_value)
-        discounted_gp_arr = npf.npv(DISCOUNT_RATE, gp_arr)
-        row[enum_dict["discounted_green_premium"]] = discounted_gp_arr
-        return row
-
-    logger.info("Calculating green premium values")
-    tqdma.pandas(desc="Apply Green Premium Values")
-    enumerated_cols = enumerate_iterable(steel_plant_ref.columns)
-    steel_plant_ref = steel_plant_ref.progress_apply(
-        value_mapper, enum_dict=enumerated_cols, axis=1, raw=True
-    )
-    pair_list = []
-    for tech in SWITCH_DICT:
-        pair_list.append(list(itertools.product([tech], SWITCH_DICT[tech])))
-    all_tech_switch_combinations = [item for sublist in pair_list for item in sublist]
-    df_list = []
-    logger.info("Generating Year range reference")
-    for combination in tqdm(
-        all_tech_switch_combinations,
-        total=len(all_tech_switch_combinations),
-        desc="Steel Plant TCO Switches: Technology Loop",
-    ):
-        sp_c = steel_plant_ref.copy()
-        sp_c["base_tech"] = combination[0]
-        sp_c["switch_tech"] = combination[1]
-        df_list.append(sp_c)
-    steel_plant_full_ref = pd.concat(df_list).reset_index(drop=True)
-    steel_plant_full_ref.set_index(
-        ["year", "country_code", "base_tech", "switch_tech"], inplace=True
-    )
-    return steel_plant_full_ref
-
-
-def map_region_tco_to_plants(
-    steel_plant_ref: pd.DataFrame, opex_capex_ref: pd.DataFrame
-) -> pd.DataFrame:
-    """Maps the regional TCO values generated in `tco_regions_ref_generator` to the Plant Reference table generated in `create_full_steel_plant_ref`.
-
-    Args:
-        steel_plant_ref (pd.DataFrame): A steel plant DataFrame reference.
-        opex_capex_ref (pd.DataFrame): A DataFrame containing opex and capex reference values.
-
-    Returns:
-        pd.DataFrame: A DataFrame containing all the components necessary to calculate TCO.
-    """
-    logger.info("Mapping Regional emissions dict to plants")
-
-    opex_capex_ref_c = opex_capex_ref.reset_index(drop=True).copy()
-    
-    opex_capex_ref_c.rename(
-        {"start_technology": "base_tech", "end_technology": "switch_tech"},
-        axis="columns",
-        inplace=True,
-    )
-    opex_capex_ref_c.set_index(
-        ["year", "country_code", "base_tech", "switch_tech"], inplace=True
-    )
-    logger.info("Joining tco values on steel plant df")
-    combined_df = steel_plant_ref.join(opex_capex_ref_c, how="left").reset_index()
-
-    def value_mapper(row):
-        opex = float(row["capex_value"] + row["discounted_opex"])
-        if row.switch_tech in LOW_CARBON_TECHS:
-            opex -= float(row["discounted_green_premium"])
-        row["tco"] = float(opex / INVESTMENT_CYCLE_DURATION_YEARS)
-        return row
-
-    combined_df["tco"] = 0
-    combined_df = combined_df.apply(value_mapper, axis=1)
-
-    new_col_order = [
-        "year",
-        "plant_id",
-        "plant_name",
-        "country_code",
-        "base_tech",
-        "switch_tech",
-        "capex_value",
-        "discounted_opex",
-        "discounted_green_premium",
-        "tco",
-    ]
-    return combined_df[new_col_order]
-
-
 def get_abatement_difference(
     df: pd.DataFrame,
     year: int,
@@ -330,7 +193,7 @@ def emissivity_abatement(combined_emissivity: pd.DataFrame, scope: str) -> pd.Da
 
 
 @timer_func
-def tco_presolver_reference(scenario_dict, serialize: bool = False, full_tco: bool = False) -> pd.DataFrame:
+def tco_presolver_reference(scenario_dict, serialize: bool = False) -> pd.DataFrame:
     """Complete flow to create two reference TCO DataFrames.
     The first DataFrame `tco_summary` create contains only TCO summary data on a regional level (not plant level).
     The second DataFrame `tco_reference_data` contains the full TCO reference data on a plant level, including green premium calculations. 
@@ -348,7 +211,6 @@ def tco_presolver_reference(scenario_dict, serialize: bool = False, full_tco: bo
     electricity_cost_scenario = scenario_dict["electricity_cost_scenario"]
     grid_scenario = scenario_dict["grid_scenario"]
     hydrogen_cost_scenario = scenario_dict["hydrogen_cost_scenario"]
-    eur_usd_rate = scenario_dict["eur_usd"]
     opex_capex_reference_data = tco_regions_ref_generator(
         electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario
     )
@@ -358,23 +220,11 @@ def tco_presolver_reference(scenario_dict, serialize: bool = False, full_tco: bo
     tco_summary['region']= tco_summary['country_code'].apply(lambda x: get_region_from_country_code(
         x, "rmi_region", country_ref_dict
     ))
-    if full_tco:
-        steel_plant_ref = create_full_steel_plant_ref(eur_usd_rate)
-        tco_reference_data = map_region_tco_to_plants(
-            steel_plant_ref, opex_capex_reference_data
-        )
-        tco_reference_data = add_results_metadata(
-            tco_reference_data, scenario_dict, single_line=True
-        )
     if serialize:
         logger.info("-- Serializing dataframe")
         serialize_file(
             tco_summary, PKL_DATA_INTERMEDIATE, "tco_summary_data"
-        )  # This version does not incorporate green premium
-        if full_tco:
-            serialize_file(tco_reference_data, PKL_DATA_INTERMEDIATE, "tco_reference_data")
-    if full_tco:
-        return tco_reference_data
+        )
     return tco_summary
 
 
