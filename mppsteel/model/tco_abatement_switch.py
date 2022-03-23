@@ -330,7 +330,7 @@ def emissivity_abatement(combined_emissivity: pd.DataFrame, scope: str) -> pd.Da
 
 
 @timer_func
-def tco_presolver_reference(scenario_dict, serialize: bool = False) -> pd.DataFrame:
+def tco_presolver_reference(scenario_dict, serialize: bool = False, full_tco: bool = False) -> pd.DataFrame:
     """Complete flow to create two reference TCO DataFrames.
     The first DataFrame `tco_summary` create contains only TCO summary data on a regional level (not plant level).
     The second DataFrame `tco_reference_data` contains the full TCO reference data on a plant level, including green premium calculations. 
@@ -358,20 +358,24 @@ def tco_presolver_reference(scenario_dict, serialize: bool = False) -> pd.DataFr
     tco_summary['region']= tco_summary['country_code'].apply(lambda x: get_region_from_country_code(
         x, "rmi_region", country_ref_dict
     ))
-    steel_plant_ref = create_full_steel_plant_ref(eur_usd_rate)
-    tco_reference_data = map_region_tco_to_plants(
-        steel_plant_ref, opex_capex_reference_data
-    )
-    tco_reference_data = add_results_metadata(
-        tco_reference_data, scenario_dict, single_line=True
-    )
+    if full_tco:
+        steel_plant_ref = create_full_steel_plant_ref(eur_usd_rate)
+        tco_reference_data = map_region_tco_to_plants(
+            steel_plant_ref, opex_capex_reference_data
+        )
+        tco_reference_data = add_results_metadata(
+            tco_reference_data, scenario_dict, single_line=True
+        )
     if serialize:
         logger.info("-- Serializing dataframe")
         serialize_file(
             tco_summary, PKL_DATA_INTERMEDIATE, "tco_summary_data"
         )  # This version does not incorporate green premium
-        serialize_file(tco_reference_data, PKL_DATA_INTERMEDIATE, "tco_reference_data")
-    return tco_reference_data
+        if full_tco:
+            serialize_file(tco_reference_data, PKL_DATA_INTERMEDIATE, "tco_reference_data")
+    if full_tco:
+        return tco_reference_data
+    return tco_summary
 
 
 @timer_func
