@@ -86,16 +86,16 @@ def modify_scope3_ef_1(
     df_c = df.copy()
     scope3df_index = df_c.set_index(["Category", "Fuel", "Unit"])
     scope3df_index.loc[
-        "Scope 3 Emissions Factor", "Slag", "ton CO2eq / ton slag"
-    ] = slag_values/1000 #from [t CO2/ t slag] to [t CO2/ kg slag] see standardized BC
+        "Scope 3 Emissions Factor", "BF slag", "ton CO2eq / ton slag"
+    ] = slag_values/1000 # from [t CO2/ t slag] to [t CO2/ kg slag] see standardized BC
     met_coal_values = scope3df_index.loc[
         "Scope 3 Emissions Factor", "Met coal", "MtCO2eq / PJ"
-    ].apply(lambda x: x * met_coal_density)
+    ]
+    met_coal_values = met_coal_values.apply(lambda x: x * met_coal_density)
     scope3df_index.loc[
         "Scope 3 Emissions Factor", "Met coal", "MtCO2eq / PJ"
     ] = met_coal_values
     scope3df_index.reset_index(inplace=True)
-    scope3df_index.head()
     return scope3df_index.melt(id_vars=["Category", "Fuel", "Unit"], var_name="Year")
 
 

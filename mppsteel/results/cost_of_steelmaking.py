@@ -90,8 +90,13 @@ def apply_cos(
 
     primary_capacity = cap_dict[row.plant_name]["primary_capacity"]
     secondary_capacity = cap_dict[row.plant_name]["secondary_capacity"]
-    variable_cost = v_costs.loc[row.country_code, year, row.technology]["cost"]
-    other_opex_cost = capex_costs["other_opex"].loc[row.technology, year]["value"]
+    variable_cost = 0
+    other_opex_cost = 0
+    gf_value = 0
+    if row.technology:
+        variable_cost = v_costs.loc[row.country_code, year, row.technology]["cost"]
+        other_opex_cost = capex_costs["other_opex"].loc[row.technology, year]["value"]
+        gf_value = capex_costs["greenfield"].loc[row.technology, year]["value"]
     steel_demand_value = steel_demand_getter(
         steel_demand, year, steel_scenario, "crude", region="World"
     )
@@ -101,7 +106,7 @@ def apply_cos(
     # cuf = steel_demand_value / row.capacity
     relining_cost = 0
 
-    if capital_charges:
+    if capital_charges and row.technology:
         relining_cost = calculate_cc(
             capex_costs,
             year,
@@ -118,7 +123,6 @@ def apply_cos(
     if not capital_charges:
         return result_1
 
-    gf_value = capex_costs["greenfield"].loc[row.technology, year]["value"]
     result_2 = npf.pmt(discount_rate, relining_year_span, gf_value) / steel_demand_value
 
     return result_1 - result_2
@@ -303,10 +307,10 @@ def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize: bool = 
     production_resource_usage = read_pickle_folder(
         PKL_DATA_FINAL, "production_resource_usage", "df"
     )
-    modified_plant_df = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "modified_plant_df", "df"
+    plant_result_df = read_pickle_folder(
+        PKL_DATA_INTERMEDIATE, "plant_result_df", "df"
     )
-    capacities_dict = create_plant_capacities_dict(modified_plant_df)
+    capacities_dict = create_plant_capacities_dict(plant_result_df)
     steel_demand_scenario = scenario_dict["steel_demand_scenario"]
 
     cos_data = create_cost_of_steelmaking_data(

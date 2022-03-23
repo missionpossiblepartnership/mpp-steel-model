@@ -302,9 +302,9 @@ def map_plant_id_to_df(
     Returns:
         pd.DataFrame: A DataFrame with the newly added column.
     """
-    steel_plants = read_pickle_folder(PKL_DATA_IMPORTS, "steel_plants")
+    steel_plants = read_pickle_folder(PKL_DATA_INTERMEDIATE, "plant_result_df")
     plant_id_dict = dict(
-        zip(steel_plants["Plant name (English)"], steel_plants["Plant ID"])
+        zip(steel_plants["plant_name"], steel_plants["plant_id"])
     )
     df_c = df.copy()
     if reverse:

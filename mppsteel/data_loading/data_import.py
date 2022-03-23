@@ -88,10 +88,10 @@ def load_data(serialize: bool = False) -> dict:
 
     # Import scope 3 EF data
     s3_emissions_factors_1 = extract_data(
-        IMPORT_DATA_PATH, "Scope 3 Emissions Factors", "xlsx", 0
+        IMPORT_DATA_PATH, "Scope 3 Emissions Factors edit", "xlsx", 0
     )
     s3_emissions_factors_2 = pd.read_excel(
-        f"{IMPORT_DATA_PATH}/Scope 3 Emissions Factors.xlsx", sheet_name=1, skiprows=1
+        f"{IMPORT_DATA_PATH}/Scope 3 Emissions Factors edit.xlsx", sheet_name=1, skiprows=1
     )
 
     # Import static energy prices

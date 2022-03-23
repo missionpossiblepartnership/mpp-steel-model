@@ -51,6 +51,8 @@ def capex_getter_f(
         float: A value containing the capex value based on the function arguments.
     """
     capex_year = min(MODEL_YEAR_END, year)
+    if not start_tech:
+        return 0
     if new_tech == "Close plant":
         return 0
     if switch_type == "no switch":
@@ -109,8 +111,10 @@ def investment_row_calculator(
         start_tech = get_tech_choice(tech_choices, year - 1, plant_name)
 
     new_tech = get_tech_choice(tech_choices, year, plant_name)
-    capex_ref = capex_getter_f(capex_df, year, start_tech, new_tech, switch_type)
-    actual_capex = capex_ref * (capacity_value * 1000 * 1000)  # convert from Mt to T
+    actual_capex = 0
+    if new_tech:
+        capex_ref = capex_getter_f(capex_df, year, start_tech, new_tech, switch_type)
+        actual_capex = capex_ref * (capacity_value * 1000 * 1000)  # convert from Mt to T
     return {
         "plant_name": plant_name,
         "country_code": country_code,
@@ -215,7 +219,7 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
         PKL_DATA_INTERMEDIATE, "tech_choice_dict", "df"
     )
     plant_investment_cycles = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "plant_investment_cycles", "df"
+        PKL_DATA_INTERMEDIATE, "investment_cycle_ref_result", "df"
     )
     plant_result_df = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "plant_result_df", "df"

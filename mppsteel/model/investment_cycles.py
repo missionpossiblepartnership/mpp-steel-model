@@ -199,6 +199,24 @@ def create_investment_cycle(steel_plant_df: pd.DataFrame) -> pd.DataFrame:
     )
     return investment_df, investment_dict
 
+def amend_investment_dict(inv_dict: dict, plant: str, year: int):
+    inv_dict_c = deepcopy(inv_dict)
+    initial_list = inv_dict_c[plant]
+    inv_ranges_list = [year_obj for year_obj in initial_list if isinstance(year_obj, range)]
+    if len(inv_ranges_list) == 0:
+        return inv_dict_c
+    inv_range_match = [matching_range for matching_range in inv_ranges_list if year in matching_range]
+    if len(inv_range_match) == 0:
+        return inv_dict_c
+    matching_range = inv_range_match[0]
+    index_position = initial_list.index(matching_range)
+    range_start = list(matching_range)[0]
+    new_range = range(range_start, year)
+    new_list = deepcopy(initial_list)
+    new_list[index_position] = new_range
+    inv_dict_c[plant] = new_list
+    return inv_dict_c
+
 
 @timer_func
 def investment_cycle_flow(serialize: bool = False) -> pd.DataFrame:
