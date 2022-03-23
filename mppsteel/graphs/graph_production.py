@@ -373,11 +373,12 @@ def create_tco_graph(
         px.bar: _description_
     """
     filename = f'TCO_{year}_from_{tech}'
+    logger.info(f"TCO Output: {filename}")
     if region:
         filename = f'TCO_{year}_in_{region}_from_{tech}_'
     if filepath:
         filename = f"{filepath}/{filename}"
-    logger.info(f"TCO Output: {filename}")
+    
     return generate_tco_charts(df, year,region, tech, save_filepath=filename)
 
 
@@ -396,10 +397,10 @@ def create_emissions_graph(df: pd.DataFrame, year: int = None, region: str = Non
     """
     filename = f'emissions_chart {scope}'
     if region:
-        filename = f'emissions_chart_{scope}_in{region}'
+        filename = f'emissions_chart_{scope}_in_{region}'
+    logger.info(f"Emissions_chart: {filename}")
     if filepath:
         filename = f"{filepath}/{filename}"
-    logger.info(f"Emissions_chart: {filename}")
     return generate_emissivity_charts(df, year, region, scope, save_filepath=filename)
 
 @timer_func
