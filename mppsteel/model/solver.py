@@ -14,6 +14,7 @@ from mppsteel.data_loading.reg_steel_demand_formatter import extend_steel_demand
 from mppsteel.model.investment_cycles import create_investment_cycle, amend_investment_dict, create_investment_cycle_reference
 
 from mppsteel.config.model_config import (
+    MODEL_YEAR_END,
     MODEL_YEAR_START,
     PKL_DATA_IMPORTS,
     PKL_DATA_INTERMEDIATE,
@@ -49,7 +50,8 @@ from mppsteel.model.plant_open_close import (
     open_close_flow, return_modified_plants, 
     create_wsa_2020_utilization_dict, create_plant_capacity_dict
 )
-
+from mppsteel.model.trade import TradeBalance
+from mppsteel.model.levelized_cost import generate_levelized_cost_results
 from mppsteel.utility.log_utility import get_logger
 
 # Create logger
@@ -210,7 +212,8 @@ def choose_technology(
     enforce_constraints: bool = True,
     steel_demand_scenario: str = "bau",
     trans_switch_scenario: str = True,
-    tech_switch_scenario: dict = {"tco": 0.6, "emissions": 0.4},
+    tech_switch_scenario: dict = {"tco": 1, "emissions": 0},
+    trade_scenario: bool = False
 ) -> dict:
     """Function containing the entire solver decision logic flow.
     1) In each year, the solver splits the plants into technology switchers, and non-switchers.
@@ -240,8 +243,12 @@ def choose_technology(
     investment_dict = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "investment_dict", "dict"
     )
+    plant_cycle_length_mapper = read_pickle_folder(
+        PKL_DATA_INTERMEDIATE, "plant_cycle_length_mapper", "dict"
+    )
     investment_year_ref_c = investment_year_ref.copy()
     investment_dict_c = deepcopy(investment_dict)
+    plant_cycle_length_mapper_c = deepcopy(plant_cycle_length_mapper_c)
     # Constraint data
     bio_constraint_model = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "bio_constraint_model_formatted", "df"
@@ -273,6 +280,11 @@ def choose_technology(
     PlantIDC = PlantIdContainer()
     model_plant_df = plant_df.copy()
     PlantIDC.add_steel_plant_ids(model_plant_df)
+
+    # Instantiate Trade Container
+    trade_container = TradeBalance()
+    region_list = model_plant_df['rmi_region'].unique()
+    trade_container.full_instantiation(MODEL_YEAR_START, MODEL_YEAR_END, region_list)
     
     # General Reference data
     business_cases = load_business_cases()
@@ -289,18 +301,23 @@ def choose_technology(
         logger.info(f"Running investment decisions for {year}")
         current_plant_choices[str(year)] = {}
         logger.info(f'Starting the open close flow for {year}')
-        open_close_dict = open_close_flow(PlantIDC, model_plant_df, current_plant_choices, investment_dict_c, util_dict_c, year)
+        open_close_dict = open_close_flow(
+            PlantIDC, trade_container, model_plant_df, current_plant_choices, 
+            investment_dict_c, util_dict_c, year, trade_scenario
+            )
         
         model_plant_df = open_close_dict['plant_df']
         current_plant_choices = open_close_dict['tech_choice_dict']
         util_dict_c = open_close_dict['util_dict']
+        trade_container = open_close_dict['trade_container']
         
         all_plant_names = model_plant_df["plant_name"].copy()
         plant_capacities_dict = create_plant_capacities_dict(model_plant_df)
         logger.info(f'Creating investment cycle for new plants')
         new_open_plants = return_modified_plants(model_plant_df, year, 'open')
-        new_investment_df, new_investment_dict = create_investment_cycle(new_open_plants)
-        investment_dict_c = {**investment_dict_c, **new_investment_dict}
+        investment_dict_object = create_investment_cycle(new_open_plants)
+        investment_dict_c = {**investment_dict_c, **investment_dict_object['investment_dict']}
+        plant_cycle_length_mapper_c = {**plant_cycle_length_mapper_c, **investment_dict_object['plant_cycle_length_mapper_c']}
         investment_year_ref_c = create_investment_cycle_ref_from_dict(investment_dict_c, year_end)
         switchers = extract_tech_plant_switchers(investment_year_ref_c, year)
         non_switchers = list(set(all_plant_names).difference(switchers))
@@ -437,13 +454,17 @@ def choose_technology(
                         pass
                     current_plant_choices[str(year)][plant_name] = best_choice_tech
         capacity_results[str(year)] = create_plant_capacity_dict(model_plant_df, as_mt=True)
+    
+    trade_df = trade_container.output_trade_to_df()
     investment_year_ref_c = create_investment_cycle_ref_from_dict(investment_dict_c, year_end)
     return {
         'tech_choice_dict': current_plant_choices, 
         'plant_result_df': model_plant_df, 
         'investment_cycle_ref_result': investment_year_ref_c,
         'investment_dict_result': investment_dict_c,
-        'capacity_results': capacity_results
+        'plant_cycle_length_mapper_c': plant_cycle_length_mapper_c,
+        'capacity_results': capacity_results,
+        'trade_results': trade_df
         }
 
 
@@ -502,7 +523,9 @@ def solver_flow(scenario_dict: dict, year_end: int, serialize: bool = False) -> 
         tech_switch_scenario=TECH_SWITCH_SCENARIOS[
             scenario_dict["tech_switch_scenario"]
         ],
+        trade_scenario=scenario_dict["trade_scenario"]
     )
+    levelized_cost_updated = generate_levelized_cost_results(results_dict['plant_result_df'])
 
     if serialize:
         logger.info("-- Serializing dataframes")
@@ -511,4 +534,6 @@ def solver_flow(scenario_dict: dict, year_end: int, serialize: bool = False) -> 
         serialize_file(results_dict['investment_cycle_ref_result'], PKL_DATA_INTERMEDIATE, "investment_cycle_ref_result")
         serialize_file(results_dict['investment_dict_result'], PKL_DATA_INTERMEDIATE, "investment_dict_result")
         serialize_file(results_dict['capacity_results'], PKL_DATA_INTERMEDIATE, "capacity_results")
+        serialize_file(results_dict['trade_results'], PKL_DATA_INTERMEDIATE, "trade_results")
+        serialize_file(levelized_cost_updated, PKL_DATA_INTERMEDIATE, 'levelized_cost_updated') # updated old levelized cost including all the new plants
     return results_dict
