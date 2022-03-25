@@ -103,7 +103,7 @@ def load_data(serialize: bool = False) -> dict:
     feedstock_prices = extract_data(IMPORT_DATA_PATH, "Feedstock Prices", "xlsx")
 
     # Import steel plant data
-    steel_plants = extract_data(IMPORT_DATA_PATH, "Steel Plant Data Full", "xlsx")
+    steel_plants = extract_data(IMPORT_DATA_PATH, "Steel Plant Data Anon", "xlsx")
 
     # Import technology availability
     tech_availability = extract_data(IMPORT_DATA_PATH, "Technology Availability", "csv")
