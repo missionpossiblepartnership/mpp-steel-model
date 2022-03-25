@@ -1,5 +1,6 @@
 """Production Results generator for technology investments"""
 
+from re import L
 import pandas as pd
 from tqdm import tqdm
 
@@ -50,6 +51,10 @@ def generate_production_stats(
         pd.DataFrame: A DataFrame containing the new columns: produciton, capacity_utilization, and low_carbon_tech
     """
     logger.info("- Generating Production Results from capacity")
+
+    def apply_production_value(row):
+        return row.capacity * row.capacity_utilization if row.technology else 0
+
     df_list = []
     year_range = range(MODEL_YEAR_START, year_end + 1)
     tech_capacity_df["low_carbon_tech"] = tech_capacity_df["technology"].apply(
@@ -67,8 +72,8 @@ def generate_production_stats(
             regional_capacity = capacity_results[str(year)][region]
             capacity_utilization_factor = regional_steel_demand / regional_capacity
             df_r = df[df["region"] == region].copy()
-            df_r['production'] = df_r["capacity"].apply(lambda capacity: capacity * capacity_utilization_factor) # This calculates production!!!
             df_r["capacity_utilization"] = capacity_utilization_factor
+            df_r['production'] = df_r.apply(apply_production_value)
             df_list.append(df_r)
     return pd.concat(df_list).reset_index(drop=True)
 
@@ -172,10 +177,6 @@ def production_stats_generator(
     if as_summary:
         return df_c.groupby(["year", "technology"]).sum()
 
-    # Convert Hydrogen from Twh to Pj
-    for material in ["hydrogen"]:
-        df_c[material] = df_c[material] * 3.6
-
     return df_c
 
 
@@ -272,6 +273,25 @@ def load_materials_mapper() -> dict:
     materials = load_materials()
     material_col_names = [material.lower().replace(" ", "_") for material in materials]
     return dict(zip(materials, material_col_names))
+
+
+def production_stats_getter(
+    df: pd.DataFrame, year: int, plant_name, value_col: str
+) -> float:
+    """Returns a specified stat from the Production DataFrame.
+
+    Args:
+        df (pd.DataFrame): A DataFrame of the Production Statistics containing resource usage.
+        year (int): The year that you want to reference.
+        plant_name (_type_): The name of the reference plant.
+        value_col (str): The column containing the value you want to reference.
+
+    Returns:
+        float: The value of the value_col passed as a function argument.
+    """
+    df_c = df.copy()
+    df_c.set_index(["year", "plant_name"], inplace=True)
+    return df_c.xs((year, plant_name))[value_col]
 
 
 @timer_func
