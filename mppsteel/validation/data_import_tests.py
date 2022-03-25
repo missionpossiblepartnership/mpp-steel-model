@@ -54,10 +54,8 @@ STEEL_PLANT_DATA_SCHEMA = DataFrameSchema(
     columns={
         "Plant ID": Column(str, Check.str_length(8)),
         "Plant name (English)": Column(str),
-        "Parent": Column(str),
         "Country": Column(str),
         "Region - analysis": Column(str),
-        "Coordinates": Column(str),
         "Status": Column(str),
         "Start of operation": Column(
             str, nullable=True, coerce=True
