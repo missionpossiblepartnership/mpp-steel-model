@@ -11,14 +11,12 @@ from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.location_utility import (
     country_mapping_fixer,
     country_matcher,
-    match_country,
     get_region_from_country_code,
 )
 
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
     serialize_file,
-    extract_data,
 )
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.config.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
@@ -41,10 +39,8 @@ COLUMNS_TO_REMOVE = [
 NEW_COLUMN_NAMES = [
     "plant_id",
     "plant_name",
-    "parent",
     "country",
     "region",
-    "coordinates",
     "status",
     "start_of_operation",
     "BFBOF_capacity",
