@@ -856,8 +856,6 @@ def limestone_df_editor(
         limestone_df = limestone_df.append(new_row, ignore_index=True)
         df_dict_c["Limestone"] = limestone_df
 
-        print(limestone_df)
-
     return df_dict_c
 
 
