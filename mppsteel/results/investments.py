@@ -16,7 +16,7 @@ from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.data_loading.steel_plant_formatter import map_plant_id_to_df
-from mppsteel.results.production import get_tech_choice
+from mppsteel.results.production import get_tech_choice, production_stats_getter
 
 # Create logger
 logger = get_logger("Investment Results")
@@ -126,25 +126,6 @@ def investment_row_calculator(
     }
 
 
-def production_stats_getter(
-    df: pd.DataFrame, year: int, plant_name, value_col: str
-) -> float:
-    """Returns a specified stat from the Production DataFrame.
-
-    Args:
-        df (pd.DataFrame): A DataFrame of the Production Statistics containing resource usage.
-        year (int): The year that you want to reference.
-        plant_name (_type_): The name of the reference plant.
-        value_col (str): The column containing the value you want to reference.
-
-    Returns:
-        float: The value of the value_col passed as a function argument.
-    """
-    df_c = df.copy()
-    df_c.set_index(["year", "plant_name"], inplace=True)
-    return df_c.xs((year, plant_name))[value_col]
-
-
 def create_inv_stats(
     df: pd.DataFrame, results: str = "global", agg: bool = False, operation: str = "sum"
 ) -> Union[pd.DataFrame, dict]:
@@ -202,6 +183,37 @@ def create_inv_stats(
             return pd.concat(df_list).reset_index()
         return region_dict
 
+
+def get_plant_cycle(plant_cycles: dict, plant_name: str, current_year: int, model_start_year: int, model_end_year: int):
+    if (current_year < model_start_year) or (current_year > model_end_year):
+        return None
+    cycles = plant_cycles[plant_name]
+    if len(cycles) == 0:
+        return None
+    first_year = cycles[0]
+    if len(cycles) == 1:
+        if first_year > current_year:
+            return range(model_start_year, current_year + 1)
+    elif len(cycles) == 2:
+        second_year = cycles[1]
+        if first_year > current_year:
+            return range(model_start_year, current_year + 1)
+        elif first_year <= current_year < second_year:
+            return range(first_year, current_year + 1)
+    elif len(cycles) == 3:
+        third_year = cycles[2]
+        if first_year > current_year:
+            return range(model_start_year, current_year + 1)
+        elif first_year <= current_year < second_year:
+            return range(first_year, current_year + 1)
+        elif second_year <= current_year < third_year:
+            return range(second_year, current_year + 1)
+    return range(current_year, model_end_year + 1)
+
+
+def get_investment_capital_costs(investment_df: pd.DataFrame, investment_cycles: dict, plant_name: str, current_year: int):
+    range_obj = get_plant_cycle(investment_cycles, plant_name, current_year, MODEL_YEAR_START, MODEL_YEAR_END)
+    return investment_df.set_index(['year']).loc[list(range_obj)]['capital_cost'].sum()
 
 @timer_func
 def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataFrame:
