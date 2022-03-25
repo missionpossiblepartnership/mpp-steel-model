@@ -147,7 +147,7 @@ def create_levelised_cost(
 
 
 @timer_func
-def generate_levelized_cost_results(serialize: bool = False) -> dict:
+def generate_levelized_cost_results(steel_plant_df: pd.DataFrame = None, serialize: bool = False) -> dict:
     """Full flow to create the Levelized Cost DataFrame.
 
     Args:
@@ -161,9 +161,10 @@ def generate_levelized_cost_results(serialize: bool = False) -> dict:
         PKL_DATA_INTERMEDIATE, "variable_costs_regional", "df"
     )
     capex_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "capex_dict", "df")
-    steel_plant_df = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df"
-    )
+    if not steel_plant_df:
+        steel_plant_df = read_pickle_folder(
+            PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df"
+        )
     lcos_data = create_levelised_cost(
         steel_plant_df, variable_costs_regional, capex_dict, include_greenfield=True
     )
