@@ -67,7 +67,7 @@ def agg_plant_capacity(plant_df: pd.DataFrame, avg: bool = False, region_string:
         plant_cap_dict (dict): A dictionary containing plant: capacity/inital tech key:value pairs.
 
     Returns:
-        float: Float value of the summation of all plant capacities using the `calculate_primary_and_secondary` function.
+        float: Float value of the summation of all plant capacities using the `calculate_primary_capacity` function.
     """
     plant_df_c = plant_df.copy()
     region_capacity_dict = {}
@@ -368,7 +368,7 @@ def open_close_plants(
                 steel_plant_df_c = create_new_plant(steel_plant_df_c, new_plant_meta)
                 xcost_tech = get_xcost_from_region(lev_cost_df, year=year, region=region, value_type='min')
                 idx_open = steel_plant_df_c.index[steel_plant_df_c['plant_id'] == new_plant_meta['plant_id']].tolist()[0]
-                steel_plant_df_c.loc[idx_open, 'primary_capacity_2020'] = return_capacity_value(new_plant_meta['combined_capacity'], xcost_tech, 'primary')
+                steel_plant_df_c.loc[idx_open, 'primary_capacity_2020'] = return_capacity_value(new_plant_meta['combined_capacity'], xcost_tech)
                 steel_plant_df_c.loc[idx_open, 'technology_in_2020'] = xcost_tech
                 tc_dict_ref_c = tc_dict_editor(tc_dict_ref_c, year, new_plant_meta['plant_name'], xcost_tech)
 

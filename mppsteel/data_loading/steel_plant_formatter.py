@@ -215,15 +215,6 @@ def adjust_capacity_values(df: pd.DataFrame) -> pd.DataFrame:
     df_c["combined_capacity"] = (
         df_c["primary_capacity_2020"] + df_c["secondary_capacity_2020"]
     )
-
-    def total_capacity_value_mapper(row):
-        if row['technology_in_2020'] == 'EAF':
-            return row['primary_capacity_2020'] + row['secondary_capacity_2020']
-        return row['primary_capacity_2020']
-    df_c["total_capacity"] = df_c.progress_apply(
-        total_capacity_value_mapper,
-        axis=1
-    )
     return df_c
 
 
@@ -236,16 +227,20 @@ def create_plant_capacities_dict(plant_df: pd.DataFrame) -> dict:
     plant_capacities = {}
     for row in plant_df.itertuples():
         plant_name = row.plant_name
+        tech = row.technology_in_2020
+        if tech == 'EAF':
+            capacity = row.primary_capacity_2020
+        else:
+            capacity = row.secondary_capacity_2020
         row = {
             "2020_tech": row.technology_in_2020,
-            "primary_capacity": row.primary_capacity_2020,
-            "secondary_capacity": row.secondary_capacity_2020,
+            "primary_capacity": capacity
         }
         plant_capacities[plant_name] = row
     return plant_capacities
 
 
-def calculate_primary_and_secondary(
+def calculate_primary_capacity(
     tech_capacities: dict, plant: str, tech: str
 ) -> float:
     """Sums primary and secondary capacity if the technology is EAF, otherwise returns the primary capacity value.
@@ -268,10 +263,10 @@ def total_plant_capacity(plant_cap_dict: dict) -> float:
         plant_cap_dict (dict): A dictionary containing plant: capacity/inital tech key:value pairs.
 
     Returns:
-        float: Float value of the summation of all plant capacities using the `calculate_primary_and_secondary` function.
+        float: Float value of the summation of all plant capacities using the `calculate_primary_capacity` function.
     """
     all_capacities = [
-        calculate_primary_and_secondary(
+        calculate_primary_capacity(
             plant_cap_dict, plant, plant_cap_dict[plant]["2020_tech"]
         )
         for plant in plant_cap_dict
@@ -331,6 +326,7 @@ def apply_countries_to_steel_plants(
     country_reference_dict = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "country_reference_dict", "df"
     )
+    print(steel_plants[steel_plants['country_code'] == ''])
     steel_plants["region"] = steel_plants["country_code"].apply(
         lambda x: get_region_from_country_code(x, "wsa_region", country_reference_dict)
     )

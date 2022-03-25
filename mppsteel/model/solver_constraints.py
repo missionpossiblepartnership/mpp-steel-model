@@ -17,7 +17,7 @@ from mppsteel.data_loading.data_interface import (
 from mppsteel.data_loading.pe_model_formatter import bio_constraint_getter
 from mppsteel.data_loading.reg_steel_demand_formatter import steel_demand_getter
 from mppsteel.data_loading.steel_plant_formatter import (
-    calculate_primary_and_secondary, total_plant_capacity
+    calculate_primary_capacity, total_plant_capacity
 )
 from mppsteel.utility.log_utility import get_logger
 
@@ -166,7 +166,7 @@ def material_usage_calc(
     """
 
     plant_capacity = (
-        calculate_primary_and_secondary(plant_capacities, plant_name, tech) / 1000
+        calculate_primary_capacity(plant_capacities, plant_name, tech) / 1000
     )
     steel_demand = steel_demand_getter(
         steel_demand_df, year, steel_demand_scenario, "crude", country_code=country_code
@@ -372,7 +372,7 @@ def material_usage_per_plant(
     capacity_sum = total_plant_capacity(plant_capacities)
     for plant_name, tech in zipped_data:
         plant_capacity = (
-            calculate_primary_and_secondary(plant_capacities, plant_name, tech) / 1000
+            calculate_primary_capacity(plant_capacities, plant_name, tech) / 1000
         )
         plant_country = steel_plant_df[steel_plant_df["plant_name"] == plant_name][
             "country_code"
