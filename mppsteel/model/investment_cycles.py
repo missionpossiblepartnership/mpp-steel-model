@@ -28,9 +28,9 @@ logger = get_logger("Investment Cycles")
 
 def calculate_investment_years(
     op_start_year: int,
+    cycle_length: int,
     cutoff_start_year: int = MODEL_YEAR_START,
     cutoff_end_year: int = MODEL_YEAR_END,
-    inv_intervals: int = INVESTMENT_CYCLE_DURATION_YEARS,
 ) -> list:
     """Creates a list of investment decision years for a plant based on inputted parameters that determine the decision years.
 
@@ -45,13 +45,10 @@ def calculate_investment_years(
     """
     x = op_start_year
     decision_years = []
-    unique_investment_interval = inv_intervals + random.randrange(
-        -INVESTMENT_CYCLE_VARIANCE_YEARS, INVESTMENT_CYCLE_VARIANCE_YEARS, 1
-    )
     while x < cutoff_end_year:
         if x >= cutoff_start_year:
             decision_years.append(x)
-        x += unique_investment_interval
+        x += cycle_length
     return decision_years
 
 
@@ -108,25 +105,27 @@ def add_off_cycle_investment_years(
     return range_list
 
 
-def apply_investment_years(year_value: int) -> list:
+def apply_investment_years(row, cycle_length_mapper: dict) -> list:
     """Formats the operating start date column values from and applies the calculate_investment_years function.
 
     Args:
-        year_value (int): The raw operating start date column from plant data.
+        row (int): The raw operating start date column from plant data.
 
     Returns:
         list: The list of investment decision years.
     """
+    year_value = row.start_of_operation
+    plant_cycle_length = cycle_length_mapper[row.plant_name]
     if pd.isna(year_value):
-        return calculate_investment_years(MODEL_YEAR_START)
+        return calculate_investment_years(MODEL_YEAR_START, plant_cycle_length)
     elif "(anticipated)" in str(year_value):
         year_value = year_value[:4]
-        return calculate_investment_years(int(year_value))
+        return calculate_investment_years(int(year_value), plant_cycle_length)
     else:
         try:
-            return calculate_investment_years(int(float(year_value)))
+            return calculate_investment_years(int(float(year_value)), plant_cycle_length)
         except:
-            return calculate_investment_years(int(year_value[:4]))
+            return calculate_investment_years(int(year_value[:4]), plant_cycle_length)
 
 
 def create_investment_cycle_reference(
@@ -169,6 +168,16 @@ def create_investment_cycle_reference(
     return df.set_index(["year", "switch_type"])
 
 
+def generate_investment_cycle_lengths(steel_plant_df: pd.DataFrame, inv_intervals: int = INVESTMENT_CYCLE_DURATION_YEARS) -> pd.DataFrame:
+    def return_cycle_length():
+        return inv_intervals + random.randrange(
+            -INVESTMENT_CYCLE_VARIANCE_YEARS, INVESTMENT_CYCLE_VARIANCE_YEARS, 1
+        )
+
+    investment_cycle_lengths = [return_cycle_length() for _ in range(len(steel_plant_df["plant_name"]))]
+
+    return dict(zip(steel_plant_df["plant_name"], investment_cycle_lengths))
+
 def create_investment_cycle(steel_plant_df: pd.DataFrame) -> pd.DataFrame:
     """Full flow to create the investment decision cycle reference DataFrame.
 
@@ -179,8 +188,10 @@ def create_investment_cycle(steel_plant_df: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: A DataFrame containing the Complete Investment Decision Cycle Reference.
     """
     logger.info("Creating investment cycle")
-    investment_years = steel_plant_df["start_of_operation"].apply(
-        lambda year: apply_investment_years(year)
+
+    plant_cycle_length_mapper = generate_investment_cycle_lengths(steel_plant_df)
+    investment_years = steel_plant_df.apply(
+        lambda row: apply_investment_years(row, plant_cycle_length_mapper), axis=1,
     ).tolist()
     investment_years_inc_off_cycle = deepcopy(investment_years)
     if len(investment_years) > 0:
@@ -197,7 +208,7 @@ def create_investment_cycle(steel_plant_df: pd.DataFrame) -> pd.DataFrame:
         investment_years_inc_off_cycle,
         MODEL_YEAR_END,
     )
-    return investment_df, investment_dict
+    return {'investment_df': investment_df, 'investment_dict': investment_dict, 'plant_cycle_length_mapper': plant_cycle_length_mapper}
 
 def amend_investment_dict(inv_dict: dict, plant: str, year: int):
     inv_dict_c = deepcopy(inv_dict)
@@ -231,7 +242,7 @@ def investment_cycle_flow(serialize: bool = False) -> pd.DataFrame:
     steel_plants_aug = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df"
     )
-    investment_df, investment_dict = create_investment_cycle(steel_plants_aug)
+    investment_df, investment_dict, plant_cycle_length_mapper = create_investment_cycle(steel_plants_aug)
 
     if serialize:
         logger.info("-- Serializing Investment Cycle Reference")
@@ -241,4 +252,7 @@ def investment_cycle_flow(serialize: bool = False) -> pd.DataFrame:
         serialize_file(
             investment_dict, PKL_DATA_INTERMEDIATE, "investment_dict"
         )
-    return investment_df
+        serialize_file(
+            plant_cycle_length_mapper, PKL_DATA_INTERMEDIATE, "plant_cycle_length_mapper"
+        )
+    return {'investment_df': investment_df, 'investment_dict': investment_dict, 'plant_cycle_length_mapper': plant_cycle_length_mapper}
