@@ -70,11 +70,10 @@ def agg_plant_capacity(plant_df: pd.DataFrame, avg: bool = False, region_string:
         float: Float value of the summation of all plant capacities using the `calculate_primary_and_secondary` function.
     """
     plant_df_c = plant_df.copy()
-    plant_capacity_dict = create_plant_capacities_dict(plant_df_c)
     region_capacity_dict = {}
     regions = plant_df_c[region_string].unique()
     for region in regions:
-        plant_capacities = plant_df_c[plant_df[region_string] == region]['combined_capacity']
+        plant_capacities = plant_df_c[plant_df[region_string] == region]['primary_capacity']
         final_stat = plant_capacities.sum()
         if avg:
             final_stat = plant_capacities.mean()
@@ -202,13 +201,9 @@ def ng_flag_mapper(plant_df: pd.DataFrame, country_ref: pd.DataFrame):
     return dict(zip(country_ref['country_code'], final_values))
 
 
-def return_capacity_value(total_capacity: float, tech: str, return_type: str):
+def return_capacity_value(total_capacity: float, tech: str):
     if tech == 'EAF':
-        if return_type == 'secondary':
-            return total_capacity
-        return 0
-    elif return_type == 'secondary':
-        return 0
+        return total_capacity
     return total_capacity
 
 
@@ -373,8 +368,7 @@ def open_close_plants(
                 steel_plant_df_c = create_new_plant(steel_plant_df_c, new_plant_meta)
                 xcost_tech = get_xcost_from_region(lev_cost_df, year=year, region=region, value_type='min')
                 idx_open = steel_plant_df_c.index[steel_plant_df_c['plant_id'] == new_plant_meta['plant_id']].tolist()[0]
-                steel_plant_df_c.loc[idx_open, 'primary_capacity_2020'] = return_capacity_value(new_plant_meta['combined_capacity'], xcost_tech, 'primary') 
-                steel_plant_df_c.loc[idx_open, 'secondary_capacity_2020'] = return_capacity_value(new_plant_meta['combined_capacity'], xcost_tech, 'secondary')
+                steel_plant_df_c.loc[idx_open, 'primary_capacity_2020'] = return_capacity_value(new_plant_meta['combined_capacity'], xcost_tech, 'primary')
                 steel_plant_df_c.loc[idx_open, 'technology_in_2020'] = xcost_tech
                 tc_dict_ref_c = tc_dict_editor(tc_dict_ref_c, year, new_plant_meta['plant_name'], xcost_tech)
 

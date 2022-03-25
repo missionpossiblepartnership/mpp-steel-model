@@ -87,7 +87,7 @@ def steel_plant_formatter(
 
 
 def extract_steel_plant_capacity(df: pd.DataFrame) -> pd.DataFrame:
-    """Creates new columns `primary_capacity_2020` and `secondary_capacity_2020` based on
+    """Creates new columns `primary_capacity_2020` based on
     technology capacity columns. 
 
     Args:
@@ -258,11 +258,6 @@ def calculate_primary_and_secondary(
     Returns:
         float: The capacity value given the paramaters inputted to the function.
     """
-    if tech == "EAF":
-        return (
-            tech_capacities[plant]["secondary_capacity"]
-            + tech_capacities[plant]["primary_capacity"]
-        )
     return tech_capacities[plant]["primary_capacity"]
 
 

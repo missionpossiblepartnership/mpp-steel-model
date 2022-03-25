@@ -8,23 +8,10 @@ import numpy as np
 
 from copy import deepcopy
 
-from mppsteel.utility.location_utility import get_region_from_country_code, get_countries_from_group
-from mppsteel.utility.file_handling_utility import read_pickle_folder
-from mppsteel.utility.plant_container_class import PlantIdContainer
-from mppsteel.data_loading.reg_steel_demand_formatter import steel_demand_getter
-from mppsteel.data_loading.country_reference import country_df_formatter
-
 from mppsteel.config.model_config import (
-    MODEL_YEAR_END,
     MODEL_YEAR_START,
-    PKL_DATA_IMPORTS,
-    PKL_DATA_INTERMEDIATE,
     CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
     CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
-)
-
-from mppsteel.data_loading.steel_plant_formatter import (
-    calculate_primary_and_secondary, create_plant_capacities_dict
 )
 
 from mppsteel.utility.log_utility import get_logger
@@ -132,8 +119,13 @@ def modify_prod_df(df: pd.DataFrame, data_entry_values: list, year: int, region:
 
 
 def trade_flow(
-    trade_container: TradeBalance, production_demand_df: pd.DataFrame, util_dict: dict,
-    levelized_cost_df: pd.DataFrame, year: int, util_min: float, util_max: float,
+    trade_container: TradeBalance, 
+    production_demand_df: pd.DataFrame, 
+    util_dict: dict,
+    levelized_cost_df: pd.DataFrame, 
+    year: int, 
+    util_min: float = CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION, 
+    util_max: float = CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
 ):
     production_demand_df_c = production_demand_df.copy()
     # change to cos!!!!!!
