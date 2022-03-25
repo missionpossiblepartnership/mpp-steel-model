@@ -36,7 +36,7 @@ from mppsteel.config.model_config import (
     PKL_DATA_INTERMEDIATE,
     EMISSIONS_FACTOR_SLAG,
     ENERGY_DENSITY_MET_COAL_MJ_KG,
-    EUR_USD_CONVERSION_DEFAULT
+    USD_TO_EUR_CONVERSION_DEFAULT
 )
 
 # Create logger
@@ -132,7 +132,7 @@ def capex_generator(
 @pa.check_input(CAPEX_OPEX_PER_TECH_SCHEMA)
 def capex_dictionary_generator(
     greenfield_df: pd.DataFrame, brownfield_df: pd.DataFrame, 
-    other_df: pd.DataFrame, eur_usd: float = EUR_USD_CONVERSION_DEFAULT
+    other_df: pd.DataFrame, eur_usd: float = 1 / USD_TO_EUR_CONVERSION_DEFAULT
 ) -> dict:
     """A dictionary of greenfield, brownfield and other_opex.
 

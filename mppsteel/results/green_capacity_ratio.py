@@ -48,6 +48,7 @@ def green_capacity_ratio_predata(plant_df: pd.DataFrame, tech_choices: dict, cou
     years = [int(key) for key in tech_choices.keys()]
     capacities_dict = dict(zip(plant_df['plant_name'], plant_df['combined_capacity']))
     start_year_dict = dict(zip(plant_df['plant_name'], plant_df['start_of_operation']))
+    country_code_dict = dict(zip(plant_df['plant_name'], plant_df['country_code']))
     for year in years:
         plants = list(tech_choices[str(year)].keys())
         capacities = [capacities_dict[plant] for plant in plants]
@@ -56,13 +57,13 @@ def green_capacity_ratio_predata(plant_df: pd.DataFrame, tech_choices: dict, cou
         df['technology'] = df['plant_name'].apply(lambda plant_name: tech_choices[str(year)][plant_name])
         df['green_tech'] = df['technology'].apply(lambda technology: tech_status_mapper(technology, inc_trans))
         df['active_status'] = df.apply(lambda row: active_status(row, tech_choices, year), axis=1)
-        df['region'] = df["country_code"].apply(lambda x: get_region_from_country_code(x, "rmi_region", country_reference_dict))
+        df['region'] = df["plant_name"].apply(lambda plant_name: get_region_from_country_code(country_code_dict[plant_name], "rmi_region", country_reference_dict))
         df_container.append(df)
     df_final = pd.concat(df_container).reset_index(drop=True)
     df_final['capacity'] /= 1000
     return df_final
     
-def create_gcr_df(green_capacity_ratio_df: pd.DataFrame):
+def create_gcr_df(green_capacity_ratio_df: pd.DataFrame, rounding: int = 3):
     gcr = green_capacity_ratio_df[['year', 'capacity', 'green_tech', 'active_status']].set_index(['active_status','green_tech']).copy()
     gcr_green = gcr.loc[True, True].reset_index().groupby(['year']).sum()[['capacity']].copy()
     gcr_green.rename({'capacity': 'green_capacity'}, axis=1, inplace=True)
@@ -71,7 +72,7 @@ def create_gcr_df(green_capacity_ratio_df: pd.DataFrame):
     gcr_combined = gcr_green.join(gcr_nongreen)
     gcr_combined['nongreen_capacity'] = gcr_combined['nongreen_capacity'].fillna(0)
     gcr_combined['green_capacity_ratio'] = gcr_combined['green_capacity'] / gcr_combined['nongreen_capacity']
-    return gcr_combined
+    return gcr_combined.round(rounding)
 
 @timer_func
 def generate_gcr_df(scenario_dict: dict, serialize: bool = False) -> pd.DataFrame:

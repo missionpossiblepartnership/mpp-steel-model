@@ -4,7 +4,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from mppsteel.config.model_config import (
-    EUR_USD_CONVERSION_DEFAULT,
+    USD_TO_EUR_CONVERSION_DEFAULT,
     MODEL_YEAR_END,
     PKL_DATA_IMPORTS,
     MODEL_YEAR_START,
@@ -44,7 +44,7 @@ from mppsteel.data_loading.pe_model_formatter import (
 logger = get_logger("Variable Plant Cost Archetypes")
 
 
-def generate_feedstock_dict(eur_usd_rate: float = EUR_USD_CONVERSION_DEFAULT) -> dict:
+def generate_feedstock_dict(eur_usd_rate: float = 1 / USD_TO_EUR_CONVERSION_DEFAULT) -> dict:
     """Creates a feedstock dictionary that combines all non-energy model commodities into one dictionary.
     The dictionary has a pairing of the commodity name and the price.
 
@@ -116,6 +116,7 @@ def plant_variable_costs(
     static_energy_prices = read_pickle_folder(
         PKL_DATA_IMPORTS, "static_energy_prices", "df"
     )[["Metric", "Year", "Value"]]
+    static_energy_prices = convert_currency_col(static_energy_prices, 'Value', eur_usd_rate)
     feedstock_dict = generate_feedstock_dict(eur_usd_rate)
     business_cases = load_business_cases()
 

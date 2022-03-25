@@ -301,17 +301,7 @@ def change_cols_to_numeric(df: pd.DataFrame, numeric_cols: list):
 
 def subset_presolver_df(df: pd.DataFrame, subset_type: str = False):
     df_c = df.copy()
-    full_ref_cols = [
-        "year",
-        "plant_id",
-        "plant_name",
-        "base_tech",
-        "switch_tech",
-        "country_code",
-        "tco",
-        "capex_value",
-    ]
-    subset_cols = [
+    tco_cols = [
         "year",
         "base_tech",
         "switch_tech",
@@ -329,10 +319,7 @@ def subset_presolver_df(df: pd.DataFrame, subset_type: str = False):
     if subset_type == 'tco_summary':
         df_c = change_cols_to_numeric(df_c, ['tco', 'capex_value'])
         df_c = df_c.rename({'start_technology': 'base_tech', 'end_technology': 'switch_tech'}, axis=1).copy()
-        return df_c[subset_cols].set_index(["year", "country_code", "base_tech"]).copy()
-    elif subset_type == 'tco_full':
-        df_c = change_cols_to_numeric(df_c, ['tco', 'capex_value'])
-        return df_c[full_ref_cols].set_index(["year", "plant_name", "base_tech"]).copy()
+        return df_c[tco_cols].set_index(["year", "country_code", "base_tech"]).copy()
     elif subset_type == 'abatement':
         df_c = change_cols_to_numeric(df_c, ['abated_combined_emissivity'])
         return df_c[emissions_cols].set_index(["year", "country_code", "base_tech"]).copy()

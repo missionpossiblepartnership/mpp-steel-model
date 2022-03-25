@@ -122,7 +122,7 @@ if __name__ == "__main__":
     if args.emissivity:
         generate_emissions_flow(scenario_dict=scenario_args, serialize=True)
 
-    if args.investment_cycle:
-        inv_cycle_flow()
+    if args.investment_cycles:
+        investment_cycles(scenario_dict=scenario_args)
 
     TIME_CONTAINER.return_time_container()

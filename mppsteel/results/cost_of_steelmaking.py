@@ -8,6 +8,8 @@ from tqdm import tqdm
 from mppsteel.data_loading.steel_plant_formatter import create_plant_capacities_dict
 from mppsteel.data_loading.reg_steel_demand_formatter import steel_demand_getter
 from mppsteel.model.levelized_cost import calculate_cc
+from mppsteel.results.production import production_stats_getter
+from mppsteel.results.investments import get_investment_capital_costs
 
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
@@ -20,7 +22,6 @@ from mppsteel.config.model_config import (
 )
 
 logger = get_logger("Cost of Steelmaking")
-
 
 def create_region_plant_ref(df: pd.DataFrame, region_string: str) -> dict:
     """Creates a mapping of plants to a region(s) of interest.
@@ -68,8 +69,10 @@ def apply_cos(
     cap_dict: dict,
     v_costs: pd.DataFrame,
     capex_costs: dict,
-    steel_demand: pd.DataFrame,
-    steel_scenario: str,
+    production_df: pd.DataFrame,
+    investment_df: pd.DataFrame,
+    plant_investment_cycle_length_mapper: dict,
+    full_investment_cycles: dict,
     capital_charges: bool,
 ) -> float:
     """Applies the Cost of Steelmaking function to a given row in a DataFrame.
@@ -80,7 +83,7 @@ def apply_cos(
         cap_dict (dict): A DataFrame containing the steel plant metadata.
         v_costs (pd.DataFrame): A DataFrame containing the variable costs for each technology across each year and region.
         capex_costs (dict): A dictionary containing the Capex values for Greenfield, Brownfield and Other Opex values.
-        steel_demand (pd.DataFrame): A DataFrame containing the steel demand value timeseries.
+        production_df (pd.DataFrame): A DataFrame containing the production values.
         steel_scenario (str): A string containing the scenario to be used in the steel.
         capital_charges (bool): A boolean flag to toggle the capital charges function.
 
@@ -89,21 +92,16 @@ def apply_cos(
     """
 
     primary_capacity = cap_dict[row.plant_name]["primary_capacity"]
-    secondary_capacity = cap_dict[row.plant_name]["secondary_capacity"]
     variable_cost = 0
     other_opex_cost = 0
-    gf_value = 0
+    capital_investment = 0
     if row.technology:
         variable_cost = v_costs.loc[row.country_code, year, row.technology]["cost"]
         other_opex_cost = capex_costs["other_opex"].loc[row.technology, year]["value"]
-        gf_value = capex_costs["greenfield"].loc[row.technology, year]["value"]
-    steel_demand_value = steel_demand_getter(
-        steel_demand, year, steel_scenario, "crude", region="World"
-    )
+        capital_investment = get_investment_capital_costs(investment_df, full_investment_cycles, row.plant_name, year)
     discount_rate = DISCOUNT_RATE
-    relining_year_span = INVESTMENT_CYCLE_DURATION_YEARS
+    relining_year_span = plant_investment_cycle_length_mapper.get(row.plant_name, INVESTMENT_CYCLE_DURATION_YEARS)
 
-    # cuf = steel_demand_value / row.capacity
     relining_cost = 0
 
     if capital_charges and row.technology:
@@ -116,14 +114,22 @@ def apply_cos(
             "brownfield",
         )
 
-    result_1 = (primary_capacity + secondary_capacity) * (
-        (variable_cost * row.capacity_utilization) + other_opex_cost + relining_cost
-    )
+    if row.capacity_utilization == 0:
+        result_1 = 0
+
+    else:
+        result_1 = primary_capacity * (
+            (variable_cost * row.capacity_utilization) + other_opex_cost + relining_cost
+        )
 
     if not capital_charges:
         return result_1
 
-    result_2 = npf.pmt(discount_rate, relining_year_span, gf_value) / steel_demand_value
+    production_value = production_stats_getter(production_df, year, row.plant_name, 'production')
+    if production_value == 0:
+        result_2 = 0
+    else:
+        result_2 = npf.pmt(discount_rate, relining_year_span, capital_investment) / production_value
 
     return result_1 - result_2
 
@@ -132,9 +138,10 @@ def cost_of_steelmaking(
     production_stats: pd.DataFrame,
     variable_costs: pd.DataFrame,
     capex_df: pd.DataFrame,
-    steel_demand: pd.DataFrame,
     capacities_dict: dict,
-    steel_scenario: str = "bau",
+    investment_results: pd.DataFrame,
+    plant_investment_cycle_length_mapper: dict,
+    full_investment_cycles: dict,
     region_group: str = "region_wsa_region",
     regional: bool = False,
     capital_charges: bool = False,
@@ -145,9 +152,8 @@ def cost_of_steelmaking(
         production_stats (pd.DataFrame): A DataFrame containing the Production Stats.
         variable_costs (pd.DataFrame): A DataFrame containing the variable costs for each technology across each year and region.
         capex_df (pd.DataFrame): A dictionary containing the Capex values for Greenfield, Brownfield and Other Opex values.
-        steel_demand (pd.DataFrame): A DataFrame containing the steel demand value timeseries.
         capacities_dict (dict): A dictionary containing the initial capacities of each plant.
-        steel_scenario (str): A string containing the scenario to be used in the steel. Defaults to "bau".
+        investment_df
         region_group (str, optional): Determines which regional schema to use if the `regional` flag is set to `True`. Defaults to "region_wsa_region".
         regional (bool, optional): Boolean flag to determine whether to calculate the Cost of Steelmaking at the regional level or the global level. Defaults to False.
         capital_charges (bool): A boolean flag to toggle the capital charges function. Defaults to False.
@@ -183,8 +189,10 @@ def cost_of_steelmaking(
             cap_dict=capacities_dict,
             v_costs=variable_costs,
             capex_costs=capex_df,
-            steel_demand=steel_demand,
-            steel_scenario=steel_scenario,
+            production_df=production_stats,
+            investment_df=investment_results,
+            plant_investment_cycle_length_mapper=plant_investment_cycle_length_mapper,
+            full_investment_cycles=full_investment_cycles,
             capital_charges=capital_charges,
             axis=1,
         )
@@ -192,10 +200,7 @@ def cost_of_steelmaking(
         primary_sum = extract_dict_values(
             capacities_dict, "primary_capacity", plant_region_ref, ref
         )
-        secondary_sum = extract_dict_values(
-            capacities_dict, "secondary_capacity", plant_region_ref, ref
-        )
-        return cos_sum / (primary_sum + secondary_sum)
+        return cos_sum / primary_sum
 
     for year in tqdm(years, total=len(years), desc="Cost of Steelmaking: Year Loop"):
         ps_y = production_stats.loc[year]
@@ -240,10 +245,11 @@ def dict_to_df(df_values_dict: dict, region_group: str, cc: bool = False) -> pd.
 def create_cost_of_steelmaking_data(
     production_df: pd.DataFrame,
     variable_costs_df: pd.DataFrame,
+    investment_df: pd.DataFrame,
     capex_ref: dict,
-    steel_demand_df: pd.DataFrame,
     capacities_ref: dict,
-    demand_scenario: str,
+    investment_cycle_lengths: dict,
+    full_investment_cycles: dict,
     region_group: str,
 ) -> pd.DataFrame:
     """Generates a DataFrame containing two value columns: one with standard cost of steelmaking, and cost of steelmaking with capital charges.
@@ -259,14 +265,17 @@ def create_cost_of_steelmaking_data(
     Returns:
         pd.DataFrame: A DataFrame containing the new columns.
     """
-
+    investment_dict_result_cycles_only = {
+        key: [val for val in values if isinstance(val, int)] for key, values in full_investment_cycles.items()
+        }
     standard_cos = cost_of_steelmaking(
         production_df,
         variable_costs_df,
         capex_ref,
-        steel_demand_df,
         capacities_ref,
-        demand_scenario,
+        investment_df,
+        investment_cycle_lengths,
+        investment_dict_result_cycles_only,
         region_group,
         regional=True,
     )
@@ -274,9 +283,10 @@ def create_cost_of_steelmaking_data(
         production_df,
         variable_costs_df,
         capex_ref,
-        steel_demand_df,
         capacities_ref,
-        demand_scenario,
+        investment_df,
+        investment_cycle_lengths,
+        investment_dict_result_cycles_only,
         region_group,
         regional=True,
         capital_charges=True,
@@ -301,9 +311,7 @@ def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize: bool = 
         PKL_DATA_INTERMEDIATE, "variable_costs_regional", "df"
     )
     capex_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "capex_dict", "df")
-    steel_demand_df = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "regional_steel_demand_formatted", "df"
-    )
+    
     production_resource_usage = read_pickle_folder(
         PKL_DATA_FINAL, "production_resource_usage", "df"
     )
@@ -311,15 +319,24 @@ def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize: bool = 
         PKL_DATA_INTERMEDIATE, "plant_result_df", "df"
     )
     capacities_dict = create_plant_capacities_dict(plant_result_df)
-    steel_demand_scenario = scenario_dict["steel_demand_scenario"]
-
+    investment_results = read_pickle_folder(
+        PKL_DATA_INTERMEDIATE, "investment_results", "df"
+    )
+    investment_dict_result = read_pickle_folder(
+        PKL_DATA_INTERMEDIATE, "investment_dict_result", "df"
+    )
+    plant_cycle_length_mapper = read_pickle_folder(
+        PKL_DATA_INTERMEDIATE, "plant_cycle_length_mapper", "df"
+    )
+    
     cos_data = create_cost_of_steelmaking_data(
         production_resource_usage,
         variable_costs_regional,
+        investment_results,
         capex_dict,
-        steel_demand_df,
         capacities_dict,
-        steel_demand_scenario,
+        plant_cycle_length_mapper,
+        investment_dict_result,
         "region_wsa_region",
     )
 

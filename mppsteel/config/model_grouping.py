@@ -43,7 +43,7 @@ from mppsteel.results.green_capacity_ratio import generate_gcr_df
 from mppsteel.graphs.graph_production import create_graphs
 
 from mppsteel.config.model_config import (
-    EUR_USD_CONVERSION_DEFAULT,
+    USD_TO_EUR_CONVERSION_DEFAULT,
     MODEL_YEAR_END,
     OUTPUT_FOLDER,
     PKL_DATA_FINAL,
@@ -76,14 +76,14 @@ def get_inputted_scenarios(scenario_options: dict, default_scenario: dict) -> di
 
 
 def add_currency_rates_to_scenarios(scenario_dict: dict, live: bool = False) -> dict:
-    eur_usd = EUR_USD_CONVERSION_DEFAULT
-    usd_eur = 1 / EUR_USD_CONVERSION_DEFAULT
+    eur_to_usd = 1 / USD_TO_EUR_CONVERSION_DEFAULT
+    usd_to_eur = USD_TO_EUR_CONVERSION_DEFAULT
     if live:
         eur_usd = get_currency_rate("eur", "usd")
         usd_eur = get_currency_rate("usd", "eur")
 
-    scenario_dict["eur_usd"] = eur_usd
-    scenario_dict["usd_eur"] = usd_eur
+    scenario_dict["eur_usd"] = eur_to_usd
+    scenario_dict["usd_eur"] = usd_to_eur
 
     return scenario_dict
 
@@ -107,6 +107,9 @@ def data_preprocessing_phase(scenario_dict: dict) -> None:
     investment_cycle_flow(serialize=True)
     generate_variable_plant_summary(scenario_dict, serialize=True)
     generate_levelized_cost_results(serialize=True)
+
+def investment_cycles(scenario_dict: dict) -> None:
+    investment_cycle_flow(serialize=True)
 
 def model_presolver(scenario_dict: dict) -> None:
     tco_presolver_reference(scenario_dict, serialize=True)
@@ -139,7 +142,6 @@ def model_outputs_phase(new_folder: bool = False, timestamp: str = "") -> None:
     pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, "levelized_cost")
     pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, "emissivity_abatement_switches")
     pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, "tco_summary_data")
-    pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, "tco_reference_data")
 
     # Save Final Pickle Files
     pkl_files = [
@@ -266,8 +268,8 @@ def get_emissivity() -> None:
 def lcost_flow() -> None:
     generate_levelized_cost_results(serialize=True)
 
-def inv_cycle_flow() -> None:
-    investment_cycle_flow(serialize=True)
+def gcr_flow(scenario_dict: dict) -> None:
+    generate_gcr_df(scenario_dict, serialize=True)
 
 parser = argparse.ArgumentParser(
     description="The MPP Python Steel Model Command Line Interface", add_help=False
@@ -399,5 +401,5 @@ parser.add_argument(
     "-j", "--emissivity", action="store_true", help="Runs the emissivity script only"
 )  # get_emissivity
 parser.add_argument(
-    "-m", "--investment_cycle", action="store_true", help="Runs the investment_cycle script only"
-)  # investment cycles
+    "-m", "--investment_cycles", action="store_true", help="Runs the investment_cycles script only"
+)  # investment_cycles
