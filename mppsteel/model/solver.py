@@ -248,7 +248,7 @@ def choose_technology(
     )
     investment_year_ref_c = investment_year_ref.copy()
     investment_dict_c = deepcopy(investment_dict)
-    plant_cycle_length_mapper_c = deepcopy(plant_cycle_length_mapper_c)
+    plant_cycle_length_mapper_c = deepcopy(plant_cycle_length_mapper)
     # Constraint data
     bio_constraint_model = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "bio_constraint_model_formatted", "df"
@@ -317,7 +317,7 @@ def choose_technology(
         new_open_plants = return_modified_plants(model_plant_df, year, 'open')
         investment_dict_object = create_investment_cycle(new_open_plants)
         investment_dict_c = {**investment_dict_c, **investment_dict_object['investment_dict']}
-        plant_cycle_length_mapper_c = {**plant_cycle_length_mapper_c, **investment_dict_object['plant_cycle_length_mapper_c']}
+        plant_cycle_length_mapper_c = {**plant_cycle_length_mapper_c, **investment_dict_object['plant_cycle_length_mapper']}
         investment_year_ref_c = create_investment_cycle_ref_from_dict(investment_dict_c, year_end)
         switchers = extract_tech_plant_switchers(investment_year_ref_c, year)
         non_switchers = list(set(all_plant_names).difference(switchers))
@@ -535,5 +535,5 @@ def solver_flow(scenario_dict: dict, year_end: int, serialize: bool = False) -> 
         serialize_file(results_dict['investment_dict_result'], PKL_DATA_INTERMEDIATE, "investment_dict_result")
         serialize_file(results_dict['capacity_results'], PKL_DATA_INTERMEDIATE, "capacity_results")
         serialize_file(results_dict['trade_results'], PKL_DATA_INTERMEDIATE, "trade_results")
-        serialize_file(levelized_cost_updated, PKL_DATA_INTERMEDIATE, 'levelized_cost_updated') # updated old levelized cost including all the new plants
+        serialize_file(levelized_cost_updated, PKL_DATA_INTERMEDIATE, 'levelized_cost_updated')
     return results_dict

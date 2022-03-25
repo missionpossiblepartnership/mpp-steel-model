@@ -254,6 +254,7 @@ def production_demand_gap(
         new_plants_required = 0
         plants_to_close = 0
         current_capacity = deepcopy(capacity_agg)
+        new_total_capacity = 0
 
         initial_min_utilization_reqiured = demand / capacity_agg
         new_min_utilization_required = 0
@@ -278,7 +279,7 @@ def production_demand_gap(
         util_dict_c[region] = new_min_utilization_required
         util_dict_c['World'] = round(np.mean(list(util_dict_c.values())), rounding)
         initial_utilized_capacity = capacity_agg * initial_utilization
-        new_utilized_capacity = new_total_capacity * new_min_utilization_required
+        new_utilized_capacity = capacity_agg * new_min_utilization_required
         initial_balance_value = initial_utilized_capacity - demand
         new_balance_value = new_utilized_capacity - demand
 

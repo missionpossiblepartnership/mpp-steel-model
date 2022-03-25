@@ -242,17 +242,17 @@ def investment_cycle_flow(serialize: bool = False) -> pd.DataFrame:
     steel_plants_aug = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df"
     )
-    investment_df, investment_dict, plant_cycle_length_mapper = create_investment_cycle(steel_plants_aug)
+    investment_object = create_investment_cycle(steel_plants_aug)
 
     if serialize:
         logger.info("-- Serializing Investment Cycle Reference")
         serialize_file(
-            investment_df, PKL_DATA_INTERMEDIATE, "plant_investment_cycles"
+            investment_object['investment_df'], PKL_DATA_INTERMEDIATE, "plant_investment_cycles"
         )
         serialize_file(
-            investment_dict, PKL_DATA_INTERMEDIATE, "investment_dict"
+            investment_object['investment_dict'], PKL_DATA_INTERMEDIATE, "investment_dict"
         )
         serialize_file(
-            plant_cycle_length_mapper, PKL_DATA_INTERMEDIATE, "plant_cycle_length_mapper"
+            investment_object['plant_cycle_length_mapper'], PKL_DATA_INTERMEDIATE, "plant_cycle_length_mapper"
         )
-    return {'investment_df': investment_df, 'investment_dict': investment_dict, 'plant_cycle_length_mapper': plant_cycle_length_mapper}
+    return {'investment_df': investment_object['investment_df'], 'investment_dict': investment_object['investment_dict'], 'plant_cycle_length_mapper': investment_object['investment_dict']}
