@@ -4,14 +4,11 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 
-from mppsteel.config.model_config import PKL_DATA_FINAL
-from mppsteel.config.model_config import PKL_DATA_INTERMEDIATE
 from mppsteel.config.reference_lists import MPP_COLOR_LIST, GRAPH_COL_ORDER
 
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.utility.file_handling_utility import read_pickle_folder
 
-from mppsteel.graphs.plotly_graphs import bar_chart
+logger = get_logger(__name__)
 
 def generate_emissivity_charts (
     df: pd.DataFrame, year: int = None, region: str = None, 

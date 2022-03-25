@@ -12,8 +12,6 @@ from mppsteel.config.model_config import PKL_DATA_INTERMEDIATE
 from mppsteel.graphs.plotly_graphs import (
     line_chart,
     area_chart,
-    bar_chart,
-    bar_chart_vertical,
     ARCHETYPE_COLORS,
 )
 
@@ -23,8 +21,8 @@ from mppsteel.graphs.cost_of_steelmaking_graphs import lcost_graph
 from mppsteel.graphs.investment_graph import investment_line_chart, investment_per_tech
 from mppsteel.graphs.emissions_per_tech import generate_emissivity_charts
 from mppsteel.graphs.tco_graph import generate_tco_charts
-# Create logger
-logger = get_logger("Graph Production")
+
+logger = get_logger(__name__)
 
 INITIAL_COLS = [
     "year",
