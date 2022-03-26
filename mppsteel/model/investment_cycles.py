@@ -192,7 +192,7 @@ def create_investment_cycle(steel_plant_df: pd.DataFrame) -> pd.DataFrame:
     plant_cycle_length_mapper = generate_investment_cycle_lengths(steel_plant_df)
     investment_years = steel_plant_df.apply(
         lambda row: apply_investment_years(row, plant_cycle_length_mapper), axis=1,
-    ).tolist()
+    )
     investment_years_inc_off_cycle = deepcopy(investment_years)
     if len(investment_years) > 0:
         investment_years_inc_off_cycle = [
