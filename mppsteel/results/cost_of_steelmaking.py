@@ -39,12 +39,11 @@ def create_region_plant_ref(df: pd.DataFrame, region_string: str) -> dict:
 
 
 def extract_dict_values(
-    main_dict: dict, key_to_extract: str, reference_dict: dict = None, ref_key: str = None
+    main_dict: dict, reference_dict: dict = None, ref_key: str = None
 ) -> float:
     """Extracts dictionary values based on function arguments passed (multi-nested dict). final values must be numerical.
     Args:
         main_dict (dict): The main dictionary you want to extract values from.
-        key_to_extract (str): The specific dictionary key you want to extract values for (when dictionary has multiple levels).
         reference_dict (dict, optional): A reference dictionary containing metadata about the keys in main_dict. Defaults to None.
         ref_key (str, optional): A reference key for the reference_dict. Defaults to None.
 
@@ -55,12 +54,12 @@ def extract_dict_values(
         ref_list = reference_dict[ref_key]
         return sum(
             [
-                main_dict[key][key_to_extract]
+                main_dict[key]
                 for key in main_dict
                 if key in ref_list
             ]
         )
-    return sum([main_dict[key][key_to_extract] for key in main_dict])
+    return sum([main_dict[key] for key in main_dict])
 
 
 def apply_cos(
@@ -91,7 +90,7 @@ def apply_cos(
         float: The cost of Steelmaking value to be applied.
     """
 
-    primary_capacity = cap_dict[row.plant_name]["primary_capacity"]
+    plant_capacity = cap_dict[row.plant_name]["plant_capacity"]
     variable_cost = 0
     other_opex_cost = 0
     capital_investment = 0
@@ -118,7 +117,7 @@ def apply_cos(
         result_1 = 0
 
     else:
-        result_1 = primary_capacity * (
+        result_1 = plant_capacity * (
             (variable_cost * row.capacity_utilization) + other_opex_cost + relining_cost
         )
 
@@ -197,10 +196,10 @@ def cost_of_steelmaking(
             axis=1,
         )
         cos_sum = cos_values.sum()
-        primary_sum = extract_dict_values(
-            capacities_dict, "primary_capacity", plant_region_ref, ref
+        capacity_sum = extract_dict_values(
+            capacities_dict, plant_region_ref, ref
         )
-        return cos_sum / primary_sum
+        return cos_sum / capacity_sum
 
     for year in tqdm(years, total=len(years), desc="Cost of Steelmaking: Year Loop"):
         ps_y = production_stats_modified.loc[year]

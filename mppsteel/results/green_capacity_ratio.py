@@ -47,7 +47,7 @@ def green_capacity_ratio_predata(
 
     df_container = []
     years = [int(key) for key in tech_choices.keys()]
-    capacities_dict = dict(zip(plant_df['plant_name'], plant_df['combined_capacity']))
+    capacities_dict = dict(zip(plant_df['plant_name'], plant_df['plant_capacity']))
     start_year_dict = dict(zip(plant_df['plant_name'], plant_df['start_of_operation']))
     country_code_dict = dict(zip(plant_df['plant_name'], plant_df['country_code']))
     for year in years:

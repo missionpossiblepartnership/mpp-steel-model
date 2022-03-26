@@ -41,7 +41,7 @@ def carbon_tax_estimate(
 @lru_cache(maxsize=200000)
 def green_premium_capacity_calculation(
     variable_tech_cost: float,
-    primary_capacity: float,
+    plant_capacity: float,
     technology: str,
     eur_usd_rate: float,
 ) -> float:
@@ -49,19 +49,16 @@ def green_premium_capacity_calculation(
 
     Args:
         variable_tech_cost (float): The variable cost of a technology.
-        primary_capacity (float): The primary capacity of a plant.
+        plant_capacity (float): The plant_capacity of a plant.
         technology (str): The technology that the green premium is being calculated for.
         eur_usd_rate (float): A conversion rate from euros to usd.
 
     Returns:
         float: A green premium capacity value based on the inputted values.
     """
-    if technology == "EAF":
-        variable_cost_value = variable_tech_cost * primary_capacity
-    else:
-        variable_cost_value = variable_tech_cost * primary_capacity
+    variable_cost_value = variable_tech_cost * plant_capacity
     return (
-        (variable_cost_value / primary_capacity) / eur_usd_rate
+        (variable_cost_value / plant_capacity) / eur_usd_rate
     )
 
 
@@ -97,13 +94,13 @@ def calculate_green_premium(
     steel_plant_df_c = steel_plant_df.loc[
         steel_plant_df["plant_name"] == plant_name
     ].copy()
-    primary_capacity = steel_plant_df_c["primary_capacity_2020"].values[0]
+    plant_capacity = steel_plant_df_c["plant_capacity"].values[0]
     green_premium = green_premium_timeseries.loc[
         green_premium_timeseries["year"] == year
     ]["value"]
     steel_making_cost = green_premium_capacity_calculation(
         variable_tech_cost,
-        primary_capacity,
+        plant_capacity,
         technology_2020,
         eur_usd_rate,
     )

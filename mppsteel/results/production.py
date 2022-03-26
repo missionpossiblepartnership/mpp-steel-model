@@ -85,7 +85,7 @@ def tech_capacity_splits(steel_plants: pd.DataFrame, tech_choices: dict) -> pd.D
         pd.DataFrame: The combined DataFrame
     """
     logger.info("- Generating Capacity split DataFrame")
-    capacities_dict = dict(zip(steel_plants['plant_name'], steel_plants['combined_capacity']))
+    capacities_dict = dict(zip(steel_plants['plant_name'], steel_plants['plant_capacity']))
     steel_plant_dict = dict(
         zip(steel_plants["plant_name"].values, steel_plants["country_code"].values)
     )

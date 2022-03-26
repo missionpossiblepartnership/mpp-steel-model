@@ -87,7 +87,7 @@ def steel_plant_formatter(
 
 
 def extract_steel_plant_capacity(df: pd.DataFrame) -> pd.DataFrame:
-    """Creates new columns `primary_capacity_2020` based on
+    """Creates new columns `plant_capacity` based on
     technology capacity columns. 
 
     Args:
@@ -115,7 +115,7 @@ def extract_steel_plant_capacity(df: pd.DataFrame) -> pd.DataFrame:
             return float(0)
 
     df_c = df.copy()
-    df_c["primary_capacity_2020"] = 0
+    df_c["plant_capacity"] = 0
     capacity_cols = [
         "BFBOF_capacity",
         "EAF_capacity",
@@ -127,21 +127,19 @@ def extract_steel_plant_capacity(df: pd.DataFrame) -> pd.DataFrame:
         tech = row[enum_dict["technology_in_2020"]]
         for col in capacity_cols:
             if (col == "EAF_capacity") & (tech == "EAF"):
-                row[enum_dict["primary_capacity_2020"]] = 0
+                row[enum_dict["plant_capacity"]] = convert_to_float(
+                    row[enum_dict["EAF_capacity"]]
+                )
             elif (col == "BFBOF_capacity") & (tech in ["Avg BF-BOF", "BAT BF-BOF"]):
-                row[enum_dict["primary_capacity_2020"]] = convert_to_float(
+                row[enum_dict["plant_capacity"]] = convert_to_float(
                     row[enum_dict["BFBOF_capacity"]]
                 )
-            elif (col == "DRIEAF_capacity") & (tech in ["DRI-EAF", "DRI-EAF+CCUS"]):
-                row[enum_dict["primary_capacity_2020"]] = convert_to_float(
-                    row[enum_dict["DRIEAF_capacity"]]
-                )
-            elif (col == "DRI_capacity") & (tech == "DRI"):
-                row[enum_dict["primary_capacity_2020"]] = convert_to_float(
+            elif (col in {"DRIEAF_capacity", "DRI_capacity"}) & (tech in {"DRI-EAF", "DRI-EAF+CCUS"}):
+                row[enum_dict["plant_capacity"]] = convert_to_float(
                     row[enum_dict["DRI_capacity"]]
                 )
             else:
-                row[enum_dict["primary_capacity_2020"]] = 0
+                row[enum_dict["plant_capacity"]] = 0
         return row
 
     tqdma.pandas(desc="Extract Steel Plant Capacity")
@@ -149,9 +147,6 @@ def extract_steel_plant_capacity(df: pd.DataFrame) -> pd.DataFrame:
     df_c = df_c.progress_apply(
         value_mapper, enum_dict=enumerated_cols, axis=1, raw=True
     )
-    df_c["secondary_capacity_2020"] = df_c["EAF_capacity"].apply(
-        lambda x: convert_to_float(x)
-    ) - df_c["DRIEAF_capacity"].apply(lambda x: convert_to_float(x))
     return df_c
 
 
@@ -165,42 +160,13 @@ def adjust_capacity_values(df: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: The DataFrame with the amended capacity values.
     """
     df_c = df.copy()
-    average_eaf_secondary_capacity = df_c[
-        (df_c["secondary_capacity_2020"] != 0) & (df_c["technology_in_2020"] == "EAF")
-    ]["secondary_capacity_2020"].mean()
 
-    def value_mapper(row, enum_dict: dict, avg_eaf_value: float):
-        # use average bfof values for primary if technology is BOF but primary capapcity is 0
+    def value_mapper(row, enum_dict: dict):
+        # use average bfof values for plant capacity if technology is BOF but capapcity is 0
         if (row[enum_dict["BFBOF_capacity"]] != 0) & (
             row[enum_dict["technology_in_2020"]] in ["Avg BF-BOF", "BAT BF-BOF"]
         ):
-            row[enum_dict["primary_capacity_2020"]] = row[enum_dict["BFBOF_capacity"]]
-        # use bfbof values for primary capacity if technology is eaf
-        if (row[enum_dict["BFBOF_capacity"]] != 0) & (
-            row[enum_dict["technology_in_2020"]] == "EAF"
-        ):
-            row[enum_dict["primary_capacity_2020"]] = row[enum_dict["BFBOF_capacity"]]
-        # use average eaf values for secondary capacity if technology is eaf but secondary capapcity is currently unknown
-        if (row[enum_dict["technology_in_2020"]] == "EAF") & (
-            row[enum_dict["secondary_capacity_2020"]] == 0
-        ):
-            row[enum_dict["secondary_capacity_2020"]] = avg_eaf_value
-        # if plant has DRI capacity and DRI-EAF capacity, make primary capacity the residue
-        if (
-            (abs(row[enum_dict["primary_capacity_2020"]]) > 0)
-            & (abs(row[enum_dict["secondary_capacity_2020"]]) > 0)
-            & (
-                row[enum_dict["primary_capacity_2020"]]
-                + row[enum_dict["secondary_capacity_2020"]]
-                == 0
-            )
-        ):
-            row[enum_dict["secondary_capacity_2020"]] = row[
-                enum_dict["DRIEAF_capacity"]
-            ]
-            row[enum_dict["primary_capacity_2020"]] = (
-                row[enum_dict["DRI_capacity"]] - row[enum_dict["DRIEAF_capacity"]]
-            )
+            row[enum_dict["plant_capacity"]] = row[enum_dict["BFBOF_capacity"]]
         return row
 
     tqdma.pandas(desc="Adjust Capacity Values")
@@ -208,52 +174,35 @@ def adjust_capacity_values(df: pd.DataFrame) -> pd.DataFrame:
     df_c = df_c.progress_apply(
         value_mapper,
         enum_dict=enumerated_cols,
-        avg_eaf_value=average_eaf_secondary_capacity,
         axis=1,
         raw=True,
     )
-    df_c["combined_capacity"] = (
-        df_c["primary_capacity_2020"] + df_c["secondary_capacity_2020"]
-    )
+
     return df_c
 
 
 def create_plant_capacities_dict(plant_df: pd.DataFrame) -> dict:
-    """Generates a dictionary that contains each steel plants primary and secondary capacity.
+    """Generates a dictionary that contains each steel plants capacity.
 
     Returns:
         dict: A diction containing the plant name as the key and the capacity values + technology in 2020 as dict values.
     """
-    plant_capacities = {}
-    for row in plant_df.itertuples():
-        plant_name = row.plant_name
-        tech = row.technology_in_2020
-        if tech == 'EAF':
-            capacity = row.primary_capacity_2020
-        else:
-            capacity = row.secondary_capacity_2020
-        row = {
-            "2020_tech": row.technology_in_2020,
-            "primary_capacity": capacity
-        }
-        plant_capacities[plant_name] = row
-    return plant_capacities
+    return {row.plant_name: row.plant_capacity for row in plant_df.itertuples()}
 
 
-def calculate_primary_capacity(
-    tech_capacities: dict, plant: str, tech: str
+def get_plant_capacity(
+    tech_capacities: dict, plant: str,
 ) -> float:
-    """Sums primary and secondary capacity if the technology is EAF, otherwise returns the primary capacity value.
+    """Returns the plant capacity value.
 
     Args:
         tech_capacities (dict): A dictionary containing plant: capacity/inital tech key:value pairs.
-        plant (str): The plant name you want to calculate primary and secondary capacity for.
-        tech (str): The technology you want to calculate primary and secondary capacity for.
+        plant (str): The plant name you want to calculate capacity for.
 
     Returns:
         float: The capacity value given the paramaters inputted to the function.
     """
-    return tech_capacities[plant]["primary_capacity"]
+    return tech_capacities[plant]
 
 
 def total_plant_capacity(plant_cap_dict: dict) -> float:
@@ -263,11 +212,11 @@ def total_plant_capacity(plant_cap_dict: dict) -> float:
         plant_cap_dict (dict): A dictionary containing plant: capacity/inital tech key:value pairs.
 
     Returns:
-        float: Float value of the summation of all plant capacities using the `calculate_primary_capacity` function.
+        float: Float value of the summation of all plant capacities using the `get_plant_capacity` function.
     """
     all_capacities = [
-        calculate_primary_capacity(
-            plant_cap_dict, plant, plant_cap_dict[plant]["2020_tech"]
+        get_plant_capacity(
+            plant_cap_dict, plant
         )
         for plant in plant_cap_dict
     ]
