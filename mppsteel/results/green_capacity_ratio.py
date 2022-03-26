@@ -34,7 +34,7 @@ def green_capacity_ratio_predata(
         if pd.isna(start_year):
             return 2020
         elif "(anticipated)" in str(start_year):
-            return start_year[:4]
+            return int(start_year[:4])
         return int(start_year)
     
     def active_status(row, tech_choices: dict, current_year: int):

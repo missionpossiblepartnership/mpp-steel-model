@@ -177,7 +177,7 @@ def cost_of_steelmaking(
         "region_continent",
         "region_region",
     ]
-    production_stats = production_stats[cols_to_keep].set_index("year").copy()
+    production_stats_modified = production_stats[cols_to_keep].set_index("year").copy()
     plant_region_ref = create_region_plant_ref(production_stats, region_group)
     cos_year_list = []
 
@@ -203,7 +203,7 @@ def cost_of_steelmaking(
         return cos_sum / primary_sum
 
     for year in tqdm(years, total=len(years), desc="Cost of Steelmaking: Year Loop"):
-        ps_y = production_stats.loc[year]
+        ps_y = production_stats_modified.loc[year]
 
         if regional:
             ps_y = ps_y.set_index(region_group)
@@ -320,7 +320,7 @@ def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize: bool = 
     )
     capacities_dict = create_plant_capacities_dict(plant_result_df)
     investment_results = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "investment_results", "df"
+        PKL_DATA_FINAL, "investment_results", "df"
     )
     investment_dict_result = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "investment_dict_result", "df"

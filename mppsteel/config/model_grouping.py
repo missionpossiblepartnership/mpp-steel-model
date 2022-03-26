@@ -79,8 +79,8 @@ def add_currency_rates_to_scenarios(scenario_dict: dict, live: bool = False) -> 
     eur_to_usd = 1 / USD_TO_EUR_CONVERSION_DEFAULT
     usd_to_eur = USD_TO_EUR_CONVERSION_DEFAULT
     if live:
-        eur_usd = get_currency_rate("eur", "usd")
-        usd_eur = get_currency_rate("usd", "eur")
+        eur_to_usd = get_currency_rate("eur", "usd")
+        usd_to_eur = get_currency_rate("usd", "eur")
 
     scenario_dict["eur_usd"] = eur_to_usd
     scenario_dict["usd_eur"] = usd_to_eur
@@ -401,5 +401,5 @@ parser.add_argument(
     "-j", "--emissivity", action="store_true", help="Runs the emissivity script only"
 )  # get_emissivity
 parser.add_argument(
-    "-m", "--investment_cycles", action="store_true", help="Runs the investment_cycles script only"
-)  # investment_cycles
+    "-m", "--green_replacement_ratio", action="store_true", help="Runs the gcr_flow script only"
+)  # gcr_flow

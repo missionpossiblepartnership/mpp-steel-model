@@ -213,7 +213,10 @@ def get_plant_cycle(plant_cycles: dict, plant_name: str, current_year: int, mode
 
 def get_investment_capital_costs(investment_df: pd.DataFrame, investment_cycles: dict, plant_name: str, current_year: int):
     range_obj = get_plant_cycle(investment_cycles, plant_name, current_year, MODEL_YEAR_START, MODEL_YEAR_END)
-    return investment_df.set_index(['year']).loc[list(range_obj)]['capital_cost'].sum()
+    if range_obj:
+        return investment_df.set_index(['year']).loc[list(range_obj)]['capital_cost'].sum()
+    else:
+        return 0
 
 @timer_func
 def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataFrame:
