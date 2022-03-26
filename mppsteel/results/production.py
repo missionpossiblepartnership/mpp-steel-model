@@ -73,7 +73,7 @@ def generate_production_stats(
             capacity_utilization_factor = regional_steel_demand / regional_capacity
             df_r = df[df["region"] == region].copy()
             df_r["capacity_utilization"] = capacity_utilization_factor
-            df_r['production'] = df_r.apply(apply_production_value)
+            df_r['production'] = df_r.apply(apply_production_value, axis=1)
             df_list.append(df_r)
     return pd.concat(df_list).reset_index(drop=True)
 
