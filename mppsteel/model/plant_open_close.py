@@ -348,6 +348,7 @@ def open_close_plants(
     util_dict_c = gap_analysis['utilization_dict']
 
     if trade_scenario:
+        logger.info(f"Starting the trade flow for {year}")
         trade_output = trade_flow(trade_container, gap_analysis_df, util_dict_c, lev_cost_df, year, close_plant_util_cutoff, open_plant_util_cutoff)
         gap_analysis_df = trade_output['production_demand_df']
         util_dict_c = trade_output['util_dict']
@@ -389,7 +390,7 @@ def open_close_plants(
                 else:
                     tc_dict_ref_c = tc_dict_editor(tc_dict_ref_c, year, plant_to_close, 'Close plant')
 
-    return {'tech_choice_dict': tc_dict_ref_c, 'plant_df': steel_plant_df_c, 'util_dict': util_dict_c, 'trade_container': trade_container}
+    return {'tech_choice_dict': tc_dict_ref_c, 'plant_df': steel_plant_df_c, 'util_dict': util_dict_c}
 
 
 def format_wsa_production_data(df, as_dict: bool = False):

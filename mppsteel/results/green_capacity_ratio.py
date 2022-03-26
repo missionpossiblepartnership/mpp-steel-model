@@ -18,7 +18,8 @@ from mppsteel.utility.location_utility import get_region_from_country_code
 # Create logger
 logger = get_logger("Green Capacity Ratio")
 
-def green_capacity_ratio_predata(plant_df: pd.DataFrame, tech_choices: dict, country_reference_dict: dict, inc_trans: bool = False):
+def green_capacity_ratio_predata(
+    plant_df: pd.DataFrame, tech_choices: dict, country_reference_dict: dict, inc_trans: bool = False):
 
     def tech_status_mapper(tech_choice: dict, inc_trans: bool):
         check_list = deepcopy(TECHNOLOGY_STATES['end_state'])

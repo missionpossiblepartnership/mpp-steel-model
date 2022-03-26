@@ -81,7 +81,7 @@ if __name__ == "__main__":
 
     if args.business_cases:
         standardise_business_cases(serialize=True)
-        #business_case_tests(new_folder=True, timestamp=timestamp, create_test_df=True)
+        # business_case_tests(new_folder=True, timestamp=timestamp, create_test_df=True)
 
     if args.variable_costs:
         generate_variable_plant_summary(scenario_dict=scenario_args, serialize=True)

@@ -309,7 +309,6 @@ def choose_technology(
         model_plant_df = open_close_dict['plant_df']
         current_plant_choices = open_close_dict['tech_choice_dict']
         util_dict_c = open_close_dict['util_dict']
-        trade_container = open_close_dict['trade_container']
         
         all_plant_names = model_plant_df["plant_name"].copy()
         plant_capacities_dict = create_plant_capacities_dict(model_plant_df)
@@ -523,7 +522,7 @@ def solver_flow(scenario_dict: dict, year_end: int, serialize: bool = False) -> 
         tech_switch_scenario=TECH_SWITCH_SCENARIOS[
             scenario_dict["tech_switch_scenario"]
         ],
-        trade_scenario=scenario_dict["trade_scenario"]
+        trade_scenario=scenario_dict["trade_active"]
     )
     levelized_cost_updated = generate_levelized_cost_results(results_dict['plant_result_df'])
 

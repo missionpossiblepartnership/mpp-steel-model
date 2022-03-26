@@ -122,9 +122,9 @@ def model_calculation_phase(scenario_dict: dict) -> None:
 
 def model_results_phase(scenario_dict: dict) -> None:
     production_results_flow(scenario_dict, serialize=True)
-    generate_cost_of_steelmaking_results(scenario_dict, serialize=True)
-    metaresults_flow(scenario_dict, serialize=True)
     investment_results(scenario_dict, serialize=True)
+    metaresults_flow(scenario_dict, serialize=True)
+    generate_cost_of_steelmaking_results(scenario_dict, serialize=True)
     generate_gcr_df(scenario_dict, serialize=True)
 
 

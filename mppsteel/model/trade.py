@@ -133,8 +133,8 @@ def trade_flow(
 
     region_list = list(trade_container[MODEL_YEAR_START].keys())
     util_dict_c = deepcopy(util_dict)
-
-    for region in region_list:
+    
+    for region in tqdm(region_list, total=len(region_list), desc=f'Trade Flow for {year}'):
         trade_balance = get_regional_balance(production_demand_df_c, year, region)
         utilization = get_utilization(production_demand_df_c, year, region)
         demand = production_demand_df_c.loc[(year, region), 'demand']
