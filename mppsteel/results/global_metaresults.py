@@ -5,7 +5,6 @@ from tqdm import tqdm
 from tqdm.auto import tqdm as tqdma
 
 from mppsteel.config.model_config import (
-    AVERAGE_LEVEL_OF_CAPACITY,
     MODEL_YEAR_END,
     MODEL_YEAR_START,
     PKL_DATA_INTERMEDIATE,
