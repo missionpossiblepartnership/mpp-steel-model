@@ -43,7 +43,7 @@ def green_premium_capacity_calculation(
     variable_tech_cost: float,
     plant_capacity: float,
     technology: str,
-    eur_usd_rate: float,
+    eur_to_usd_rate: float,
 ) -> float:
     """Calculates a green premium capacity amount to be multiplied by the green premium value. 
 
@@ -51,14 +51,14 @@ def green_premium_capacity_calculation(
         variable_tech_cost (float): The variable cost of a technology.
         plant_capacity (float): The plant_capacity of a plant.
         technology (str): The technology that the green premium is being calculated for.
-        eur_usd_rate (float): A conversion rate from euros to usd.
+        eur_to_usd_rate (float): A conversion rate from euros to usd.
 
     Returns:
         float: A green premium capacity value based on the inputted values.
     """
     variable_cost_value = variable_tech_cost * plant_capacity
     return (
-        (variable_cost_value / plant_capacity) / eur_usd_rate
+        (variable_cost_value / plant_capacity) / eur_to_usd_rate
     )
 
 
