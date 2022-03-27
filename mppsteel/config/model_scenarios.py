@@ -59,6 +59,7 @@ SCENARIO_SETTINGS = {
 }
 
 DEFAULT_SCENARIO = {
+    "scenario_name": "Default",
     "tech_moratorium": True,  # bool
     "enforce_constraints": True,  # bool
     "transitional_switch": True,  #  bool
@@ -75,6 +76,7 @@ DEFAULT_SCENARIO = {
     "trade_active": True, # bool
 }
 TECH_MORATORIUM = {
+    "scenario_name": "Technology Moratorium",
     'tech_moratorium': True,
     'enforce_constraints': True,
     'transitional_switch': True,
@@ -91,6 +93,7 @@ TECH_MORATORIUM = {
     'trade_active': False,
 }
 CARBON_COST = {
+    "scenario_name": "Carbon Cost",
     'tech_moratorium': False,
     'enforce_constraints': True,
     'transitional_switch': True,
@@ -107,6 +110,7 @@ CARBON_COST = {
     'trade_active': False,
 }
 BAU_SCENARIO = {
+    "scenario_name": "BAU",
     'tech_moratorium': False,
     'enforce_constraints': True,
     'transitional_switch': True,
@@ -123,6 +127,7 @@ BAU_SCENARIO = {
     'trade_active': False,
 }
 BAU_HIGH_CIRC_SCENARIO = {
+    "scenario_name": "BAU High Circularity",
     'tech_moratorium': False,
     'enforce_constraints': True,
     'transitional_switch': True,
@@ -139,6 +144,7 @@ BAU_HIGH_CIRC_SCENARIO = {
     'trade_active': False,
 }
 ABATEMENT_SCENARIO = {
+    "scenario_name": "Abatement Scenario",
     'tech_moratorium': False,
     'enforce_constraints': True,
     'transitional_switch': True,
@@ -155,6 +161,7 @@ ABATEMENT_SCENARIO = {
     'trade_active': False,
 }
 ABATEMENT_HIGH_CIRC_SCENARIO = {
+    "scenario_name": "Abatement High Circularity",
     'tech_moratorium': False,
     'enforce_constraints': True,
     'transitional_switch': True,
