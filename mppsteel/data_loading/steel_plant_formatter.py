@@ -136,7 +136,7 @@ def extract_steel_plant_capacity(df: pd.DataFrame) -> pd.DataFrame:
                 )
             elif (col in {"DRIEAF_capacity", "DRI_capacity"}) & (tech in {"DRI-EAF", "DRI-EAF+CCUS"}):
                 row[enum_dict["plant_capacity"]] = convert_to_float(
-                    row[enum_dict["DRI_capacity"]]
+                    row[enum_dict["DRIEAF_capacity"]]
                 )
             else:
                 row[enum_dict["plant_capacity"]] = 0
