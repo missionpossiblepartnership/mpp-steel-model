@@ -19,8 +19,8 @@ from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.config.model_config import (
     IMPORT_DATA_PATH,
-    PKL_DATA_IMPORTS,
-    PKL_DATA_INTERMEDIATE,
+    PKL_DATA_FORMATTED,
+    PKL_DATA_IMPORTS
 )
 
 from mppsteel.config.reference_lists import (
@@ -467,7 +467,7 @@ def create_bc_test_df(serialize: bool) -> None:
             .copy()
         )
         df_inspector = inspector_df_flow(bc_master)
-        serialize_file(df_inspector, PKL_DATA_INTERMEDIATE, "business_case_test_df")
+        serialize_file(df_inspector, PKL_DATA_FORMATTED, "business_case_test_df")
 
 
 def test_all_technology_business_cases(folder_path: str) -> None:
@@ -490,7 +490,7 @@ def test_all_technology_business_cases(folder_path: str) -> None:
     )
     materials_ref = list(bc_master.index.get_level_values(1).unique())
     df_inspector = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "business_case_test_df", "df"
+        PKL_DATA_FORMATTED, "business_case_test_df", "df"
     )
     for technology in tqdm(
         TECH_REFERENCE_LIST,

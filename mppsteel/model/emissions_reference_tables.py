@@ -11,7 +11,9 @@ from tqdm.auto import tqdm as tqdma
 from mppsteel.utility.utils import enumerate_iterable
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import move_cols_to_front
-from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file, get_scenario_pkl_path
+)
 from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.data_loading.pe_model_formatter import (
@@ -25,8 +27,8 @@ from mppsteel.data_loading.data_interface import load_business_cases
 from mppsteel.config.model_config import (
     MODEL_YEAR_END,
     MODEL_YEAR_START,
-    PKL_DATA_IMPORTS,
-    PKL_DATA_INTERMEDIATE,
+    PKL_DATA_FORMATTED,
+    PKL_DATA_IMPORTS
 )
 
 from mppsteel.config.reference_lists import TECH_REFERENCE_LIST, SWITCH_DICT
@@ -218,7 +220,7 @@ def generate_emissions_dataframe(
     # S3 emissions: all the emissions associated, not with the company itself,
     # but that the organisation is indirectly responsible for, up and down its value chain.
     s3_emissivity_factors = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "final_scope3_ef_df", "df"
+        PKL_DATA_FORMATTED, "final_scope3_ef_df", "df"
     )
 
     return generate_s1_s3_emissions(
@@ -321,17 +323,17 @@ def regional_s2_emissivity(
     """
     b_df = load_business_cases()
     power_model_formatted = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "power_model_formatted", "df"
+        PKL_DATA_FORMATTED, "power_model_formatted", "df"
     )
     hydrogen_model_formatted = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "hydrogen_model_formatted", "df"
+        PKL_DATA_FORMATTED, "hydrogen_model_formatted", "df"
     )
     steel_plants = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df"
+        PKL_DATA_FORMATTED, "steel_plants_processed", "df"
     )
     steel_plant_country_codes = list(steel_plants["country_code"].unique())
     country_ref_dict = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "country_reference_dict", "df"
+        PKL_DATA_FORMATTED, "country_reference_dict", "df"
     )
     df_list = []
     year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
@@ -379,7 +381,7 @@ def combine_emissivity(
     """
     logger.info("Combining S2 Emissions with S1 & S3 emissivity")
     country_ref_dict = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "country_reference_dict", "df"
+        PKL_DATA_FORMATTED, "country_reference_dict", "df"
     )
     total_emissivity = s2_ref.set_index(["year", "country_code", "technology"]).copy()
     total_emissivity["s1_emissivity"] = ""
@@ -459,8 +461,9 @@ def generate_emissions_flow(
     Returns:
         pd.DataFrame: The combined S1, S2 & S3 emissions DataFrame reference. 
     """
+    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
     business_cases_summary = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "standardised_business_cases", "df"
+        PKL_DATA_FORMATTED, "standardised_business_cases", "df"
     )
     electricity_cost_scenario = scenario_dict["electricity_cost_scenario"]
     grid_scenario = scenario_dict["grid_scenario"]
@@ -495,11 +498,11 @@ def generate_emissions_flow(
     )
 
     if serialize:
-        serialize_file(em_exc_ref_dict, PKL_DATA_INTERMEDIATE, "em_exc_ref_dict")
-        serialize_file(s1_emissivity, PKL_DATA_INTERMEDIATE, "calculated_s1_emissivity")
-        serialize_file(s3_emissivity, PKL_DATA_INTERMEDIATE, "calculated_s3_emissivity")
-        serialize_file(s2_emissivity, PKL_DATA_INTERMEDIATE, "calculated_s2_emissivity")
+        serialize_file(em_exc_ref_dict, intermediate_path, "em_exc_ref_dict")
+        serialize_file(s1_emissivity, intermediate_path, "calculated_s1_emissivity")
+        serialize_file(s3_emissivity, intermediate_path, "calculated_s3_emissivity")
+        serialize_file(s2_emissivity, intermediate_path, "calculated_s2_emissivity")
         serialize_file(
-            combined_emissivity, PKL_DATA_INTERMEDIATE, "calculated_emissivity_combined"
+            combined_emissivity, intermediate_path, "calculated_emissivity_combined"
         )
     return combined_emissivity

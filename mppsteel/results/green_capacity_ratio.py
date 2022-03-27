@@ -5,13 +5,14 @@ from copy import deepcopy
 import pandas as pd
 
 from mppsteel.config.model_config import (
-    PKL_DATA_INTERMEDIATE,
-    PKL_DATA_FINAL,
+    PKL_DATA_FORMATTED
 )
 from mppsteel.config.reference_lists import TECHNOLOGY_STATES
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import add_results_metadata
-from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file, get_scenario_pkl_path
+)
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.location_utility import get_region_from_country_code
 
@@ -78,10 +79,11 @@ def create_gcr_df(green_capacity_ratio_df: pd.DataFrame, rounding: int = 3):
 @timer_func
 def generate_gcr_df(scenario_dict: dict, serialize: bool = False) -> pd.DataFrame:
     logger.info("- Starting Green Capacity Ratio")
-
-    plant_result_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, "plant_result_df", "df")
-    tech_choice_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "tech_choice_dict", "dict")
-    country_reference_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "country_reference_dict", "dict")
+    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
+    final_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'final')
+    plant_result_df = read_pickle_folder(intermediate_path, "plant_result_df", "df")
+    tech_choice_dict = read_pickle_folder(intermediate_path, "tech_choice_dict", "dict")
+    country_reference_dict = read_pickle_folder(PKL_DATA_FORMATTED, "country_reference_dict", "dict")
     green_capacity_ratio_df = green_capacity_ratio_predata(plant_result_df, tech_choice_dict, country_reference_dict, True)
     green_capacity_ratio_result = create_gcr_df(green_capacity_ratio_df)
     green_capacity_ratio_result = add_results_metadata(
@@ -89,5 +91,5 @@ def generate_gcr_df(scenario_dict: dict, serialize: bool = False) -> pd.DataFram
     )
     if serialize:
         logger.info("-- Serializing dataframes")
-        serialize_file(green_capacity_ratio_result, PKL_DATA_FINAL, "green_capacity_ratio")
+        serialize_file(green_capacity_ratio_result, final_path, "green_capacity_ratio")
     return green_capacity_ratio_result

@@ -7,10 +7,8 @@ import numpy_financial as npf
 from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
 
 from mppsteel.utility.utils import cast_to_float
-from mppsteel.config.model_config import PKL_DATA_INTERMEDIATE
 from mppsteel.utility.dataframe_utility import column_sorter
 from mppsteel.utility.location_utility import get_region_from_country_code
-from mppsteel.utility.file_handling_utility import read_pickle_folder
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.graphs.plotly_graphs import bar_chart
 
@@ -166,24 +164,19 @@ def assign_country_deltas(df: pd.DataFrame, delta_dict: dict) -> pd.DataFrame:
     return df_c
 
 
-def create_capex_opex_split_data() -> pd.DataFrame:
+def create_capex_opex_split_data(variable_cost_df: pd.DataFrame, capex_dict: dict, country_ref_dict: dict) -> pd.DataFrame:
     """Creates a DataFrame split by cost type for the purpose of creating a graph.
 
     Returns:
         pd.DataFrame: A DataFrame containing the split of costs and the associated metadata.
     """
-    capex_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "capex_dict", "df")
-    vcsmb = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "variable_costs_regional_material_breakdown", "df"
-    )
-    vcsmb_c = vcsmb.copy()
+    vcsmb_c = variable_cost_df.copy()
     index_sort = ["technology", "cost_type", "country_code"]
     # Eletricity PJ to Twh
     def value_mapper(row):
         if row["material_category"] in ["Electricity", "Hydrogen"]:
             row["cost"] = row["cost"] / 3.6
         return row
-
     vcsmb_c = vcsmb_c.apply(value_mapper, axis=1)
     vcsmb_c = (
         vcsmb_c.set_index("year")
@@ -200,9 +193,6 @@ def create_capex_opex_split_data() -> pd.DataFrame:
     vcsmb_c, country_deltas = get_country_deltas(vcsmb_c)
     vcsmb_c = assign_country_deltas(vcsmb_c, country_deltas)
     vcsmb_c.reset_index(inplace=True)
-    country_ref_dict = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "country_reference_dict", "df"
-    )
     vcsmb_c["region"] = vcsmb_c["country_code"].apply(
         lambda x: get_region_from_country_code(x, "rmi_region", country_ref_dict)
     )
@@ -216,7 +206,7 @@ def create_capex_opex_split_data() -> pd.DataFrame:
     )
 
 
-def opex_capex_graph(save_filepath: str = None, ext: str = "png") -> px.bar:
+def opex_capex_graph(variable_cost_df: pd.DataFrame, capex_dict: dict, country_ref_dict: dict, save_filepath: str = None, ext: str = "png") -> px.bar:
     """Creates a bar graph for the Opex Capex split graph.
 
     Args:
@@ -226,7 +216,7 @@ def opex_capex_graph(save_filepath: str = None, ext: str = "png") -> px.bar:
     Returns:
         px.bar: A plotly express bar chart.
     """
-    final_opex_capex_dataset = create_capex_opex_split_data()
+    final_opex_capex_dataset = create_capex_opex_split_data(variable_cost_df, capex_dict, country_ref_dict)
     final_opex_capex_dataset_c = column_sorter(
         final_opex_capex_dataset, "cost_type", BAR_CHART_ORDER.keys()
     )

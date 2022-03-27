@@ -13,10 +13,12 @@ from tqdm.auto import tqdm as tqdma
 # For logger
 from mppsteel.utility.utils import enumerate_iterable
 from mppsteel.utility.function_timer_utility import timer_func
-from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file
+)
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.validation.data_import_tests import STEEL_BUSINESS_CASES_SCHEMA
-from mppsteel.config.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
+from mppsteel.config.model_config import PKL_DATA_IMPORTS, PKL_DATA_FORMATTED
 
 from mppsteel.config.reference_lists import (
     TECH_REFERENCE_LIST,
@@ -2217,7 +2219,7 @@ def generate_full_consumption_table(technology_list: list) -> pd.DataFrame:
 
 
 @timer_func
-def standardise_business_cases(serialize: bool = False) -> pd.DataFrame:
+def standardise_business_cases(scenario_dict: dict, serialize: bool = False) -> pd.DataFrame:
     """Standardises the business cases for each technology into per t steel.
 
     Args:
@@ -2229,6 +2231,6 @@ def standardise_business_cases(serialize: bool = False) -> pd.DataFrame:
     full_summary_df = generate_full_consumption_table(TECH_REFERENCE_LIST)
     if serialize:
         serialize_file(
-            full_summary_df, PKL_DATA_INTERMEDIATE, "standardised_business_cases"
+            full_summary_df, PKL_DATA_FORMATTED, "standardised_business_cases"
         )
     return full_summary_df

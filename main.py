@@ -52,22 +52,30 @@ if __name__ == "__main__":
         logger.info(f"{n_cores} cores detected")
         pool = mp.Pool(processes=n_cores)
 
-        # Model flow
-        data_import_refresh()
+        # Model flow - Load reusable data
+        data_import_refresh(scenario_args)
+        data_preprocessing_generic(scenario_args)
         for scenario in options:
+            # create new folders for path
             intermediate_path = get_scenario_pkl_path(scenario, 'intermediate')
             final_path = get_scenario_pkl_path(scenario, 'final')
             create_folders_if_nonexistant([intermediate_path, final_path])
+
+            # Set up scenario and metadata
             scenario_args = SCENARIO_OPTIONS[scenario]
             scenario_args = add_currency_rates_to_scenarios(scenario_args)
             timestamp = datetime.today().strftime('%d-%m-%y %H-%M')
             model_output_folder = f"{scenario_args['scenario_name']} {timestamp}"
+
+            # run the multiprocessing pool over the cores
             pool.apply_async(
                 scenario_batch_run,
                 scenario_dict=scenario_args,
                 dated_output_folder=True,
                 model_output_folder=model_output_folder
             )
+
+        # close and join the pools
         pool.close()
         pool.join()
 
@@ -93,7 +101,7 @@ if __name__ == "__main__":
         data_import_refresh()
 
     if args.preprocessing:
-        data_preprocessing_phase(scenario_dict=scenario_args)
+        data_preprocessing_scenarios(scenario_dict=scenario_args)
 
     if args.data_refresh:
         data_import_and_preprocessing_refresh(scenario_dict=scenario_args)

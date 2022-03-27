@@ -4,9 +4,7 @@ from itertools import zip_longest
 import pandas as pd
 import plotly.express as px
 
-from mppsteel.config.model_config import PKL_DATA_FINAL
 from mppsteel.config.reference_lists import MPP_COLOR_LIST
-
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.file_handling_utility import read_pickle_folder
 
@@ -51,7 +49,7 @@ def format_cot_graph(
 
 
 def consumption_over_time_graph(
-    regions: list = None, save_filepath: str = None, ext: str = "png"
+    production_resource_usage: pd.DataFrame, regions: list = None, save_filepath: str = None, ext: str = "png"
 ) -> px.bar:
     """Generates a Graph showing the consumption over time of a material resource.
 
@@ -74,9 +72,6 @@ def consumption_over_time_graph(
         "natural_gas",
     ]
 
-    production_resource_usage = read_pickle_folder(
-        PKL_DATA_FINAL, "production_resource_usage", "df"
-    )
     production_resource_usage = format_cot_graph(
         production_resource_usage, regions, resource_list=resources
     )

@@ -4,11 +4,10 @@ from typing import Union
 import pandas as pd
 
 from mppsteel.utility.file_handling_utility import read_pickle_folder
-from mppsteel.config.model_config import PKL_DATA_INTERMEDIATE, TECH_MORATORIUM_DATE
+from mppsteel.config.model_config import TECH_MORATORIUM_DATE
 from mppsteel.config.reference_lists import (
     SWITCH_DICT,
     TECHNOLOGY_PHASES,
-    TECHNOLOGY_STATES,
     RESOURCE_CONTAINER_REF,
 )
 from mppsteel.data_loading.data_interface import (

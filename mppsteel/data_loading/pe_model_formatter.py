@@ -5,13 +5,12 @@ import pandera as pa
 
 from mppsteel.config.model_config import (
     PKL_DATA_IMPORTS,
-    PKL_DATA_INTERMEDIATE,
+    PKL_DATA_FORMATTED,
     MODEL_YEAR_END,
 )
 
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import (
-    expand_dataset_years,
     expand_melt_and_sort_years,
 )
 from mppsteel.utility.location_utility import (
@@ -26,7 +25,6 @@ from mppsteel.utility.log_utility import get_logger
 from mppsteel.config.reference_lists import EU_COUNTRIES
 from mppsteel.validation.shared_inputs_tests import (
     BIO_CONSTRAINT_MODEL_SCHEMA,
-    BIO_PRICE_MODEL_SCHEMA,
 )
 
 # Create logger
@@ -291,7 +289,7 @@ def format_biomass_constraint_data(df: pd.DataFrame) -> pd.DataFrame:
 
 
 @timer_func
-def format_pe_data(serialize: bool = False) -> dict:
+def format_pe_data(scenario_dict: dict, serialize: bool = False) -> dict:
     """Full process flow for the Power & Energy data.
 
     Args:
@@ -319,13 +317,13 @@ def format_pe_data(serialize: bool = False) -> dict:
         "ccus": ccus,
     }
     if serialize:
-        serialize_file(power, PKL_DATA_INTERMEDIATE, "power_model_formatted")
-        serialize_file(hydrogen, PKL_DATA_INTERMEDIATE, "hydrogen_model_formatted")
-        serialize_file(bio_price, PKL_DATA_INTERMEDIATE, "bio_price_model_formatted")
+        serialize_file(power, PKL_DATA_FORMATTED, "power_model_formatted")
+        serialize_file(hydrogen, PKL_DATA_FORMATTED, "hydrogen_model_formatted")
+        serialize_file(bio_price, PKL_DATA_FORMATTED, "bio_price_model_formatted")
         serialize_file(
-            bio_constraint, PKL_DATA_INTERMEDIATE, "bio_constraint_model_formatted"
+            bio_constraint, PKL_DATA_FORMATTED, "bio_constraint_model_formatted"
         )
-        serialize_file(ccus, PKL_DATA_INTERMEDIATE, "ccus_model_formatted")
+        serialize_file(ccus, PKL_DATA_FORMATTED, "ccus_model_formatted")
 
     return data_dict
 

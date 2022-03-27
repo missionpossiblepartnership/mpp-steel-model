@@ -15,8 +15,8 @@ from mppsteel.utility.plant_container_class import PlantIdContainer
 from mppsteel.data_loading.reg_steel_demand_formatter import steel_demand_getter
 
 from mppsteel.config.model_config import (
+    PKL_DATA_FORMATTED,
     PKL_DATA_IMPORTS,
-    PKL_DATA_INTERMEDIATE,
     CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
     CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
 )
@@ -430,7 +430,7 @@ def return_utilization(prod_dict: dict, cap_dict: dict, value_cap: float = None)
 def create_wsa_2020_utilization_dict():
     logger.info('Creating the utilization dictionary for 2020.')
     wsa_production = read_pickle_folder(PKL_DATA_IMPORTS, "wsa_production", "df")
-    steel_plants_processed = read_pickle_folder(PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df")
+    steel_plants_processed = read_pickle_folder(PKL_DATA_FORMATTED, "steel_plants_processed", "df")
     wsa_2020_production_dict = format_wsa_production_data(wsa_production, as_dict=True)
     capacity_dict = create_plant_capacity_dict(steel_plants_processed, as_mt=True)
     return return_utilization(wsa_2020_production_dict, capacity_dict, value_cap=1)

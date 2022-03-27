@@ -17,6 +17,7 @@ logger = get_logger(__name__)
 
 
 def investment_line_chart(
+    investment_df: pd.DataFrame,
     group: str = "global",
     operation: str = "cumsum",
     save_filepath: str = None,
@@ -33,9 +34,8 @@ def investment_line_chart(
     Returns:
         px.line: A plotly express line graph.
     """
-    investment_results = read_pickle_folder(PKL_DATA_FINAL, "investment_results", "df")
     data = create_inv_stats(
-        investment_results, results=group, operation=operation, agg=False
+        investment_df, results=group, operation=operation, agg=False
     )
 
     fig_ = line_chart(
@@ -52,7 +52,7 @@ def investment_line_chart(
         fig_.write_image(f"{save_filepath}.{ext}")
 
 
-def investment_per_tech(save_filepath: str = None, ext: str = "png") -> px.bar:
+def investment_per_tech(investment_df: pd.DataFrame, save_filepath: str = None, ext: str = "png") -> px.bar:
     """Creates a bar graph showing the level of investment per technology.
 
     Args:
@@ -62,9 +62,8 @@ def investment_per_tech(save_filepath: str = None, ext: str = "png") -> px.bar:
     Returns:
         px.bar: A Plotly express bar chart.
     """
-    investment_results = read_pickle_folder(PKL_DATA_FINAL, "investment_results", "df")
     tech_investment = (
-        investment_results.groupby(["end_tech", "region_wsa_region"])
+        investment_df.groupby(["end_tech", "region_wsa_region"])
         .agg({"capital_cost": "sum"})
         .reset_index()
         .copy()

@@ -4,34 +4,30 @@ import pandas as pd
 from tqdm import tqdm
 
 from mppsteel.config.model_config import (
+    PKL_DATA_FORMATTED,
     USD_TO_EUR_CONVERSION_DEFAULT,
     MODEL_YEAR_END,
     PKL_DATA_IMPORTS,
     MODEL_YEAR_START,
-    PKL_DATA_INTERMEDIATE,
 )
-
 from mppsteel.config.model_scenarios import (
     COST_SCENARIO_MAPPER,
     GRID_DECARBONISATION_SCENARIOS,
     BIOMASS_SCENARIOS,
     CCUS_SCENARIOS,
 )
-
 from mppsteel.model.solver import load_business_cases
-
-
 from mppsteel.utility.utils import enumerate_iterable, cast_to_float
 from mppsteel.utility.function_timer_utility import timer_func
-from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file, get_scenario_pkl_path
+)
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.dataframe_utility import convert_currency_col
-
 from mppsteel.data_loading.data_interface import (
     commodity_data_getter,
     static_energy_prices_getter,
 )
-
 from mppsteel.data_loading.pe_model_formatter import (
     power_data_getter,
     hydrogen_data_getter,
@@ -44,16 +40,16 @@ from mppsteel.data_loading.pe_model_formatter import (
 logger = get_logger("Variable Plant Cost Archetypes")
 
 
-def generate_feedstock_dict(eur_usd_rate: float = 1 / USD_TO_EUR_CONVERSION_DEFAULT) -> dict:
+def generate_feedstock_dict(eur_to_usd_rate: float = 1 / USD_TO_EUR_CONVERSION_DEFAULT) -> dict:
     """Creates a feedstock dictionary that combines all non-energy model commodities into one dictionary.
     The dictionary has a pairing of the commodity name and the price.
 
     Returns:
         dict: A dictionary containing the pairing of feedstock name and price.
     """
-    commodities_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, "commodities_df", "df")
+    commodities_df = read_pickle_folder(PKL_DATA_FORMATTED, "commodities_df", "df")
     feedstock_prices = read_pickle_folder(PKL_DATA_IMPORTS, "feedstock_prices", "df")
-    feedstock_prices = convert_currency_col(feedstock_prices, 'Value', eur_usd_rate)
+    feedstock_prices = convert_currency_col(feedstock_prices, 'Value', eur_to_usd_rate)
     commodities_dict = commodity_data_getter(commodities_df)
     commodity_dictname_mapper = {
         "plastic": "Plastic waste",
@@ -75,7 +71,7 @@ def plant_variable_costs(
     hydrogen_cost_scenario: str,
     biomass_cost_scenario: str,
     ccus_cost_scenario: str,
-    eur_usd_rate: float
+    eur_to_usd_rate: float
 ) -> pd.DataFrame:
     """Creates a DataFrame reference of each plant's variable cost.
 
@@ -93,7 +89,7 @@ def plant_variable_costs(
     df_list = []
 
     steel_plants = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df"
+        PKL_DATA_FORMATTED, "steel_plants_processed", "df"
     )
     steel_plant_country_codes = list(steel_plants["country_code"].unique())
     steel_plant_region_ng_dict = (
@@ -102,22 +98,22 @@ def plant_variable_costs(
         .to_dict()["cheap_natural_gas"]
     )
     power_model_formatted = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "power_model_formatted", "df"
+        PKL_DATA_FORMATTED, "power_model_formatted", "df"
     )
     hydrogen_model_formatted = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "hydrogen_model_formatted", "df"
+        PKL_DATA_FORMATTED, "hydrogen_model_formatted", "df"
     )
     bio_price_model_formatted = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "bio_price_model_formatted", "df"
+        PKL_DATA_FORMATTED, "bio_price_model_formatted", "df"
     )
     ccus_model_formatted = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "ccus_model_formatted", "df"
+        PKL_DATA_FORMATTED, "ccus_model_formatted", "df"
     )
     static_energy_prices = read_pickle_folder(
         PKL_DATA_IMPORTS, "static_energy_prices", "df"
     )[["Metric", "Year", "Value"]]
-    static_energy_prices = convert_currency_col(static_energy_prices, 'Value', eur_usd_rate)
-    feedstock_dict = generate_feedstock_dict(eur_usd_rate)
+    static_energy_prices = convert_currency_col(static_energy_prices, 'Value', eur_to_usd_rate)
+    feedstock_dict = generate_feedstock_dict(eur_to_usd_rate)
     business_cases = load_business_cases()
 
     for country_code in tqdm(
@@ -192,7 +188,7 @@ def generate_variable_costs(
     df_list = []
     # Create resources reference list
     country_ref_dict = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "country_reference_dict", "df"
+        PKL_DATA_FORMATTED, "country_reference_dict", "df"
     )
     FEEDSTOCK_LIST = ["Iron Ore", "Scrap", "DRI", "Coal"]
     FOSSIL_FUELS = [
@@ -383,12 +379,13 @@ def generate_variable_plant_summary(
     Returns:
         pd.DataFrame: A DataFrame containing the variable plant results.
     """
+    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
     electricity_cost_scenario = scenario_dict["electricity_cost_scenario"]
     grid_scenario = scenario_dict["grid_scenario"]
     hydrogen_cost_scenario = scenario_dict["hydrogen_cost_scenario"]
     biomass_cost_scenario = scenario_dict["biomass_cost_scenario"]
     ccus_cost_scenario = scenario_dict["ccus_cost_scenario"]
-    eur_usd_rate = scenario_dict["eur_usd"]
+    eur_to_usd_rate = scenario_dict["eur_to_usd"]
     variable_costs = plant_variable_costs(
         MODEL_YEAR_END,
         electricity_cost_scenario,
@@ -396,7 +393,7 @@ def generate_variable_plant_summary(
         hydrogen_cost_scenario,
         biomass_cost_scenario,
         ccus_cost_scenario,
-        eur_usd_rate
+        eur_to_usd_rate
     )
     variable_costs_summary = format_variable_costs(variable_costs)
     variable_costs_summary_material_breakdown = format_variable_costs(
@@ -406,11 +403,11 @@ def generate_variable_plant_summary(
     if serialize:
         logger.info("-- Serializing dataframes")
         serialize_file(
-            variable_costs_summary, PKL_DATA_INTERMEDIATE, "variable_costs_regional"
+            variable_costs_summary, intermediate_path, "variable_costs_regional"
         )
         serialize_file(
             variable_costs_summary_material_breakdown,
-            PKL_DATA_INTERMEDIATE,
+            intermediate_path,
             "variable_costs_regional_material_breakdown",
         )
     return variable_costs_summary

@@ -4,12 +4,11 @@ import pandas as pd
 import numpy as np
 
 # For logger and units dict
-from mppsteel.utility.file_handling_utility import serialize_file
+from mppsteel.utility.file_handling_utility import serialize_file, get_scenario_pkl_path
 from mppsteel.utility.function_timer_utility import timer_func
 
 # Get model parameters
 from mppsteel.config.model_config import (
-    PKL_DATA_INTERMEDIATE,
     MODEL_YEAR_END,
     MODEL_YEAR_START,
 )
@@ -94,7 +93,7 @@ def timeseries_generator(
 
 
 @timer_func
-def generate_timeseries(serialize: bool = False, scenario_dict: dict = None) -> dict:
+def generate_timeseries(scenario_dict: dict = None, serialize: bool = False) -> dict:
     """Generates timeseries for biomass, carbon taxes and electricity.
 
     Args:
@@ -103,7 +102,7 @@ def generate_timeseries(serialize: bool = False, scenario_dict: dict = None) -> 
     Returns:
         dict: A dict containing dataframes with the following keys: 'biomass', 'carbon_tax', 'electricity'.
     """
-
+    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
     carbon_tax_scenario_values = CARBON_TAX_SCENARIOS[
         scenario_dict["carbon_tax_scenario"]
     ]
@@ -129,10 +128,10 @@ def generate_timeseries(serialize: bool = False, scenario_dict: dict = None) -> 
     if serialize:
         # Serialize timeseries
         serialize_file(
-            carbon_tax_timeseries, PKL_DATA_INTERMEDIATE, "carbon_tax_timeseries"
+            carbon_tax_timeseries, intermediate_path, "carbon_tax_timeseries"
         )
         serialize_file(
-            green_premium_timeseries, PKL_DATA_INTERMEDIATE, "green_premium_timeseries"
+            green_premium_timeseries, intermediate_path, "green_premium_timeseries"
         )
 
     return {

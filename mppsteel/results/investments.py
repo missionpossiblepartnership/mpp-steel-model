@@ -7,13 +7,14 @@ from tqdm import tqdm
 from mppsteel.config.model_config import (
     MODEL_YEAR_START,
     MODEL_YEAR_END,
-    PKL_DATA_INTERMEDIATE,
-    PKL_DATA_FINAL,
+    PKL_DATA_FORMATTED
 )
 
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import add_results_metadata
-from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file, get_scenario_pkl_path
+)
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.data_loading.steel_plant_formatter import map_plant_id_to_df
 from mppsteel.results.production import get_tech_choice, production_stats_getter
@@ -28,7 +29,7 @@ def create_capex_dict() -> pd.DataFrame:
     Returns:
         pd.DataFrame: A reformatted and reindexed Capex Switching DataFrame.
     """
-    capex = read_pickle_folder(PKL_DATA_INTERMEDIATE, "capex_switching_df", "df")
+    capex = read_pickle_folder(PKL_DATA_FORMATTED, "capex_switching_df", "df")
     capex_c = capex.copy()
     capex_c.reset_index(inplace=True)
     capex_c.columns = [col.lower().replace(" ", "_") for col in capex_c.columns]
@@ -230,20 +231,23 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
         pd.DataFrame: A DataFrame containing the investment results.
     """
     logger.info("Generating Investment Results")
+    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
+    final_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'final')
+    
     tech_choice_dict = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "tech_choice_dict", "df"
+        intermediate_path, "tech_choice_dict", "df"
     )
     plant_investment_cycles = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "investment_cycle_ref_result", "df"
+        intermediate_path, "investment_cycle_ref_result", "df"
     )
     plant_result_df = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "plant_result_df", "df"
+        intermediate_path, "plant_result_df", "df"
     )
     plant_names_and_country_codes = zip(
         plant_result_df["plant_name"].values, plant_result_df["country_code"].values
     )
     production_resource_usage = read_pickle_folder(
-        PKL_DATA_FINAL, "production_resource_usage", "df"
+        final_path, "production_resource_usage", "df"
     )
     capex_df = create_capex_dict()
     max_year = max([int(year) for year in tech_choice_dict])
@@ -274,7 +278,7 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
         pd.DataFrame(data_container).set_index(["year"]).sort_values("year")
     )
     investment_results.reset_index(inplace=True)
-    investment_results = map_plant_id_to_df(investment_results, "plant_name")
+    investment_results = map_plant_id_to_df(investment_results, plant_result_df, "plant_name")
     investment_results = add_results_metadata(
         investment_results, scenario_dict, single_line=True
     )
@@ -284,10 +288,14 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
 
     if serialize:
         logger.info(f"-- Serializing dataframes")
-        serialize_file(investment_results, PKL_DATA_FINAL, "investment_results")
+        serialize_file(
+            investment_results, 
+            final_path, 
+            "investment_results"
+        )
         serialize_file(
             cumulative_investment_results,
-            PKL_DATA_FINAL,
+            final_path,
             "cumulative_investment_results",
         )
     return investment_results

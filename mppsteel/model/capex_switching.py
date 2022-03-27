@@ -7,14 +7,14 @@ from tqdm import tqdm
 # For logger
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import create_line_through_points
-from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file
+)
 from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.config.model_config import (
-    PKL_DATA_IMPORTS,
-    PKL_DATA_INTERMEDIATE,
+    PKL_DATA_FORMATTED,
     SWITCH_CAPEX_DATA_POINTS,
-    MODEL_YEAR_END,
     MODEL_YEAR_START,
 )
 
@@ -322,7 +322,7 @@ def get_capex_values(
 
 
 @timer_func
-def create_capex_timeseries(serialize: bool = False) -> pd.DataFrame:
+def create_capex_timeseries(scenario_dict: dict = None, serialize: bool = False) -> pd.DataFrame:
     """Complete flow to create a capex dictionary.
 
     Args:
@@ -333,7 +333,7 @@ def create_capex_timeseries(serialize: bool = False) -> pd.DataFrame:
     """
     logger.info("Creating the base switching dict")
     switching_dict = create_switching_dfs(TECH_REFERENCE_LIST)
-    capex_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "capex_dict")
+    capex_dict = read_pickle_folder(PKL_DATA_FORMATTED, "capex_dict")
     max_model_year = max([int(year) for year in SWITCH_CAPEX_DATA_POINTS.keys()])
     switching_df_with_capex = get_capex_values(
         df_switching_dict=switching_dict,
@@ -342,6 +342,6 @@ def create_capex_timeseries(serialize: bool = False) -> pd.DataFrame:
     )
     if serialize:
         serialize_file(
-            switching_df_with_capex, PKL_DATA_INTERMEDIATE, "capex_switching_df"
+            switching_df_with_capex, PKL_DATA_FORMATTED, "capex_switching_df"
         )
     return switching_df_with_capex

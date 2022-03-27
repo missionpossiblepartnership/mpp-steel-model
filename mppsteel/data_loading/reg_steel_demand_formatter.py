@@ -6,7 +6,7 @@ import pandera as pa
 
 from mppsteel.config.model_config import (
     PKL_DATA_IMPORTS,
-    PKL_DATA_INTERMEDIATE,
+    PKL_DATA_FORMATTED,
     MODEL_YEAR_END,
 )
 from mppsteel.utility.utils import create_list_permutations
@@ -14,7 +14,7 @@ from mppsteel.utility.timeseries_extender import full_model_flow
 from mppsteel.config.model_scenarios import STEEL_DEMAND_SCENARIO_MAPPER
 from mppsteel.utility.dataframe_utility import melt_and_index
 from mppsteel.utility.function_timer_utility import timer_func
-from mppsteel.utility.location_utility import match_country, get_unique_countries, get_countries_from_group
+from mppsteel.utility.location_utility import get_unique_countries, get_countries_from_group
 from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
 from mppsteel.validation.data_import_tests import REGIONAL_STEEL_DEMAND_SCHEMA
 from mppsteel.utility.log_utility import get_logger
@@ -71,7 +71,7 @@ def steel_demand_creator(df: pd.DataFrame, rmi_matcher: dict) -> pd.DataFrame:
 
 
 @timer_func
-def get_steel_demand(serialize: bool = False) -> pd.DataFrame:
+def get_steel_demand(scenario_dict: dict, serialize: bool = False) -> pd.DataFrame:
     """Complete preprocessing flow for the regional steel demand data.
 
     Args:
@@ -84,7 +84,7 @@ def get_steel_demand(serialize: bool = False) -> pd.DataFrame:
     steel_demand_f = steel_demand_creator(steel_demand, RMI_MATCHER)
     if serialize:
         serialize_file(
-            steel_demand_f, PKL_DATA_INTERMEDIATE, "regional_steel_demand_formatted"
+            steel_demand_f, PKL_DATA_FORMATTED, "regional_steel_demand_formatted"
         )
     return steel_demand_f
 

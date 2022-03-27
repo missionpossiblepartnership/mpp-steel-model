@@ -8,8 +8,7 @@ from copy import deepcopy
 from mppsteel.config.model_config import (
     MODEL_YEAR_START,
     MODEL_YEAR_END,
-    PKL_DATA_INTERMEDIATE,
-    PKL_DATA_IMPORTS,
+    PKL_DATA_FORMATTED,
     NET_ZERO_TARGET,
     NET_ZERO_VARIANCE_YEARS,
     INVESTMENT_CYCLE_DURATION_YEARS,
@@ -19,7 +18,9 @@ from mppsteel.config.model_config import (
 )
 
 from mppsteel.utility.function_timer_utility import timer_func
-from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file, get_scenario_pkl_path
+)
 from mppsteel.utility.log_utility import get_logger
 
 # Create logger
@@ -230,7 +231,7 @@ def amend_investment_dict(inv_dict: dict, plant: str, year: int):
 
 
 @timer_func
-def investment_cycle_flow(serialize: bool = False) -> pd.DataFrame:
+def investment_cycle_flow(scenario_dict: dict = None, serialize: bool = False) -> pd.DataFrame:
     """Inintiates the complete investment cycle flow and serializes the resulting DataFrame.
 
     Args:
@@ -240,19 +241,19 @@ def investment_cycle_flow(serialize: bool = False) -> pd.DataFrame:
         pd.DataFrame: A DataFrame containing the Complete Investment Decision Cycle Reference.
     """
     steel_plants_aug = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df"
+        PKL_DATA_FORMATTED, "steel_plants_processed", "df"
     )
     investment_object = create_investment_cycle(steel_plants_aug)
 
     if serialize:
         logger.info("-- Serializing Investment Cycle Reference")
         serialize_file(
-            investment_object['investment_df'], PKL_DATA_INTERMEDIATE, "plant_investment_cycles"
+            investment_object['investment_df'], PKL_DATA_FORMATTED, "plant_investment_cycles"
         )
         serialize_file(
-            investment_object['investment_dict'], PKL_DATA_INTERMEDIATE, "investment_dict"
+            investment_object['investment_dict'], PKL_DATA_FORMATTED, "investment_dict"
         )
         serialize_file(
-            investment_object['plant_cycle_length_mapper'], PKL_DATA_INTERMEDIATE, "plant_cycle_length_mapper"
+            investment_object['plant_cycle_length_mapper'], PKL_DATA_FORMATTED, "plant_cycle_length_mapper"
         )
     return {'investment_df': investment_object['investment_df'], 'investment_dict': investment_object['investment_dict'], 'plant_cycle_length_mapper': investment_object['investment_dict']}

@@ -10,7 +10,7 @@ from mppsteel.utility.location_utility import get_region_from_country_code
 from mppsteel.utility.file_handling_utility import read_pickle_folder
 
 from mppsteel.config.model_config import (
-    PKL_DATA_INTERMEDIATE,
+    PKL_DATA_FORMATTED,
     RESULTS_REGIONS_TO_MAP,
 )
 
@@ -179,7 +179,7 @@ def add_results_metadata(
         pd.DataFrame: The name of the schema you want to map.
     """
     country_reference_dict = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "country_reference_dict", "dict"
+        PKL_DATA_FORMATTED, "country_reference_dict", "dict"
     )
     df_c = df.copy()
     df_c = add_scenarios(df_c, scenario_dict, single_line)

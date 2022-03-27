@@ -1,34 +1,27 @@
 """Script to run a full reference dataframe for tco switches and abatement switches"""
-import itertools
 from functools import lru_cache
 
 import pandas as pd
 import numpy as np
-import numpy_financial as npf
 
 from tqdm import tqdm
-from tqdm.auto import tqdm as tqdma
 
 from mppsteel.data_loading.data_interface import load_business_cases
-from mppsteel.model.tco_calculation_functions import tco_calc, calculate_green_premium
-from mppsteel.utility.utils import enumerate_iterable
+from mppsteel.model.tco_calculation_functions import tco_calc
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import add_results_metadata
-from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
-from mppsteel.config.reference_lists import LOW_CARBON_TECHS, SWITCH_DICT
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file, get_scenario_pkl_path
+)
+from mppsteel.config.reference_lists import SWITCH_DICT
 from mppsteel.config.model_config import (
-    DISCOUNT_RATE,
     MODEL_YEAR_END,
     MODEL_YEAR_START,
-    PKL_DATA_INTERMEDIATE,
-    PKL_DATA_IMPORTS,
+    PKL_DATA_FORMATTED,
     INVESTMENT_CYCLE_DURATION_YEARS,
 )
 
 from mppsteel.utility.location_utility import (
-    country_mapping_fixer,
-    country_matcher,
-    match_country,
     get_region_from_country_code,
 )
 
@@ -37,9 +30,7 @@ from mppsteel.utility.log_utility import get_logger
 logger = get_logger("TCO & Abatement switches")
 
 
-def tco_regions_ref_generator(
-    electricity_cost_scenario: str, grid_scenario: str, hydrogen_cost_scenario: str
-) -> pd.DataFrame:
+def tco_regions_ref_generator(scenario_dict: dict) -> pd.DataFrame:
     """Creates a summary of TCO values for each technology and region.
 
     Args:
@@ -50,30 +41,33 @@ def tco_regions_ref_generator(
     Returns:
         pd.DataFrame: A DataFrame containing the components necessary to calculate TCO (not including green premium).
     """
-
+    electricity_cost_scenario = scenario_dict["electricity_cost_scenario"]
+    grid_scenario = scenario_dict["grid_scenario"]
+    hydrogen_cost_scenario = scenario_dict["hydrogen_cost_scenario"]
+    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
     carbon_tax_df = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "carbon_tax_timeseries", "df"
+        intermediate_path, "carbon_tax_timeseries", "df"
     )
     variable_costs_regional = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "variable_costs_regional", "df"
+        intermediate_path, "variable_costs_regional", "df"
     )
     power_model = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "power_model_formatted", "df"
+        PKL_DATA_FORMATTED, "power_model_formatted", "df"
     )
     hydrogen_model = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "hydrogen_model_formatted", "df"
+        PKL_DATA_FORMATTED, "hydrogen_model_formatted", "df"
     )
-    opex_values_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "capex_dict", "df")
+    opex_values_dict = read_pickle_folder(PKL_DATA_FORMATTED, "capex_dict", "df")
     business_cases = load_business_cases()
     calculated_s1_emissivity = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "calculated_s1_emissivity", "df"
+        intermediate_path, "calculated_s1_emissivity", "df"
     )
-    capex_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, "capex_switching_df", "df")
+    capex_df = read_pickle_folder(PKL_DATA_FORMATTED, "capex_switching_df", "df")
     country_ref_dict = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "country_reference_dict", "df"
+        PKL_DATA_FORMATTED, "country_reference_dict", "df"
     )
     steel_plants = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df"
+        PKL_DATA_FORMATTED, "steel_plants_processed", "df"
     )
     steel_plant_country_codes = list(steel_plants["country_code"].unique())
     technologies = SWITCH_DICT.keys()
@@ -193,7 +187,7 @@ def emissivity_abatement(combined_emissivity: pd.DataFrame, scope: str) -> pd.Da
 
 
 @timer_func
-def tco_presolver_reference(scenario_dict, serialize: bool = False) -> pd.DataFrame:
+def tco_presolver_reference(scenario_dict: dict, serialize: bool = False) -> pd.DataFrame:
     """Complete flow to create two reference TCO DataFrames.
     The first DataFrame `tco_summary` create contains only TCO summary data on a regional level (not plant level).
     The second DataFrame `tco_reference_data` contains the full TCO reference data on a plant level, including green premium calculations. 
@@ -205,15 +199,10 @@ def tco_presolver_reference(scenario_dict, serialize: bool = False) -> pd.DataFr
     Returns:
         pd.DataFrame: A DataFrame containing the complete TCO reference DataFrame (including green premium values).
     """
-    country_ref_dict = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "country_reference_dict", "df"
-    )
-    electricity_cost_scenario = scenario_dict["electricity_cost_scenario"]
-    grid_scenario = scenario_dict["grid_scenario"]
-    hydrogen_cost_scenario = scenario_dict["hydrogen_cost_scenario"]
-    opex_capex_reference_data = tco_regions_ref_generator(
-        electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario
-    )
+    logger.info("Running TCO Reference Sheet")
+    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
+    country_ref_dict = read_pickle_folder(PKL_DATA_FORMATTED, "country_reference_dict", "df")
+    opex_capex_reference_data = tco_regions_ref_generator(scenario_dict)
     tco_summary = opex_capex_reference_data.copy()
     tco_summary["tco"] = tco_summary["discounted_opex"] + tco_summary["capex_value"]
     tco_summary["tco"] = tco_summary["tco"] / INVESTMENT_CYCLE_DURATION_YEARS
@@ -223,14 +212,14 @@ def tco_presolver_reference(scenario_dict, serialize: bool = False) -> pd.DataFr
     if serialize:
         logger.info("-- Serializing dataframe")
         serialize_file(
-            tco_summary, PKL_DATA_INTERMEDIATE, "tco_summary_data"
+            tco_summary, intermediate_path, "tco_summary_data"
         )
     return tco_summary
 
 
 @timer_func
 def abatement_presolver_reference(
-    scenario_dict, serialize: bool = False
+    scenario_dict: dict, serialize: bool = False
 ) -> pd.DataFrame:
     """Complete flow required to create the emissivity abatement presolver reference table.
 
@@ -242,8 +231,9 @@ def abatement_presolver_reference(
         pd.DataFrame: A DataFrame containing the emissivity abatement values.
     """
     logger.info("Running Abatement Reference Sheet")
+    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
     calculated_emissivity_combined = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "calculated_emissivity_combined", "df"
+        intermediate_path, "calculated_emissivity_combined", "df"
     )
     emissivity_abatement_switches = emissivity_abatement(
         calculated_emissivity_combined, scope="combined"
@@ -255,7 +245,7 @@ def abatement_presolver_reference(
         logger.info("-- Serializing dataframe")
         serialize_file(
             emissivity_abatement_switches,
-            PKL_DATA_INTERMEDIATE,
+            intermediate_path,
             "emissivity_abatement_switches",
         )
     return emissivity_abatement_switches

@@ -17,9 +17,10 @@ from mppsteel.utility.location_utility import (
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
     serialize_file,
+    get_scenario_pkl_path
 )
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.config.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
+from mppsteel.config.model_config import PKL_DATA_IMPORTS
 from mppsteel.validation.data_import_tests import STEEL_PLANT_DATA_SCHEMA
 
 # Create logger
@@ -225,7 +226,7 @@ def total_plant_capacity(plant_cap_dict: dict) -> float:
 
 
 def map_plant_id_to_df(
-    df: pd.DataFrame, plant_identifier: str, reverse: bool = False
+    df: pd.DataFrame, steel_plants: pd.DataFrame, plant_identifier: str, reverse: bool = False
 ) -> pd.DataFrame:
     """Creates a column references with either the plant ID of the steel plant or the plant name based on the ID.
 
@@ -237,7 +238,6 @@ def map_plant_id_to_df(
     Returns:
         pd.DataFrame: A DataFrame with the newly added column.
     """
-    steel_plants = read_pickle_folder(PKL_DATA_INTERMEDIATE, "plant_result_df")
     plant_id_dict = dict(
         zip(steel_plants["plant_name"], steel_plants["plant_id"])
     )
@@ -250,7 +250,7 @@ def map_plant_id_to_df(
 
 
 def apply_countries_to_steel_plants(
-    steel_plant_formatted: pd.DataFrame,
+    steel_plant_formatted: pd.DataFrame, country_reference_dict: dict,
 ) -> pd.DataFrame:
     """Maps a country codes and region column to the Steel Plants.
 
@@ -272,10 +272,6 @@ def apply_countries_to_steel_plants(
     steel_plants = country_mapping_fixer(
         df_c, "country", "country_code", country_fixer_dict
     )
-    country_reference_dict = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "country_reference_dict", "df"
-    )
-    print(steel_plants[steel_plants['country_code'] == ''])
     steel_plants["region"] = steel_plants["country_code"].apply(
         lambda x: get_region_from_country_code(x, "wsa_region", country_reference_dict)
     )
@@ -287,7 +283,7 @@ def apply_countries_to_steel_plants(
 
 @timer_func
 def steel_plant_processor(
-    serialize: bool = False, remove_non_operating_plants: bool = False
+    scenario_dict: dict = None, serialize: bool = False, remove_non_operating_plants: bool = False
 ) -> pd.DataFrame:
     """Generates a fully preprocessed Steel Plant DataFrame.
 
@@ -298,11 +294,15 @@ def steel_plant_processor(
         pd.DataFrame: A DataFrame containing the preprocessed steel plants.
     """
     logger.info("Preprocessing the Steel Plant Data")
+    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
     steel_plants = read_pickle_folder(PKL_DATA_IMPORTS, "steel_plants")
+    country_reference_dict = read_pickle_folder(
+        intermediate_path, "country_reference_dict", "df"
+    )
     steel_plants = steel_plant_formatter(steel_plants, remove_non_operating_plants)
-    steel_plants = apply_countries_to_steel_plants(steel_plants)
+    steel_plants = apply_countries_to_steel_plants(steel_plants, country_reference_dict)
 
     if serialize:
-        serialize_file(steel_plants, PKL_DATA_INTERMEDIATE, "steel_plants_processed")
+        serialize_file(steel_plants, intermediate_path, "steel_plants_processed")
 
     return steel_plants

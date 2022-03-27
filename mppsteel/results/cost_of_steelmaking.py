@@ -11,11 +11,12 @@ from mppsteel.results.production import production_stats_getter
 from mppsteel.results.investments import get_investment_capital_costs
 
 from mppsteel.utility.function_timer_utility import timer_func
-from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file, get_scenario_pkl_path
+)
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.config.model_config import (
-    PKL_DATA_FINAL,
-    PKL_DATA_INTERMEDIATE,
+    PKL_DATA_FORMATTED,
     DISCOUNT_RATE,
     INVESTMENT_CYCLE_DURATION_YEARS,
 )
@@ -96,9 +97,13 @@ def apply_cos(
     if row.technology:
         variable_cost = v_costs.loc[row.country_code, year, row.technology]["cost"]
         other_opex_cost = capex_costs["other_opex"].loc[row.technology, year]["value"]
-        capital_investment = get_investment_capital_costs(investment_df, full_investment_cycles, row.plant_name, year)
+        capital_investment = get_investment_capital_costs(
+            investment_df, full_investment_cycles, row.plant_name, year
+        )
     discount_rate = DISCOUNT_RATE
-    relining_year_span = plant_investment_cycle_length_mapper.get(row.plant_name, INVESTMENT_CYCLE_DURATION_YEARS)
+    relining_year_span = plant_investment_cycle_length_mapper.get(
+        row.plant_name, INVESTMENT_CYCLE_DURATION_YEARS
+    )
 
     relining_cost = 0
 
@@ -308,26 +313,28 @@ def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize: bool = 
     Returns:
         dict: A dictionary with the Cost of Steelmaking DataFrame and the Levelized Cost of Steelmaking DataFrame.
     """
+    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
+    final_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'final')
     variable_costs_regional = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "variable_costs_regional", "df"
+        intermediate_path, "variable_costs_regional", "df"
     )
-    capex_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "capex_dict", "df")
+    capex_dict = read_pickle_folder(PKL_DATA_FORMATTED, "capex_dict", "df")
     
     production_resource_usage = read_pickle_folder(
-        PKL_DATA_FINAL, "production_resource_usage", "df"
+        final_path, "production_resource_usage", "df"
     )
     plant_result_df = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "plant_result_df", "df"
+        intermediate_path, "plant_result_df", "df"
     )
     capacities_dict = create_plant_capacities_dict(plant_result_df)
     investment_results = read_pickle_folder(
-        PKL_DATA_FINAL, "investment_results", "df"
+        final_path, "investment_results", "df"
     )
     investment_dict_result = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "investment_dict_result", "df"
+        intermediate_path, "investment_dict_result", "df"
     )
-    plant_cycle_length_mapper = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "plant_cycle_length_mapper", "df"
+    plant_cycle_length_mapper_result = read_pickle_folder(
+        intermediate_path, "plant_cycle_length_mapper_result", "df"
     )
     
     cos_data = create_cost_of_steelmaking_data(
@@ -336,12 +343,12 @@ def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize: bool = 
         investment_results,
         capex_dict,
         capacities_dict,
-        plant_cycle_length_mapper,
+        plant_cycle_length_mapper_result,
         investment_dict_result,
         "region_wsa_region",
     )
 
     if serialize:
         logger.info("-- Serializing dataframes")
-        serialize_file(cos_data, PKL_DATA_FINAL, "cost_of_steelmaking")
+        serialize_file(cos_data, final_path, "cost_of_steelmaking")
     return cos_data

@@ -70,7 +70,7 @@ def calculate_green_premium(
     plant_name: str,
     technology_2020: str,
     year: int,
-    eur_usd_rate: float,
+    eur_to_usd_rate: float,
 ) -> float:
     """Calculates a green premium amout based on the product of the green premium capacity and the green premium timeseries value.
 
@@ -82,7 +82,7 @@ def calculate_green_premium(
         plant_name (str): The name of the plant you want to calculate the green premium value for.
         technology (str): The technology that the green premium is being calculated for.
         year (int): The year to get the green premium timeseries value for.
-        eur_usd_rate (float): A conversion rate from euros to usd.
+        eur_to_usd_rate (float): A conversion rate from euros to usd.
 
     Returns:
         float: A green premium value product.
@@ -102,7 +102,7 @@ def calculate_green_premium(
         variable_tech_cost,
         plant_capacity,
         technology_2020,
-        eur_usd_rate,
+        eur_to_usd_rate,
     )
     return steel_making_cost * green_premium
 

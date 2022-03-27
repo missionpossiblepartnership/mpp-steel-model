@@ -6,24 +6,20 @@ import pandera as pa
 import numpy as np
 
 from typing import Tuple, Union
+from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.validation.data_import_tests import (
-    FEEDSTOCK_INPUT_SCHEMA,
-    ENERGY_PRICES_STATIC_SCHEMA,
     ETHANOL_PLASTIC_CHARCOAL_SCHEMA,
-    SCOPE1_EF_SCHEMA,
     SCOPE3_EF_SCHEMA_1,
     SCOPE3_EF_SCHEMA_2,
     CAPEX_OPEX_PER_TECH_SCHEMA,
-    STEEL_BUSINESS_CASES_SCHEMA,
 )
 
 # For logger and units dict
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
-    serialize_file,
-    extract_data,
+    serialize_file
 )
 from mppsteel.utility.dataframe_utility import (
     melt_and_index, convert_currency_col
@@ -33,7 +29,7 @@ from mppsteel.utility.dataframe_utility import (
 from mppsteel.config.model_config import (
     MODEL_YEAR_END,
     PKL_DATA_IMPORTS,
-    PKL_DATA_INTERMEDIATE,
+    PKL_DATA_FORMATTED,
     EMISSIONS_FACTOR_SLAG,
     ENERGY_DENSITY_MET_COAL_MJ_KG,
     USD_TO_EUR_CONVERSION_DEFAULT
@@ -132,7 +128,7 @@ def capex_generator(
 @pa.check_input(CAPEX_OPEX_PER_TECH_SCHEMA)
 def capex_dictionary_generator(
     greenfield_df: pd.DataFrame, brownfield_df: pd.DataFrame, 
-    other_df: pd.DataFrame, eur_usd: float = 1 / USD_TO_EUR_CONVERSION_DEFAULT
+    other_df: pd.DataFrame, eur_to_usd: float = 1 / USD_TO_EUR_CONVERSION_DEFAULT
 ) -> dict:
     """A dictionary of greenfield, brownfield and other_opex.
 
@@ -153,9 +149,9 @@ def capex_dictionary_generator(
     oo_df = melt_and_index(
             other_df, ["Technology"], "Year", ["Technology", "Year"]
         )
-    gf_df = convert_currency_col(gf_df, 'value', eur_usd)
-    bf_df = convert_currency_col(bf_df, 'value', eur_usd)
-    oo_df = convert_currency_col(oo_df, 'value', eur_usd)
+    gf_df = convert_currency_col(gf_df, 'value', eur_to_usd)
+    bf_df = convert_currency_col(bf_df, 'value', eur_to_usd)
+    oo_df = convert_currency_col(oo_df, 'value', eur_to_usd)
     
     return {
         "greenfield": gf_df,
@@ -312,6 +308,7 @@ def scope3_ef_getter(df: pd.DataFrame, fuel: str, year: str) -> float:
     df_c.set_index(["Fuel", "Year"], inplace=True)
     return df_c.loc[fuel, year]["value"]
 
+@timer_func
 def create_capex_opex_dict(scenario_dict: dict, serialize: bool = False) -> dict:
     """Creates a Dictionary containing Greenfield, Brownfield and Opex values.
 
@@ -321,20 +318,20 @@ def create_capex_opex_dict(scenario_dict: dict, serialize: bool = False) -> dict
     Returns:
         dict: A dictionary containing the capex/opex values.
     """
-    eur_usd_rate = scenario_dict['eur_usd']
+    eur_to_usd_rate = scenario_dict['eur_to_usd']
     greenfield_capex_df = read_pickle_folder(PKL_DATA_IMPORTS, "greenfield_capex")
     brownfield_capex_df = read_pickle_folder(PKL_DATA_IMPORTS, "brownfield_capex")
     other_opex_df = read_pickle_folder(PKL_DATA_IMPORTS, "other_opex")
     capex_dict = capex_dictionary_generator(
-        greenfield_capex_df, brownfield_capex_df, other_opex_df, eur_usd_rate
+        greenfield_capex_df, brownfield_capex_df, other_opex_df, eur_to_usd_rate
     )
     if serialize:
-        serialize_file(capex_dict, PKL_DATA_INTERMEDIATE, "capex_dict")
+        serialize_file(capex_dict, PKL_DATA_FORMATTED, "capex_dict")
     return capex_dict
 
-
+@timer_func
 def generate_preprocessed_emissions_data(
-    serialize: bool = False,
+    scenario_dict: dict = None, serialize: bool = False,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Complete process flow for the preprocessed emissivity data.
 
@@ -364,8 +361,8 @@ def generate_preprocessed_emissions_data(
         s3_emissions_factors_1, slag_new_values, ENERGY_DENSITY_MET_COAL_MJ_KG
     )
     if serialize:
-        serialize_file(commodities_df, PKL_DATA_INTERMEDIATE, "commodities_df")
-        serialize_file(final_scope3_ef_df, PKL_DATA_INTERMEDIATE, "final_scope3_ef_df")
+        serialize_file(commodities_df, PKL_DATA_FORMATTED, "commodities_df")
+        serialize_file(final_scope3_ef_df, PKL_DATA_FORMATTED, "final_scope3_ef_df")
     return commodities_df, final_scope3_ef_df
 
 
@@ -391,7 +388,7 @@ def load_business_cases() -> pd.DataFrame:
         pd.DataFrame: The formatted standardised business cases.
     """
     standardised_business_cases = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "standardised_business_cases", "df"
+        PKL_DATA_FORMATTED, "standardised_business_cases", "df"
     )
     return format_bc(standardised_business_cases)
 

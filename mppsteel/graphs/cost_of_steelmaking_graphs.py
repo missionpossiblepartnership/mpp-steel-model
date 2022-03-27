@@ -4,12 +4,8 @@ from typing import Union
 import pandas as pd
 import plotly.express as px
 
-from mppsteel.config.model_config import PKL_DATA_INTERMEDIATE
 from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
-
-from mppsteel.utility.file_handling_utility import read_pickle_folder
 from mppsteel.utility.log_utility import get_logger
-
 from mppsteel.graphs.plotly_graphs import bar_chart
 
 logger = get_logger(__name__)
@@ -74,7 +70,8 @@ def assign_country_deltas(df: pd.DataFrame, delta_dict: dict) -> pd.DataFrame:
 
 
 def lcost_graph(
-    chosen_year: int = 2030, save_filepath: str = None, ext: str = "png"
+    lcost_data: pd.DataFrame, chosen_year: int = 2030, 
+    save_filepath: str = None, ext: str = "png"
 ) -> px.bar:
     """Creates a bar graph for the Levelised Cost.
 
@@ -87,9 +84,6 @@ def lcost_graph(
         px.bar: A Plotly express bar chart.
     """
 
-    lcost_data = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "levelized_cost_updated", "df"
-    )
     lcost_c, country_deltas = get_lcost_lowest_vals(lcost_data, chosen_year, "LCOS")
     lcost_c = assign_country_deltas(lcost_c, country_deltas)
 

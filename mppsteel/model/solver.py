@@ -9,16 +9,20 @@ from tqdm import tqdm
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.plant_container_class import PlantIdContainer
 from mppsteel.utility.dataframe_utility import return_furnace_group
-from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file, get_scenario_pkl_path
+)
 from mppsteel.data_loading.reg_steel_demand_formatter import extend_steel_demand
-from mppsteel.model.investment_cycles import create_investment_cycle, amend_investment_dict, create_investment_cycle_reference
+from mppsteel.model.investment_cycles import (
+    create_investment_cycle, amend_investment_dict, create_investment_cycle_reference
+)
 from mppsteel.data_loading.country_reference import country_df_formatter
 
 from mppsteel.config.model_config import (
     MODEL_YEAR_END,
     MODEL_YEAR_START,
+    PKL_DATA_FORMATTED,
     PKL_DATA_IMPORTS,
-    PKL_DATA_INTERMEDIATE,
     INVESTMENT_CYCLE_DURATION_YEARS,
     INVESTMENT_OFFCYCLE_BUFFER_TOP,
     INVESTMENT_OFFCYCLE_BUFFER_TAIL
@@ -32,7 +36,6 @@ from mppsteel.config.reference_lists import (
     FURNACE_GROUP_DICT,
     TECH_MATERIAL_CHECK_DICT,
     RESOURCE_CONTAINER_REF,
-    TECHNOLOGY_PHASES,
 )
 
 from mppsteel.data_loading.data_interface import load_materials, load_business_cases
@@ -207,6 +210,7 @@ def create_investment_cycle_ref_from_dict(inv_dict: dict, year_end: int):
 
 def choose_technology(
     year_end: int,
+    scenario_dict: dict,
     solver_logic: str,
     tech_moratorium: bool = False,
     enforce_constraints: bool = True,
@@ -223,33 +227,37 @@ def choose_technology(
 
     Args:
         year_end (int): The last model run year.
-        solver_logic (str): Scenario setting that decides the logic used to choose the best technology `scaled`, `ranked` or `bins`. 
-        tech_moratorium (bool, optional): Scenario setting that determines if the tech moratorium should be active. Defaults to False.
-        enforce_constraints (bool, optional): Scenario setting that determines if constraints are enforced within the model. Defaults to False.
-        steel_demand_scenario (str): Scenario that determines the Steel Demand Timeseries. Defaults to "bau".
-        trans_switch_scenario (bool, optional): Scenario setting that determines if trasnitional switches are allowed. Defaults to False.
-        tech_switch_scenario (_type_, optional): _description_. Defaults to {"tco": 0.6, "emissions": 0.4}.
-
     Returns:
         dict: A dictionary containing the best technology resuls. Organised as year: plant: best tech.
     """
 
     logger.info("Creating Steel plant df")
 
-    plant_df = read_pickle_folder(PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df")
+    solver_logic = SOLVER_LOGICS[scenario_dict["solver_logic"]],
+    tech_moratorium = scenario_dict["tech_moratorium"],
+    enforce_constraints = scenario_dict["enforce_constraints"],
+    steel_demand_scenario = scenario_dict["steel_demand_scenario"],
+    trans_switch_scenario = scenario_dict["transitional_switch"],
+    tech_switch_scenario = TECH_SWITCH_SCENARIOS[
+        scenario_dict["tech_switch_scenario"]
+    ]
+    trade_scenario=scenario_dict["trade_active"]
+    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
+
+    plant_df = read_pickle_folder(PKL_DATA_FORMATTED, "steel_plants_processed", "df")
     investment_year_ref = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "plant_investment_cycles", "df"
+        PKL_DATA_FORMATTED, "plant_investment_cycles", "df"
     )
     investment_dict = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "investment_dict", "dict"
+        PKL_DATA_FORMATTED, "investment_dict", "dict"
     )
     plant_cycle_length_mapper = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "plant_cycle_length_mapper", "dict"
+        PKL_DATA_FORMATTED, "plant_cycle_length_mapper", "dict"
     )
     variable_costs_regional = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "variable_costs_regional", "df"
+        intermediate_path, "variable_costs_regional", "df"
     )
-    country_reference_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "country_reference_dict", "df")
+    country_reference_dict = read_pickle_folder(PKL_DATA_FORMATTED, "country_reference_dict", "df")
     country_df = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref")
     country_df_f = country_df_formatter(country_df)
     investment_year_ref_c = investment_year_ref.copy()
@@ -257,13 +265,13 @@ def choose_technology(
     plant_cycle_length_mapper_c = deepcopy(plant_cycle_length_mapper)
     # Constraint data
     bio_constraint_model = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "bio_constraint_model_formatted", "df"
+        PKL_DATA_FORMATTED, "bio_constraint_model_formatted", "df"
     )
     materials = load_materials()
-    ccs_co2 = read_pickle_folder(PKL_DATA_IMPORTS, "ccs_co2", "df")
+    ccs_co2 = read_pickle_folder(PKL_DATA_FORMATTED, "ccs_co2", "df")
     # steel_demand_df = extend_steel_demand(MODEL_YEAR_END)
     steel_demand_df = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "regional_steel_demand_formatted", "df"
+        PKL_DATA_FORMATTED, "regional_steel_demand_formatted", "df"
     )
     tech_availability = read_pickle_folder(PKL_DATA_IMPORTS, "tech_availability", "df")
     ta_dict = dict(
@@ -271,19 +279,19 @@ def choose_technology(
     )
     tech_availability = read_and_format_tech_availability(tech_availability)
     capex_dict = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "capex_dict", "dict"
+        PKL_DATA_FORMATTED, "capex_dict", "dict"
     )
     # TCO & Abatement Data
     tco_summary_data = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "tco_summary_data", "df"
+        intermediate_path, "tco_summary_data", "df"
     )
     tco_slim = subset_presolver_df(tco_summary_data, subset_type='tco_summary')
-    levelized_cost = read_pickle_folder(PKL_DATA_INTERMEDIATE, "levelized_cost", "df")
+    levelized_cost = read_pickle_folder(intermediate_path, "levelized_cost", "df")
     levelized_cost["region"] = levelized_cost["country_code"].apply(
             lambda x: get_region_from_country_code(x, "rmi_region", country_reference_dict)
     )
     steel_plant_abatement_switches = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "emissivity_abatement_switches", "df"
+        intermediate_path, "emissivity_abatement_switches", "df"
     )
     abatement_slim = subset_presolver_df(steel_plant_abatement_switches, subset_type='abatement')
 
@@ -488,7 +496,7 @@ def choose_technology(
         'plant_result_df': model_plant_df, 
         'investment_cycle_ref_result': investment_year_ref_c,
         'investment_dict_result': investment_dict_c,
-        'plant_cycle_length_mapper_c': plant_cycle_length_mapper_c,
+        'plant_cycle_length_mapper_result': plant_cycle_length_mapper_c,
         'capacity_results': capacity_results,
         'trade_results': trade_df
         }
@@ -538,28 +546,21 @@ def solver_flow(scenario_dict: dict, year_end: int, serialize: bool = False) -> 
     Returns:
         dict: A dictionary containing the best technology results and the resultant steel plants. tech_choice_dict is organised as year: plant: best tech.
     """
-
+    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
     results_dict = choose_technology(
         year_end=year_end,
-        solver_logic=SOLVER_LOGICS[scenario_dict["solver_logic"]],
-        tech_moratorium=scenario_dict["tech_moratorium"],
-        enforce_constraints=scenario_dict["enforce_constraints"],
-        steel_demand_scenario=scenario_dict["steel_demand_scenario"],
-        trans_switch_scenario=scenario_dict["transitional_switch"],
-        tech_switch_scenario=TECH_SWITCH_SCENARIOS[
-            scenario_dict["tech_switch_scenario"]
-        ],
-        trade_scenario=scenario_dict["trade_active"]
+        scenario_dict=scenario_dict
     )
-    levelized_cost_updated = generate_levelized_cost_results(results_dict['plant_result_df'])
+    levelized_cost_updated = generate_levelized_cost_results(steel_plant_df=results_dict['plant_result_df'])
 
     if serialize:
         logger.info("-- Serializing dataframes")
-        serialize_file(results_dict['tech_choice_dict'], PKL_DATA_INTERMEDIATE, "tech_choice_dict")
-        serialize_file(results_dict['plant_result_df'], PKL_DATA_INTERMEDIATE, "plant_result_df")
-        serialize_file(results_dict['investment_cycle_ref_result'], PKL_DATA_INTERMEDIATE, "investment_cycle_ref_result")
-        serialize_file(results_dict['investment_dict_result'], PKL_DATA_INTERMEDIATE, "investment_dict_result")
-        serialize_file(results_dict['capacity_results'], PKL_DATA_INTERMEDIATE, "capacity_results")
-        serialize_file(results_dict['trade_results'], PKL_DATA_INTERMEDIATE, "trade_results")
-        serialize_file(levelized_cost_updated, PKL_DATA_INTERMEDIATE, 'levelized_cost_updated')
+        serialize_file(results_dict['tech_choice_dict'], intermediate_path, "tech_choice_dict")
+        serialize_file(results_dict['plant_result_df'], intermediate_path, "plant_result_df")
+        serialize_file(results_dict['investment_cycle_ref_result'], intermediate_path, "investment_cycle_ref_result")
+        serialize_file(results_dict['investment_dict_result'], intermediate_path, "investment_dict_result")
+        serialize_file(results_dict['plant_cycle_length_mapper_result'], intermediate_path, "plant_cycle_length_mapper_result")
+        serialize_file(results_dict['capacity_results'], intermediate_path, "capacity_results")
+        serialize_file(results_dict['trade_results'], intermediate_path, "trade_results")
+        serialize_file(levelized_cost_updated, intermediate_path, 'levelized_cost_updated')
     return results_dict

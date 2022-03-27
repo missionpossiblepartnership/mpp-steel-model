@@ -5,6 +5,7 @@ from mppsteel.utility.utils import stdout_query, get_currency_rate
 from mppsteel.utility.file_handling_utility import (
     pickle_to_csv,
     create_folder_if_nonexist,
+    get_scenario_pkl_path
 )
 from mppsteel.utility.log_utility import get_logger
 
@@ -43,11 +44,11 @@ from mppsteel.results.green_capacity_ratio import generate_gcr_df
 from mppsteel.graphs.graph_production import create_graphs
 
 from mppsteel.config.model_config import (
+    PKL_DATA_FORMATTED,
     USD_TO_EUR_CONVERSION_DEFAULT,
     MODEL_YEAR_END,
     OUTPUT_FOLDER,
     PKL_DATA_FINAL,
-    PKL_DATA_INTERMEDIATE,
     BC_TEST_FOLDER,
 )
 
@@ -82,34 +83,36 @@ def add_currency_rates_to_scenarios(scenario_dict: dict, live: bool = False) -> 
         eur_to_usd = get_currency_rate("eur", "usd")
         usd_to_eur = get_currency_rate("usd", "eur")
 
-    scenario_dict["eur_usd"] = eur_to_usd
-    scenario_dict["usd_eur"] = usd_to_eur
+    scenario_dict["eur_to_usd"] = eur_to_usd
+    scenario_dict["usd_to_eur"] = usd_to_eur
 
     return scenario_dict
 
 
 # Model phasing
-def data_import_stage() -> None:
+def data_import_stage(scenario_dict: dict) -> None:
     load_data(serialize=True)
-    get_steel_demand(serialize=True)
-    format_pe_data(serialize=True)
-    standardise_business_cases(serialize=True)
-    create_country_ref(serialize=True)
+    get_steel_demand(scenario_dict=scenario_dict, serialize=True)
+    format_pe_data(scenario_dict=scenario_dict, serialize=True)
+    standardise_business_cases(scenario_dict=scenario_dict, serialize=True)
+    create_country_ref(scenario_dict=scenario_dict, serialize=True)
 
 
-def data_preprocessing_phase(scenario_dict: dict) -> None:
-    generate_timeseries(serialize=True, scenario_dict=scenario_dict)
-    steel_plant_processor(serialize=True, remove_non_operating_plants=True)
+def data_preprocessing_generic(scenario_dict: dict) -> None:
+    steel_plant_processor(scenario_dict=scenario_dict, serialize=True, remove_non_operating_plants=True)
     create_capex_opex_dict(scenario_dict=scenario_dict, serialize=True)
-    generate_preprocessed_emissions_data(serialize=True)
+    create_capex_timeseries(scenario_dict=scenario_dict, serialize=True)
+    generate_preprocessed_emissions_data(scenario_dict=scenario_dict, serialize=True)
+    investment_cycle_flow(scenario_dict=scenario_dict, serialize=True)
+
+def data_preprocessing_scenarios(scenario_dict: dict) -> None:
+    generate_timeseries(scenario_dict=scenario_dict, serialize=True)
     generate_emissions_flow(scenario_dict=scenario_dict, serialize=True)
-    create_capex_timeseries(serialize=True)
-    investment_cycle_flow(serialize=True)
     generate_variable_plant_summary(scenario_dict, serialize=True)
-    generate_levelized_cost_results(serialize=True)
+    generate_levelized_cost_results(scenario_dict=scenario_dict, serialize=True)
 
 def investment_cycles(scenario_dict: dict) -> None:
-    investment_cycle_flow(serialize=True)
+    investment_cycle_flow(scenario_dict=scenario_dict, serialize=True)
 
 def model_presolver(scenario_dict: dict) -> None:
     tco_presolver_reference(scenario_dict, serialize=True)
@@ -117,6 +120,8 @@ def model_presolver(scenario_dict: dict) -> None:
 
 
 def model_calculation_phase(scenario_dict: dict) -> None:
+    data_preprocessing_scenarios(scenario_dict)
+    model_presolver(scenario_dict)
     solver_flow(scenario_dict, year_end=MODEL_YEAR_END, serialize=True)
 
 
@@ -128,7 +133,7 @@ def model_results_phase(scenario_dict: dict) -> None:
     generate_gcr_df(scenario_dict, serialize=True)
 
 
-def model_outputs_phase(new_folder: bool = False, output_folder: str = "") -> None:
+def model_outputs_phase(scenario_dict: dict, new_folder: bool = False, output_folder: str = "") -> None:
     save_path = OUTPUT_FOLDER
     if new_folder:
         folder_filepath = f"{OUTPUT_FOLDER}/{output_folder}"
@@ -136,12 +141,13 @@ def model_outputs_phase(new_folder: bool = False, output_folder: str = "") -> No
         save_path = folder_filepath
 
     # Save Intermediate Pickle Files
-    pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, "steel_plants_processed")
-    pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, "capex_switching_df")
-    pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, "calculated_emissivity_combined")
-    pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, "levelized_cost")
-    pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, "emissivity_abatement_switches")
-    pickle_to_csv(save_path, PKL_DATA_INTERMEDIATE, "tco_summary_data")
+    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
+    pickle_to_csv(save_path, PKL_DATA_FORMATTED, "capex_switching_df")
+    pickle_to_csv(save_path, intermediate_path, "plant_result_df")
+    pickle_to_csv(save_path, intermediate_path, "calculated_emissivity_combined")
+    pickle_to_csv(save_path, intermediate_path, "levelized_cost")
+    pickle_to_csv(save_path, intermediate_path, "emissivity_abatement_switches")
+    pickle_to_csv(save_path, intermediate_path, "tco_summary_data")
 
     # Save Final Pickle Files
     pkl_files = [
@@ -165,17 +171,18 @@ def model_graphs_phase(new_folder: bool = False, model_output_folder: str = "") 
 
 
 # Group phases
-def data_import_refresh() -> None:
-    data_import_stage()
+def data_import_refresh(scenario_dict: dict) -> None:
+    data_import_stage(scenario_dict)
 
 
 def data_preprocessing_refresh(scenario_dict: dict) -> None:
-    data_preprocessing_phase(scenario_dict)
+    data_preprocessing_generic(scenario_dict)
+    data_preprocessing_scenarios(scenario_dict)
 
 
 def data_import_and_preprocessing_refresh(scenario_dict: dict) -> None:
-    data_import_stage()
-    data_preprocessing_phase(scenario_dict)
+    data_import_stage(scenario_dict)
+    data_preprocessing_generic(scenario_dict)
 
 
 def tco_and_abatement_calculations(scenario_dict: dict) -> None:
@@ -185,42 +192,41 @@ def tco_and_abatement_calculations(scenario_dict: dict) -> None:
 def scenario_batch_run(
     scenario_dict: dict, dated_output_folder: bool, model_output_folder: str
 ) -> None:
-    data_preprocessing_phase(scenario_dict)
-    model_presolver(scenario_dict)
     model_calculation_phase(scenario_dict)
     model_results_phase(scenario_dict)
-    model_outputs_phase(dated_output_folder, model_output_folder)
+    model_outputs_phase(scenario_dict, dated_output_folder, model_output_folder)
+    model_graphs_phase(scenario_dict, dated_output_folder, model_output_folder)
 
 
 def half_model_run(
     scenario_dict: dict, dated_output_folder: bool, model_output_folder: str
 ) -> None:
-    model_calculation_phase(scenario_dict)
+    solver_flow(scenario_dict, year_end=MODEL_YEAR_END, serialize=True)
     model_results_phase(scenario_dict)
-    model_outputs_phase(dated_output_folder, model_output_folder)
-    model_graphs_phase(dated_output_folder, model_output_folder)
+    model_outputs_phase(scenario_dict, dated_output_folder, model_output_folder)
+    model_graphs_phase(scenario_dict, dated_output_folder, model_output_folder)
 
 
 def results_and_output(
     scenario_dict: dict, dated_output_folder: bool, model_output_folder: str
 ) -> None:
     model_results_phase(scenario_dict)
-    model_outputs_phase(dated_output_folder, model_output_folder)
-    model_graphs_phase(dated_output_folder, model_output_folder)
+    model_outputs_phase(scenario_dict, dated_output_folder, model_output_folder)
+    model_graphs_phase(scenario_dict, dated_output_folder, model_output_folder)
 
 
-def outputs_only(dated_output_folder: bool, model_output_folder: str) -> None:
-    model_outputs_phase(dated_output_folder, model_output_folder)
-    model_graphs_phase(dated_output_folder, model_output_folder)
+def outputs_only(scenario_dict: dict, dated_output_folder: bool, model_output_folder: str) -> None:
+    model_outputs_phase(scenario_dict, dated_output_folder, model_output_folder)
+    model_graphs_phase(scenario_dict, dated_output_folder, model_output_folder)
 
 
-def graphs_only(model_output_folder: str, dated_output_folder: bool) -> None:
-    model_graphs_phase(dated_output_folder, model_output_folder)
+def graphs_only(scenario_dict: dict, model_output_folder: str, dated_output_folder: bool) -> None:
+    model_graphs_phase(scenario_dict, dated_output_folder, model_output_folder)
 
 
 def full_flow(scenario_dict: dict, dated_output_folder: bool, model_output_folder: str) -> None:
     data_import_and_preprocessing_refresh(scenario_dict)
-    model_presolver(scenario_dict)
+    scenario_batch_run(scenario_dict)
     half_model_run(scenario_dict, dated_output_folder, model_output_folder)
 
 
@@ -238,7 +244,7 @@ def business_case_tests(
 
 
 def generate_minimodels(scenario_dict: dict) -> None:
-    generate_timeseries(serialize=True, scenario_dict=scenario_dict)
+    generate_timeseries(scenario_dict, serialize=True)
 
 
 def tco_switch_reference(scenario_dict: dict) -> None:
@@ -262,11 +268,11 @@ def investment_flow(scenario_dict: dict) -> None:
     investment_results(scenario_dict, serialize=True)
 
 
-def get_emissivity() -> None:
-    generate_emissions_flow(False)
+def get_emissivity(scenario_dict: dict) -> None:
+    generate_emissions_flow(scenario_dict, serialize=True)
 
-def lcost_flow() -> None:
-    generate_levelized_cost_results(serialize=True)
+def lcost_flow(scenario_dict: dict) -> None:
+    generate_levelized_cost_results(scenario_dict=scenario_dict, serialize=True)
 
 def gcr_flow(scenario_dict: dict) -> None:
     generate_gcr_df(scenario_dict, serialize=True)

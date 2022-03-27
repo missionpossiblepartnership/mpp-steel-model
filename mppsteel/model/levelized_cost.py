@@ -7,12 +7,14 @@ import numpy_financial as npf
 from tqdm.auto import tqdm as tqdma
 
 from mppsteel.utility.function_timer_utility import timer_func
-from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file, get_scenario_pkl_path
+)
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.config.model_config import (
     MODEL_YEAR_END,
     MODEL_YEAR_START,
-    PKL_DATA_INTERMEDIATE,
+    PKL_DATA_FORMATTED,
     DISCOUNT_RATE,
     INVESTMENT_CYCLE_DURATION_YEARS,
     STEEL_PLANT_LIFETIME_YEARS,
@@ -147,7 +149,7 @@ def create_levelised_cost(
 
 
 @timer_func
-def generate_levelized_cost_results(steel_plant_df = None, serialize: bool = False) -> dict:
+def generate_levelized_cost_results(scenario_dict: dict, serialize: bool = False, steel_plant_df = None) -> dict:
     """Full flow to create the Levelized Cost DataFrame.
 
     Args:
@@ -157,13 +159,14 @@ def generate_levelized_cost_results(steel_plant_df = None, serialize: bool = Fal
     Returns:
         dict: A dictionary with the Levelized Cost DataFrame.
     """
+    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
     variable_costs_regional = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "variable_costs_regional", "df"
+        intermediate_path, "variable_costs_regional", "df"
     )
-    capex_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "capex_dict", "df")
+    capex_dict = read_pickle_folder(PKL_DATA_FORMATTED, "capex_dict", "df")
     if not isinstance(steel_plant_df, pd.DataFrame):
         steel_plant_df = read_pickle_folder(
-            PKL_DATA_INTERMEDIATE, "steel_plants_processed", "df"
+            PKL_DATA_FORMATTED, "steel_plants_processed", "df"
         )
     lcos_data = create_levelised_cost(
         steel_plant_df, variable_costs_regional, capex_dict, include_greenfield=True
@@ -171,5 +174,5 @@ def generate_levelized_cost_results(steel_plant_df = None, serialize: bool = Fal
 
     if serialize:
         logger.info("-- Serializing dataframes")
-        serialize_file(lcos_data, PKL_DATA_INTERMEDIATE, "levelized_cost")
+        serialize_file(lcos_data, intermediate_path, "levelized_cost")
     return lcos_data

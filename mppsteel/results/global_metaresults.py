@@ -1,20 +1,18 @@
 """Calculates Global Meta Results of the model"""
 
 import pandas as pd
-from tqdm import tqdm
-from tqdm.auto import tqdm as tqdma
 
 from mppsteel.config.model_config import (
     MODEL_YEAR_END,
     MODEL_YEAR_START,
-    PKL_DATA_INTERMEDIATE,
-    PKL_DATA_FINAL,
+    PKL_DATA_FORMATTED
 )
 from mppsteel.data_loading.reg_steel_demand_formatter import steel_demand_getter
-from mppsteel.results.production import tech_capacity_splits
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import add_results_metadata
-from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file, get_scenario_pkl_path
+)
 from mppsteel.utility.log_utility import get_logger
 
 # Create logger
@@ -85,14 +83,16 @@ def metaresults_flow(scenario_dict: dict, serialize: bool = False) -> pd.DataFra
         pd.DataFrame: A DataFrame containing the Metaresults.
     """
     logger.info("- Starting Production Results Model Flow")
+    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
+    final_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'final')
     steel_demand_df = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "regional_steel_demand_formatted", "df"
+        PKL_DATA_FORMATTED, "regional_steel_demand_formatted", "df"
     )
     production_resource_usage = read_pickle_folder(
-        PKL_DATA_FINAL, "production_resource_usage", "df"
+        final_path, "production_resource_usage", "df"
     )
     capacity_results = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "capacity_results", "dict"
+        intermediate_path, "capacity_results", "dict"
     )
     steel_demand_scenario = scenario_dict["steel_demand_scenario"]
     global_metaresults = global_metaresults_calculator(
@@ -108,5 +108,5 @@ def metaresults_flow(scenario_dict: dict, serialize: bool = False) -> pd.DataFra
 
     if serialize:
         logger.info("-- Serializing dataframes")
-        serialize_file(global_metaresults, PKL_DATA_FINAL, "global_metaresults")
+        serialize_file(global_metaresults, final_path, "global_metaresults")
     return global_metaresults

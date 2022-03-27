@@ -1,20 +1,15 @@
 """Creates graphs from model outputs"""
 import pandas as pd
 import plotly.express as px
+from mppsteel.config.model_config import PKL_DATA_FORMATTED
 
 from mppsteel.utility.function_timer_utility import timer_func
-from mppsteel.utility.file_handling_utility import read_pickle_folder
-
+from mppsteel.utility.file_handling_utility import read_pickle_folder, get_scenario_pkl_path
 from mppsteel.utility.log_utility import get_logger
-
-from mppsteel.config.model_config import PKL_DATA_FINAL
-from mppsteel.config.model_config import PKL_DATA_INTERMEDIATE
 from mppsteel.graphs.plotly_graphs import (
     line_chart,
     area_chart,
-    ARCHETYPE_COLORS,
 )
-
 from mppsteel.graphs.opex_capex_graph import opex_capex_graph
 from mppsteel.graphs.consumption_over_time import consumption_over_time_graph
 from mppsteel.graphs.cost_of_steelmaking_graphs import lcost_graph
@@ -268,7 +263,8 @@ def resource_line_charts(
     )
 
 
-def create_opex_capex_graph(filepath: str = None) -> px.bar:
+def create_opex_capex_graph(
+    variable_cost_df: pd.DataFrame, capex_dict: dict, country_ref_dict: dict, filepath: str = None) -> px.bar:
     """Creates a Opex Capex split graph.
 
     Args:
@@ -281,11 +277,11 @@ def create_opex_capex_graph(filepath: str = None) -> px.bar:
     logger.info(f"Creating Opex Capex Graph Output: {filename}")
     if filepath:
         filename = f"{filepath}/{filename}"
-    return opex_capex_graph(save_filepath=filename)
+    return opex_capex_graph(variable_cost_df, capex_dict, country_ref_dict, save_filepath=filename)
 
 
 def create_investment_line_graph(
-    group: str, operation: str, filepath: str = None
+    investment_results: pd.DataFrame, group: str, operation: str, filepath: str = None
 ) -> px.line:
     """Creates a line graph showing the level of investment across all technologies and saves it.
 
@@ -302,11 +298,11 @@ def create_investment_line_graph(
     if filepath:
         filename = f"{filepath}/{filename}"
     return investment_line_chart(
-        group=group, operation=operation, save_filepath=filename
+        investment_results, group=group, operation=operation, save_filepath=filename
     )
 
 
-def create_investment_per_tech_graph(filepath: str = None) -> px.bar:
+def create_investment_per_tech_graph(investment_results: pd.DataFrame, filepath: str = None) -> px.bar:
     """Creates a line graph showing the level of investment across all technologies.
 
     Args:
@@ -319,10 +315,10 @@ def create_investment_per_tech_graph(filepath: str = None) -> px.bar:
     logger.info(f"Technology Investment Output: {filename}")
     if filepath:
         filename = f"{filepath}/{filename}"
-    return investment_per_tech(save_filepath=filename)
+    return investment_per_tech(investment_results, save_filepath=filename)
 
 
-def create_cot_graph(regions: list = None, filepath: str = None) -> px.bar:
+def create_cot_graph(production_resource_usage: pd.DataFrame, regions: list = None, filepath: str = None) -> px.bar:
     """Generates a Graph showing the consumption over time of a material resource.
 
     Args:
@@ -340,10 +336,10 @@ def create_cot_graph(regions: list = None, filepath: str = None) -> px.bar:
     logger.info(f"Consumption Over Time Output: {filename}")
     if filepath:
         filename = f"{filepath}/{filename}"
-    return consumption_over_time_graph(regions=regions, save_filepath=filename)
+    return consumption_over_time_graph(production_resource_usage, regions=regions, save_filepath=filename)
 
 
-def create_lcost_graph(chosen_year: int, filepath: str = None) -> px.bar:
+def create_lcost_graph(lcost_df: pd.DataFrame, chosen_year: int, filepath: str = None) -> px.bar:
     """Creates a bar graph for the Levelised Cost.
 
     Args:
@@ -357,7 +353,7 @@ def create_lcost_graph(chosen_year: int, filepath: str = None) -> px.bar:
     logger.info(f"Levelised Cost Output: {filename}")
     if filepath:
         filename = f"{filepath}/{filename}"
-    return lcost_graph(chosen_year=chosen_year, save_filepath=filename)
+    return lcost_graph(lcost_df, chosen_year=chosen_year, save_filepath=filename)
 
 def create_tco_graph(
     df: pd.DataFrame, year: int = None, region: str = None, 
@@ -402,25 +398,37 @@ def create_emissions_graph(df: pd.DataFrame, year: int = None, region: str = Non
     return generate_emissivity_charts(df, year, region, scope, save_filepath=filename)
 
 @timer_func
-def create_graphs(filepath: str) -> None:
+def create_graphs(filepath: str, scenario_dict: dict) -> None:
     """Graph creation flow.
 
     Args:
         filepath (str): The folder path you want to save the chart to. Defaults to None.
     """
+    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
+    final_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'final')
     production_resource_usage = read_pickle_folder(
-        PKL_DATA_FINAL, "production_resource_usage", "df"
+        final_path, "production_resource_usage", "df"
     )
     production_emissions = read_pickle_folder(
-        PKL_DATA_FINAL, "production_emissions", "df"
+        final_path, "production_emissions", "df"
     )
     tco_ref = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "tco_summary_data", "df"
+        intermediate_path, "tco_summary_data", "df"
     )
     calculated_emissivity_combined_df = read_pickle_folder(
-        PKL_DATA_INTERMEDIATE, "calculated_emissivity_combined", "df"
+        intermediate_path, "calculated_emissivity_combined", "df"
     )
-
+    lcost_data = read_pickle_folder(
+        intermediate_path, "levelized_cost_updated", "df"
+    )
+    investment_results = read_pickle_folder(final_path, "investment_results", "df")
+    capex_dict = read_pickle_folder(PKL_DATA_FORMATTED, "capex_dict", "df")
+    variable_cost_df = read_pickle_folder(
+        intermediate_path, "variable_costs_regional_material_breakdown", "df"
+    )
+    country_ref_dict = read_pickle_folder(
+        PKL_DATA_FORMATTED, "country_reference_dict", "df"
+    )
     steel_production_area_chart(production_emissions, filepath)
     resource_line_charts(
         production_resource_usage,
@@ -437,20 +445,19 @@ def create_graphs(filepath: str) -> None:
             df=production_resource_usage, resource=resource, filepath=filepath
         )
 
-    create_opex_capex_graph(filepath)
+    create_opex_capex_graph(variable_cost_df, capex_dict, country_ref_dict, filepath)
 
-    create_investment_line_graph(group="global", operation="cumsum", filepath=filepath)
+    create_investment_line_graph(investment_results, group="global", operation="cumsum", filepath=filepath)
 
-    create_investment_per_tech_graph(filepath=filepath)
+    create_investment_per_tech_graph(investment_results, filepath=filepath)
 
-    for reg in [None, 'China', 'India', 'EU + UK', 'USMCA']:
-        create_cot_graph(filepath=filepath)
+    create_cot_graph(production_resource_usage, regions=[None, 'China', 'India', 'EU + UK', 'USMCA'], filepath=filepath)
 
-    create_lcost_graph(2030, filepath=filepath)
+    create_lcost_graph(lcost_data, 2030, filepath=filepath)
 
     for year in [2020, 2030, 2040, 2050]:
         for reg in ['China', 'NAFTA', 'India','Europe', None]:
-            create_tco_graph(tco_ref, year,reg,'Avg BF-BOF', filepath=filepath)
+            create_tco_graph(tco_ref, year, reg, 'Avg BF-BOF', filepath=filepath)
 
     for yrs in [2020, 2030, 2050]:
         for reg in ['China','India','Europe','NAFTA']:

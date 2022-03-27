@@ -13,9 +13,11 @@ from tqdm.auto import tqdm as tqdma
 from mppsteel.utility.utils import enumerate_iterable
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.location_utility import CountryMetadata
-from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file
+)
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.config.model_config import PKL_DATA_IMPORTS, PKL_DATA_INTERMEDIATE
+from mppsteel.config.model_config import PKL_DATA_IMPORTS, PKL_DATA_FORMATTED
 from mppsteel.validation.data_import_tests import COUNTRY_REF_SCHEMA
 
 # Create logger
@@ -132,7 +134,7 @@ def country_ref_getter(
 
 
 @timer_func
-def create_country_ref(serialize: bool = False) -> dict:
+def create_country_ref(scenario_dict: dict, serialize: bool = False) -> dict:
     """Preprocesses the country data.
 
     Args:
@@ -147,6 +149,6 @@ def create_country_ref(serialize: bool = False) -> dict:
     cr_dict = create_country_ref_dict(country_ref, CountryMetadata)
 
     if serialize:
-        serialize_file(cr_dict, PKL_DATA_INTERMEDIATE, "country_reference_dict")
+        serialize_file(cr_dict, PKL_DATA_FORMATTED, "country_reference_dict")
         return
     return cr_dict
