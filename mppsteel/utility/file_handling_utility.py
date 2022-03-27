@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Union
 
 import pandas as pd
+from mppsteel.config.model_config import OUTPUT_FOLDER, PKL_DATA_FINAL, PKL_DATA_INTERMEDIATE, PKL_FOLDER
 
 from mppsteel.utility.log_utility import get_logger
 
@@ -135,3 +136,9 @@ def pickle_to_csv(
 
 def create_folder_if_nonexist(folder_path: str):
     Path(folder_path).mkdir(parents=True, exist_ok=True)
+
+def get_scenario_pkl_path(scenario: str, pkl_folder_type: str):
+    if pkl_folder_type == 'intermediate':
+        return f'{PKL_FOLDER}/{scenario}/intermediate_data'
+    if pkl_folder_type == 'final':
+        return f'{PKL_FOLDER}/{scenario}/final_data'
