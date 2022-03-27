@@ -1,10 +1,13 @@
 """Runs the data loading scripts"""
+import multiprocessing as mp
 
 from datetime import datetime
 from itertools import product
 
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.utility.file_handling_utility import create_folders_if_nonexistant, serialize_df_dict
+from mppsteel.utility.file_handling_utility import (
+    create_folders_if_nonexistant, serialize_df_dict, get_scenario_pkl_path
+)
 from mppsteel.utility.function_timer_utility import TIME_CONTAINER
 
 from mppsteel.config.model_config import FOLDERS_TO_CHECK_IN_ORDER
@@ -24,6 +27,7 @@ if __name__ == "__main__":
 
     timestamp = datetime.today().strftime('%d-%m-%y %H-%M')
     logger.info(f'Model running at {timestamp}')
+    model_output_folder = f"{scenario_args['scenario_name']} {timestamp}"
 
     create_folders_if_nonexistant(FOLDERS_TO_CHECK_IN_ORDER)
 
@@ -39,21 +43,39 @@ if __name__ == "__main__":
             scenario_options = list(SCENARIO_OPTIONS.keys())
             logger.info(f'INVALID SCENARIO INPUT: {args.choose_scenario}, please choose from {scenario_options}')
 
-    if args.all_scenarios:
-        all_options = list(product(*SCENARIO_SETTINGS.values()))
-        logger.info(f'Running ALL {len(all_options)} SCENARIO options')
-        '''
+    if args.main_scenarios:
+        options = ['baseline_scenario', 'tech_moratorium', 'abatement', 'fastest_abatement']
+        logger.info(f'Running {options} scenario options')
+
+        # Multiprocessing
+        n_cores = mp.cpu_count()
+        logger.info(f"{n_cores} cores detected")
+        pool = mp.Pool(processes=n_cores)
+
+        # Model flow
         data_import_refresh()
-        for scenario in all_options:
-            scenario_run = add_currency_rates_to_scenarios(scenario)
-            scenario_batch_run(scenario_dict=scenario_run, dated_output_folder=True, timestamp=timestamp)
-        '''
+        for scenario in options:
+            intermediate_path = get_scenario_pkl_path(scenario, 'intermediate')
+            final_path = get_scenario_pkl_path(scenario, 'final')
+            create_folders_if_nonexistant([intermediate_path, final_path])
+            scenario_args = SCENARIO_OPTIONS[scenario]
+            scenario_args = add_currency_rates_to_scenarios(scenario_args)
+            timestamp = datetime.today().strftime('%d-%m-%y %H-%M')
+            model_output_folder = f"{scenario_args['scenario_name']} {timestamp}"
+            pool.apply_async(
+                scenario_batch_run,
+                scenario_dict=scenario_args,
+                dated_output_folder=True,
+                model_output_folder=model_output_folder
+            )
+        pool.close()
+        pool.join()
 
     logger.info(f'''Running model with the following parameters:  
     {scenario_args}''')
 
     if args.full_model:
-        full_flow(scenario_dict=scenario_args, dated_output_folder=True, timestamp=timestamp)
+        full_flow(scenario_dict=scenario_args, dated_output_folder=True, model_output_folder=model_output_folder)
 
     if args.solver:
         model_calculation_phase(scenario_dict=scenario_args)
@@ -62,10 +84,10 @@ if __name__ == "__main__":
         model_results_phase(scenario_dict=scenario_args)
 
     if args.output:
-        outputs_only(dated_output_folder=True, timestamp=timestamp)
+        outputs_only(dated_output_folder=True, model_output_folder=model_output_folder)
 
     if args.half_model:
-        half_model_run(scenario_dict=scenario_args, dated_output_folder=True, timestamp=timestamp)
+        half_model_run(scenario_dict=scenario_args, dated_output_folder=True, model_output_folder=model_output_folder)
 
     if args.data_import:
         data_import_refresh()
@@ -81,7 +103,7 @@ if __name__ == "__main__":
 
     if args.business_cases:
         standardise_business_cases(serialize=True)
-        # business_case_tests(new_folder=True, timestamp=timestamp, create_test_df=True)
+        # business_case_tests(new_folder=True, model_output_folder=model_output_folder, create_test_df=True)
 
     if args.variable_costs:
         generate_variable_plant_summary(scenario_dict=scenario_args, serialize=True)
@@ -90,10 +112,10 @@ if __name__ == "__main__":
         lcost_flow()
 
     if args.results_and_output:
-        results_and_output(scenario_dict=scenario_args, dated_output_folder=True, timestamp=timestamp)
+        results_and_output(scenario_dict=scenario_args, dated_output_folder=True, model_output_folder=model_output_folder)
 
     if args.graphs:
-        graphs_only(timestamp=timestamp, dated_output_folder=True)
+        graphs_only(model_output_folder=model_output_folder, dated_output_folder=True)
 
     if args.minimodels:
         generate_minimodels(scenario_dict=scenario_args)

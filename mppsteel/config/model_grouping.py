@@ -128,10 +128,10 @@ def model_results_phase(scenario_dict: dict) -> None:
     generate_gcr_df(scenario_dict, serialize=True)
 
 
-def model_outputs_phase(new_folder: bool = False, timestamp: str = "") -> None:
+def model_outputs_phase(new_folder: bool = False, output_folder: str = "") -> None:
     save_path = OUTPUT_FOLDER
     if new_folder:
-        folder_filepath = f"{OUTPUT_FOLDER}/{timestamp}"
+        folder_filepath = f"{OUTPUT_FOLDER}/{output_folder}"
         create_folder_if_nonexist(folder_filepath)
         save_path = folder_filepath
 
@@ -155,10 +155,10 @@ def model_outputs_phase(new_folder: bool = False, timestamp: str = "") -> None:
         pickle_to_csv(save_path, PKL_DATA_FINAL, pkl_file)
 
 
-def model_graphs_phase(new_folder: bool = False, timestamp: str = "") -> None:
+def model_graphs_phase(new_folder: bool = False, model_output_folder: str = "") -> None:
     save_path = OUTPUT_FOLDER
     if new_folder:
-        folder_filepath = f"{OUTPUT_FOLDER}/{timestamp}/graphs"
+        folder_filepath = f"{OUTPUT_FOLDER}/{model_output_folder}/graphs"
         create_folder_if_nonexist(folder_filepath)
         save_path = folder_filepath
     create_graphs(save_path)
@@ -183,53 +183,53 @@ def tco_and_abatement_calculations(scenario_dict: dict) -> None:
 
 
 def scenario_batch_run(
-    scenario_dict: dict, dated_output_folder: bool, timestamp: str
+    scenario_dict: dict, dated_output_folder: bool, model_output_folder: str
 ) -> None:
     data_preprocessing_phase(scenario_dict)
     model_presolver(scenario_dict)
     model_calculation_phase(scenario_dict)
     model_results_phase(scenario_dict)
-    model_outputs_phase(dated_output_folder, timestamp)
+    model_outputs_phase(dated_output_folder, model_output_folder)
 
 
 def half_model_run(
-    scenario_dict: dict, dated_output_folder: bool, timestamp: str
+    scenario_dict: dict, dated_output_folder: bool, model_output_folder: str
 ) -> None:
     model_calculation_phase(scenario_dict)
     model_results_phase(scenario_dict)
-    model_outputs_phase(dated_output_folder, timestamp)
-    model_graphs_phase(dated_output_folder, timestamp)
+    model_outputs_phase(dated_output_folder, model_output_folder)
+    model_graphs_phase(dated_output_folder, model_output_folder)
 
 
 def results_and_output(
-    scenario_dict: dict, dated_output_folder: bool, timestamp: str
+    scenario_dict: dict, dated_output_folder: bool, model_output_folder: str
 ) -> None:
     model_results_phase(scenario_dict)
-    model_outputs_phase(dated_output_folder, timestamp)
-    model_graphs_phase(dated_output_folder, timestamp)
+    model_outputs_phase(dated_output_folder, model_output_folder)
+    model_graphs_phase(dated_output_folder, model_output_folder)
 
 
-def outputs_only(dated_output_folder: bool, timestamp: str) -> None:
-    model_outputs_phase(dated_output_folder, timestamp)
-    model_graphs_phase(dated_output_folder, timestamp)
+def outputs_only(dated_output_folder: bool, model_output_folder: str) -> None:
+    model_outputs_phase(dated_output_folder, model_output_folder)
+    model_graphs_phase(dated_output_folder, model_output_folder)
 
 
-def graphs_only(timestamp: str, dated_output_folder: bool) -> None:
-    model_graphs_phase(dated_output_folder, timestamp)
+def graphs_only(model_output_folder: str, dated_output_folder: bool) -> None:
+    model_graphs_phase(dated_output_folder, model_output_folder)
 
 
-def full_flow(scenario_dict: dict, dated_output_folder: bool, timestamp: str) -> None:
+def full_flow(scenario_dict: dict, dated_output_folder: bool, model_output_folder: str) -> None:
     data_import_and_preprocessing_refresh(scenario_dict)
     model_presolver(scenario_dict)
-    half_model_run(scenario_dict, dated_output_folder, timestamp)
+    half_model_run(scenario_dict, dated_output_folder, model_output_folder)
 
 
 def business_case_tests(
-    new_folder: bool = False, timestamp: str = "", create_test_df: bool = True
+    new_folder: bool = False, model_output_folder: str = "", create_test_df: bool = True
 ) -> None:
     save_path = BC_TEST_FOLDER
     if new_folder:
-        folder_filepath = f"{BC_TEST_FOLDER}/{timestamp}"
+        folder_filepath = f"{BC_TEST_FOLDER}/{model_output_folder}"
         create_folder_if_nonexist(folder_filepath)
         save_path = folder_filepath
     if create_test_df:
@@ -288,10 +288,10 @@ parser.add_argument(
 )
 parser.add_argument(
     "-a",
-    "--all_scenarios",
+    "--main_scenarios",
     action="store_true",
-    help="Runs all fixed scenarios in the model",
-)
+    help="Runs specified scenarios using multiprocessing using scenario_batch_run",
+) # scenario_batch_run
 parser.add_argument(
     "-f", "--full_model", action="store_true", help="Runs the complete model flow"
 )  # full_flow
@@ -381,7 +381,7 @@ parser.add_argument(
     "--cos",
     action="store_true",
     help="Runs the cost of steelmaking script directly",
-)  # cost of steelmaking
+)  # cos_flow
 parser.add_argument(
     "-k",
     "--metaresults",

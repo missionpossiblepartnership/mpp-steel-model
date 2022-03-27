@@ -6,7 +6,6 @@ import numpy_financial as npf
 from tqdm import tqdm
 
 from mppsteel.data_loading.steel_plant_formatter import create_plant_capacities_dict
-from mppsteel.data_loading.reg_steel_demand_formatter import steel_demand_getter
 from mppsteel.model.levelized_cost import calculate_cc
 from mppsteel.results.production import production_stats_getter
 from mppsteel.results.investments import get_investment_capital_costs
@@ -90,7 +89,7 @@ def apply_cos(
         float: The cost of Steelmaking value to be applied.
     """
 
-    plant_capacity = cap_dict[row.plant_name]["plant_capacity"]
+    plant_capacity = cap_dict[row.plant_name]
     variable_cost = 0
     other_opex_cost = 0
     capital_investment = 0
@@ -200,8 +199,11 @@ def cost_of_steelmaking(
             capacities_dict, plant_region_ref, ref
         )
         return cos_sum / capacity_sum
+    desc = "Cost of Steelmaking without Captial Charges: Year Loop"
+    if capital_charges:
+        desc = "Cost of Steelmaking with Captial Charges: Year Loop"
 
-    for year in tqdm(years, total=len(years), desc="Cost of Steelmaking: Year Loop"):
+    for year in tqdm(years, total=len(years), desc=desc):
         ps_y = production_stats_modified.loc[year]
 
         if regional:

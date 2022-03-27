@@ -12,6 +12,7 @@ from mppsteel.utility.dataframe_utility import return_furnace_group
 from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
 from mppsteel.data_loading.reg_steel_demand_formatter import extend_steel_demand
 from mppsteel.model.investment_cycles import create_investment_cycle, amend_investment_dict, create_investment_cycle_reference
+from mppsteel.data_loading.country_reference import country_df_formatter
 
 from mppsteel.config.model_config import (
     MODEL_YEAR_END,
@@ -36,7 +37,6 @@ from mppsteel.config.reference_lists import (
 
 from mppsteel.data_loading.data_interface import load_materials, load_business_cases
 from mppsteel.data_loading.steel_plant_formatter import create_plant_capacities_dict
-
 from mppsteel.model.solver_constraints import (
     tech_availability_check,
     read_and_format_tech_availability,
@@ -44,7 +44,6 @@ from mppsteel.model.solver_constraints import (
     material_usage_per_plant,
     load_resource_usage_dict,
 )
-
 from mppsteel.model.tco_and_abatement_optimizer import get_best_choice, subset_presolver_df
 from mppsteel.model.plant_open_close import (
     open_close_flow, return_modified_plants, 
@@ -53,6 +52,7 @@ from mppsteel.model.plant_open_close import (
 from mppsteel.model.trade import TradeBalance
 from mppsteel.model.levelized_cost import generate_levelized_cost_results
 from mppsteel.utility.log_utility import get_logger
+from mppsteel.utility.location_utility import get_region_from_country_code
 
 # Create logger
 logger = get_logger("Solver Logic")
@@ -246,6 +246,12 @@ def choose_technology(
     plant_cycle_length_mapper = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "plant_cycle_length_mapper", "dict"
     )
+    variable_costs_regional = read_pickle_folder(
+        PKL_DATA_INTERMEDIATE, "variable_costs_regional", "df"
+    )
+    country_reference_dict = read_pickle_folder(PKL_DATA_INTERMEDIATE, "country_reference_dict", "df")
+    country_df = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref")
+    country_df_f = country_df_formatter(country_df)
     investment_year_ref_c = investment_year_ref.copy()
     investment_dict_c = deepcopy(investment_dict)
     plant_cycle_length_mapper_c = deepcopy(plant_cycle_length_mapper)
@@ -264,13 +270,18 @@ def choose_technology(
         zip(tech_availability["Technology"], tech_availability["Year available from"])
     )
     tech_availability = read_and_format_tech_availability(tech_availability)
-
+    capex_dict = read_pickle_folder(
+        PKL_DATA_INTERMEDIATE, "capex_dict", "dict"
+    )
     # TCO & Abatement Data
     tco_summary_data = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "tco_summary_data", "df"
     )
     tco_slim = subset_presolver_df(tco_summary_data, subset_type='tco_summary')
-
+    levelized_cost = read_pickle_folder(PKL_DATA_INTERMEDIATE, "levelized_cost", "df")
+    levelized_cost["region"] = levelized_cost["country_code"].apply(
+            lambda x: get_region_from_country_code(x, "rmi_region", country_reference_dict)
+    )
     steel_plant_abatement_switches = read_pickle_folder(
         PKL_DATA_INTERMEDIATE, "emissivity_abatement_switches", "df"
     )
@@ -299,12 +310,29 @@ def choose_technology(
 
     for year in tqdm(year_range, total=len(year_range), desc="Years"):
         logger.info(f"Running investment decisions for {year}")
-        current_plant_choices[str(year)] = {}
+        if year == 2020:
+            logger.info(f'Loading initial technology choices for {year}')
+            current_plant_choices[str(year)] = {row.plant_name: row.technology_in_2020 for row in model_plant_df.itertuples()}
+        else:
+            logger.info(f'Loading plant entries for {year}')
+            current_plant_choices[str(year)] = {row.plant_name: '' for row in model_plant_df.itertuples()}
         logger.info(f'Starting the open close flow for {year}')
         open_close_dict = open_close_flow(
-            PlantIDC, trade_container, model_plant_df, current_plant_choices, 
-            investment_dict_c, util_dict_c, year, trade_scenario
-            )
+            plant_container=PlantIDC,
+            trade_container=trade_container,
+            plant_df=model_plant_df,
+            levelized_cost=levelized_cost,
+            steel_demand_df=steel_demand_df,
+            country_df=country_df_f,
+            variable_costs_df=variable_costs_regional,
+            capex_dict=capex_dict,
+            tech_choice_dict=current_plant_choices,
+            investment_dict=investment_dict_c,
+            util_dict=util_dict_c,
+            year=year,
+            trade_scenario=trade_scenario,
+            steel_demand_scenario=steel_demand_scenario
+        )
         
         model_plant_df = open_close_dict['plant_df']
         current_plant_choices = open_close_dict['tech_choice_dict']
@@ -332,7 +360,6 @@ def choose_technology(
 
         if year == 2020:
             technologies = non_switchers_df["technology_in_2020"].values
-
         else:
             technologies = current_plant_choices[str(year - 1)].values()
 
