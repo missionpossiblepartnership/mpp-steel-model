@@ -152,7 +152,7 @@ def steel_demand_getter(
     # Apply subsets
     # Scenario: BAU, High Circ, average
     # Metric: crude, scrap
-    STEEL_DEMAND_SCENARIO_MAPPER = STEEL_DEMAND_SCENARIO_MAPPER = {"bau": "BAU", "high": "High Circ", "average": "average"}
+    STEEL_DEMAND_SCENARIO_MAPPER = {"bau": "BAU", "high": "High Circ", "average": "average"}
     scenario_entry = STEEL_DEMAND_SCENARIO_MAPPER[scenario]
 
     metric_mapper = {
