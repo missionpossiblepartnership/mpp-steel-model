@@ -210,14 +210,7 @@ def create_investment_cycle_ref_from_dict(inv_dict: dict, year_end: int):
 
 def choose_technology(
     year_end: int,
-    scenario_dict: dict,
-    solver_logic: str,
-    tech_moratorium: bool = False,
-    enforce_constraints: bool = True,
-    steel_demand_scenario: str = "bau",
-    trans_switch_scenario: str = True,
-    tech_switch_scenario: dict = {"tco": 1, "emissions": 0},
-    trade_scenario: bool = False
+    scenario_dict: dict
 ) -> dict:
     """Function containing the entire solver decision logic flow.
     1) In each year, the solver splits the plants into technology switchers, and non-switchers.
@@ -233,11 +226,11 @@ def choose_technology(
 
     logger.info("Creating Steel plant df")
 
-    solver_logic = SOLVER_LOGICS[scenario_dict["solver_logic"]],
-    tech_moratorium = scenario_dict["tech_moratorium"],
-    enforce_constraints = scenario_dict["enforce_constraints"],
-    steel_demand_scenario = scenario_dict["steel_demand_scenario"],
-    trans_switch_scenario = scenario_dict["transitional_switch"],
+    solver_logic = SOLVER_LOGICS[scenario_dict["solver_logic"]]
+    tech_moratorium = scenario_dict["tech_moratorium"]
+    enforce_constraints = scenario_dict["enforce_constraints"]
+    steel_demand_scenario = scenario_dict["steel_demand_scenario"]
+    trans_switch_scenario = scenario_dict["transitional_switch"]
     tech_switch_scenario = TECH_SWITCH_SCENARIOS[
         scenario_dict["tech_switch_scenario"]
     ]
@@ -268,7 +261,7 @@ def choose_technology(
         PKL_DATA_FORMATTED, "bio_constraint_model_formatted", "df"
     )
     materials = load_materials()
-    ccs_co2 = read_pickle_folder(PKL_DATA_FORMATTED, "ccs_co2", "df")
+    ccs_co2 = read_pickle_folder(PKL_DATA_IMPORTS, "ccs_co2", "df")
     # steel_demand_df = extend_steel_demand(MODEL_YEAR_END)
     steel_demand_df = read_pickle_folder(
         PKL_DATA_FORMATTED, "regional_steel_demand_formatted", "df"
@@ -413,6 +406,10 @@ def choose_technology(
 
             if (current_tech == "Not operating") or (current_tech == "Close plant"):
                 current_plant_choices[str(year)][plant_name] = "Close plant"
+
+            elif (tech_in_2020 == 'EAF') & (plant.primary == 'N'):
+                best_choice_tech = 'EAF'
+                current_plant_choices[str(year)][plant_name] = best_choice_tech
 
             else:
                 switch_type = (

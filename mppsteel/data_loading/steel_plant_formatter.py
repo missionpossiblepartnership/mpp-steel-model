@@ -17,10 +17,9 @@ from mppsteel.utility.location_utility import (
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
     serialize_file,
-    get_scenario_pkl_path
 )
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.config.model_config import PKL_DATA_IMPORTS
+from mppsteel.config.model_config import PKL_DATA_FORMATTED, PKL_DATA_IMPORTS
 from mppsteel.validation.data_import_tests import STEEL_PLANT_DATA_SCHEMA
 
 # Create logger
@@ -53,6 +52,7 @@ NEW_COLUMN_NAMES = [
     "cheap_natural_gas",
     "industrial_cluster",
     "technology_in_2020",
+    "primary",
 ]
 
 
@@ -294,15 +294,14 @@ def steel_plant_processor(
         pd.DataFrame: A DataFrame containing the preprocessed steel plants.
     """
     logger.info("Preprocessing the Steel Plant Data")
-    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
     steel_plants = read_pickle_folder(PKL_DATA_IMPORTS, "steel_plants")
     country_reference_dict = read_pickle_folder(
-        intermediate_path, "country_reference_dict", "df"
+        PKL_DATA_FORMATTED, "country_reference_dict", "df"
     )
     steel_plants = steel_plant_formatter(steel_plants, remove_non_operating_plants)
     steel_plants = apply_countries_to_steel_plants(steel_plants, country_reference_dict)
 
     if serialize:
-        serialize_file(steel_plants, intermediate_path, "steel_plants_processed")
+        serialize_file(steel_plants, PKL_DATA_FORMATTED, "steel_plants_processed")
 
     return steel_plants
