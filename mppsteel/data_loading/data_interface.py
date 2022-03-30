@@ -308,6 +308,19 @@ def scope3_ef_getter(df: pd.DataFrame, fuel: str, year: str) -> float:
     df_c.set_index(["Fuel", "Year"], inplace=True)
     return df_c.loc[fuel, year]["value"]
 
+
+@timer_func
+def format_business_cases(serialize: bool):
+    bc_df = read_pickle_folder(
+        PKL_DATA_IMPORTS, "excel_business_cases"
+    )
+    bc_df =  bc_df.melt(id_vars=['Material', 'Type of metric', 'Unit'], var_name='technology', value_name='value').copy()
+    bc_df.rename({'Material': 'material_category', 'Type of metric': 'metric_type', 'Unit': 'unit'}, axis=1, inplace=True)
+    if serialize:
+        serialize_file(bc_df, PKL_DATA_FORMATTED, "standardised_business_cases")
+    return bc_df
+
+
 @timer_func
 def create_capex_opex_dict(scenario_dict: dict, serialize: bool = False) -> dict:
     """Creates a Dictionary containing Greenfield, Brownfield and Opex values.

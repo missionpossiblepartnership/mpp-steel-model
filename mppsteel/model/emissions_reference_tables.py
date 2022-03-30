@@ -468,14 +468,9 @@ def generate_emissions_flow(
     electricity_cost_scenario = scenario_dict["electricity_cost_scenario"]
     grid_scenario = scenario_dict["grid_scenario"]
     hydrogen_cost_scenario = scenario_dict["hydrogen_cost_scenario"]
-    business_cases_summary_c = (
-        business_cases_summary.loc[business_cases_summary["material_category"] != 0]
-        .copy()
-        .reset_index(drop=True)
-    )
-    emissions_df = business_cases_summary_c.copy()
+    emissions_df = business_cases_summary.copy()
     emissions = generate_emissions_dataframe(
-        business_cases_summary_c, MODEL_YEAR_END
+        business_cases_summary.copy(), MODEL_YEAR_END
     )
     emissions_s1_summary = emissions[emissions["scope"] == "S1"]
     s1_emissivity = (
