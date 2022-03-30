@@ -283,7 +283,7 @@ def generate_variable_costs(
             country_code,
             country_ref_dict,
             default_country="USA",
-            variable="Total price premium ",
+            variable="H2 price", # Should be H2 price instead of Total Price Premium?
             cost_scenario=COST_SCENARIO_MAPPER[hydrogen_cost_scenario],
         )
         bio_price = bio_price_getter(
