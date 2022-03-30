@@ -11,9 +11,14 @@ from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.config.model_config import (
     MODEL_YEAR_END,
     MODEL_YEAR_START,
+    CARBON_TAX_START_YEAR,
+    GREEN_PREMIUM_START_YEAR
 )
 
-from mppsteel.config.model_scenarios import CARBON_TAX_SCENARIOS, GREEN_PREMIUM_SCENARIOS
+from mppsteel.config.model_scenarios import (
+    CARBON_TAX_SCENARIOS,
+    GREEN_PREMIUM_SCENARIOS
+)
 from mppsteel.utility.log_utility import get_logger
 
 # Create logger
@@ -24,6 +29,7 @@ def timeseries_generator(
     timeseries_type: str,
     start_year: int,
     end_year: int,
+    series_start_year: int,
     end_value: float,
     start_value: float = 0,
     units: str = "",
@@ -34,6 +40,7 @@ def timeseries_generator(
         timeseries_type (str): Defines the timeseries to produce. Options: Biomass, Carbon Tax.
         start_year (int): Defines the start date of the timeseries.
         end_year (int): Defines the end date of the timeseries.
+        series_start_year (int): The year that the timeseries starts.
         end_value (float): Defines the terminal value of the timeseries.
         start_value (float, optional): Defines the starting value of the timeseries. Defaults to 0.
         units (str, optional): [description]. Define units of the timeseries values. Defaults to ''.
@@ -42,9 +49,11 @@ def timeseries_generator(
         DataFrame: A DataFrame of the timeseries.
     """
     # Define schema for the DataFrame
-    df_schema = {"year": int, "value": float, "units": str}
+    df_schema = {"value": float, "units": str}
     # Define the year range for the df
-    year_range = range(int(start_year), int(end_year + 1))
+    year_range = pd.RangeIndex(start_year, end_year + 1)
+    zero_range = range(int(start_year), int(series_start_year))
+    value_range = range(int(series_start_year), int(end_year + 1))
     # Create the DataFrame
     df = pd.DataFrame(
         index=pd.RangeIndex(0, len(year_range)),
@@ -54,6 +63,7 @@ def timeseries_generator(
     df["year"] = year_range
     df["units"] = units
     df["units"] = df["units"].apply(lambda x: x.lower())
+    df.set_index(['year'], inplace=True)
 
     def levy_logic(df: pd.DataFrame) -> pd.DataFrame:
         """Applies logic to generate carbon tax timeseries
@@ -65,13 +75,14 @@ def timeseries_generator(
             pd.DataFrame: A dataframe with the value logic applied.
         """
         df_c = df.copy()
+
         for row in df_c.itertuples():
-            if row.Index == 0:  # skip first year
+            if row.Index in list(zero_range):  # skip first year
                 df_c.loc[row.Index, "value"] = start_value
-            elif row.Index < len(year_range) - 1:
+            elif row.Index < end_year:
                 # logic for remaining years except last year
-                df_c.loc[row.Index, "value"] = (end_value / len(year_range)) * (
-                    row.year - start_year
+                df_c.loc[row.Index, "value"] = (end_value / len(value_range)) * (
+                    (row.Index + 1) - series_start_year
                 )
             else:
                 df_c.loc[row.Index, "value"] = end_value  # logic for last year
@@ -89,7 +100,7 @@ def timeseries_generator(
     for key in df_schema.keys():
         df[key].astype(df_schema[key])
     logger.info(f"{timeseries_type} timeseries complete")
-    return df
+    return df.reset_index()
 
 
 @timer_func
@@ -112,8 +123,9 @@ def generate_timeseries(scenario_dict: dict = None, serialize: bool = False) -> 
     # Create Carbon Tax timeseries
     carbon_tax_timeseries = timeseries_generator(
         "carbon_tax",
-        MODEL_YEAR_START,
+        CARBON_TAX_START_YEAR,
         MODEL_YEAR_END,
+        CARBON_TAX_START_YEAR,
         carbon_tax_scenario_values[1],
         carbon_tax_scenario_values[0],
     )
@@ -121,6 +133,7 @@ def generate_timeseries(scenario_dict: dict = None, serialize: bool = False) -> 
         "green_premium",
         MODEL_YEAR_START,
         MODEL_YEAR_END,
+        GREEN_PREMIUM_START_YEAR,
         green_premium_scenario_values[1],
         green_premium_scenario_values[0],
     )
