@@ -1,27 +1,26 @@
 """Model flow functions for the main script"""
 import argparse
 
+from datetime import datetime
 from mppsteel.utility.utils import stdout_query, get_currency_rate
 from mppsteel.utility.file_handling_utility import (
     pickle_to_csv,
     create_folder_if_nonexist,
-    get_scenario_pkl_path
+    get_scenario_pkl_path,
+    create_folders_if_nonexistant
 )
+
 from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.data_loading.data_import import load_data
 from mppsteel.data_loading.reg_steel_demand_formatter import get_steel_demand
 from mppsteel.minimodels.timeseries_generator import generate_timeseries
-from mppsteel.data_loading.standardise_business_cases import standardise_business_cases
-from mppsteel.data_loading.business_case_tests import (
-    create_bc_test_df,
-    test_all_technology_business_cases,
-)
 from mppsteel.data_loading.pe_model_formatter import format_pe_data
 from mppsteel.data_loading.steel_plant_formatter import steel_plant_processor
 from mppsteel.data_loading.country_reference import create_country_ref
 from mppsteel.data_loading.data_interface import (
     create_capex_opex_dict,
+    format_business_cases,
     generate_preprocessed_emissions_data,
 )
 from mppsteel.model.emissions_reference_tables import generate_emissions_flow
@@ -51,6 +50,7 @@ from mppsteel.config.model_config import (
     PKL_DATA_FINAL,
     BC_TEST_FOLDER,
 )
+from mppsteel.config.model_scenarios import SCENARIO_OPTIONS
 
 logger = get_logger("Main Model Code")
 
@@ -94,7 +94,6 @@ def data_import_stage(scenario_dict: dict) -> None:
     load_data(serialize=True)
     get_steel_demand(scenario_dict=scenario_dict, serialize=True)
     format_pe_data(scenario_dict=scenario_dict, serialize=True)
-    standardise_business_cases(scenario_dict=scenario_dict, serialize=True)
     create_country_ref(scenario_dict=scenario_dict, serialize=True)
 
 
@@ -102,6 +101,7 @@ def data_preprocessing_generic(scenario_dict: dict) -> None:
     steel_plant_processor(scenario_dict=scenario_dict, serialize=True, remove_non_operating_plants=True)
     create_capex_opex_dict(scenario_dict=scenario_dict, serialize=True)
     create_capex_timeseries(scenario_dict=scenario_dict, serialize=True)
+    format_business_cases(serialize=True)
     generate_preprocessed_emissions_data(scenario_dict=scenario_dict, serialize=True)
     investment_cycle_flow(scenario_dict=scenario_dict, serialize=True)
 
@@ -122,7 +122,6 @@ def model_presolver(scenario_dict: dict) -> None:
 def model_calculation_phase(scenario_dict: dict) -> None:
     data_preprocessing_scenarios(scenario_dict)
     model_presolver(scenario_dict)
-    solver_flow(scenario_dict, year_end=MODEL_YEAR_END, serialize=True)
 
 
 def model_results_phase(scenario_dict: dict) -> None:
@@ -190,13 +189,19 @@ def tco_and_abatement_calculations(scenario_dict: dict) -> None:
 
 
 def scenario_batch_run(
-    scenario_dict: dict, dated_output_folder: bool, model_output_folder: str
-) -> None:
-    model_calculation_phase(scenario_dict)
-    model_results_phase(scenario_dict)
-    model_outputs_phase(scenario_dict, dated_output_folder, model_output_folder)
-    model_graphs_phase(scenario_dict, dated_output_folder, model_output_folder)
-
+    scenario: str, dated_output_folder: bool) -> None:
+    # create new folders for path
+    intermediate_path = get_scenario_pkl_path(scenario, 'intermediate')
+    final_path = get_scenario_pkl_path(scenario, 'final')
+    create_folders_if_nonexistant([intermediate_path, final_path])
+    # Set up scenario and metadata
+    scenario_args = SCENARIO_OPTIONS[scenario]
+    scenario_args = add_currency_rates_to_scenarios(scenario_args)
+    timestamp = datetime.today().strftime('%d-%m-%y %H-%M')
+    model_output_folder = f"{scenario_args['scenario_name']} {timestamp}"
+    model_presolver(scenario_args)
+    #model_calculation_phase(scenario_args)
+    #half_model_run(scenario_args, dated_output_folder, model_output_folder)
 
 def half_model_run(
     scenario_dict: dict, dated_output_folder: bool, model_output_folder: str
@@ -204,7 +209,7 @@ def half_model_run(
     solver_flow(scenario_dict, year_end=MODEL_YEAR_END, serialize=True)
     model_results_phase(scenario_dict)
     model_outputs_phase(scenario_dict, dated_output_folder, model_output_folder)
-    model_graphs_phase(scenario_dict, dated_output_folder, model_output_folder)
+    model_graphs_phase(scenario_dict, model_output_folder)
 
 
 def results_and_output(
@@ -212,16 +217,16 @@ def results_and_output(
 ) -> None:
     model_results_phase(scenario_dict)
     model_outputs_phase(scenario_dict, dated_output_folder, model_output_folder)
-    model_graphs_phase(scenario_dict, dated_output_folder, model_output_folder)
+    model_graphs_phase(scenario_dict, model_output_folder)
 
 
 def outputs_only(scenario_dict: dict, dated_output_folder: bool, model_output_folder: str) -> None:
     model_outputs_phase(scenario_dict, dated_output_folder, model_output_folder)
-    model_graphs_phase(scenario_dict, dated_output_folder, model_output_folder)
+    model_graphs_phase(scenario_dict, model_output_folder)
 
 
 def graphs_only(scenario_dict: dict, model_output_folder: str, dated_output_folder: bool) -> None:
-    model_graphs_phase(scenario_dict, dated_output_folder, model_output_folder)
+    model_graphs_phase(scenario_dict, model_output_folder)
 
 
 def full_flow(scenario_dict: dict, dated_output_folder: bool, model_output_folder: str) -> None:
@@ -303,7 +308,7 @@ parser.add_argument(
 )  # full_flow
 parser.add_argument(
     "-s", "--solver", action="store_true", help="Runs the solver scripts directly"
-)  # data_import_and_preprocessing_refresh
+)  # solver_flow
 parser.add_argument(
     "-p",
     "--preprocessing",
@@ -339,10 +344,10 @@ parser.add_argument(
 )  # model_results_phase
 parser.add_argument(
     "-b",
-    "--business_cases",
+    "--generic_preprocessing",
     action="store_true",
-    help="Runs the business cases script directly",
-)  # standardise_business_cases
+    help="Runs the data_preprocessing_generic script directly",
+)  # generic_preprocessing
 parser.add_argument(
     "-v",
     "--variable_costs",

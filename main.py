@@ -2,17 +2,19 @@
 import multiprocessing as mp
 
 from datetime import datetime
-from itertools import product
 
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.file_handling_utility import (
-    create_folders_if_nonexistant, serialize_df_dict, get_scenario_pkl_path
+    create_folders_if_nonexistant
 )
 from mppsteel.utility.function_timer_utility import TIME_CONTAINER
 
 from mppsteel.config.model_config import FOLDERS_TO_CHECK_IN_ORDER
 
-from mppsteel.config.model_scenarios import DEFAULT_SCENARIO, SCENARIO_SETTINGS, SCENARIO_OPTIONS
+from mppsteel.config.model_scenarios import (
+    DEFAULT_SCENARIO, SCENARIO_SETTINGS, SCENARIO_OPTIONS,
+    ABATEMENT_SCENARIO, BAU_SCENARIO, CARBON_COST, TECH_MORATORIUM
+)
 
 from mppsteel.config.model_grouping import *
 
@@ -22,7 +24,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    scenario_args = DEFAULT_SCENARIO
+    scenario_args = BAU_SCENARIO
     scenario_args = add_currency_rates_to_scenarios(scenario_args)
 
     timestamp = datetime.today().strftime('%d-%m-%y %H-%M')
@@ -32,7 +34,7 @@ if __name__ == "__main__":
     create_folders_if_nonexistant(FOLDERS_TO_CHECK_IN_ORDER)
 
     if args.custom_scenario:
-        logger.info(f'Including custom parameter inputs')
+        logger.info('Including custom parameter inputs.')
         scenario_args = get_inputted_scenarios(scenario_options=SCENARIO_SETTINGS, default_scenario=scenario_args)
 
     if args.choose_scenario:
@@ -44,7 +46,8 @@ if __name__ == "__main__":
             logger.info(f'INVALID SCENARIO INPUT: {args.choose_scenario}, please choose from {scenario_options}')
 
     if args.main_scenarios:
-        options = ['baseline_scenario', 'tech_moratorium', 'abatement', 'fastest_abatement']
+
+        options = ['baseline', 'tech_moratorium', 'abatement', 'carbon_cost']
         logger.info(f'Running {options} scenario options')
 
         # Multiprocessing
@@ -53,26 +56,12 @@ if __name__ == "__main__":
         pool = mp.Pool(processes=n_cores)
 
         # Model flow - Load reusable data
-        data_import_refresh(scenario_args)
-        data_preprocessing_generic(scenario_args)
+        # data_import_and_preprocessing_refresh(scenario_args)
         for scenario in options:
-            # create new folders for path
-            intermediate_path = get_scenario_pkl_path(scenario, 'intermediate')
-            final_path = get_scenario_pkl_path(scenario, 'final')
-            create_folders_if_nonexistant([intermediate_path, final_path])
-
-            # Set up scenario and metadata
-            scenario_args = SCENARIO_OPTIONS[scenario]
-            scenario_args = add_currency_rates_to_scenarios(scenario_args)
-            timestamp = datetime.today().strftime('%d-%m-%y %H-%M')
-            model_output_folder = f"{scenario_args['scenario_name']} {timestamp}"
-
             # run the multiprocessing pool over the cores
             pool.apply_async(
                 scenario_batch_run,
-                scenario_dict=scenario_args,
-                dated_output_folder=True,
-                model_output_folder=model_output_folder
+                args=(scenario, True)
             )
 
         # close and join the pools
@@ -98,7 +87,7 @@ if __name__ == "__main__":
         half_model_run(scenario_dict=scenario_args, dated_output_folder=True, model_output_folder=model_output_folder)
 
     if args.data_import:
-        data_import_refresh()
+        data_import_refresh(scenario_dict=scenario_args)
 
     if args.preprocessing:
         data_preprocessing_scenarios(scenario_dict=scenario_args)
@@ -109,9 +98,8 @@ if __name__ == "__main__":
     if args.results:
         model_results_phase(scenario_dict=scenario_args)
 
-    if args.business_cases:
-        standardise_business_cases(serialize=True)
-        # business_case_tests(new_folder=True, model_output_folder=model_output_folder, create_test_df=True)
+    if args.generic_preprocessing:
+        data_preprocessing_generic(scenario_dict=scenario_args)
 
     if args.variable_costs:
         generate_variable_plant_summary(scenario_dict=scenario_args, serialize=True)
