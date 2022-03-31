@@ -548,7 +548,9 @@ def solver_flow(scenario_dict: dict, year_end: int, serialize: bool = False) -> 
         year_end=year_end,
         scenario_dict=scenario_dict
     )
-    levelized_cost_updated = generate_levelized_cost_results(steel_plant_df=results_dict['plant_result_df'])
+    levelized_cost_updated = generate_levelized_cost_results(
+        scenario_dict=scenario_dict, steel_plant_df=results_dict['plant_result_df']
+        )
 
     if serialize:
         logger.info("-- Serializing dataframes")

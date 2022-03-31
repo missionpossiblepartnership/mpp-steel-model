@@ -36,13 +36,9 @@ from mppsteel.config.reference_lists import TECH_REFERENCE_LIST, SWITCH_DICT
 from mppsteel.data_loading.data_interface import (
     scope1_emissions_getter,
     scope3_ef_getter,
-    carbon_tax_getter,
 )
 
 from mppsteel.utility.location_utility import (
-    country_mapping_fixer,
-    country_matcher,
-    match_country,
     get_region_from_country_code,
 )
 

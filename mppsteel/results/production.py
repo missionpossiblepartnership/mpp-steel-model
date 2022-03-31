@@ -91,13 +91,13 @@ def tech_capacity_splits(steel_plants: pd.DataFrame, tech_choices: dict) -> pd.D
         zip(steel_plants["plant_name"].values, steel_plants["country_code"].values)
     )
     max_year = max([int(year) for year in tech_choices])
-    steel_plants = capacities_dict.keys()
+    steel_plant_names = capacities_dict.keys()
     year_range = range(MODEL_YEAR_START, max_year + 1)
     df_list = []
 
     for year in tqdm(year_range, total=len(year_range), desc="Tech Capacity Splits"):
         df = pd.DataFrame(
-            {"year": year, "plant_name": steel_plants, "technology": "", "capacity": 0}
+            {"year": year, "plant_name": steel_plant_names, "technology": "", "capacity": 0}
         )
         df["technology"] = df["plant_name"].apply(
             lambda plant: get_tech_choice(tech_choices, year, plant)
@@ -322,7 +322,7 @@ def production_results_flow(scenario_dict: dict, serialize: bool = False) -> dic
         intermediate_path, "capacity_results", "dict"
     )
     country_reference_dict = read_pickle_folder(
-        intermediate_path, "country_reference_dict", "df"
+        PKL_DATA_FORMATTED, "country_reference_dict", "df"
     )
     calculated_emissivity_combined = read_pickle_folder(
         intermediate_path, "calculated_emissivity_combined", "df"

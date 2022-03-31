@@ -389,7 +389,6 @@ def format_bc(df: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: The formatted standardised business cases.
     """
     df_c = df.copy()
-    df_c = df_c[df_c["material_category"] != 0]
     df_c["material_category"] = df_c["material_category"].apply(lambda x: x.strip())
     return df_c
 
@@ -412,6 +411,4 @@ def load_materials() -> list:
     Returns:
         list: A list of all untque materials in the business cases.
     """
-    materials_list = load_business_cases()["material_category"].unique().tolist()
-    materials_list.remove('0…')
-    return materials_list
+    return load_business_cases()["material_category"].unique().tolist()

@@ -123,7 +123,7 @@ def generate_timeseries(scenario_dict: dict = None, serialize: bool = False) -> 
     # Create Carbon Tax timeseries
     carbon_tax_timeseries = timeseries_generator(
         "carbon_tax",
-        CARBON_TAX_START_YEAR,
+        MODEL_YEAR_START,
         MODEL_YEAR_END,
         CARBON_TAX_START_YEAR,
         carbon_tax_scenario_values[1],
