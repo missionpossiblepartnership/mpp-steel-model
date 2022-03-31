@@ -160,13 +160,13 @@ def model_outputs_phase(scenario_dict: dict, new_folder: bool = False, output_fo
         pickle_to_csv(save_path, PKL_DATA_FINAL, pkl_file)
 
 
-def model_graphs_phase(new_folder: bool = False, model_output_folder: str = "") -> None:
+def model_graphs_phase(scenario_dict: dict, new_folder: bool = False, model_output_folder: str = "") -> None:
     save_path = OUTPUT_FOLDER
     if new_folder:
         folder_filepath = f"{OUTPUT_FOLDER}/{model_output_folder}/graphs"
         create_folder_if_nonexist(folder_filepath)
         save_path = folder_filepath
-    create_graphs(save_path)
+    create_graphs(filepath=save_path, scenario_dict=scenario_dict)
 
 
 # Group phases
@@ -200,8 +200,8 @@ def scenario_batch_run(
     timestamp = datetime.today().strftime('%d-%m-%y %H-%M')
     model_output_folder = f"{scenario_args['scenario_name']} {timestamp}"
     model_presolver(scenario_args)
-    #model_calculation_phase(scenario_args)
-    #half_model_run(scenario_args, dated_output_folder, model_output_folder)
+    model_calculation_phase(scenario_args)
+    half_model_run(scenario_args, dated_output_folder, model_output_folder)
 
 def half_model_run(
     scenario_dict: dict, dated_output_folder: bool, model_output_folder: str
@@ -209,7 +209,7 @@ def half_model_run(
     solver_flow(scenario_dict, year_end=MODEL_YEAR_END, serialize=True)
     model_results_phase(scenario_dict)
     model_outputs_phase(scenario_dict, dated_output_folder, model_output_folder)
-    model_graphs_phase(scenario_dict, model_output_folder)
+    model_graphs_phase(scenario_dict, dated_output_folder, model_output_folder)
 
 
 def results_and_output(
@@ -217,35 +217,22 @@ def results_and_output(
 ) -> None:
     model_results_phase(scenario_dict)
     model_outputs_phase(scenario_dict, dated_output_folder, model_output_folder)
-    model_graphs_phase(scenario_dict, model_output_folder)
+    model_graphs_phase(scenario_dict, dated_output_folder, model_output_folder)
 
 
 def outputs_only(scenario_dict: dict, dated_output_folder: bool, model_output_folder: str) -> None:
     model_outputs_phase(scenario_dict, dated_output_folder, model_output_folder)
-    model_graphs_phase(scenario_dict, model_output_folder)
+    model_graphs_phase(scenario_dict, dated_output_folder, model_output_folder)
 
 
 def graphs_only(scenario_dict: dict, model_output_folder: str, dated_output_folder: bool) -> None:
-    model_graphs_phase(scenario_dict, model_output_folder)
+    model_graphs_phase(scenario_dict, dated_output_folder, model_output_folder)
 
 
 def full_flow(scenario_dict: dict, dated_output_folder: bool, model_output_folder: str) -> None:
     data_import_and_preprocessing_refresh(scenario_dict)
     scenario_batch_run(scenario_dict)
     half_model_run(scenario_dict, dated_output_folder, model_output_folder)
-
-
-def business_case_tests(
-    new_folder: bool = False, model_output_folder: str = "", create_test_df: bool = True
-) -> None:
-    save_path = BC_TEST_FOLDER
-    if new_folder:
-        folder_filepath = f"{BC_TEST_FOLDER}/{model_output_folder}"
-        create_folder_if_nonexist(folder_filepath)
-        save_path = folder_filepath
-    if create_test_df:
-        create_bc_test_df(serialize=True)
-    test_all_technology_business_cases(save_path)
 
 
 def generate_minimodels(scenario_dict: dict) -> None:

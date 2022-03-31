@@ -24,7 +24,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    scenario_args = BAU_SCENARIO
+    scenario_args = TECH_MORATORIUM
     scenario_args = add_currency_rates_to_scenarios(scenario_args)
 
     timestamp = datetime.today().strftime('%d-%m-%y %H-%M')
@@ -56,7 +56,6 @@ if __name__ == "__main__":
         pool = mp.Pool(processes=n_cores)
 
         # Model flow - Load reusable data
-        # data_import_and_preprocessing_refresh(scenario_args)
         for scenario in options:
             # run the multiprocessing pool over the cores
             pool.apply_async(
@@ -75,13 +74,13 @@ if __name__ == "__main__":
         full_flow(scenario_dict=scenario_args, dated_output_folder=True, model_output_folder=model_output_folder)
 
     if args.solver:
-        model_calculation_phase(scenario_dict=scenario_args)
+        solver_flow(scenario_dict=scenario_args, year_end=MODEL_YEAR_END, serialize=True)
 
     if args.minimodels:
         model_results_phase(scenario_dict=scenario_args)
 
     if args.output:
-        outputs_only(dated_output_folder=True, model_output_folder=model_output_folder)
+        outputs_only(scenario_dict=scenario_args, dated_output_folder=True, model_output_folder=model_output_folder)
 
     if args.half_model:
         half_model_run(scenario_dict=scenario_args, dated_output_folder=True, model_output_folder=model_output_folder)
@@ -111,7 +110,7 @@ if __name__ == "__main__":
         results_and_output(scenario_dict=scenario_args, dated_output_folder=True, model_output_folder=model_output_folder)
 
     if args.graphs:
-        graphs_only(model_output_folder=model_output_folder, dated_output_folder=True)
+        graphs_only(scenario_dict=scenario_args, model_output_folder=model_output_folder, dated_output_folder=True)
 
     if args.minimodels:
         generate_minimodels(scenario_dict=scenario_args)
