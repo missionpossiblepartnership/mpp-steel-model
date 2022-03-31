@@ -291,7 +291,10 @@ def get_best_choice(
                 rank=False,
             )
             return tco_values_min[["tco"]].idxmin().values[0]
-        return combined_ranks.idxmin()["overall_rank"]
+        elif len(best_values) == 0:
+            return start_tech
+        elif len(best_values) == 1:
+            return best_values.index.values[0]
 
 def change_cols_to_numeric(df: pd.DataFrame, numeric_cols: list):
     df_c = df.copy()
