@@ -10,7 +10,7 @@ from mppsteel.graphs.plotly_graphs import (
     line_chart,
     area_chart,
 )
-from mppsteel.graphs.opex_capex_graph import opex_capex_graph
+from mppsteel.graphs.opex_capex_graph import opex_capex_graph, opex_capex_graph_regional
 from mppsteel.graphs.consumption_over_time import consumption_over_time_graph
 from mppsteel.graphs.cost_of_steelmaking_graphs import lcost_graph
 from mppsteel.graphs.investment_graph import investment_line_chart, investment_per_tech
@@ -160,29 +160,39 @@ def generate_subset(
     return df_c
 
 
-def steel_production_area_chart(df: pd.DataFrame, filepath: str = None) -> px.area:
+def steel_production_area_chart(df: pd.DataFrame, filepath: str = None, region: str = None, scenario_name: str = None) -> px.area:
     """Creates an Area graph of Steel Production.
 
     Args:
         df (pd.DataFrame): A DataFrame of Production Stats.
         filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
-
+        region (str, optional): The region you want to model. Defaults to None.
 
     Returns:
         px.area: A plotly express area graph.
     """
     filename = "steel_production_per_technology"
+    graph_title = "Steel production per tech"
+    df_c = df.copy()
+    region_list = df_c['region'].unique()
+    if region and (region in region_list):
+        df_c = df_c[df_c['region'] == region]
+        filename = f'{filename}_for_{region}'
+    elif region and (region not in region_list):
+        raise ValueError(f'Incorrect region listed {region}')
     logger.info(f"Creating area graph output: {filename}")
     if filepath:
         filename = f"{filepath}/{filename}"
+    if scenario_name:
+        graph_title = f"{graph_title} for {scenario_name} scenario"
     return area_chart(
-        data=generate_production_emissions(df, "technology", ["production"]),
+        data=generate_production_emissions(df_c, "technology", ["production"]),
         x="year",
         y="value",
         color="technology",
-        name="Steel production per tech for run scenario",
+        name=graph_title,
         x_axis="year",
-        y_axis="Steel Production",
+        y_axis="Steel Production (Mt)",
         hoverdata=None,
         save_filepath=filename,
     )
@@ -227,6 +237,46 @@ def emissions_area_chart(
     )
 
 
+def steel_emissions_line_chart(df: pd.DataFrame, filepath: str = None, region: str = None, scenario_name: str = None) -> px.line:
+    """Creates an Area graph of Steel Production.
+
+    Args:
+        df (pd.DataFrame): A DataFrame of Production Stats.
+        filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
+
+    Returns:
+        px.area: A plotly express area graph.
+    """
+    
+    df_c = df.copy()
+    df_c['s1_s2_emissions'] = df_c['s1_emissions'] + df_c['s2_emissions']
+    filename = "scope_1_2_emissions"
+    graph_title = "Scope 1 & 2 Emissions"
+    if region:
+        df_c = df_c[df_c['region'] == region]
+        filename = f'{filename}_for_{region}'
+        graph_title = f'{graph_title} - {region}'
+    if scenario_name:
+        graph_title = f"{graph_title} - {scenario_name} scenario"
+    
+    logger.info(f"Creating line graph output: {filename}")
+    if filepath:
+        filename = f"{filepath}/{filename}"
+
+    df_c = df_c.groupby('year').agg({'s1_s2_emissions': 'sum'}).reset_index()
+
+    return line_chart(
+        data=df_c,
+        x="year",
+        y="s1_s2_emissions",
+        color=None,
+        name=graph_title,
+        x_axis="Year",
+        y_axis="Scope 1 & 2 Emisions",
+        save_filepath=filename,
+    )
+
+
 def resource_line_charts(
     df: pd.DataFrame, resource: str, regions: list = None, filepath: str = None
 ) -> px.line:
@@ -252,10 +302,10 @@ def resource_line_charts(
     if filepath:
         filename = f"{filepath}/{filename}"
     return line_chart(
-        data=generate_subset(df, "region_wsa_region", resource, regions),
+        data=generate_subset(df, "region", resource, regions),
         x="year",
         y="value",
-        color="region_wsa_region",
+        color="region",
         name=f"{resource_string} consumption in {region_list}",
         x_axis="year",
         y_axis=resource_string,
@@ -278,6 +328,19 @@ def create_opex_capex_graph(
     if filepath:
         filename = f"{filepath}/{filename}"
     return opex_capex_graph(variable_cost_df, capex_dict, country_ref_dict, save_filepath=filename)
+
+def create_opex_capex_graph_regional(vcsmb: pd.DataFrame, capex_dict: dict, country_ref_dict: dict, filepath: str = None, year: int = 2050, region:str='NAFTA') -> px.bar:
+    """Creates a Opex Capex split graph.
+    Args:
+        filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
+    Returns:
+        px.bar: A plotly express bar graph.
+    """
+    filename = f"{region}_opex_capex_graph_{year}"
+    logger.info(f"Creating Opex Capex Graph Output: {filename}")
+    if filepath:
+        filename = f"{filepath}/{filename}"
+    return opex_capex_graph_regional(vcsmb, capex_dict, country_ref_dict, save_filepath=filename, year=year, region=region)
 
 
 def create_investment_line_graph(
@@ -429,11 +492,30 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
     country_ref_dict = read_pickle_folder(
         PKL_DATA_FORMATTED, "country_reference_dict", "df"
     )
-    steel_production_area_chart(production_emissions, filepath)
+
+    steel_production_area_chart(
+        production_emissions,
+        filepath=filepath,
+        scenario_name=scenario_dict['scenario_name']
+    )
+    for region in ['India', 'China', 'NAFTA', 'Europe', 'Japan, South Korea, and Taiwan']:
+        steel_production_area_chart(
+            df=production_emissions,
+            filepath=filepath,
+            region=region,
+            scenario_name=scenario_dict['scenario_name']
+        )
+        steel_emissions_line_chart(
+            df=production_emissions,
+            filepath=filepath,
+            region=region,
+            scenario_name=scenario_dict['scenario_name']
+        )
+
     resource_line_charts(
         production_resource_usage,
         "electricity",
-        ["EU + UK", "China", "India", "USMCA"],
+        ["Europe", "China", "India", "NAFTA"],
         filepath,
     )
 
@@ -446,21 +528,24 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
         )
 
     create_opex_capex_graph(variable_cost_df, capex_dict, country_ref_dict, filepath)
+    for year in {2030, 2050}:
+        for region in {'China', 'India', 'Europe', 'NAFTA'}:
+            create_opex_capex_graph_regional(variable_cost_df, capex_dict, country_ref_dict, filepath=filepath, region=region, year=year)
 
     create_investment_line_graph(investment_results, group="global", operation="cumsum", filepath=filepath)
 
     create_investment_per_tech_graph(investment_results, filepath=filepath)
 
-    create_cot_graph(production_resource_usage, regions=[None, 'China', 'India', 'EU + UK', 'USMCA'], filepath=filepath)
+    create_cot_graph(production_resource_usage, regions=['China', 'India', 'Europe', 'NAFTA'], filepath=filepath)
 
     create_lcost_graph(lcost_data, 2030, filepath=filepath)
 
     for year in [2020, 2030, 2040, 2050]:
-        for reg in ['China', 'NAFTA', 'India','Europe', None]:
+        for reg in ['China', 'NAFTA', 'India', 'Europe']:
             create_tco_graph(tco_ref, year, reg, 'Avg BF-BOF', filepath=filepath)
 
     for yrs in [2020, 2030, 2050]:
-        for reg in ['China','India','Europe','NAFTA']:
+        for reg in ['China', 'India', 'Europe', 'NAFTA']:
             for scope in ['s2_emissivity', 'combined']:
                 create_emissions_graph(calculated_emissivity_combined_df, yrs, reg, scope, filepath=filepath)
 

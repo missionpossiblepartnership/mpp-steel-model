@@ -27,18 +27,18 @@ def format_cot_graph(
     df_c = df.copy()
     df_c = pd.melt(
         df,
-        id_vars=["year", "region_wsa_region"],
+        id_vars=["year", "region"],
         value_vars=resource_list,
         var_name="metric",
     )
     df_c.reset_index(drop=True, inplace=True)
     df_c = (
-        df_c.groupby(["region_wsa_region", "year", "metric"], as_index=False)
+        df_c.groupby(["region", "year", "metric"], as_index=False)
         .agg({"value": "sum"})
         .round(2)
     )
     if regions:
-        df_c = df_c.loc[df_c["region_wsa_region"].isin(regions)]
+        df_c = df_c.loc[df_c["region"].isin(regions)]
     else:
         df_c = (
             df_c.groupby(["year", "metric"], as_index=False)
