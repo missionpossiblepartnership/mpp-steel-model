@@ -2,6 +2,8 @@
 import itertools
 import sys
 
+import multiprocessing as mp
+
 import numpy as np
 
 from collections.abc import Iterable
@@ -158,3 +160,21 @@ def return_bin_rank(x: float, bin_dict: dict) -> float:
         for val in bin_dict_vals:
             if x <= val:
                 return bin_dict[val]
+
+def multiprocessing_scenarios(options: list, func):
+    # Multiprocessing
+    n_cores = mp.cpu_count()
+    logger.info(f"{n_cores} cores detected")
+    pool = mp.Pool(processes=n_cores)
+
+    # Model flow - Load reusable data
+    for scenario in options:
+        # run the multiprocessing pool over the cores
+        pool.apply_async(
+            func,
+            args=(scenario, True)
+        )
+
+    # close and join the pools
+    pool.close()
+    pool.join()

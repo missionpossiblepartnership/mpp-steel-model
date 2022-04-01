@@ -1,8 +1,7 @@
 """Runs the data loading scripts"""
-import multiprocessing as mp
-
 from datetime import datetime
 
+from mppsteel.utility.utils import multiprocessing_scenarios
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.file_handling_utility import (
     create_folders_if_nonexistant
@@ -24,7 +23,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    scenario_args = TECH_MORATORIUM
+    scenario_args = ABATEMENT_SCENARIO
     scenario_args = add_currency_rates_to_scenarios(scenario_args)
 
     timestamp = datetime.today().strftime('%d-%m-%y %H-%M')
@@ -46,26 +45,12 @@ if __name__ == "__main__":
             logger.info(f'INVALID SCENARIO INPUT: {args.choose_scenario}, please choose from {scenario_options}')
 
     if args.main_scenarios:
-
+        
         options = ['baseline', 'tech_moratorium', 'abatement', 'carbon_cost']
         logger.info(f'Running {options} scenario options')
 
         # Multiprocessing
-        n_cores = mp.cpu_count()
-        logger.info(f"{n_cores} cores detected")
-        pool = mp.Pool(processes=n_cores)
-
-        # Model flow - Load reusable data
-        for scenario in options:
-            # run the multiprocessing pool over the cores
-            pool.apply_async(
-                scenario_batch_run,
-                args=(scenario, True)
-            )
-
-        # close and join the pools
-        pool.close()
-        pool.join()
+        multiprocessing_scenarios(options, scenario_batch_run)
 
     logger.info(f'''Running model with the following parameters:  
     {scenario_args}''')
