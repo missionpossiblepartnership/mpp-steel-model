@@ -17,7 +17,6 @@ from mppsteel.data_loading.reg_steel_demand_formatter import get_steel_demand
 from mppsteel.minimodels.timeseries_generator import generate_timeseries
 from mppsteel.data_loading.pe_model_formatter import format_pe_data
 from mppsteel.data_loading.steel_plant_formatter import steel_plant_processor
-from mppsteel.data_loading.country_reference import create_country_ref
 from mppsteel.data_loading.data_interface import (
     create_capex_opex_dict,
     format_business_cases,
@@ -48,7 +47,6 @@ from mppsteel.config.model_config import (
     MODEL_YEAR_END,
     OUTPUT_FOLDER,
     PKL_DATA_FINAL,
-    BC_TEST_FOLDER,
 )
 from mppsteel.config.model_scenarios import SCENARIO_OPTIONS
 
@@ -90,29 +88,31 @@ def add_currency_rates_to_scenarios(scenario_dict: dict, live: bool = False) -> 
 
 
 # Model phasing
-def data_import_stage(scenario_dict: dict) -> None:
+def data_import_stage() -> None:
     load_data(serialize=True)
-    get_steel_demand(scenario_dict=scenario_dict, serialize=True)
-    format_pe_data(scenario_dict=scenario_dict, serialize=True)
-    create_country_ref(scenario_dict=scenario_dict, serialize=True)
+    get_steel_demand(serialize=True)
 
 
 def data_preprocessing_generic(scenario_dict: dict) -> None:
-    steel_plant_processor(scenario_dict=scenario_dict, serialize=True, remove_non_operating_plants=True)
+    steel_plant_processor(serialize=True, remove_non_operating_plants=True)
     create_capex_opex_dict(scenario_dict=scenario_dict, serialize=True)
     create_capex_timeseries(scenario_dict=scenario_dict, serialize=True)
     format_business_cases(serialize=True)
-    generate_preprocessed_emissions_data(scenario_dict=scenario_dict, serialize=True)
     investment_cycle_flow(scenario_dict=scenario_dict, serialize=True)
+
 
 def data_preprocessing_scenarios(scenario_dict: dict) -> None:
     generate_timeseries(scenario_dict=scenario_dict, serialize=True)
+    format_pe_data(scenario_dict=scenario_dict, serialize=True)
+    generate_preprocessed_emissions_data(scenario_dict=scenario_dict, serialize=True)
     generate_emissions_flow(scenario_dict=scenario_dict, serialize=True)
     generate_variable_plant_summary(scenario_dict, serialize=True)
     generate_levelized_cost_results(scenario_dict=scenario_dict, serialize=True)
 
+
 def investment_cycles(scenario_dict: dict) -> None:
     investment_cycle_flow(scenario_dict=scenario_dict, serialize=True)
+
 
 def model_presolver(scenario_dict: dict) -> None:
     tco_presolver_reference(scenario_dict, serialize=True)
@@ -141,7 +141,7 @@ def model_outputs_phase(scenario_dict: dict, new_folder: bool = False, output_fo
 
     # Save Intermediate Pickle Files
     intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
-    pickle_to_csv(save_path, PKL_DATA_FORMATTED, "capex_switching_df")
+    pickle_to_csv(save_path, PKL_DATA_FORMATTED, "capex_switching_df", reset_index=True)
     pickle_to_csv(save_path, intermediate_path, "plant_result_df")
     pickle_to_csv(save_path, intermediate_path, "calculated_emissivity_combined")
     pickle_to_csv(save_path, intermediate_path, "levelized_cost")
@@ -171,7 +171,7 @@ def model_graphs_phase(scenario_dict: dict, new_folder: bool = False, model_outp
 
 # Group phases
 def data_import_refresh(scenario_dict: dict) -> None:
-    data_import_stage(scenario_dict)
+    data_import_stage()
 
 
 def data_preprocessing_refresh(scenario_dict: dict) -> None:
@@ -180,7 +180,7 @@ def data_preprocessing_refresh(scenario_dict: dict) -> None:
 
 
 def data_import_and_preprocessing_refresh(scenario_dict: dict) -> None:
-    data_import_stage(scenario_dict)
+    data_import_stage()
     data_preprocessing_generic(scenario_dict)
 
 

@@ -114,7 +114,7 @@ def create_folders_if_nonexistant(folder_list: list) -> None:
 
 
 def pickle_to_csv(
-    folder_path: str, pkl_folder: str, pickle_filename: str, csv_filename: str = ""
+    folder_path: str, pkl_folder: str, pickle_filename: str, csv_filename: str = "", reset_index: bool = False
 ) -> None:
     """Checks a folder path where a pickled DataFrame is stored. Loads the DataFrame and converts it to a .csv file.
 
@@ -125,6 +125,9 @@ def pickle_to_csv(
         csv_filename (str, optional): The name of the newly created csv file. (No .csv extension necessary). If none, defaults to pickle_filename. Defaults to "".
     """
     df = read_pickle_folder(pkl_folder, pickle_filename)
+    if reset_index:
+        df.reset_index(inplace=True)
+
     logger.info(
         f"||| Saving {pickle_filename} pickle file as {csv_filename or pickle_filename}.csv"
     )

@@ -81,4 +81,4 @@ TCO_RANK_1_SCALER = 1.1
 ABATEMENT_RANK_2 = 2.37656461606311  # Switching from Avg BF-BOF to BAT BF-BOF+CCUS
 ABATEMENT_RANK_3 = 0.932690243851946  # Switching from Avg BF-BOF to BAT BF-BOF_bio PCI
 
-RESULTS_REGIONS_TO_MAP = ["wsa_region", "continent", "region"]
+RESULTS_REGIONS_TO_MAP = ["continent", "wsa", "rmi"]

@@ -89,7 +89,7 @@ if __name__ == "__main__":
         generate_variable_plant_summary(scenario_dict=scenario_args, serialize=True)
 
     if args.levelized_cost:
-        lcost_flow()
+        lcost_flow(scenario_dict=scenario_args)
 
     if args.results_and_output:
         results_and_output(scenario_dict=scenario_args, dated_output_folder=True, model_output_folder=model_output_folder)
