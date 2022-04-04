@@ -24,6 +24,32 @@ NEW_COUNTRY_COL_LIST = [
     "rmi_region",
 ]
 
+RESOURCE_CATEGORY_MAPPER = {
+    'Iron ore': 'Feedstock',
+    'Scrap': 'Feedstock',
+    'DRI': 'Feedstock',
+    'Met coal': 'Fossil Fuels',
+    'Thermal coal': 'Fossil Fuels',
+    'Coke': 'Fossil Fuels',
+    'COG': 'Fossil Fuels',
+    'BF gas': 'Fossil Fuels',
+    'BOF gas': 'Fossil Fuels',
+    'Natural gas': 'Fossil Fuels',
+    'Plastic waste': 'Fossil Fuels',
+    'Biomass': 'Bio Fuels',
+    'Biomethane': 'Bio Fuels',
+    'Hydrogen': 'Hydrogen',
+    'Electricity': 'Electricity',
+    'Steam': 'Other Opex',
+    'BF slag': 'Other Opex',
+    'Other slag': 'Other Opex',
+    'Captured CO2': 'CCS',
+    'Used CO2': 'CCS',
+    'Process emissions': 'Emissivity',
+    'Emissivity wout CCS': 'Emissivity',
+    'Emissivity': 'Emissivity'
+}
+
 PER_T_STEEL_DICT_UNITS = {
     "Iron ore": "t / t steel",
     "Scrap": "t / t steel",

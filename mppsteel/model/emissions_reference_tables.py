@@ -15,38 +15,22 @@ from mppsteel.utility.file_handling_utility import (
     read_pickle_folder, serialize_file, get_scenario_pkl_path
 )
 from mppsteel.utility.log_utility import get_logger
-
+from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.data_loading.pe_model_formatter import (
-    RE_DICT,
-    power_data_getter,
-    hydrogen_data_getter,
+    POWER_HYDROGEN_COUNTRY_MAPPER,
+    pe_model_data_getter,
 )
-
 from mppsteel.data_loading.data_interface import load_business_cases
-
 from mppsteel.config.model_config import (
     MODEL_YEAR_END,
     MODEL_YEAR_START,
     PKL_DATA_FORMATTED,
     PKL_DATA_IMPORTS
 )
-
 from mppsteel.config.reference_lists import TECH_REFERENCE_LIST, SWITCH_DICT
-
 from mppsteel.data_loading.data_interface import (
     scope1_emissions_getter,
     scope3_ef_getter,
-)
-
-from mppsteel.utility.location_utility import (
-    get_region_from_country_code,
-)
-
-from mppsteel.utility.transform_units import transform_units
-
-from mppsteel.config.model_scenarios import (
-    COST_SCENARIO_MAPPER,
-    GRID_DECARBONISATION_SCENARIOS,
 )
 
 # Create logger
@@ -231,13 +215,10 @@ def get_s2_emissions(
     power_model: dict,
     hydrogen_model: dict,
     business_cases: pd.DataFrame,
-    country_ref_dict: dict,
+    country_mapper: dict,
     year: int,
     country_code: str,
-    technology: str,
-    electricity_cost_scenario: str,
-    grid_scenario: str,
-    hydrogen_cost_scenario: str,
+    technology: str
 ) -> float:
     """_summary_
 
@@ -245,42 +226,30 @@ def get_s2_emissions(
         power_model (dict): The power model outputs dictionary.
         hydrogen_model (dict): The hydrogen model outputs dictionary.
         business_cases (pd.DataFrame): The standardised business cases DataFrame.
-        country_ref_dict (dict): A reference to the countries for mapping purposes.
+        country_mapper (dict): A reference to the countries for mapping purposes.
         year (int): The year to retrieve S2 emissions for.
         country_code (str): The country code to retrieve S2 values for.
         technology (str): The technology to retrieve S2 emissions for.
-        electricity_cost_scenario (str): The electricity cost scenario to subset the power model.
-        grid_scenario (str): The electricity grid scenario to subset the power model.
-        hydrogen_cost_scenario (str): The hydrogen cost scenario to subset the power model.
-
     Returns:
         float: The S2 emission value for a particular year technology, region and scenario inputs.
     """
     # Scope 2 Emissions: These are the emissions it makes indirectly
     # like when the electricity or energy it buys for heating and cooling buildings
 
-    electricity_cost_scenario = COST_SCENARIO_MAPPER[electricity_cost_scenario]
-    grid_scenario = GRID_DECARBONISATION_SCENARIOS[grid_scenario]
-    hydrogen_cost_scenario = COST_SCENARIO_MAPPER[hydrogen_cost_scenario]
-
-    electricity_emissions = power_data_getter(
+    electricity_emissions = pe_model_data_getter(
         power_model,
-        "emissions",
+        country_mapper,
+        POWER_HYDROGEN_COUNTRY_MAPPER,
         year,
-        country_code,
-        country_ref_dict,
-        re_dict=RE_DICT,
-        grid_scenario=grid_scenario,
-        cost_scenario=electricity_cost_scenario,
+        country_code
     )
 
-    h2_emissions = hydrogen_data_getter(
+    h2_emissions = pe_model_data_getter(
         hydrogen_model,
-        "emissions",
+        country_mapper,
+        POWER_HYDROGEN_COUNTRY_MAPPER,
         year,
-        country_code,
-        country_ref_dict,
-        cost_scenario=hydrogen_cost_scenario,
+        country_code
     )
 
     bcases = (
@@ -304,33 +273,28 @@ def get_s2_emissions(
     )
 
 
-def regional_s2_emissivity(
-    electricity_cost_scenario: str, grid_scenario: str, hydrogen_cost_scenario: str
-) -> pd.DataFrame:
+def regional_s2_emissivity(scenario_dict: dict) -> pd.DataFrame:
     """Creates a DataFrame for S2 emissivity reference for each region.
 
     Args:
-        electricity_cost_scenario (str): The electricity cost scenario to subset the power model.
-        grid_scenario (str): The electricity grid scenario to subset the power model.
-        hydrogen_cost_scenario (str): The hydrogen cost scenario to subset the power model.
 
     Returns:
         pd.DataFrame: A DataFrame with the S2 emissivity values for each country within a reference of steel plants.
     """
+    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
     b_df = load_business_cases()
-    power_model_formatted = read_pickle_folder(
-        PKL_DATA_FORMATTED, "power_model_formatted", "df"
+    power_grid_emissions_formatted = read_pickle_folder(
+        intermediate_path, "power_grid_emissions_formatted", "df"
     )
-    hydrogen_model_formatted = read_pickle_folder(
-        PKL_DATA_FORMATTED, "hydrogen_model_formatted", "df"
+    hydrogen_emissions_formatted = read_pickle_folder(
+        intermediate_path, "hydrogen_emissions_formatted", "df"
     )
     steel_plants = read_pickle_folder(
         PKL_DATA_FORMATTED, "steel_plants_processed", "df"
     )
     steel_plant_country_codes = list(steel_plants["country_code"].unique())
-    country_ref_dict = read_pickle_folder(
-        PKL_DATA_FORMATTED, "country_reference_dict", "df"
-    )
+    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
+    rmi_mapper = create_country_mapper(country_ref, 'rmi')
     df_list = []
     year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
     for year in tqdm(
@@ -341,16 +305,13 @@ def regional_s2_emissivity(
         for country_code in steel_plant_country_codes:
             for technology in SWITCH_DICT:
                 value = get_s2_emissions(
-                    power_model_formatted,
-                    hydrogen_model_formatted,
+                    power_grid_emissions_formatted,
+                    hydrogen_emissions_formatted,
                     b_df,
-                    country_ref_dict,
+                    rmi_mapper,
                     year,
                     country_code,
-                    technology,
-                    electricity_cost_scenario,
-                    grid_scenario,
-                    hydrogen_cost_scenario,
+                    technology
                 )
                 entry = {
                     "year": year,
@@ -376,38 +337,22 @@ def combine_emissivity(
         pd.DataFrame: A DataFrame with scopes 1, 2 and 3 data.
     """
     logger.info("Combining S2 Emissions with S1 & S3 emissivity")
-    country_ref_dict = read_pickle_folder(
-        PKL_DATA_FORMATTED, "country_reference_dict", "df"
+    country_ref = read_pickle_folder(
+        PKL_DATA_IMPORTS, "country_ref", "df"
     )
-    total_emissivity = s2_ref.set_index(["year", "country_code", "technology"]).copy()
-    total_emissivity["s1_emissivity"] = ""
-    total_emissivity["s3_emissivity"] = ""
-    country_codes = total_emissivity.index.get_level_values(1).unique()
-
-    total_emissivity.reset_index(inplace=True)
-    total_emissivity['region']= total_emissivity['country_code'].apply(lambda x: get_region_from_country_code(
-        x, "rmi_region", country_ref_dict
-    ))
-    
-    total_emissivity.set_index(["year", "country_code", "technology"], inplace=True)
-    
-    technologies = total_emissivity.index.get_level_values(2).unique()
-    year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
-    for year in tqdm(year_range, total=len(year_range), desc="s1 and s3 value assigning"):
-        for country_code in country_codes:
-            for technology in technologies:
-                total_emissivity.loc[
-                    (year, country_code, technology), "s1_emissivity"
-                ] = s1_ref.loc[year, technology]["emissions"]
-                total_emissivity.loc[
-                    (year, country_code, technology), "s3_emissivity"
-                ] = s3_ref.loc[year, technology]["emissions"]
-
+    rmi_mapper = create_country_mapper(country_ref, 'rmi')
+    s2_ref = s2_ref.reset_index(drop=True).set_index(['year', 'technology']).copy()
+    total_emissivity = s2_ref.join(
+        s1_ref.rename({'emissions': 's1_emissivity'}, axis=1)
+        ).join(s3_ref.rename({'emissions': 's3_emissivity'}, axis=1)
+    )
     total_emissivity["combined_emissivity"] = (
         total_emissivity["s1_emissivity"]
         + total_emissivity["s2_emissivity"]
         + total_emissivity["s3_emissivity"]
     )
+    total_emissivity['region'] = total_emissivity['country_code'].apply(lambda x: rmi_mapper[x])
+    total_emissivity = total_emissivity.reset_index().set_index(["year", "country_code", "technology"])
     # change_column_order
     new_col_order = move_cols_to_front(
         total_emissivity,
@@ -461,9 +406,6 @@ def generate_emissions_flow(
     business_cases_summary = read_pickle_folder(
         PKL_DATA_FORMATTED, "standardised_business_cases", "df"
     )
-    electricity_cost_scenario = scenario_dict["electricity_cost_scenario"]
-    grid_scenario = scenario_dict["grid_scenario"]
-    hydrogen_cost_scenario = scenario_dict["hydrogen_cost_scenario"]
     emissions_df = business_cases_summary.copy()
     emissions = generate_emissions_dataframe(
         business_cases_summary.copy(), MODEL_YEAR_END
@@ -481,9 +423,7 @@ def generate_emissions_flow(
         .groupby(by=["year", "technology"])
         .sum()
     )
-    s2_emissivity = regional_s2_emissivity(
-        electricity_cost_scenario, grid_scenario, hydrogen_cost_scenario
-    )
+    s2_emissivity = regional_s2_emissivity(scenario_dict)
     combined_emissivity = combine_emissivity(
         s1_emissivity, s2_emissivity, s3_emissivity
     )

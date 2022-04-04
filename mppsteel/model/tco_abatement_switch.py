@@ -6,7 +6,7 @@ import numpy as np
 
 from tqdm import tqdm
 
-from mppsteel.data_loading.data_interface import load_business_cases
+from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.model.tco_calculation_functions import tco_calc
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import add_results_metadata
@@ -19,10 +19,7 @@ from mppsteel.config.model_config import (
     MODEL_YEAR_START,
     PKL_DATA_FORMATTED,
     INVESTMENT_CYCLE_DURATION_YEARS,
-)
-
-from mppsteel.utility.location_utility import (
-    get_region_from_country_code,
+    PKL_DATA_IMPORTS,
 )
 
 from mppsteel.utility.log_utility import get_logger
@@ -41,9 +38,6 @@ def tco_regions_ref_generator(scenario_dict: dict) -> pd.DataFrame:
     Returns:
         pd.DataFrame: A DataFrame containing the components necessary to calculate TCO (not including green premium).
     """
-    electricity_cost_scenario = scenario_dict["electricity_cost_scenario"]
-    grid_scenario = scenario_dict["grid_scenario"]
-    hydrogen_cost_scenario = scenario_dict["hydrogen_cost_scenario"]
     intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
     carbon_tax_df = read_pickle_folder(
         intermediate_path, "carbon_tax_timeseries", "df"
@@ -51,20 +45,20 @@ def tco_regions_ref_generator(scenario_dict: dict) -> pd.DataFrame:
     variable_costs_regional = read_pickle_folder(
         intermediate_path, "variable_costs_regional", "df"
     )
-    power_model = read_pickle_folder(
-        PKL_DATA_FORMATTED, "power_model_formatted", "df"
-    )
-    hydrogen_model = read_pickle_folder(
-        PKL_DATA_FORMATTED, "hydrogen_model_formatted", "df"
-    )
     opex_values_dict = read_pickle_folder(PKL_DATA_FORMATTED, "capex_dict", "df")
-    business_cases = load_business_cases()
     calculated_s1_emissivity = read_pickle_folder(
         intermediate_path, "calculated_s1_emissivity", "df"
     )
+    calculated_s2_emissivity = read_pickle_folder(
+        intermediate_path, "calculated_s2_emissivity", "df"
+    )
     capex_df = read_pickle_folder(PKL_DATA_FORMATTED, "capex_switching_df", "df")
-    country_ref_dict = read_pickle_folder(
-        PKL_DATA_FORMATTED, "country_reference_dict", "df"
+    capex_df.reset_index(inplace=True)
+    capex_df.rename({
+        'Start Technology': 'start_technology', 
+        'New Technology': 'end_technology', 
+        'Year': 'year', 
+        'value': 'capex_value'}, axis=1, inplace=True
     )
     steel_plants = read_pickle_folder(
         PKL_DATA_FORMATTED, "steel_plants_processed", "df"
@@ -87,18 +81,12 @@ def tco_regions_ref_generator(scenario_dict: dict) -> pd.DataFrame:
                     year,
                     tech,
                     carbon_tax_df,
-                    business_cases,
                     variable_costs_regional,
-                    power_model,
-                    hydrogen_model,
                     opex_values_dict["other_opex"],
                     calculated_s1_emissivity,
-                    country_ref_dict,
+                    calculated_s2_emissivity,
                     capex_df,
                     INVESTMENT_CYCLE_DURATION_YEARS,
-                    electricity_cost_scenario,
-                    grid_scenario,
-                    hydrogen_cost_scenario,
                 )
                 df_list.append(tco_df)
     return pd.concat(df_list).reset_index(drop=True)
@@ -201,14 +189,13 @@ def tco_presolver_reference(scenario_dict: dict, serialize: bool = False) -> pd.
     """
     logger.info("Running TCO Reference Sheet")
     intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
-    country_ref_dict = read_pickle_folder(PKL_DATA_FORMATTED, "country_reference_dict", "df")
+    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
+    rmi_mapper = create_country_mapper(country_ref, 'rmi')
     opex_capex_reference_data = tco_regions_ref_generator(scenario_dict)
     tco_summary = opex_capex_reference_data.copy()
     tco_summary["tco"] = tco_summary["discounted_opex"] + tco_summary["capex_value"]
     tco_summary["tco"] = tco_summary["tco"] / INVESTMENT_CYCLE_DURATION_YEARS
-    tco_summary['region']= tco_summary['country_code'].apply(lambda x: get_region_from_country_code(
-        x, "rmi_region", country_ref_dict
-    ))
+    tco_summary['region'] = tco_summary['country_code'].apply(lambda x: rmi_mapper[x])
     if serialize:
         logger.info("-- Serializing dataframe")
         serialize_file(

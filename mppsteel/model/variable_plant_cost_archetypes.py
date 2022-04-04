@@ -10,18 +10,14 @@ from mppsteel.config.model_config import (
     PKL_DATA_IMPORTS,
     MODEL_YEAR_START,
 )
-from mppsteel.config.model_scenarios import (
-    COST_SCENARIO_MAPPER,
-    GRID_DECARBONISATION_SCENARIOS,
-    BIOMASS_SCENARIOS,
-    CCUS_SCENARIOS,
-)
+from mppsteel.config.reference_lists import RESOURCE_CATEGORY_MAPPER
 from mppsteel.model.solver import load_business_cases
-from mppsteel.utility.utils import enumerate_iterable, cast_to_float
+from mppsteel.utility.utils import cast_to_float
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder, serialize_file, get_scenario_pkl_path
 )
+from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.dataframe_utility import convert_currency_col
 from mppsteel.data_loading.data_interface import (
@@ -29,11 +25,10 @@ from mppsteel.data_loading.data_interface import (
     static_energy_prices_getter,
 )
 from mppsteel.data_loading.pe_model_formatter import (
-    power_data_getter,
-    hydrogen_data_getter,
-    bio_price_getter,
-    ccus_data_getter,
-    RE_DICT,
+    pe_model_data_getter,
+    POWER_HYDROGEN_COUNTRY_MAPPER,
+    BIO_COUNTRY_MAPPER,
+    CCUS_COUNTRY_MAPPER
 )
 
 # Create logger
@@ -66,26 +61,18 @@ def generate_feedstock_dict(eur_to_usd_rate: float = 1 / USD_TO_EUR_CONVERSION_D
 
 def plant_variable_costs(
     year_end: int,
-    electricity_cost_scenario: str,
-    grid_decarb_scenario: str,
-    hydrogen_cost_scenario: str,
-    biomass_cost_scenario: str,
-    ccus_cost_scenario: str,
-    eur_to_usd_rate: float
+    scenario_dict: dict
 ) -> pd.DataFrame:
     """Creates a DataFrame reference of each plant's variable cost.
 
     Args:
         year_end (int): The year the model is projected until.
-        electricity_cost_scenario (str): The scenario that determines the electricity cost from the shared model.
-        grid_decarb_scenario (str): The scenario that determines the grid decarbonisation cost from the shared model.
-        hydrogen_cost_scenario (str): The scenario that determines the hydrogen cost from the shared model.
-        biomass_cost_scenario (str): The scenario that determines the biomass cost from the shared model.
-        ccus_cost_scenario (str): The scenario that determines the ccus cost from the shared model.
 
     Returns:
         pd.DataFrame: A DataFrame containing each plant's variable costs.
     """
+    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
+    eur_to_usd_rate = scenario_dict['eur_to_usd']
     df_list = []
 
     steel_plants = read_pickle_folder(
@@ -97,17 +84,22 @@ def plant_variable_costs(
         .set_index("country_code")
         .to_dict()["cheap_natural_gas"]
     )
-    power_model_formatted = read_pickle_folder(
-        PKL_DATA_FORMATTED, "power_model_formatted", "df"
+    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
+    rmi_mapper = create_country_mapper(country_ref, 'rmi')
+    power_grid_prices_formatted = read_pickle_folder(
+        intermediate_path, "power_grid_prices_formatted", "df"
     )
-    hydrogen_model_formatted = read_pickle_folder(
-        PKL_DATA_FORMATTED, "hydrogen_model_formatted", "df"
+    hydrogen_prices_formatted = read_pickle_folder(
+        intermediate_path, "hydrogen_prices_formatted", "df"
     )
     bio_price_model_formatted = read_pickle_folder(
-        PKL_DATA_FORMATTED, "bio_price_model_formatted", "df"
+        intermediate_path, "bio_price_model_formatted", "df"
     )
-    ccus_model_formatted = read_pickle_folder(
-        PKL_DATA_FORMATTED, "ccus_model_formatted", "df"
+    ccus_transport_model_formatted = read_pickle_folder(
+        intermediate_path, "ccus_transport_model_formatted", "df"
+    )
+    ccus_storage_model_formatted = read_pickle_folder(
+        intermediate_path, "ccus_storage_model_formatted", "df"
     )
     static_energy_prices = read_pickle_folder(
         PKL_DATA_IMPORTS, "static_energy_prices", "df"
@@ -119,7 +111,7 @@ def plant_variable_costs(
     for country_code in tqdm(
         steel_plant_country_codes,
         total=len(steel_plant_country_codes),
-        desc="Plant country_codes",
+        desc="Regional Variable Cost Mapper",
     ):
         ng_flag = steel_plant_region_ng_dict[country_code]
         df = generate_variable_costs(
@@ -129,20 +121,21 @@ def plant_variable_costs(
             year_end=year_end,
             feedstock_dict=feedstock_dict,
             static_energy_df=static_energy_prices,
-            power_df=power_model_formatted,
-            hydrogen_df=hydrogen_model_formatted,
+            country_mapper=rmi_mapper,
+            power_df=power_grid_prices_formatted,
+            hydrogen_df=hydrogen_prices_formatted,
             bio_df=bio_price_model_formatted,
-            ccus_df=ccus_model_formatted,
-            electricity_cost_scenario=electricity_cost_scenario,
-            grid_decarb_scenario=grid_decarb_scenario,
-            hydrogen_cost_scenario=hydrogen_cost_scenario,
-            biomass_cost_scenario=biomass_cost_scenario,
-            ccus_cost_scenario=ccus_cost_scenario,
+            ccus_storage=ccus_storage_model_formatted,
+            ccus_transport=ccus_transport_model_formatted
         )
         df["country_code"] = country_code
         df_list.append(df)
 
-    return pd.concat(df_list).reset_index(drop=True)
+    df = pd.concat(df_list).reset_index(drop=True)
+    df['cost_type'] = df['material_category'].apply(
+        lambda material: RESOURCE_CATEGORY_MAPPER[material])
+
+    return df
 
 
 def generate_variable_costs(
@@ -152,15 +145,12 @@ def generate_variable_costs(
     year_end: int = None,
     feedstock_dict: dict = None,
     static_energy_df: pd.DataFrame = None,
+    country_mapper: dict = None,
     power_df: pd.DataFrame = None,
     hydrogen_df: pd.DataFrame = None,
     bio_df: pd.DataFrame = None,
-    ccus_df: pd.DataFrame = None,
-    electricity_cost_scenario: str = "",
-    grid_decarb_scenario: str = "",
-    hydrogen_cost_scenario: str = "",
-    biomass_cost_scenario: str = "",
-    ccus_cost_scenario: str = "",
+    ccus_storage: pd.DataFrame = None,
+    ccus_transport: pd.DataFrame = None,
 ) -> pd.DataFrame:
     """Generates a DataFrame based on variable cost parameters for a particular region passed to it.
 
@@ -174,150 +164,96 @@ def generate_variable_costs(
         power_df (pd.DataFrame, optional): The shared MPP Power assumptions model. Defaults to None.
         hydrogen_df (pd.DataFrame, optional): The shared MPP Hydrogen assumptions model. Defaults to None.
         bio_df (pd.DataFrame, optional): The shared MPP Bio assumptions model. Defaults to None.
-        ccus_df (pd.DataFrame, optional): The shared MPP CCUS assumptions model. Defaults to None.
-        electricity_cost_scenario (str): The scenario that determines the electricity cost from the shared model.
-        grid_decarb_scenario (str): The scenario that determines the grid decarbonisation cost from the shared model.
-        hydrogen_cost_scenario (str): The scenario that determines the hydrogen cost from the shared model.
-        biomass_cost_scenario (str): The scenario that determines the biomass cost from the shared model.
-        ccus_cost_scenario (str): The scenario that determines the ccus cost from the shared model.
-
+        ccus_storage (pd.DataFrame, optional): The shared MPP CCUS assumptions model. Defaults to None.
+        ccus_transport (pd.DataFrame, optional): The shared MPP CCUS assumptions model. Defaults to None.
     Returns:
         pd.DataFrame: A DataFrame containing variable costs for a particular region.
     """
-
     df_list = []
     # Create resources reference list
-    country_ref_dict = read_pickle_folder(
-        PKL_DATA_FORMATTED, "country_reference_dict", "df"
-    )
-    FEEDSTOCK_LIST = ["Iron Ore", "Scrap", "DRI", "Coal"]
-    FOSSIL_FUELS = [
-        "Met coal",
-        "Coke",
-        "Thermal coal",
-        "BF gas",
-        "BOF gas",
-        "Plastic Waste",
-    ]
-    BIO_FUELS = ["Biomass", "Biomethane"]
-    CCS_LIST = ["Captured CO2"]
-    OTHER_OPEX = ["Steam", "BF slag"]
+    def vc_mapper(row: str, regional_prices: dict):
+        if RESOURCE_CATEGORY_MAPPER[row.material_category] == 'Fossil Fuels':
+            if (row.material_category == "Natural gas") and (ng_flag == 1):
+                return row.value * static_energy_prices_getter(static_energy_df, "Natural gas - low", static_year)
+            elif (row.material_category == "Natural gas") and (ng_flag == 0):
+                return row.value * static_energy_prices_getter(static_energy_df, "Natural gas - high", static_year)
+            elif row.material_category == "Plastic waste":
+                return row.value * feedstock_dict[row.material_category]
+            return row.value * static_energy_prices_getter(static_energy_df, row.material_category, static_year)
 
-    def value_mapper(row, enum_dict: dict):
-        resource = row[enum_dict["material_category"]]
+        if RESOURCE_CATEGORY_MAPPER[row.material_category] == 'Feedstock':
+            return row.value * feedstock_dict[row.material_category]
 
-        if resource in FOSSIL_FUELS:
-            row[enum_dict["Fossil Fuels"]] = row[
-                enum_dict["value"]
-            ] * static_energy_prices_getter(static_energy_df, resource, static_year)
+        if RESOURCE_CATEGORY_MAPPER[row.material_category] == 'Bio Fuels':
+            return row.value * regional_prices['bio_price']
 
-        if resource in FEEDSTOCK_LIST:
-            row[enum_dict["Feedstock"]] = (
-                row[enum_dict["value"]] * feedstock_dict[resource]
-            )
+        if row.material_category == "Electricity":
+            return row.value * regional_prices['electricity_price']
 
-        if resource in BIO_FUELS:
-            row[enum_dict["Bio Fuels"]] = row[enum_dict["value"]] * bio_price
+        if row.material_category == "Hydrogen":
+            return row.value * regional_prices['hydrogen_price']
 
-        if resource == "Natural gas":
-            if ng_flag == 1:
-                row[enum_dict["Fossil Fuels"]] = (
-                    row[enum_dict["value"]] * natural_gas_low
+        if RESOURCE_CATEGORY_MAPPER[row.material_category] == 'Other Opex':
+            if row.material_category in {'BF slag', 'Other slag'}:
+                price = feedstock_dict[row.material_category]
+            elif row.material_category == "Steam":
+                price = static_energy_prices_getter(
+                    static_energy_df, row.material_category, static_year
                 )
-            elif ng_flag == 0:
-                row[enum_dict["Fossil Fuels"]] = (
-                    row[enum_dict["value"]] * natural_gas_high
-                )
+            return row.value * price
 
-        if resource == "Electricity":
-            row[enum_dict["Electricity"]] = row[enum_dict["value"]] * electricity_price
-
-        if resource == "Hydrogen":
-            row[enum_dict["Hydrogen"]] = row[enum_dict["value"]] * hydrogen_price
-
-        if resource in OTHER_OPEX:
-            if resource == "BF slag":
-                price = feedstock_dict[resource]
-            if resource == "Steam":
-                price = row[enum_dict["value"]] * static_energy_prices_getter(
-                    static_energy_df, resource, static_year
-                )
-            row[enum_dict["Other Opex"]] = row[enum_dict["value"]] * price
-
-        if resource in CCS_LIST:
-            row[enum_dict["CCS"]] = row[enum_dict["value"]] * (
-                ccus_storage_price + ccus_transport_price
-            )
-
-        return row
+        if RESOURCE_CATEGORY_MAPPER[row.material_category] == 'CCS':
+            return row.value * (regional_prices['ccus_storage_price'] + regional_prices['ccus_transport_price'])
+        
+        return 0
 
     # Create a year range
     year_range = range(MODEL_YEAR_START, tuple({year_end + 1 or 2021})[0])
     for year in year_range:
         df_c = business_cases_df.copy()
-        df_c["Feedstock"] = ""
-        df_c["Fossil Fuels"] = ""
-        df_c["Bio Fuels"] = ""
-        df_c["Hydrogen"] = ""
-        df_c["Electricity"] = ""
-        df_c["Other Opex"] = ""
-        df_c["CCS"] = ""
-
-        static_year = min(2026, year)
-        dynamic_year = min(MODEL_YEAR_END, year)
-        electricity_price = power_data_getter(
-            power_df,
-            "grid",
-            dynamic_year,
-            country_code,
-            country_ref_dict,
-            RE_DICT,
-            default_country="USA",
-            grid_scenario=GRID_DECARBONISATION_SCENARIOS[grid_decarb_scenario],
-            cost_scenario=COST_SCENARIO_MAPPER[electricity_cost_scenario],
-        )
-        hydrogen_price = hydrogen_data_getter(
-            hydrogen_df,
-            "prices",
-            dynamic_year,
-            country_code,
-            country_ref_dict,
-            default_country="USA",
-            variable="H2 price", # Should be H2 price instead of Total Price Premium?
-            cost_scenario=COST_SCENARIO_MAPPER[hydrogen_cost_scenario],
-        )
-        bio_price = bio_price_getter(
-            bio_df,
-            dynamic_year,
-            country_code,
-            country_ref_dict,
-            default_country="USA",
-            feedstock_type="Weighted average",
-            cost_scenario=BIOMASS_SCENARIOS[biomass_cost_scenario],
-        )
-        ccus_transport_price = ccus_data_getter(
-            ccus_df,
-            "transport",
-            country_code,
-            default_country="GBL",
-            cost_scenario=CCUS_SCENARIOS[ccus_cost_scenario],
-        )
-        ccus_storage_price = ccus_data_getter(
-            ccus_df,
-            "storage",
-            country_code,
-            default_country="GBL",
-            cost_scenario=CCUS_SCENARIOS[ccus_cost_scenario],
-        )
-        natural_gas_high = static_energy_prices_getter(
-            static_energy_df, "Natural gas - high", static_year
-        )
-        natural_gas_low = static_energy_prices_getter(
-            static_energy_df, "Natural gas - low", static_year
-        )
-        enumerated_cols = enumerate_iterable(df_c.columns)
-        df_c = df_c.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
         df_c["year"] = year
+        static_year = min(2026, year)
+        electricity_price = pe_model_data_getter(
+            power_df,
+            country_mapper,
+            POWER_HYDROGEN_COUNTRY_MAPPER,
+            year,
+            country_code,
+        )
+        hydrogen_price = pe_model_data_getter(
+            hydrogen_df,
+            country_mapper,
+            POWER_HYDROGEN_COUNTRY_MAPPER,
+            year,
+            country_code,
+        )
+        bio_price = pe_model_data_getter(
+            bio_df,
+            country_mapper,
+            BIO_COUNTRY_MAPPER,
+            year,
+            country_code,
+        )
+        ccus_transport_price = pe_model_data_getter(
+            ccus_transport,
+            country_mapper,
+            CCUS_COUNTRY_MAPPER,
+            region_code=country_code
+        )
+        ccus_storage_price = pe_model_data_getter(
+            ccus_storage,
+            country_mapper,
+            CCUS_COUNTRY_MAPPER,
+            region_code=country_code
+        )
+        regional_price_dict = {
+            'electricity_price': electricity_price,
+            'hydrogen_price': hydrogen_price,
+            'bio_price': bio_price,
+            'ccus_transport_price': ccus_transport_price,
+            'ccus_storage_price': ccus_storage_price
+        }
+        df_c['cost'] = df_c.apply(vc_mapper, regional_prices=regional_price_dict, axis=1)
         df_list.append(df_c)
     return pd.concat(df_list)
 
@@ -336,22 +272,7 @@ def format_variable_costs(
     """
 
     df_c = variable_cost_df.copy()
-    df_c = df_c.melt(
-        id_vars=[
-            "country_code",
-            "technology",
-            "year",
-            "material_category",
-            "unit",
-            "value",
-        ],
-        var_name=["cost_type"],
-        value_name="cost",
-    )
-    df_c["cost"] = df_c["cost"].replace("", 0)
-    df_c = df_c[(df_c["material_category"] != "0…") & (df_c["cost"] != 0)].reset_index(
-        drop=True
-    )
+    df_c.reset_index(drop=True, inplace=True)
     if group_data:
         df_c.drop(
             ["material_category", "unit", "cost_type", "value"], axis=1, inplace=True
@@ -380,20 +301,9 @@ def generate_variable_plant_summary(
         pd.DataFrame: A DataFrame containing the variable plant results.
     """
     intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
-    electricity_cost_scenario = scenario_dict["electricity_cost_scenario"]
-    grid_scenario = scenario_dict["grid_scenario"]
-    hydrogen_cost_scenario = scenario_dict["hydrogen_cost_scenario"]
-    biomass_cost_scenario = scenario_dict["biomass_cost_scenario"]
-    ccus_cost_scenario = scenario_dict["ccus_cost_scenario"]
-    eur_to_usd_rate = scenario_dict["eur_to_usd"]
     variable_costs = plant_variable_costs(
         MODEL_YEAR_END,
-        electricity_cost_scenario,
-        grid_scenario,
-        hydrogen_cost_scenario,
-        biomass_cost_scenario,
-        ccus_cost_scenario,
-        eur_to_usd_rate
+        scenario_dict
     )
     variable_costs_summary = format_variable_costs(variable_costs)
     variable_costs_summary_material_breakdown = format_variable_costs(

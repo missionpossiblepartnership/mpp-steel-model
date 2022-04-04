@@ -132,18 +132,16 @@ def get_opex_costs(
     """
 
     variable_costs = variable_costs_df.loc[country_code, year]
-    opex_costs = opex_df.swaplevel().loc[year]
+    opex_costs = opex_df.loc[year]
+    opex_costs.drop(["Charcoal mini furnace", "Close plant"], inplace=True)
     carbon_tax_value = carbon_tax_timeseries.set_index("year").loc[year]["value"]
     s1_emissions_value = s1_emissions_ref.loc[year]
     carbon_tax_result = carbon_tax_estimate(
         s1_emissions_value, s2_emissions_value, carbon_tax_value
     )
-    variable_costs.rename(mapper={"cost": "value"}, axis=1, inplace=True)
     carbon_tax_result.rename(mapper={"emissions": "value"}, axis=1, inplace=True)
     total_opex = variable_costs + opex_costs + carbon_tax_result
-    total_opex.drop(["Charcoal mini furnace", "Close plant"], inplace=True)
-    total_opex.rename(mapper={"value": "opex"}, axis=1, inplace=True)
-    return total_opex
+    return total_opex.rename(mapper={"value": "opex"}, axis=1)
 
 
 def capex_getter(
@@ -168,8 +166,7 @@ def capex_getter(
 
 
 def calculate_capex(
-    capex_df: pd.DataFrame, start_year: int, base_tech: str
-) -> pd.DataFrame:
+    capex_df: pd.DataFrame, start_year: int, base_tech: str) -> pd.DataFrame:
     """Creates a capex DataFrame for a given base tech along with capex values for potential switches. 
 
     Args:
@@ -180,47 +177,21 @@ def calculate_capex(
     Returns:
         pd.DataFrame: A DataFrame with the Capex values with a multiindex as year and start_technology.
     """
-    df = pd.DataFrame(
-        {
-            "start_technology": base_tech,
-            "end_technology": SWITCH_DICT[base_tech],
-            "year": start_year,
-            "capex_value": "",
-        }
-    )
-    c_df = (
-        capex_df.reset_index()
-        .set_index(["Year", "Start Technology", "New Technology"])
-        .copy()
-    )
-
-    def value_mapper(row, enum_dict):
-        row[enum_dict["capex_value"]] = capex_getter(
-            c_df, SWITCH_DICT, start_year, base_tech, row[enum_dict["end_technology"]]
-        )
-        return row
-
-    enumerated_cols = enumerate_iterable(df.columns)
-    df = df.apply(value_mapper, enum_dict=enumerated_cols, axis=1, raw=True)
-    return df.set_index(["year", "start_technology"])
+    df_c = capex_df.set_index(['start_technology', 'year']).loc[base_tech, start_year].copy()
+    df_c = df_c[df_c['end_technology'].isin(SWITCH_DICT[base_tech])]
+    return df_c.loc[base_tech].groupby("end_technology").sum()
 
 
 def get_discounted_opex_values(
     country_code: tuple,
     year_start: int,
     carbon_tax_df: pd.DataFrame,
-    business_cases: pd.DataFrame,
     variable_cost_summary: pd.DataFrame,
-    power_model: dict,
-    hydrogen_model: dict,
     other_opex_df: pd.DataFrame,
     s1_emissions_df: pd.DataFrame,
-    country_ref_dict: pd.DataFrame,
+    s2_emissions_df: pd.DataFrame,
     year_interval: int,
     int_rate: float,
-    electricity_cost_scenario: str,
-    grid_scenario: str,
-    hydrogen_cost_scenario: str,
     base_tech: str,
 ) -> pd.DataFrame:
     """Calculates discounted opex reference DataFrame from given inputs.
@@ -229,18 +200,13 @@ def get_discounted_opex_values(
         country_code (tuple): The country code of the steel plant you want to get discounted opex values for.
         year_start (int): The year in which the model starts.
         carbon_tax_df (pd.DataFrame): The carbon tax timeseries with the carbon tax amounts on a yearly basis.
-        business_cases (pd.DataFrame): A DataFrame of standardised business cases.
         variable_costs_df (pd.DataFrame): DataFrame containing the variable costs data split by technology and region.
         power_df (pd.DataFrame, optional): The shared MPP Power assumptions model. Defaults to None.
         hydrogen_df (pd.DataFrame, optional): The shared MPP Hydrogen assumptions model. Defaults to None.
         other_opex_df (pd.DataFrame): A fixed opex DataFrame to be used to calculate total opex costs.
         s1_emissions_df (pd.DataFrame): An S1 emissions DataFrame to be used to calculate opex costs. 
-        country_ref_dict (pd.DataFrame): A country reference dictionary to be used for S2 emissions calculations.
         year_interval (int): The year interval for the discounting window.
         int_rate (float): The interest rate that you want to discount values according to.
-        electricity_cost_scenario (str): The scenario that determines the electricity cost from the shared model.
-        grid_scenario (str): The scenario that determines the grid decarbonisation cost from the shared model.
-        hydrogen_cost_scenario (str): The scenario that determines the hydrogen cost from the shared model.
         base_tech (str): The technology you are starting from.
 
     Returns:
@@ -251,18 +217,7 @@ def get_discounted_opex_values(
     df_list = []
     for year in year_range:
         year = min(MODEL_YEAR_END, year)
-        s2_value = get_s2_emissions(
-            power_model,
-            hydrogen_model,
-            business_cases,
-            country_ref_dict,
-            year,
-            country_code,
-            base_tech,
-            electricity_cost_scenario,
-            grid_scenario,
-            hydrogen_cost_scenario,
-        )
+        s2_value = s2_emissions_df.loc[year, country_code, base_tech]
         df = get_opex_costs(
             country_code,
             year,
@@ -275,12 +230,10 @@ def get_discounted_opex_values(
         df["year"] = year
         df_list.append(df)
     df_combined = pd.concat(df_list)
-    new_df = pd.DataFrame(index=SWITCH_DICT[base_tech], columns=["discounted_opex"])
-    for technology in new_df.index.values:
-        new_df.loc[technology, "discounted_opex"] = npf.npv(
-            int_rate, df_combined.loc[technology]["opex"].values
-        )
-    return new_df
+    new_df = pd.DataFrame({'technology': SWITCH_DICT[base_tech]})
+    new_df['discounted_opex'] = new_df['technology'].apply(
+        lambda technology: npf.npv(int_rate, df_combined.loc[technology]["opex"].values))
+    return new_df.set_index(['technology'])
 
 
 def tco_calc(
@@ -288,18 +241,12 @@ def tco_calc(
     start_year: int,
     base_tech: str,
     carbon_tax_df: pd.DataFrame,
-    business_cases: pd.DataFrame,
     variable_cost_summary: pd.DataFrame,
-    power_model: dict,
-    hydrogen_model: dict,
     other_opex_df: pd.DataFrame,
     s1_emissions_df: pd.DataFrame,
-    country_ref_dict: pd.DataFrame,
+    s2_emissions_df: pd.DataFrame,
     capex_df: pd.DataFrame,
     investment_cycle: int,
-    electricity_cost_scenario: str,
-    grid_scenario: str,
-    hydrogen_cost_scenario: str,
 ) -> pd.DataFrame:
     """Creates a DataFrame with the full tco calculations for each technology. 
 
@@ -308,48 +255,32 @@ def tco_calc(
         year_start (int): The year in which the model starts.
         base_tech (str): The technology you are starting from.
         carbon_tax_df (pd.DataFrame): The carbon tax timeseries with the carbon tax amounts on a yearly basis.
-        business_cases (pd.DataFrame): A DataFrame of standardised business cases.
         variable_cost_summary (pd.DataFrame): DataFrame containing the variable costs data split by technology and region.
-        power_df (pd.DataFrame, optional): The shared MPP Power assumptions model. Defaults to None.
-        hydrogen_df (pd.DataFrame, optional): The shared MPP Hydrogen assumptions model. Defaults to None.
         other_opex_df (pd.DataFrame): A fixed opex DataFrame to be used to calculate total opex costs.
         s1_emissions_df (pd.DataFrame): An S1 emissions DataFrame to be used to calculate opex costs.
-        country_ref_dict (pd.DataFrame): A country reference dictionary to be used for S2 emissions calculations.
+        s2_emissions_df (pd.DataFrame): An S2 emissions DataFrame to be used to calculate opex costs.
         capex_df (pd.DataFrame): A capex DataFrame containing all switch capex values.
         investment_cycle (int): The year interval for the discounting window.
-        electricity_cost_scenario (str): The scenario that determines the electricity cost from the shared model.
-        grid_scenario (str): The scenario that determines the grid decarbonisation cost from the shared model.
-        hydrogen_cost_scenario (str): The scenario that determines the hydrogen cost from the shared model.
 
     Returns:
         pd.DataFrame: A DataFrame with full tco calculations and component calculation columns.
     """
-
+    other_opex_df = other_opex_df.swaplevel()
+    variable_cost_summary.rename(mapper={"cost": "value"}, axis=1, inplace=True)
+    s2_emissions_df_c = s2_emissions_df.set_index(['year', 'country_code', 'technology']).copy()
     opex_values = get_discounted_opex_values(
         country_code,
         start_year,
         carbon_tax_df,
-        business_cases,
         variable_cost_summary,
-        power_model,
-        hydrogen_model,
         other_opex_df,
         s1_emissions_df,
-        country_ref_dict=country_ref_dict,
+        s2_emissions_df_c,
         year_interval=investment_cycle,
         int_rate=DISCOUNT_RATE,
-        electricity_cost_scenario=electricity_cost_scenario,
-        grid_scenario=grid_scenario,
-        hydrogen_cost_scenario=hydrogen_cost_scenario,
-        base_tech=base_tech,
+        base_tech=base_tech
     )
-    capex_values = (
-        calculate_capex(capex_df, start_year, base_tech)
-        .swaplevel()
-        .loc[base_tech]
-        .groupby("end_technology")
-        .sum()
-    )
+    capex_values = calculate_capex(capex_df, start_year, base_tech)
     opex_values.index.rename("end_technology", inplace=True)
     capex_opex_values = capex_values.join(opex_values, on="end_technology")
     capex_opex_values["year"] = start_year
@@ -363,5 +294,4 @@ def tco_calc(
         "capex_value",
         "discounted_opex",
     ]
-    capex_opex_values.reset_index(inplace=True)
-    return capex_opex_values[column_order]
+    return capex_opex_values.reset_index()[column_order]

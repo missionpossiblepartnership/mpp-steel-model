@@ -8,48 +8,28 @@ from mppsteel.config.model_config import (
     PKL_DATA_FORMATTED,
     MODEL_YEAR_END,
 )
-
+from mppsteel.config.model_scenarios import (
+    COST_SCENARIO_MAPPER,
+    GRID_DECARBONISATION_SCENARIOS,
+    BIOMASS_SCENARIOS,
+    CCUS_SCENARIOS,
+)
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import (
     expand_melt_and_sort_years,
+    convert_currency_col
 )
-from mppsteel.utility.location_utility import (
-    match_country,
-    get_region_from_country_code,
-    get_unique_countries,
-    get_countries_from_group
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder, serialize_file, get_scenario_pkl_path
 )
-from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
 
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.config.reference_lists import EU_COUNTRIES
 from mppsteel.validation.shared_inputs_tests import (
     BIO_CONSTRAINT_MODEL_SCHEMA,
 )
 
 # Create logger
 logger = get_logger("Price & Emissions Formatter")
-
-LATEST_FILES = {
-    "power": "Power model.xlsx",
-    "hydrogen": "H2 Model.xlsx",
-    "bio": "Bio Model.xlsx",
-    "ccus": "CCUS Model.xlsx",
-}
-
-OUTPUT_SHEETS = {
-    "power": ["GridPrice", "RESPrice", "GridEmissions"],
-    "hydrogen": ["Prices", "Emissions"],
-    "bio": ["Feedstock_Prices"],
-    "ccus": ["Transport", "Storage"],
-}
-
-INDEX_DICT = {
-    "power": ["Region", "year", "Customer"],
-    "hydrogen": ["Region", "year"],
-    "bio": ["Region", "year"],
-    "ccus": ["Region", "year"],
-}
 
 RE_DICT = {
     "solar": "Price of onsite solar",
@@ -81,211 +61,196 @@ BIO_COUNTRY_MAPPER = {
     "NAFTA": "US",
     "India": "India",
     "Japan, South Korea, Taiwan": "China",
-    "Japan. South Korea, and Taiwan": "China",
+    "Japan, South Korea, and Taiwan": "China",
     "South and central Americas": "US",
     "South and Central America": "US",
     "Middle East": "India",
     "Africa": "US",
     "CIS": "Europe",
     "Southeast Asia": "China",
-    "RoW": "Avg",
+    "RoW": "RoW",
+}
+
+CCUS_COUNTRY_MAPPER = {
+    'RoW': 'Global',
+    'NAFTA': 'US',
+    'NAFTA': 'Mexico',
+    'NAFTA': 'Canada',
+    'Europe': 'Europe',
+    'China': 'China',
+    'India': 'India',
+    'Africa': 'Africa',
+    'Middle East': 'Middle East',
+    'CIS': 'Russia',
+    'Southeast Asia': 'Indonesia',
+    'South and Central America': 'Brazil',
+    'South and Central America': 'Other Latin America',
+    'CIS': 'Other Eurasia ',
+    'Southeast Asia': 'Dynamic Asia',
+    'Southeast Asia': 'Other East Asia',
+    'Japan, South Korea, and Taiwan': 'Japan',
+    'Japan, South Korea, and Taiwan': 'Korea'
 }
 
 
-def get_model_country_groups(country_ref: pd.DataFrame) -> dict:
-    """Creates a metamapping of regions to country codes for the purpose of formatting the Power & Energy Assumptions Models.
-
-    Args:
-        country_ref (pd.DataFrame): A DataFrame containing the Country References.
-
-    Returns:
-        dict: A dictionary of regions to country codes.
-    """
-
-    other_eurasia_ref = [
-        "Afghanistan",
-        "Armenia",
-        "Azerbaijan",
-        "Belarus",
-        "Georgia",
-        "Kazakhstan",
-        "Kyrgyzstan",
-        "Mongolia",
-    ]
-
-    dynamic_asia_ref = [
-        "Taiwan",
-        "Hong Kong",
-        "Indonesia",
-        "Malaysia",
-        "Philippines",
-        "Singapore",
-        "Thailand",
-    ]
-
-    middle_east = get_countries_from_group(
-        country_ref, "RMI Model Region", "Middle East"
-    )
-    africa = get_countries_from_group(country_ref, "Continent", "Africa")
-    other_latin_america = get_countries_from_group(
-        country_ref,
-        "WSA Group Region",
-        "Central and South America",
-        ["Mexico", "Brazil"],
-    )
-    cis = get_countries_from_group(country_ref, "WSA Group Region", "CIS")
-    other_eurasia = [match_country(country) for country in other_eurasia_ref]
-    dynamic_asia = [match_country(country) for country in dynamic_asia_ref]
-    big_asia = [
-        match_country(country)
-        for country in ["China", "Japan", "Korea", "Indonesia", "India"]
-    ]
-    not_other_asia = dynamic_asia + big_asia + middle_east + cis
-    other_asia = list(
-        set(get_countries_from_group(country_ref, "Continent", "Asia")).difference(
-            set(not_other_asia)
-        )
-    )
-    central_and_south_americas = get_countries_from_group(
-        country_ref, "WSA Group Region", "Central and South America"
-    )
-    europe = get_countries_from_group(country_ref, "Continent", "Europe")
-    southeast_asia = get_countries_from_group(
-        country_ref, "RMI Model Region", "Southeast Asia"
-    )
-
-    return {
-        "Middle East": middle_east,
-        "Africa": africa,
-        "Other Latin America": other_latin_america,
-        "Other Eurasia ": other_eurasia,
-        "Dynamic Asia": dynamic_asia,
-        "Other East Asia": other_asia,
-        "Other Asia": other_asia,
-        "Southeast Asia": southeast_asia,
-        "South and Central Americas": central_and_south_americas,
-        "South and central Americas": central_and_south_americas,
-        "Europe": europe,
-        "EU": EU_COUNTRIES,
-        "Japan, South Korea, Taiwan": ["JPN", "KOR", "TWN"],
-    }
+def subset_power(
+    pdf,
+    scenario_dict: dict = None,
+    customer: str = 'Industry',
+    grid_scenario: str = 'Central',
+    cost_scenario: str = 'Baseline',
+    currency_conversion_factor: float = None,
+    as_gj: bool = False
+):
+    if scenario_dict:
+        cost_scenario = COST_SCENARIO_MAPPER[scenario_dict['electricity_cost_scenario']]
+        grid_scenario = GRID_DECARBONISATION_SCENARIOS[scenario_dict['grid_scenario']]
+    pdf_c = pdf.copy()
+    pdf_c = pdf_c[(pdf_c['Customer'] == customer) & (pdf_c['Grid scenario'] == grid_scenario) & (pdf_c['Cost scenario '] == cost_scenario)]
+    years = [year_col for year_col in pdf_c.columns if isinstance(year_col, int)]
+    pdf_c = pdf_c.melt(id_vars=['Region', 'Unit'], value_vars=years, var_name='year', value_name='value')
+    pdf_c.columns = [col.lower().strip() for col in pdf_c.columns]
+    if currency_conversion_factor:
+        pdf_c = convert_currency_col(pdf_c, 'value', currency_conversion_factor)
+    if as_gj:
+        pdf_c['value'] = pdf_c['value'] / 3.6
+    return pdf_c[['year', 'region', 'unit', 'value']].set_index(['year', 'region'])
 
 
-def country_match_ref(
-    df: pd.DataFrame, country_group_dict: dict, default_country: str = None
+def subset_hydrogen(
+    h2df,
+    scenario_dict: dict = None,
+    prices: bool = False,
+    variable: str = 'H2 price',
+    cost_scenario: str = 'Baseline',
+    prod_scenario: str = 'On-site, dedicated VREs',
+    currency_conversion_factor: float = None
+):
+    if scenario_dict:
+        cost_scenario = COST_SCENARIO_MAPPER[scenario_dict['hydrogen_cost_scenario']]
+    h2df_c = h2df.copy()
+    h2df_c = h2df_c[(h2df_c['Cost scenario'] == cost_scenario) & (h2df_c['Production scenario'] == prod_scenario)]
+    if prices:
+        h2df_c = h2df_c[ (h2df_c['Variable'] == variable)]
+    years = [year_col for year_col in h2df_c.columns if isinstance(year_col, int)]
+    h2df_c = h2df_c.melt(id_vars=['Region', 'Unit '], value_vars=years, var_name='year', value_name='value')
+    h2df_c.columns = [col.lower().strip() for col in h2df_c.columns]
+    if currency_conversion_factor:
+        h2df_c = convert_currency_col(h2df_c, 'value', currency_conversion_factor)
+    return h2df_c[['year', 'region', 'unit', 'value']].set_index(['year', 'region'])
+
+def subset_bio_prices(
+    bdf: pd.DataFrame,
+    scenario_dict: dict = None,
+    cost_scenario: str = 'Medium',
+    feedstock_type: str = 'Weighted average',
+    currency_conversion_factor: float = None,
 ) -> pd.DataFrame:
-    """Creates a new column in the Power and Energy Model based on the `Region` column.
-    The new column will be called Country Code and will be a list of all country codes mentioned.
+    if scenario_dict:
+        cost_scenario = BIOMASS_SCENARIOS[scenario_dict['biomass_cost_scenario']]
+    bdf_c = bdf[(bdf["Price scenario"] == cost_scenario) & (bdf["Feedstock type"] == feedstock_type)].copy()
+    year_pairs = [(2020, 2030), (2030, 2040), (2040, 2050)]
+    bdf_c = expand_melt_and_sort_years(bdf_c, year_pairs)
+    bdf_c.columns = [col.lower().strip() for col in bdf_c.columns]
+    if currency_conversion_factor:
+        bdf_c = convert_currency_col(bdf_c, 'value', currency_conversion_factor)
+    return bdf_c[['year', 'region', 'unit', 'value']].set_index(['year', 'region'])
+
+
+def subset_bio_constraints(
+    bdf: pd.DataFrame,
+    scenario_dict: dict,
+    sector: str = "Steel",
+    const_scenario: str = "Prudent",
+    currency_conversion_factor: float = None,
+) -> float:
+    """A getter function for the formatted Bio Constraints model.
 
     Args:
-        df (pd.DataFrame): A DataFrame of the Power / Energy Model.
-        country_group_dict (dict): A dictionary of regions to country codes.
-        default_country (str, optional): A default country you want to map an unmapped region to. Defaults to None.
+        df (pd.DataFrame): A DataFrame of the Bio Constraint model.
+        year (int): The year you want to retrieve a value.
+        sector (str, optional): The sector you would like to get constraint values for. Defaults to "Steel".
+        const_scenario (str, optional): The constraint scenario: 'Prudent, MaxPotential'. Defaults to "Prudent".
 
     Returns:
-        pd.DataFrame: A DataFrame of the Power / Energy model with the new coutry_code column.
+        float: A value based on the parameter settings inputted.
     """
-    df_c = df.copy()
-    countries = df_c["Region"].unique()
-    country_dict = {}
-    for country in countries:
-        if country in country_group_dict.keys():
-            country_dict[country] = country_group_dict[country]
-        elif country == "Global":
-            country_dict[country] = ["GBL"]
-        elif pd.isna(country):
-            country_dict[country] = ""
-        else:
-            country_match = match_country(country)
-            if country_match is None:
-                print(f"Country not found {country}")
-                if default_country:
-                    print(f"Reassigning to {default_country}")
-                    country_dict[country] = [default_country]
-                else:
-                    print(f"Leaving blank")
-                    country_dict[country] = [""]
-            else:
-                country_dict[country] = [country_match]
-    df_c["country_code"] = df_c["Region"].apply(lambda x: country_dict[x])
-    return df_c
+    bdf_c = bdf[(bdf["Sector"] == sector) & (bdf["Scenario"] == const_scenario)].copy()
+    year_pairs = [(2020, 2030), (2030, 2040), (2040, 2050)]
+    bdf_c = expand_melt_and_sort_years(bdf_c, year_pairs)
+    bdf_c.columns = [col.lower().strip() for col in bdf_c.columns]
+    if currency_conversion_factor:
+        bdf_c = convert_currency_col(bdf_c, 'value', currency_conversion_factor)
+    return bdf_c[['year', 'unit', 'value']].set_index(['year'])
 
 
-def format_model_data(
-    model_name: str,
-    data_dict: dict,
-    sheet_dict: dict,
-    index_dict: dict,
-    country_ref: pd.DataFrame,
-) -> dict:
-    """Formats a Power / Energy model based on a number of different features.
 
-    Args:
-        model_name (str): The name of the model: 'power', 'hydrogen' or 'bio'
-        data_dict (dict): The Data Dictionary containing the model's data tabs.
-        sheet_dict (dict): A mapping of each model to the sheets contained. 
-        index_dict (dict): A dictionary of each models name to the required index.
-        country_ref (pd.DataFrame): A DataFrame containing country references.
+def subset_ccus_transport(
+    cdf: pd.DataFrame,
+    scenario_dict: dict,
+    cost_scenario: str = "low",
+    currency_conversion_factor: float = None,
+):
+    if scenario_dict:
+        cost_scenario = CCUS_SCENARIOS[scenario_dict['ccus_cost_scenario']]
+    cdf_c = cdf.copy()
+    if cost_scenario == "low":
+        cost_scenario_input = "BaseCase"
+        transport_type_input = "Onshore Pipeline"
+        capacity_input = 5
+        t_cost_number = 1
 
-    Returns:
-        dict: A dictionary containing the formatted data tabs from each model.
-    """
-    logger.info(f"Formatting the {model_name} model")
-    dict_obj = {}
-    country_group_dict = get_model_country_groups(country_ref)
-    for sheet in sheet_dict[model_name]:
-        temp_df = data_dict[sheet].copy()
-        temp_df.columns = [
-            col.strip() if isinstance(col, str) else col for col in temp_df.columns
-        ]
-        temp_df = country_match_ref(temp_df, country_group_dict)
-        if model_name in {"power", "hydrogen"}:
-            years = [
-                year_col for year_col in temp_df.columns if isinstance(year_col, int)
-            ]
-            temp_df = temp_df.melt(
-                id_vars=set(temp_df.columns).difference(set(years)), var_name="year"
-            )
-            temp_df.set_index(index_dict[model_name], inplace=True)
-        if model_name in {"bio"}:
-            year_pairs = [(2020, 2030), (2030, 2040), (2040, 2050)]
-            temp_df = expand_melt_and_sort_years(temp_df, year_pairs)
-            temp_df.set_index(index_dict[model_name], inplace=True)
-        dict_obj[sheet] = temp_df
-    return dict_obj
+    elif cost_scenario == "high":
+        cost_scenario_input = "BaseCase"
+        transport_type_input = "Shipping"
+        capacity_input = 5
+        t_cost_number = 2
+
+    cdf_c = cdf_c[
+        (cdf_c["Cost Estimate"] == cost_scenario_input)
+        & (cdf_c["Transport Type"] == transport_type_input)
+        & (cdf_c["Capacity"] == capacity_input)
+    ]
+    cdf_c.columns = [col.lower().strip().replace(' ', '_').replace('__', '_') for col in cdf_c.columns]
+    value_colname = f'transport_costs_node_{t_cost_number}'
+    cdf_c.rename({'unit_capacity': 'unit', value_colname: 'value'}, axis=1, inplace=True)
+    if currency_conversion_factor:
+        cdf_c = convert_currency_col(cdf_c, 'value', currency_conversion_factor)
+
+    return cdf_c[['region', 'unit', 'value']].set_index(['region'])
 
 
-def full_model_getter_flow(model_name: str, country_ref: pd.DataFrame) -> dict:
-    """Loads data input from a pickled model and formats the data dictionary.
-
-    Args:
-        model_name (str): The name of the model: 'power', 'hydrogen' or 'bio'.
-        country_ref (pd.DataFrame): A DataFrame containing country references.
-
-    Returns:
-        dict: A dictionary containing the formatted Power / Energy model.
-    """
-    logger.info(f"Creating the formatted model for {model_name}")
-    model_pickle_file = f"{model_name}_model"
-    data_dict = read_pickle_folder(PKL_DATA_IMPORTS, model_pickle_file, "df")
-    return format_model_data(
-        model_name, data_dict, OUTPUT_SHEETS, INDEX_DICT, country_ref
-    )
-
-
-@pa.check_input(BIO_CONSTRAINT_MODEL_SCHEMA)
-def format_biomass_constraint_data(df: pd.DataFrame) -> pd.DataFrame:
-    """Formats the biomass constraints data.
-
-    Args:
-        df (pd.DataFrame): A DataFrame of the biomass constraints data.
-
-    Returns:
-        pd.DataFrame: A DataFrame of the formatted biomass constraints data.
-    """
-    logger.info("Formatting Biomass Constraints Data")
-    biomass_year_pairs = [(2020, 2030), (2030, 2040), (2040, 2050)]
-    return expand_melt_and_sort_years(df, biomass_year_pairs)
+def subset_ccus_storage(
+    cdf: pd.DataFrame,
+    scenario_dict: dict,
+    cost_scenario: str = "low",
+    currency_conversion_factor: float = None,
+):
+    if scenario_dict:
+        cost_scenario = CCUS_SCENARIOS[scenario_dict['ccus_cost_scenario']]
+    cdf_c = cdf.copy()
+    if cost_scenario == "low":
+        storage_location_input = "Onshore"
+        storage_type_input = "Depleted O&G field"
+        reusable_lw_input = "Yes"
+        value_input = "Medium"
+    elif cost_scenario == "high":
+        storage_location_input = "Offshore"
+        storage_type_input = "Saline aquifers"
+        reusable_lw_input = "No"
+        value_input = "Medium"
+    cdf_c = cdf_c[
+        (cdf_c["Storage location"] == storage_location_input)
+        & (cdf_c["Storage type"] == storage_type_input)
+        & (cdf_c["Reusable legacy wells"] == reusable_lw_input)
+        & (cdf_c["Value"] == value_input)
+    ]
+    cdf_c.columns = [col.lower().strip().replace(' ', '_').replace('__', '_') for col in cdf_c.columns]
+    cdf_c.drop('value', axis=1, inplace=True)
+    cdf_c.rename({'costs_-_capacity_5': 'value'}, axis=1, inplace=True)
+    if currency_conversion_factor:
+        cdf_c = convert_currency_col(cdf_c, 'value', currency_conversion_factor)
+    return cdf_c[['region', 'unit', 'value']].set_index(['region'])
 
 
 @timer_func
@@ -299,352 +264,68 @@ def format_pe_data(scenario_dict: dict, serialize: bool = False) -> dict:
         dict: Dictionary of the Power & Energy data.
     """
     logger.info("Initiating full format flow for all models")
-    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
-    power = full_model_getter_flow("power", country_ref)
-    hydrogen = full_model_getter_flow("hydrogen", country_ref)
-    bio_price = full_model_getter_flow("bio", country_ref)
-    biomass_constraint_data = read_pickle_folder(PKL_DATA_IMPORTS, "bio_model", "df")[
-        "Biomass_constraint"
-    ]
-    bio_constraint = format_biomass_constraint_data(biomass_constraint_data)
-    ccus = full_model_getter_flow("ccus", country_ref)
+    h2_prices = read_pickle_folder(PKL_DATA_IMPORTS, 'hydrogen_model', 'df')['Prices']
+    h2_emissions = read_pickle_folder(PKL_DATA_IMPORTS, 'hydrogen_model', 'df')['Emissions']
+    power_grid_prices = read_pickle_folder(PKL_DATA_IMPORTS, 'power_model', 'df')['GridPrice']
+    power_grid_emissions = read_pickle_folder(PKL_DATA_IMPORTS, 'power_model', 'df')['GridEmissions']
+    bio_model_prices = read_pickle_folder(PKL_DATA_IMPORTS, 'bio_model', 'df')['Feedstock_Prices']
+    bio_model_constraints = read_pickle_folder(PKL_DATA_IMPORTS, 'bio_model', 'df')['Biomass_constraint']
+    ccus_model_transport = read_pickle_folder(PKL_DATA_IMPORTS, 'ccus_model', 'df')['Transport']
+    ccus_model_storage = read_pickle_folder(PKL_DATA_IMPORTS, 'ccus_model', 'df')['Storage']
+
+    h2_prices_f = subset_hydrogen(h2_prices, scenario_dict, prices=True)
+    h2_emissions_f = subset_hydrogen(h2_emissions, scenario_dict, prices=False)
+    power_grid_prices_f = subset_power(power_grid_prices, scenario_dict, as_gj=True)
+    power_grid_emissions_f = subset_power(power_grid_emissions, scenario_dict)
+    bio_model_prices_f = subset_bio_prices(bio_model_prices, scenario_dict)
+    bio_model_constraints_f = subset_bio_constraints(bio_model_constraints, scenario_dict)
+    ccus_model_storage_f = subset_ccus_storage(ccus_model_storage, scenario_dict)
+    ccus_model_transport_f = subset_ccus_transport(ccus_model_transport, scenario_dict)
 
     data_dict = {
-        "power": power,
-        "hydrogen": hydrogen,
-        "bio_price": bio_price,
-        "bio_constraint": bio_constraint,
-        "ccus": ccus,
+        "hydrogen_prices": h2_prices_f,
+        "hydrogen_emissions": h2_emissions_f,
+        "power_grid_prices": power_grid_prices_f,
+        "power_grid_emissions": power_grid_emissions_f,
+        "bio_price": bio_model_prices_f,
+        "bio_constraint": bio_model_constraints_f,
+        "ccus_transport": ccus_model_storage_f,
+        "ccus_storage": ccus_model_transport_f,
     }
+
     if serialize:
-        serialize_file(power, PKL_DATA_FORMATTED, "power_model_formatted")
-        serialize_file(hydrogen, PKL_DATA_FORMATTED, "hydrogen_model_formatted")
-        serialize_file(bio_price, PKL_DATA_FORMATTED, "bio_price_model_formatted")
-        serialize_file(
-            bio_constraint, PKL_DATA_FORMATTED, "bio_constraint_model_formatted"
-        )
-        serialize_file(ccus, PKL_DATA_FORMATTED, "ccus_model_formatted")
+        intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
+        serialize_file(h2_prices_f, intermediate_path, "hydrogen_prices_formatted")
+        serialize_file(h2_emissions_f, intermediate_path, "hydrogen_emissions_formatted")
+        serialize_file(power_grid_prices_f, intermediate_path, "power_grid_prices_formatted")
+        serialize_file(power_grid_emissions_f, intermediate_path, "power_grid_emissions_formatted")
+        serialize_file(bio_model_prices_f, intermediate_path, "bio_price_model_formatted")
+        serialize_file(bio_model_constraints_f, intermediate_path, "bio_constraint_model_formatted")
+        serialize_file(ccus_model_storage_f, intermediate_path, "ccus_transport_model_formatted")
+        serialize_file(ccus_model_transport_f, intermediate_path, "ccus_storage_model_formatted")
 
     return data_dict
 
 
-def remapping_country_code_to_mapped_countries(
-    df: pd.DataFrame, country_code: str, country_ref_dict: dict, mapper: dict
-) -> float:
-    """A mapping of a country code to specific region value(s).
+def pe_model_data_getter(
+    df: pd.DataFrame,
+    country_mapper: dict = None,
+    model_region_mapper: dict = None,
+    year: int = None,
+    region_code: str = None
+    ):
+    
+    if year:
+        # Cap year at 2050
+        year = min(MODEL_YEAR_END, year)
 
-    Args:
-        df (pd.DataFrame): A DataFrame of 
-        country_code (str): The country code you want to map.
-        country_ref_dict (dict): A dictionary of country codes to countries.
-        mapper (dict): A mapper of regions to country code.
+    if region_code and year:
+        region = model_region_mapper[country_mapper[region_code]]
+        return df.loc[year, region]['value']
 
-    Returns:
-        float: A value representing the mapped region values.
-    """
-    country_code_region = get_region_from_country_code(
-        country_code, "rmi_region", country_ref_dict
-    )
-    mapped_region = mapper[country_code_region]
-    # Managing Bio Average case: return average of all regions
-    if mapped_region == "Avg":
-        return df["value"].mean()
-    # Normal case: return the specific region value
-    return df[df["Region"] == mapped_region]["value"].values[0]
-
-
-def power_data_getter(
-    df_dict: dict,
-    data_type: str,
-    year: int,
-    country_code: str,
-    country_ref_dict: dict,
-    re_dict: dict = None,
-    re_type: str = "",
-    default_country: str = "USA",
-    grid_scenario: str = "Central",
-    cost_scenario: str = "Baseline",
-    customer: str = "Industry",
-    as_GJ: bool = True,
-) -> float:
-    """A getter function for the formatted Power model.
-
-    Args:
-        df_dict (dict): A Data dictionary of the power model.
-        data_type (str): The type of data you want to get: 'grid', 'renewable' and 'emissions'
-        year (int): The year you want to retrieve a value.
-        country_code (str): The country code you want to retrieve a value for.
-        country_ref_dict (dict): A mapping of country codes to countries.
-        re_dict (dict, optional): A mapping specific to Renewable Energy data sheet. Defaults to None.
-        re_type (str, optional): The Renewable energy type. Defaults to "".
-        default_country (str, optional): The default country to map to in case no country code mapping is found. Defaults to "USA".
-        grid_scenario (str, optional): The scenario for grid (Central, Accelerated, All). Defaults to "Central".
-        cost_scenario (str, optional): The scenario for cost (Baseline, Min, Max, All). Defaults to "Baseline".
-        customer (str, optional): The customer parameter. Defaults to "Industry".
-        as_GJ (bool, optional): Transform value units from MWh to Gj. Defaults to True.
-
-    Returns:
-        float: A value based on the parameter settings inputted.
-    """
-    # map data_type to df_dict keys
-    data_type_mapper = dict(
-        zip(["grid", "renewable", "emissions"], OUTPUT_SHEETS["power"])
-    )
-
-    # subset the dict_object
-    df_c = df_dict[data_type_mapper[data_type]].copy()
-    # define country list based on the data_type
-    country_list = get_unique_countries(df_c["country_code"].values)
-    # Cap year at 2050
-    year = min(MODEL_YEAR_END, year)
-
-    # Apply subsets
-    df_c = df_c.xs((year, customer), level=["year", "Customer"])
-    df_c.reset_index(drop=False, inplace=True)
-
-    df_c = df_c[
-        (df_c["Grid scenario"] == grid_scenario)
-        & (df_c["Cost scenario"] == cost_scenario)
-    ]
-
-    if data_type == "renewable":
-        df_c = df_c[df_c["Captive power source"] == re_dict[re_type]]
-    if (data_type in {"renewable", "grid", "emissions"}) and as_GJ:
-        df_c["value"] = df_c["value"] / 3.6  # converting unit to $/GJ
-
-    # Apply country check and use default
-    if country_code in country_list:
-        return df_c[df_c["country_code"].str.contains(country_code, regex=False)][
-            "value"
-        ].values[0]
-    return remapping_country_code_to_mapped_countries(
-        df_c, country_code, country_ref_dict, POWER_HYDROGEN_COUNTRY_MAPPER
-    )
-
-
-def hydrogen_data_getter(
-    df_dict: dict,
-    data_type: str,
-    year: int,
-    country_code: str,
-    country_ref_dict: dict,
-    default_country: str = "USA",
-    variable: str = "H2 price",
-    cost_scenario: str = "Min",
-    prod_scenario: str = "Utility plant, dedicated VREs",
-    as_GJ: bool = True,
-) -> float:
-    """A getter function for the formatted Hydrogen model.
-
-    Args:
-        df_dict (dict): A Data dictionary of the hydrogen model.
-        data_type (str): The type of data you want to get: 'prices', 'emissions'
-        year (int): The year you want to retrieve a value.
-        country_code (str): The country code you want to retrieve a value for.
-        country_ref_dict (dict): A mapping of country codes to countries.
-        default_country (str, optional): The default country to map to in case no country code mapping is found. Defaults to "USA".
-        variable (str, optional): The variable type: 'H2 price', 'Electrolyser-related H2 cost component', 'Cost of energy ', 'Total Other costs', 'Total price premium '. Defaults to "H2 price".
-        cost_scenario (str, optional): The scenario for cost: Baseline, Min, Max, All. Defaults to "Baseline".
-        prod_scenario (str, optional): The scenario for grid: 'Utility plant, dedicated VREs', 'On-site, dedicated VREs', 'On-site, grid', 'Utility plant, grid'. Defaults to "On-site, dedicated VREs".
-        as_GJ (bool, optional): Transform value units from MWh to Gj. Defaults to True.
-
-    Returns:
-        float: A value based on the parameter settings inputted.
-    """
-    # map data_type to df_dict keys
-    data_type_mapper = {"prices": "Prices", "emissions": "Emissions"}
-
-    # subset the dict_object
-    df_c = df_dict[data_type_mapper[data_type]].copy()
-
-    # define country list based on the data_type
-    country_list = get_unique_countries(df_c["country_code"].values)
-
-    # Cap year at 2050
-    year = min(MODEL_YEAR_END, year)
-
-    # Apply subsets
-    df_c = df_c.xs(year, level="year")
-    df_c.reset_index(drop=False, inplace=True)
-    # Variables: 
-    df_c = df_c[
-        (df_c["Cost scenario"] == cost_scenario)
-        & (df_c["Production scenario"] == prod_scenario)
-    ]
-    if (data_type == "prices") and variable:
-        df_c = df_c[(df_c["Variable"] == variable)]
-    elif (data_type == "prices") and not variable:
-        df_c = df_c[(df_c["Variable"] == "Total price premium ")]
-    if (data_type == "prices") and as_GJ:
-        df_c["value"] = df_c["value"] / (120 * 1000)  # converting unit to $/GJ
-
-    # Apply country check and use default
-    if country_code in country_list:
-        return df_c[df_c["country_code"].str.contains(country_code, regex=False)][
-            "value"
-        ].values[0]
-    else:
-        return remapping_country_code_to_mapped_countries(
-            df_c, country_code, country_ref_dict, POWER_HYDROGEN_COUNTRY_MAPPER
-        )
-
-
-def bio_price_getter(
-    df_dict: dict,
-    year: int,
-    country_code: str,
-    country_ref_dict: dict,
-    default_country: str = "USA",
-    feedstock_type: str = "Weighted average",
-    cost_scenario: str = "Medium",
-) -> float:
-    """A getter function for the formatted Bio Price model.
-
-    Args:
-        df_dict (dict): A Data dictionary of the Bio model.
-        year (int): The year you want to retrieve a value.
-        country_code (str): The country code you want to retrieve a value for.
-        country_ref_dict (dict): A mapping of country codes to countries.
-        default_country (str, optional): The default country to map to in case no country code mapping is found. Defaults to "USA".
-        feedstock_type (str, optional): The type of bio feedstock. Defaults to "Weighted average".
-        cost_scenario (str, optional):  The scenario for cost: 'Medium'. Defaults to "Medium".
-
-    Returns:
-        float: A value based on the parameter settings inputted.
-    """
-    df_c = df_dict["Feedstock_Prices"].copy()
-    country_list = get_unique_countries(df_c["country_code"].values)
-    year = min(MODEL_YEAR_END, year)
-    df_c = df_c.xs(year, level="year")
-    df_c.reset_index(drop=False, inplace=True)
-    df_c = df_c[
-        (df_c["Price scenario"] == cost_scenario)
-        & (df_c["Feedstock type"] == feedstock_type)
-    ]
-
-    # Apply country check and use default
-    if country_code in country_list:
-        return df_c[df_c["country_code"].str.contains(country_code, regex=False)][
-            "value"
-        ].values[0]
-    else:
-        return remapping_country_code_to_mapped_countries(
-            df_c, country_code, country_ref_dict, BIO_COUNTRY_MAPPER
-        )
-
-
-def bio_constraint_getter(
-    df: pd.DataFrame, year: int, sector: str = "Steel", const_scenario: str = "Prudent"
-) -> float:
-    """A getter function for the formatted Bio Constraints model.
-
-    Args:
-        df (pd.DataFrame): A DataFrame of the Bio Constraint model.
-        year (int): The year you want to retrieve a value.
-        sector (str, optional): The sector you would like to get constraint values for. Defaults to "Steel".
-        const_scenario (str, optional): The constraint scenario: 'Prudent, MaxPotential'. Defaults to "Prudent".
-
-    Returns:
-        float: A value based on the parameter settings inputted.
-    """
-    year = min(MODEL_YEAR_END, year)
-    return df[
-        (df["year"] == year)
-        & (df["Sector"] == sector)
-        & (df["Scenario"] == const_scenario)
-    ].value.values[0]
-
-
-def ccus_data_getter(
-    df_dict: dict,
-    data_type: str,
-    country_code: str,
-    default_country: str = "GBL",
-    cost_scenario: str = "BaseCase",
-) -> float:
-    """A getter function for the formatted Bio Constraints model.
-
-    Args:
-        df_dict (dict): A data dictionary of the CCUS model.
-        data_type (str): The type of data you want to get: 'transport', 'storage'.
-        country_code (str): The country code you want to retrieve a value for.
-        default_country (str, optional): The default country to map to in case no country code mapping is found. Defaults to "GBL" for global.
-        cost_scenario (str, optional): The constraint scenario: 'BaseCase', 'Low'. Defaults to "BaseCase".
-
-    Returns:
-        float: A value based on the parameter settings inputted.
-    """
-    # map data_type to df_dict keys
-    data_type_mapper = {
-        "transport": "Transport",
-        "storage": "Storage",
-    }
-
-    # subset the dict_object
-    df_c = df_dict[data_type_mapper[data_type]].copy()
-
-    # define country list based on the data_type
-    country_list = get_unique_countries(df_c["country_code"].values)
-
-    # Apply country check and use default
-    if country_code in country_list:
-        df_c = df_c[df_c["country_code"].str.contains(country_code, regex=False)]
-    else:
-        df_c = df_c[df_c["country_code"].str.contains(default_country, regex=False)]
-
-    if data_type == "transport":
-        # Apply subsets
-        df_c.reset_index(drop=True, inplace=True)
-        # Transport Type: 'Onshore Pipeline', 'Offshore Pipeline', 'Shipping'
-
-        if cost_scenario == "low":
-            cost_scenario_input = "BaseCase"
-            transport_type_input = "Onshore Pipeline"
-            capacity_input = 5
-            t_node_input = ["Transport costs _Node 1"]
-
-        elif cost_scenario == "high":
-            cost_scenario_input = "BaseCase"
-            transport_type_input = "Shipping"
-            capacity_input = 5
-            t_node_input = ["Transport costs _Node 2"]
-
-        df_c = df_c[
-            (df_c["Cost Estimate"] == cost_scenario_input)
-            & (df_c["Transport Type"] == transport_type_input)
-            & (df_c["Capacity"] == capacity_input)
-        ]
-
-        # Return the transport node costs
-        return df_c[t_node_input].values[0]
-
-    if data_type == "storage":
-        # Apply subsets
-        df_c.reset_index(drop=False, inplace=True)
-
-        # Storage Location: 'Onshore' 'Offshore'
-        # Storage type: 'Depleted O&G field', 'Saline aquifers'
-        # reusable_lw: Yes or No
-
-        if cost_scenario == "low":
-            storage_location_input = "Onshore"
-            storage_type_input = "Depleted O&G field"
-            reusable_lw_input = "Yes"
-            value_input = "Medium"
-            cost_capacity_input = "Costs -  capacity 5"
-
-        elif cost_scenario == "high":
-            storage_location_input = "Offshore"
-            storage_type_input = "Saline aquifers"
-            reusable_lw_input = "No"
-            value_input = "Medium"
-            cost_capacity_input = "Costs -  capacity 5"
-
-        df_c = df_c[
-            (df_c["Storage location"] == storage_location_input)
-            & (df_c["Storage type"] == storage_type_input)
-            & (df_c["Reusable legacy wells"] == reusable_lw_input)
-            & (df_c["Value"] == value_input)
-        ]
-
-        return df_c[cost_capacity_input].values[0]
+    if year and not region_code:
+        return df.loc[year]['value']
+    
+    if region_code and not year:
+        region = model_region_mapper[country_mapper[region_code]]
+        return df.loc[region]['value']
