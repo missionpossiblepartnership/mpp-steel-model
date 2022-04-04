@@ -13,7 +13,7 @@ from mppsteel.config.reference_lists import (
 from mppsteel.data_loading.data_interface import (
     ccs_co2_getter,
 )
-from mppsteel.data_loading.pe_model_formatter import bio_constraint_getter
+from mppsteel.data_loading.pe_model_formatter import pe_model_data_getter
 from mppsteel.data_loading.reg_steel_demand_formatter import steel_demand_getter
 from mppsteel.data_loading.steel_plant_formatter import (
     get_plant_capacity, total_plant_capacity
@@ -239,7 +239,7 @@ def plant_tech_resource_checker(
             # Setting parameters
             if material_check == "Bioenergy":
                 material_ref = "Bioenergy"
-                material_capacity = bio_constraint_getter(bio_constraint_model, year)
+                material_capacity = pe_model_data_getter(bio_constraint_model, year)
                 materials_to_check = ["Biomass", "Biomethane"]
 
             if material_check == "Used CO2":
