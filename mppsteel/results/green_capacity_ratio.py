@@ -5,7 +5,8 @@ from copy import deepcopy
 import pandas as pd
 
 from mppsteel.config.model_config import (
-    PKL_DATA_FORMATTED
+    PKL_DATA_FORMATTED,
+    PKL_DATA_IMPORTS
 )
 from mppsteel.config.reference_lists import TECHNOLOGY_STATES
 from mppsteel.utility.function_timer_utility import timer_func
@@ -13,14 +14,14 @@ from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder, serialize_file, get_scenario_pkl_path
 )
+from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.utility.location_utility import get_region_from_country_code
 
 # Create logger
 logger = get_logger("Green Capacity Ratio")
 
 def green_capacity_ratio_predata(
-    plant_df: pd.DataFrame, tech_choices: dict, country_reference_dict: dict, inc_trans: bool = False):
+    plant_df: pd.DataFrame, tech_choices: dict, country_mapper: dict, inc_trans: bool = False):
 
     def tech_status_mapper(tech_choice: dict, inc_trans: bool):
         check_list = deepcopy(TECHNOLOGY_STATES['end_state'])
@@ -59,7 +60,7 @@ def green_capacity_ratio_predata(
         df['technology'] = df['plant_name'].apply(lambda plant_name: tech_choices[str(year)][plant_name])
         df['green_tech'] = df['technology'].apply(lambda technology: tech_status_mapper(technology, inc_trans))
         df['active_status'] = df.apply(lambda row: active_status(row, tech_choices, year), axis=1)
-        df['region'] = df["plant_name"].apply(lambda plant_name: get_region_from_country_code(country_code_dict[plant_name], "rmi_region", country_reference_dict))
+        df['region'] = df["plant_name"].apply(lambda plant_name: country_mapper[country_code_dict[plant_name]])
         df_container.append(df)
     df_final = pd.concat(df_container).reset_index(drop=True)
     df_final['capacity'] /= 1000
@@ -83,8 +84,9 @@ def generate_gcr_df(scenario_dict: dict, serialize: bool = False) -> pd.DataFram
     final_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'final')
     plant_result_df = read_pickle_folder(intermediate_path, "plant_result_df", "df")
     tech_choice_dict = read_pickle_folder(intermediate_path, "tech_choice_dict", "dict")
-    country_reference_dict = read_pickle_folder(PKL_DATA_FORMATTED, "country_reference_dict", "dict")
-    green_capacity_ratio_df = green_capacity_ratio_predata(plant_result_df, tech_choice_dict, country_reference_dict, True)
+    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
+    rmi_mapper = create_country_mapper(country_ref, 'rmi')
+    green_capacity_ratio_df = green_capacity_ratio_predata(plant_result_df, tech_choice_dict, rmi_mapper, True)
     green_capacity_ratio_result = create_gcr_df(green_capacity_ratio_df)
     green_capacity_ratio_result = add_results_metadata(
         green_capacity_ratio_result, scenario_dict, include_regions=False, single_line=True

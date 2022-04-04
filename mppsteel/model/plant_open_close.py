@@ -9,7 +9,7 @@ from tqdm import tqdm
 import random
 from copy import deepcopy
 
-from mppsteel.utility.location_utility import get_region_from_country_code, get_countries_from_group
+from mppsteel.utility.location_utility import get_countries_from_group
 from mppsteel.utility.file_handling_utility import read_pickle_folder
 from mppsteel.utility.plant_container_class import PlantIdContainer
 from mppsteel.data_loading.reg_steel_demand_formatter import steel_demand_getter
@@ -152,7 +152,6 @@ def new_plant_metadata(
     if region in country_specific_mapper:
         assigned_country = country_specific_mapper[region]
     else:
-        #assigned_country = pick_random_country_from_region(country_df, region)
         assigned_country = pick_random_country_from_region_subset(plant_df, region)
     return {
         'plant_id': new_id,

@@ -12,12 +12,10 @@ from mppsteel.utility.dataframe_utility import return_furnace_group
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder, serialize_file, get_scenario_pkl_path
 )
-from mppsteel.data_loading.reg_steel_demand_formatter import extend_steel_demand
 from mppsteel.model.investment_cycles import (
     create_investment_cycle, amend_investment_dict, create_investment_cycle_reference
 )
-from mppsteel.data_loading.country_reference import country_df_formatter
-
+from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.config.model_config import (
     MODEL_YEAR_END,
     MODEL_YEAR_START,
@@ -55,7 +53,6 @@ from mppsteel.model.plant_open_close import (
 from mppsteel.model.trade import TradeBalance
 from mppsteel.model.levelized_cost import generate_levelized_cost_results
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.utility.location_utility import get_region_from_country_code
 
 # Create logger
 logger = get_logger("Solver Logic")
@@ -250,15 +247,15 @@ def choose_technology(
     variable_costs_regional = read_pickle_folder(
         intermediate_path, "variable_costs_regional", "df"
     )
-    country_reference_dict = read_pickle_folder(PKL_DATA_FORMATTED, "country_reference_dict", "df")
-    country_df = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref")
-    country_df_f = country_df_formatter(country_df)
+    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
+    rmi_mapper = create_country_mapper(country_ref, 'rmi')
+    country_ref_f = country_df_formatter(country_ref)
     investment_year_ref_c = investment_year_ref.copy()
     investment_dict_c = deepcopy(investment_dict)
     plant_cycle_length_mapper_c = deepcopy(plant_cycle_length_mapper)
     # Constraint data
     bio_constraint_model = read_pickle_folder(
-        PKL_DATA_FORMATTED, "bio_constraint_model_formatted", "df"
+        intermediate_path, "bio_constraint_model_formatted", "df"
     )
     materials = load_materials()
     ccs_co2 = read_pickle_folder(PKL_DATA_IMPORTS, "ccs_co2", "df")
@@ -280,9 +277,7 @@ def choose_technology(
     )
     tco_slim = subset_presolver_df(tco_summary_data, subset_type='tco_summary')
     levelized_cost = read_pickle_folder(intermediate_path, "levelized_cost", "df")
-    levelized_cost["region"] = levelized_cost["country_code"].apply(
-            lambda x: get_region_from_country_code(x, "rmi_region", country_reference_dict)
-    )
+    levelized_cost["region"] = levelized_cost["country_code"].apply(lambda x: rmi_mapper[x])
     steel_plant_abatement_switches = read_pickle_folder(
         intermediate_path, "emissivity_abatement_switches", "df"
     )
@@ -324,7 +319,7 @@ def choose_technology(
             plant_df=model_plant_df,
             levelized_cost=levelized_cost,
             steel_demand_df=steel_demand_df,
-            country_df=country_df_f,
+            country_df=country_ref_f,
             variable_costs_df=variable_costs_regional,
             capex_dict=capex_dict,
             tech_choice_dict=current_plant_choices,

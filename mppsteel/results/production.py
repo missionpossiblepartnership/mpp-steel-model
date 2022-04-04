@@ -8,6 +8,7 @@ from mppsteel.config.model_config import (
     MODEL_YEAR_START,
     MODEL_YEAR_END,
     PKL_DATA_FORMATTED,
+    PKL_DATA_IMPORTS,
 )
 
 from mppsteel.config.reference_lists import LOW_CARBON_TECHS
@@ -25,7 +26,7 @@ from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder, serialize_file, get_scenario_pkl_path
 )
-from mppsteel.utility.location_utility import get_region_from_country_code
+from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.utility.log_utility import get_logger
 
 # Create logger
@@ -36,7 +37,7 @@ def generate_production_stats(
     tech_capacity_df: pd.DataFrame,
     capacity_results: pd.DataFrame,
     steel_df: pd.DataFrame,
-    country_reference_dict: dict,
+    country_mapper: dict,
     steel_demand_scenario: str,
     year_end: int,
 ) -> pd.DataFrame:
@@ -62,8 +63,7 @@ def generate_production_stats(
         lambda tech: "Y" if tech in LOW_CARBON_TECHS else "N"
     )
     tech_capacity_df["region"] = tech_capacity_df["country_code"].apply(
-        lambda x: get_region_from_country_code(x, "rmi_region", country_reference_dict)
-    )
+        lambda x: country_mapper[x])
     regions = tech_capacity_df['region'].unique()
     for year in tqdm(year_range, total=len(year_range), desc="Production Stats"):
         df = tech_capacity_df[tech_capacity_df["year"] == year].copy()
@@ -321,9 +321,8 @@ def production_results_flow(scenario_dict: dict, serialize: bool = False) -> dic
     capacity_results = read_pickle_folder(
         intermediate_path, "capacity_results", "dict"
     )
-    country_reference_dict = read_pickle_folder(
-        PKL_DATA_FORMATTED, "country_reference_dict", "df"
-    )
+    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
+    rmi_mapper = create_country_mapper(country_ref, 'rmi')
     calculated_emissivity_combined = read_pickle_folder(
         intermediate_path, "calculated_emissivity_combined", "df"
     )
@@ -331,7 +330,7 @@ def production_results_flow(scenario_dict: dict, serialize: bool = False) -> dic
     steel_demand_scenario = scenario_dict["steel_demand_scenario"]
     production_results = generate_production_stats(
         tech_capacity_df, capacity_results, steel_demand_df, 
-        country_reference_dict, steel_demand_scenario, MODEL_YEAR_END
+        rmi_mapper, steel_demand_scenario, MODEL_YEAR_END
     )
     production_resource_usage = production_stats_generator(production_results)
     production_emissions = generate_production_emission_stats(production_results, calculated_emissivity_combined)

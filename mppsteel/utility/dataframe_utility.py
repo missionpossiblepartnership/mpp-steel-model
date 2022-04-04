@@ -5,13 +5,12 @@ from typing import List
 import pandas as pd
 import numpy as np
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.utility.location_utility import get_region_from_country_code
 
 from mppsteel.utility.file_handling_utility import read_pickle_folder
-
+from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.config.model_config import (
-    PKL_DATA_FORMATTED,
     RESULTS_REGIONS_TO_MAP,
+    PKL_DATA_IMPORTS
 )
 
 logger = get_logger("DataFrame Utility")
@@ -139,13 +138,12 @@ def add_scenarios(
 
 
 def add_regions(
-    df: pd.DataFrame, country_ref_dict: dict, country_ref_col: str, region_schema: str
-) -> pd.DataFrame:
+    df: pd.DataFrame, country_ref: dict, region_schema: str) -> pd.DataFrame:
     """Adds regional metadata column(s) to each row in a DataFrame.
 
     Args:
         df (pd.DataFrame): The DataFrame you want to modify.
-        country_ref_dict (dict): A dictionary containing the mapping of country codes to regions.
+        country_mapper (dict): A dictionary containing the mapping of country codes to regions.
         country_ref_col (str): The column containing the country codes you want to map.
         region_schema (str): The name of the schema you want to map.
 
@@ -153,11 +151,9 @@ def add_regions(
         pd.DataFrame: A DataFrame with additional regional metadata column(s).
     """
     df_c = df.copy()
-    df_c[f"region_{region_schema}"] = df_c[country_ref_col].apply(
-        lambda country: get_region_from_country_code(
-            country, region_schema, country_ref_dict
-        )
-    )
+    country_mapper = create_country_mapper(country_ref, region_schema)
+    df_c[f"region_{region_schema}"] = df_c['country_ref'].apply(
+        lambda country: country_mapper[country])
     return df_c
 
 
@@ -178,14 +174,12 @@ def add_results_metadata(
     Returns:
         pd.DataFrame: The name of the schema you want to map.
     """
-    country_reference_dict = read_pickle_folder(
-        PKL_DATA_FORMATTED, "country_reference_dict", "dict"
-    )
+    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
     df_c = df.copy()
     df_c = add_scenarios(df_c, scenario_dict, single_line)
     if include_regions:
         for schema in RESULTS_REGIONS_TO_MAP:
-            df_c = add_regions(df_c, country_reference_dict, "country_code", schema)
+            df_c = add_regions(df_c, country_ref, schema)
     return df_c
 
 

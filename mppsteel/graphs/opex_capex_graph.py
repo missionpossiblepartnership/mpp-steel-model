@@ -4,15 +4,13 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 import numpy_financial as npf
-from mppsteel.config.model_config import DISCOUNT_RATE, PKL_DATA_FORMATTED
+from mppsteel.config.model_config import DISCOUNT_RATE
 from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
 
 from mppsteel.utility.utils import cast_to_float
 from mppsteel.utility.dataframe_utility import column_sorter
-from mppsteel.utility.location_utility import get_region_from_country_code
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.graphs.plotly_graphs import bar_chart
-from mppsteel.utility.file_handling_utility import read_pickle_folder, get_scenario_pkl_path
 
 logger = get_logger(__name__)
 
@@ -164,7 +162,7 @@ def assign_country_deltas(df: pd.DataFrame, delta_dict: dict) -> pd.DataFrame:
     return df_c
 
 
-def create_capex_opex_split_data(variable_cost_df: pd.DataFrame, capex_dict: dict, country_ref_dict: dict) -> pd.DataFrame:
+def create_capex_opex_split_data(variable_cost_df: pd.DataFrame, capex_dict: dict, country_mapper: dict) -> pd.DataFrame:
     """Creates a DataFrame split by cost type for the purpose of creating a graph.
 
     Returns:
@@ -188,8 +186,7 @@ def create_capex_opex_split_data(variable_cost_df: pd.DataFrame, capex_dict: dic
     vcsmb_c = assign_country_deltas(vcsmb_c, country_deltas)
     vcsmb_c.reset_index(inplace=True)
     vcsmb_c["region"] = vcsmb_c["country_code"].apply(
-        lambda x: get_region_from_country_code(x, "rmi_region", country_ref_dict)
-    )
+        lambda x: country_mapper[x])
     vcsmb_cocd = vcsmb_c.reset_index(drop=True).drop(["country_code", "region"], axis=1)
     return (
         vcsmb_cocd.groupby(["technology", "cost_type"])
@@ -200,7 +197,7 @@ def create_capex_opex_split_data(variable_cost_df: pd.DataFrame, capex_dict: dic
     )
 
 
-def opex_capex_graph(variable_cost_df: pd.DataFrame, capex_dict: dict, country_ref_dict: dict, save_filepath: str = None, ext: str = "png") -> px.bar:
+def opex_capex_graph(variable_cost_df: pd.DataFrame, capex_dict: dict, country_mapper: dict, save_filepath: str = None, ext: str = "png") -> px.bar:
     """Creates a bar graph for the Opex Capex split graph.
 
     Args:
@@ -210,7 +207,7 @@ def opex_capex_graph(variable_cost_df: pd.DataFrame, capex_dict: dict, country_r
     Returns:
         px.bar: A plotly express bar chart.
     """
-    final_opex_capex_dataset = create_capex_opex_split_data(variable_cost_df, capex_dict, country_ref_dict)
+    final_opex_capex_dataset = create_capex_opex_split_data(variable_cost_df, capex_dict, country_mapper)
     final_opex_capex_dataset_c = column_sorter(
         final_opex_capex_dataset, "cost_type", BAR_CHART_ORDER.keys()
     )
@@ -297,7 +294,7 @@ def return_capex_values_regional(
 
 
 def create_capex_opex_split_data_regional(
-    vcsmb: pd.DataFrame, capex_dict: dict, country_ref_dict: dict, year: int = 2050, region: str= 'NAFTA') -> pd.DataFrame:
+    vcsmb: pd.DataFrame, capex_dict: dict, country_mapper: dict, year: int = 2050, region: str= 'NAFTA') -> pd.DataFrame:
     """Creates a DataFrame split by cost type for the purpose of creating a graph.
     Returns:
         pd.DataFrame: A DataFrame containing the split of costs and the associated metadata.
@@ -319,9 +316,7 @@ def create_capex_opex_split_data_regional(
     vcsmb_c.reset_index(inplace=True)
     vcsmb_c['cost_type'].replace('Other_Opex','Other Opex', inplace=True)
 
-    vcsmb_c["region"] = vcsmb_c["country_code"].apply(
-        lambda x: get_region_from_country_code(x, "rmi_region", country_ref_dict)
-    )
+    vcsmb_c["region"] = vcsmb_c["country_code"].apply(lambda x: country_mapper[x])
     vcsmb_c=vcsmb_c.reset_index(drop=True)
     if region:
         vcsmb_c=vcsmb_c.loc[(vcsmb_c['region']==region)]
@@ -329,13 +324,11 @@ def create_capex_opex_split_data_regional(
         vcsmb_c=vcsmb_c.drop(["material_category",'country_code', "region"], axis=1)
     vcsmb_c = vcsmb_c.reset_index(drop=True)
     vcsmb_c=vcsmb_c.groupby(["technology", "cost_type"]).sum().reset_index()
-    return (
-        vcsmb_c
-    )
+    return vcsmb_c
 
 
 def opex_capex_graph_regional(
-    vcsmb: pd.DataFrame, capex_dict: dict, country_ref_dict: dict, save_filepath: str = None, ext: str = "png", year: int = 2050, region:str='NAFTA') -> px.bar:
+    vcsmb: pd.DataFrame, capex_dict: dict, country_mapper: dict, save_filepath: str = None, ext: str = "png", year: int = 2050, region:str='NAFTA') -> px.bar:
     """Creates a bar graph for the Opex Capex split graph.
     Args:
         save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
@@ -343,7 +336,7 @@ def opex_capex_graph_regional(
     Returns:
         px.bar: A plotly express bar chart.
     """
-    final_opex_capex_dataset = create_capex_opex_split_data_regional(vcsmb, capex_dict, country_ref_dict, year, region)
+    final_opex_capex_dataset = create_capex_opex_split_data_regional(vcsmb, capex_dict, country_mapper, year, region)
     final_opex_capex_dataset_c = column_sorter(
         final_opex_capex_dataset, "cost_type", BAR_CHART_ORDER.keys()
     )
