@@ -7,11 +7,10 @@ from tqdm.auto import tqdm as tqdma
 # For logger and units dict
 from mppsteel.utility.utils import enumerate_iterable
 from mppsteel.utility.function_timer_utility import timer_func
-
 from mppsteel.utility.location_utility import (
     country_mapping_fixer,
     country_matcher,
-    get_region_from_country_code,
+    create_country_mapper,
 )
 
 from mppsteel.utility.file_handling_utility import (
@@ -77,7 +76,6 @@ def steel_plant_formatter(
     df_c = df_c.rename(mapper=dict(zip(df_c.columns, NEW_COLUMN_NAMES)), axis=1)
     df_c["country_code"] = ""
     df_c = extract_steel_plant_capacity(df_c)
-    df_c = adjust_capacity_values(df_c)
 
     if remove_non_operating_plants:
         df_c = df_c[df_c["technology_in_2020"] != "Not operating"].reset_index(
@@ -116,69 +114,19 @@ def extract_steel_plant_capacity(df: pd.DataFrame) -> pd.DataFrame:
             return float(0)
 
     df_c = df.copy()
-    df_c["plant_capacity"] = 0
-    capacity_cols = [
-        "BFBOF_capacity",
-        "EAF_capacity",
-        "DRI_capacity",
-        "DRIEAF_capacity",
-    ]
 
-    def value_mapper(row, enum_dict: dict):
-        tech = row[enum_dict["technology_in_2020"]]
-        for col in capacity_cols:
-            if (col == "EAF_capacity") & (tech == "EAF"):
-                row[enum_dict["plant_capacity"]] = convert_to_float(
-                    row[enum_dict["EAF_capacity"]]
-                )
-            elif (col == "BFBOF_capacity") & (tech in ["Avg BF-BOF", "BAT BF-BOF"]):
-                row[enum_dict["plant_capacity"]] = convert_to_float(
-                    row[enum_dict["BFBOF_capacity"]]
-                )
-            elif (col in {"DRIEAF_capacity", "DRI_capacity"}) & (tech in {"DRI-EAF", "DRI-EAF+CCUS"}):
-                row[enum_dict["plant_capacity"]] = convert_to_float(
-                    row[enum_dict["DRIEAF_capacity"]]
-                )
-            else:
-                row[enum_dict["plant_capacity"]] = 0
-        return row
+    def assign_plant_capacity(row):
+        tech = row["technology_in_2020"]
+        if tech == "EAF":
+            return convert_to_float(row["EAF_capacity"])
+        elif tech in {"Avg BF-BOF", "BAT BF-BOF"}:
+            return convert_to_float(row["BFBOF_capacity"])
+        elif tech in {"DRI-EAF", "DRI-EAF+CCUS"}:
+            return convert_to_float(row["DRIEAF_capacity"])
+        return 0
 
     tqdma.pandas(desc="Extract Steel Plant Capacity")
-    enumerated_cols = enumerate_iterable(df_c.columns)
-    df_c = df_c.progress_apply(
-        value_mapper, enum_dict=enumerated_cols, axis=1, raw=True
-    )
-    return df_c
-
-
-def adjust_capacity_values(df: pd.DataFrame) -> pd.DataFrame:
-    """Adjusts capacity values based on technology values for each plant.
-
-    Args:
-        df (pd.DataFrame): A DataFrame of the formatted steel plant data with newly added capacity columns.
-
-    Returns:
-        pd.DataFrame: The DataFrame with the amended capacity values.
-    """
-    df_c = df.copy()
-
-    def value_mapper(row, enum_dict: dict):
-        # use average bfof values for plant capacity if technology is BOF but capapcity is 0
-        if (row[enum_dict["BFBOF_capacity"]] != 0) & (
-            row[enum_dict["technology_in_2020"]] in ["Avg BF-BOF", "BAT BF-BOF"]
-        ):
-            row[enum_dict["plant_capacity"]] = row[enum_dict["BFBOF_capacity"]]
-        return row
-
-    tqdma.pandas(desc="Adjust Capacity Values")
-    enumerated_cols = enumerate_iterable(df_c.columns)
-    df_c = df_c.progress_apply(
-        value_mapper,
-        enum_dict=enumerated_cols,
-        axis=1,
-        raw=True,
-    )
-
+    df_c['plant_capacity'] = df_c.progress_apply(assign_plant_capacity, axis=1)
     return df_c
 
 
@@ -250,8 +198,7 @@ def map_plant_id_to_df(
 
 
 def apply_countries_to_steel_plants(
-    steel_plant_formatted: pd.DataFrame, country_reference_dict: dict,
-) -> pd.DataFrame:
+    steel_plant_formatted: pd.DataFrame, country_ref: dict) -> pd.DataFrame:
     """Maps a country codes and region column to the Steel Plants.
 
     Args:
@@ -272,18 +219,16 @@ def apply_countries_to_steel_plants(
     steel_plants = country_mapping_fixer(
         df_c, "country", "country_code", country_fixer_dict
     )
-    steel_plants["region"] = steel_plants["country_code"].apply(
-        lambda x: get_region_from_country_code(x, "wsa_region", country_reference_dict)
-    )
-    steel_plants["rmi_region"] = steel_plants["country_code"].apply(
-        lambda x: get_region_from_country_code(x, "rmi_region", country_reference_dict)
-    )
+    wsa_mapper = create_country_mapper(country_ref, 'wsa')
+    steel_plants["wsa_region"] = steel_plants["country_code"].apply(lambda x: wsa_mapper[x])
+    rmi_mapper = create_country_mapper(country_ref, 'rmi')
+    steel_plants["rmi_region"] = steel_plants["country_code"].apply(lambda x: rmi_mapper[x])
     return steel_plants
 
 
 @timer_func
 def steel_plant_processor(
-    scenario_dict: dict = None, serialize: bool = False, remove_non_operating_plants: bool = False
+    serialize: bool = False, remove_non_operating_plants: bool = False
 ) -> pd.DataFrame:
     """Generates a fully preprocessed Steel Plant DataFrame.
 
@@ -295,11 +240,9 @@ def steel_plant_processor(
     """
     logger.info("Preprocessing the Steel Plant Data")
     steel_plants = read_pickle_folder(PKL_DATA_IMPORTS, "steel_plants")
-    country_reference_dict = read_pickle_folder(
-        PKL_DATA_FORMATTED, "country_reference_dict", "df"
-    )
+    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
     steel_plants = steel_plant_formatter(steel_plants, remove_non_operating_plants)
-    steel_plants = apply_countries_to_steel_plants(steel_plants, country_reference_dict)
+    steel_plants = apply_countries_to_steel_plants(steel_plants, country_ref)
 
     if serialize:
         serialize_file(steel_plants, PKL_DATA_FORMATTED, "steel_plants_processed")
