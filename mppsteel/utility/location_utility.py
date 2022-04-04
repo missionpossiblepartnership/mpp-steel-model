@@ -8,8 +8,6 @@ import pycountry
 
 from mppsteel.utility.log_utility import get_logger
 
-from mppsteel.config.reference_lists import NEW_COUNTRY_COL_LIST, FILES_TO_REFRESH
-
 logger = get_logger("Location Utility")
 
 
@@ -97,37 +95,6 @@ def country_matcher(country_list: list, output_type: str = "all") -> dict:
     if output_type == "nonmatches":
         return unmatched_dict
 
-
-CountryMetadata = namedtuple("CountryMetadata", NEW_COUNTRY_COL_LIST)
-
-
-def get_region_from_country_code(
-    country_code: str, schema: str, country_ref_dict: dict
-) -> str:
-    """Gets a prespecified country region from a country code.
-
-    Args:
-        country_code (str): The country code you want to map to a region.
-        schema (str): The region schema you want to use in your mapping.
-        country_ref_dict (dict): The mapping of country codes to regions implemented as a CountryMetadata Class.
-
-    Raises:
-        AttributeError: If the schema inputted is not in the CountryMetaData class, then error is raised.
-
-    Returns:
-        str: The request region from the schema you have specified.
-    """
-    if country_code == "TWN":
-        country_code = "CHN"  # !!! Not a political statement. Blame the lookup ref !!!!
-    country_metadata_obj = country_ref_dict[country_code]
-    if schema in dir(country_metadata_obj):
-        return getattr(country_metadata_obj, schema)
-    options = ["m49_code", "region", "continent", "wsa_region", "rmi_region"]
-    raise AttributeError(
-        f"Schema: {schema} is not an attribute of {country_code} CountryMetadata object. Choose from the following options: {options}"
-    )
-
-
 def get_unique_countries(country_arrays) -> list:
     """Gets a unique list of countries from a list of arrays of countries.
 
@@ -168,3 +135,18 @@ def get_countries_from_group(
         exc_codes = [match_country(country) for country in exc_list]
         return list(set(code_list).difference(exc_codes))
     return code_list
+
+def create_country_mapper(country_ref: pd.DataFrame, schema: str):
+    mapper = {
+        'Country': 'country_name', 
+        'ISO-alpha3 code': 'country_code', 
+        'M49 Code': 'm49', 
+        'Region 1': 'region', 
+        'Continent': 'continent', 
+        'WSA Group Region': 'wsa', 
+        'RMI Model Region': 'rmi'
+    }
+    country_ref_c = country_ref.rename(mapper, axis=1)
+    mapper = dict(zip(country_ref_c['country_code'], country_ref_c[schema]))
+    mapper['TWN'] = 'Japan, South Korea, and Taiwan'
+    return mapper
