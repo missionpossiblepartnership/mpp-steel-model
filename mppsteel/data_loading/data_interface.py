@@ -344,7 +344,7 @@ def create_capex_opex_dict(scenario_dict: dict, serialize: bool = False) -> dict
 
 @timer_func
 def generate_preprocessed_emissions_data(
-    scenario_dict: dict = None, serialize: bool = False,
+    serialize: bool = False,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Complete process flow for the preprocessed emissivity data.
 

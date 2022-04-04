@@ -71,7 +71,7 @@ def steel_demand_creator(df: pd.DataFrame, rmi_matcher: dict) -> pd.DataFrame:
 
 
 @timer_func
-def get_steel_demand(scenario_dict: dict, serialize: bool = False) -> pd.DataFrame:
+def get_steel_demand(serialize: bool = False) -> pd.DataFrame:
     """Complete preprocessing flow for the regional steel demand data.
 
     Args:

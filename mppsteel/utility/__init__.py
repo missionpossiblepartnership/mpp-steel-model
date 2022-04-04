@@ -1,6 +1,5 @@
 from . import (
     utils,
-    regional_splitter,
     timeseries_extender,
     transform_units,
     log_utility,

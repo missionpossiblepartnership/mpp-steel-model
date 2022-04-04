@@ -69,7 +69,7 @@ def get_capex_values(
     """
     logger.info("Generating the capex values for each technology")
     df_dict_c = df_switching_dict.copy()
-    # Hard coded values.
+    # Hard coded values
     hard_coded_capex_values = create_line_through_points(SWITCH_CAPEX_DATA_POINTS)
 
     # Create a year range
@@ -82,9 +82,7 @@ def get_capex_values(
         logger.info(f"Calculating year {year}")
 
         tech_list = []
-        for technology in tqdm(
-            SWITCH_DICT, total=len(SWITCH_DICT), desc=f"Technology"
-        ):
+        for technology in SWITCH_DICT:
             # logger.info(f"-- Generating Capex values for {technology}")
 
             df_temp = df_dict_c[technology].copy()
