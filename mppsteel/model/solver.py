@@ -23,27 +23,29 @@ from mppsteel.config.model_config import (
     PKL_DATA_IMPORTS,
     INVESTMENT_CYCLE_DURATION_YEARS,
     INVESTMENT_OFFCYCLE_BUFFER_TOP,
-    INVESTMENT_OFFCYCLE_BUFFER_TAIL
+    INVESTMENT_OFFCYCLE_BUFFER_TAIL,
 )
 
-from mppsteel.config.model_scenarios import TECH_SWITCH_SCENARIOS, SOLVER_LOGICS
+from mppsteel.config.model_scenarios import (
+    TECH_SWITCH_SCENARIOS, SOLVER_LOGICS, STEEL_DEMAND_SCENARIO_MAPPER
+)
 
 from mppsteel.config.reference_lists import (
     SWITCH_DICT,
     TECHNOLOGY_STATES,
     FURNACE_GROUP_DICT,
-    TECH_MATERIAL_CHECK_DICT,
     RESOURCE_CONTAINER_REF,
 )
 
-from mppsteel.data_loading.data_interface import load_materials, load_business_cases
+from mppsteel.data_loading.data_interface import load_business_cases
 from mppsteel.data_loading.steel_plant_formatter import create_plant_capacities_dict
+from mppsteel.data_loading.country_reference import country_df_formatter
 from mppsteel.model.solver_constraints import (
     tech_availability_check,
     read_and_format_tech_availability,
-    plant_tech_resource_checker,
-    material_usage_per_plant,
-    load_resource_usage_dict,
+    MaterialUsage,
+    return_current_usage,
+    return_projected_usage
 )
 from mppsteel.model.tco_and_abatement_optimizer import get_best_choice, subset_presolver_df
 from mppsteel.model.plant_open_close import (
@@ -55,7 +57,46 @@ from mppsteel.model.levelized_cost import generate_levelized_cost_results
 from mppsteel.utility.log_utility import get_logger
 
 # Create logger
-logger = get_logger("Solver Logic")
+logger = get_logger(__name__)
+
+
+def apply_constraints(
+    business_cases: pd.DataFrame,
+    plant_capacities: dict,
+    material_usage_dict_container: MaterialUsage,
+    combined_available_list: list,
+    plant_name: str,
+    year: int,
+):
+    # Constraints checks
+    new_availability_list = []
+    for technology in combined_available_list:
+        material_check_container = {}
+        for resource in RESOURCE_CONTAINER_REF:
+            projected_usage = return_projected_usage(
+                plant_name,
+                technology,
+                plant_capacities,
+                business_cases,
+                RESOURCE_CONTAINER_REF[resource]
+            )
+
+            material_check = material_usage_dict_container.constraint_transaction(
+                resource,
+                year,
+                projected_usage,
+                override_constraint=False
+            )
+            material_check_container[resource] = material_check
+        result = ''
+        if all(material_check_container.values()):
+            result = 'PASS'
+            new_availability_list.append(technology)
+        else:
+            result = 'FAIL'
+
+        print(f'Plant: {plant_name} | Technology: {technology} | Year: {year} | Result: {result} --- {material_check_container}')
+    return new_availability_list
 
 
 def return_best_tech(
@@ -63,25 +104,18 @@ def return_best_tech(
     abatement_reference_data: pd.DataFrame,
     solver_logic: str,
     proportions_dict: dict,
-    steel_demand_df: pd.DataFrame,
-    steel_plant_df: pd.DataFrame,
     business_cases: pd.DataFrame,
-    biomass_df: pd.DataFrame,
-    ccs_co2_df: pd.DataFrame,
     tech_availability: pd.DataFrame,
     tech_avail_from_dict: dict,
     plant_capacities: dict,
-    materials_list: list,
     year: int,
     plant_name: str,
     country_code: str,
-    steel_demand_scenario: str,
     base_tech: str = None,
     tech_moratorium: bool = False,
     transitional_switch_only: bool = False,
     enforce_constraints: bool = False,
-    material_usage_dict_container: dict = None,
-    return_material_container: bool = True,
+    material_usage_dict_container: MaterialUsage = None,
 ) -> Union[str, dict]:
     """Function generates the best technology choice from a number of key data and scenario inputs.
 
@@ -90,19 +124,13 @@ def return_best_tech(
         abatement_reference_data (pd.DataFrame): DataFrame containing all Emissions Abatement components by plant, technology and year.
         solver_logic (str): Scenario setting that decides the logic used to choose the best technology `scale`, `ranke` or `bins`.
         proportions_dict (dict): Scenario seeting that decides the weighting given to TCO or Emissions Abatement in the technology selector part of the solver logic.
-        steel_demand_df (pd.DataFrame): A Steel Demand Timeseries. 
-        steel_plant_df (pd.DataFrame): A Steel Plant DataFrame.
         business_cases (pd.DataFrame): Standardised Business Cases.
-        biomass_df (pd.DataFrame): The Shared Assumptions Biomass Constraints DataFrame.
-        ccs_co2_df (pd.DataFrame): CCS / CO2 Constraints DataFrame
         tech_availability (pd.DataFrame): Technology Availability DataFrame
         tech_avail_from_dict (dict): _description_
         plant_capacities (dict): A dictionary containing plant: capacity/inital tech key:value pairs.
-        materials_list (list): List of materials to track the usage for.
         year (int): The current model year to get the best technology for.
         plant_name (str): The plant name.
         country_code (str): The country code related to the plant.
-        steel_demand_scenario (str): Scenario that determines the Steel Demand Timeseries. Defaults to "bau".
         base_tech (str, optional): The current base technology. Defaults to None.
         tech_moratorium (bool, optional): Scenario setting that determines if the tech moratorium should be active. Defaults to False.
         transitional_switch_only (bool, optional): Scenario setting that determines if transitional switches are allowed. Defaults to False.
@@ -159,24 +187,13 @@ def return_best_tech(
             INVESTMENT_CYCLE_DURATION_YEARS - (INVESTMENT_OFFCYCLE_BUFFER_TOP + INVESTMENT_OFFCYCLE_BUFFER_TAIL))
 
     if enforce_constraints:
-        # Constraints checks
-        combined_available_list = plant_tech_resource_checker(
-            plant_name,
-            base_tech,
-            year,
-            steel_demand_df,
-            steel_plant_df,
-            steel_demand_scenario,
+        combined_available_list = apply_constraints(
             business_cases,
-            biomass_df,
-            ccs_co2_df,
-            materials_list,
-            TECH_MATERIAL_CHECK_DICT,
-            RESOURCE_CONTAINER_REF,
             plant_capacities,
-            combined_available_list,
             material_usage_dict_container,
-            "included",
+            combined_available_list,
+            plant_name,
+            year,
         )
 
     best_choice = get_best_choice(
@@ -194,8 +211,6 @@ def return_best_tech(
     if not isinstance(best_choice, str):
         raise ValueError(f'Issue with get_best_choice function returning a nan: {plant_name} | {year} | {combined_available_list}')
 
-    if return_material_container:
-        return best_choice, material_usage_dict_container
     return best_choice
 
 def create_investment_cycle_ref_from_dict(inv_dict: dict, year_end: int):
@@ -257,12 +272,12 @@ def choose_technology(
     bio_constraint_model = read_pickle_folder(
         intermediate_path, "bio_constraint_model_formatted", "df"
     )
-    materials = load_materials()
     ccs_co2 = read_pickle_folder(PKL_DATA_IMPORTS, "ccs_co2", "df")
     # steel_demand_df = extend_steel_demand(MODEL_YEAR_END)
     steel_demand_df = read_pickle_folder(
         PKL_DATA_FORMATTED, "regional_steel_demand_formatted", "df"
     )
+    steel_demand_df = steel_demand_df.loc[:,STEEL_DEMAND_SCENARIO_MAPPER[steel_demand_scenario],:].copy()
     tech_availability = read_pickle_folder(PKL_DATA_IMPORTS, "tech_availability", "df")
     ta_dict = dict(
         zip(tech_availability["Technology"], tech_availability["Year available from"])
@@ -304,7 +319,21 @@ def choose_technology(
 
     capacity_results = {}
 
+    # Initialize the Material Usage container
+    MaterialUsageContainer = MaterialUsage()
+    material_models = {
+        'biomass': bio_constraint_model,
+        'scrap': steel_demand_df,
+        'co2': ccs_co2,
+        'ccs': ccs_co2
+    }
+    for material in material_models:
+        MaterialUsageContainer.load_constraint(material_models[material], material)
+
     for year in tqdm(year_range, total=len(year_range), desc="Years"):
+        for material in material_models:
+            MaterialUsageContainer.set_year_balance(material, year)
+
         logger.info(f"Running investment decisions for {year}")
         if year == 2020:
             logger.info(f'Loading initial technology choices for {year}')
@@ -313,6 +342,7 @@ def choose_technology(
             logger.info(f'Loading plant entries for {year}')
             current_plant_choices[str(year)] = {row.plant_name: '' for row in model_plant_df.itertuples()}
         logger.info(f'Starting the open close flow for {year}')
+
         open_close_dict = open_close_flow(
             plant_container=PlantIDC,
             trade_container=trade_container,
@@ -329,11 +359,10 @@ def choose_technology(
             trade_scenario=trade_scenario,
             steel_demand_scenario=steel_demand_scenario
         )
-        
+
         model_plant_df = open_close_dict['plant_df']
         current_plant_choices = open_close_dict['tech_choice_dict']
         util_dict_c = open_close_dict['util_dict']
-        
         all_plant_names = model_plant_df["plant_name"].copy()
         plant_capacities_dict = create_plant_capacities_dict(model_plant_df)
         logger.info(f'Creating investment cycle for new plants')
@@ -354,23 +383,6 @@ def choose_technology(
         )
         non_switchers_df.rename({"index": "plant_name"}, axis=1, inplace=True)
 
-        if year == 2020:
-            technologies = non_switchers_df["technology_in_2020"].values
-        else:
-            technologies = current_plant_choices[str(year - 1)].values()
-
-        yearly_usage = material_usage_per_plant(
-            non_switchers,
-            technologies,
-            business_cases,
-            model_plant_df,
-            plant_capacities_dict,
-            steel_demand_df,
-            materials,
-            year,
-            steel_demand_scenario,
-        )
-        material_usage_dict = load_resource_usage_dict(yearly_usage)
         logger.info(f"-- Running investment decisions for Non Switching Plants")
         for plant_name in non_switchers:
             year_founded = non_switchers_df[non_switchers_df['plant_name'] == plant_name]['start_of_operation'].values[0]
@@ -383,6 +395,21 @@ def choose_technology(
                 current_plant_choices[str(year)][plant_name] = current_plant_choices[
                     str(year - 1)
                 ][plant_name]
+
+        for resource in RESOURCE_CONTAINER_REF:
+            current_usage = return_current_usage(
+                non_switchers_df["plant_name"].unique(),
+                current_plant_choices,
+                plant_capacities_dict,
+                business_cases,
+                RESOURCE_CONTAINER_REF[resource],
+                year
+            )
+            MaterialUsageContainer.constraint_transaction(
+                resource, year, current_usage, override_constraint=True)
+
+            print(MaterialUsageContainer.get_current_balance(resource, year))
+
 
         logger.info(f"-- Running investment decisions for Switching Plants")
         for plant in switchers_df.itertuples():
@@ -415,29 +442,22 @@ def choose_technology(
                 )
 
                 if switch_type == "main cycle":
-                    best_choice_tech, material_usage_dict = return_best_tech(
+                    best_choice_tech = return_best_tech(
                         tco_slim,
                         abatement_slim,
                         solver_logic,
                         tech_switch_scenario,
-                        steel_demand_df,
-                        model_plant_df,
                         business_cases,
-                        bio_constraint_model,
-                        ccs_co2,
                         tech_availability,
                         ta_dict,
                         plant_capacities_dict,
-                        materials,
                         year,
                         plant_name,
                         country_code,
-                        steel_demand_scenario,
                         current_tech,
                         tech_moratorium=tech_moratorium,
                         enforce_constraints=enforce_constraints,
-                        material_usage_dict_container=material_usage_dict,
-                        return_material_container=True,
+                        material_usage_dict_container=MaterialUsageContainer,
                     )
                     if best_choice_tech == current_tech:
                         # print(f'No change in main investment cycle in {year} for {plant_name} | {year} -> {current_tech} to {best_choice_tech}')
@@ -447,30 +467,23 @@ def choose_technology(
                         pass
                     current_plant_choices[str(year)][plant_name] = best_choice_tech
                 if switch_type == "trans switch":
-                    best_choice_tech, material_usage_dict = return_best_tech(
+                    best_choice_tech = return_best_tech(
                         tco_slim,
                         abatement_slim,
                         solver_logic,
                         tech_switch_scenario,
-                        steel_demand_df,
-                        model_plant_df,
                         business_cases,
-                        bio_constraint_model,
-                        ccs_co2,
                         tech_availability,
                         ta_dict,
                         plant_capacities_dict,
-                        materials,
                         year,
                         plant_name,
                         country_code,
-                        steel_demand_scenario,
                         current_tech,
                         tech_moratorium=tech_moratorium,
                         enforce_constraints=enforce_constraints,
-                        material_usage_dict_container=material_usage_dict,
+                        material_usage_dict_container=MaterialUsageContainer,
                         transitional_switch_only=trans_switch_scenario,
-                        return_material_container=True,
                     )
                     if best_choice_tech != current_tech:
                         # print(f'Transistional switch flipped for {plant_name} in {year} -> {current_tech} to {best_choice_tech}')

@@ -334,34 +334,6 @@ TECHNOLOGY_PHASES = {
     ],
 }
 
-
-TECH_MATERIAL_CHECK_DICT = {
-    "Avg BF-BOF": [],
-    "BAT BF-BOF": [],
-    "BAT BF-BOF_bio PCI": ["Bioenergy", "Scrap"],
-    "BAT BF-BOF_H2 PCI": ["Scrap"],
-    "BAT BF-BOF+CCUS": ["Used CO2", "Used CO2", "Scrap"],
-    "DRI-EAF": [],
-    "DRI-EAF_50% green H2": [],
-    "DRI-EAF_50% bio-CH4": ["Bioenergy"],
-    "DRI-EAF+CCUS": [
-        "Used CO2",
-    ],
-    "DRI-EAF_100% green H2": [],
-    "Smelting Reduction": ["Scrap"],
-    "Smelting Reduction+CCUS": ["Used CO2", "Scrap"],
-    "EAF": ["Scrap EAF"],
-    "Electrolyzer-EAF": [],
-    "BAT BF-BOF+CCU": ["Used CO2", "Scrap"],
-    "DRI-Melt-BOF": [],
-    "DRI-Melt-BOF+CCUS": [
-        "Used CO2",
-    ],
-    "DRI-Melt-BOF_100% zero-C H2": [],
-    "Electrowinning-EAF": [],
-    "BAT BF-BOF+BECCUS": ["Captured CO2", "Bioenergy", "Scrap"],
-}
-
 # Define Groups
 bosc_factor_group = (
     FURNACE_GROUP_DICT["blast_furnace"]
@@ -375,10 +347,10 @@ electricity_self_gen_group = (
 )
 
 RESOURCE_CONTAINER_REF = {
-    "Bioenergy": "biomass",
-    "Scrap": "scrap",
-    "Used CO2": "used_co2",
-    "Captured CO2": "captured_co2",
+    'scrap': ['Scrap'],
+    'biomass': ['Biomass', 'Biomethane'],
+    'ccs': ['Captured CO2'],
+    'co2': ['Used CO2']
 }
 
 FILES_TO_REFRESH = []
