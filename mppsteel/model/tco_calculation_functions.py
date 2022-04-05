@@ -5,16 +5,8 @@ from functools import lru_cache
 import pandas as pd
 import numpy_financial as npf
 
-from tqdm import tqdm
-from tqdm.auto import tqdm as tqdma
-
-from mppsteel.model.emissions_reference_tables import get_s2_emissions
-
-from mppsteel.utility.utils import enumerate_iterable
-
 from mppsteel.config.model_config import (
-    MODEL_YEAR_END,
-    DISCOUNT_RATE,
+    MODEL_YEAR_END
 )
 from mppsteel.config.reference_lists import SWITCH_DICT
 from mppsteel.utility.log_utility import get_logger
@@ -113,8 +105,8 @@ def get_opex_costs(
     variable_costs_df: pd.DataFrame,
     opex_df: pd.DataFrame,
     s1_emissions_ref: dict,
-    carbon_tax_timeseries: pd.DataFrame,
-    s2_emissions_value: float,
+    s2_emissions_ref: float,
+    carbon_tax_timeseries: pd.DataFrame
 ) -> pd.DataFrame:
     """Returns the combined Opex costs for each technology in each region.
 
@@ -124,18 +116,20 @@ def get_opex_costs(
         variable_costs_df (pd.DataFrame): DataFrame containing the variable costs data split by technology and region.
         opex_df (pd.DataFrame): The Fixed Opex DataFrame containing opex costs split by technology.
         s1_emissions_ref (dict): The DataFrame for scope 1 emissions.
-        carbon_tax_timeseries (pd.DataFrame): The carbon tax timeseries with the carbon tax amounts on a yearly basis.
         s2_emissions_value (float): The value for Scope 2 emissions.
+        carbon_tax_timeseries (pd.DataFrame): The carbon tax timeseries with the carbon tax amounts on a yearly basis.
 
     Returns:
         pd.DataFrame: A DataFrame containing the opex costs for each technology for a given year.
     """
 
-    variable_costs = variable_costs_df.loc[country_code, year]
+    
     opex_costs = opex_df.loc[year]
-    opex_costs.drop(["Charcoal mini furnace", "Close plant"], inplace=True)
-    carbon_tax_value = carbon_tax_timeseries.set_index("year").loc[year]["value"]
+    carbon_tax_value = carbon_tax_timeseries.loc[year]["value"]
     s1_emissions_value = s1_emissions_ref.loc[year]
+    variable_costs = variable_costs_df.loc[country_code, year]
+    s2_emissions_value = s2_emissions_ref.loc[year, country_code]
+
     carbon_tax_result = carbon_tax_estimate(
         s1_emissions_value, s2_emissions_value, carbon_tax_value
     )
@@ -179,20 +173,15 @@ def calculate_capex(
     """
     df_c = capex_df.set_index(['start_technology', 'year']).loc[base_tech, start_year].copy()
     df_c = df_c[df_c['end_technology'].isin(SWITCH_DICT[base_tech])]
-    return df_c.loc[base_tech].groupby("end_technology").sum()
+    return df_c.loc[base_tech].set_index('end_technology')
 
 
 def get_discounted_opex_values(
     country_code: tuple,
     year_start: int,
-    carbon_tax_df: pd.DataFrame,
-    variable_cost_summary: pd.DataFrame,
-    other_opex_df: pd.DataFrame,
-    s1_emissions_df: pd.DataFrame,
-    s2_emissions_df: pd.DataFrame,
+    opex_cost_ref: dict,
     year_interval: int,
     int_rate: float,
-    base_tech: str,
 ) -> pd.DataFrame:
     """Calculates discounted opex reference DataFrame from given inputs.
 
@@ -214,84 +203,8 @@ def get_discounted_opex_values(
     """
 
     year_range = range(year_start, year_start + year_interval + 1)
-    df_list = []
-    for year in year_range:
-        year = min(MODEL_YEAR_END, year)
-        s2_value = s2_emissions_df.loc[year, country_code, base_tech]
-        df = get_opex_costs(
-            country_code,
-            year,
-            variable_cost_summary,
-            other_opex_df,
-            s1_emissions_df,
-            carbon_tax_df,
-            s2_value,
-        )
-        df["year"] = year
-        df_list.append(df)
+    year_range = [year if (year <= MODEL_YEAR_END) else min(MODEL_YEAR_END, year) for year in year_range]
+    df_list = [opex_cost_ref[(year, country_code)] for year in year_range]
     df_combined = pd.concat(df_list)
-    new_df = pd.DataFrame({'technology': SWITCH_DICT[base_tech]})
-    new_df['discounted_opex'] = new_df['technology'].apply(
-        lambda technology: npf.npv(int_rate, df_combined.loc[technology]["opex"].values))
-    return new_df.set_index(['technology'])
-
-
-def tco_calc(
-    country_code,
-    start_year: int,
-    base_tech: str,
-    carbon_tax_df: pd.DataFrame,
-    variable_cost_summary: pd.DataFrame,
-    other_opex_df: pd.DataFrame,
-    s1_emissions_df: pd.DataFrame,
-    s2_emissions_df: pd.DataFrame,
-    capex_df: pd.DataFrame,
-    investment_cycle: int,
-) -> pd.DataFrame:
-    """Creates a DataFrame with the full tco calculations for each technology. 
-
-    Args:
-        country_code (tuple): The country code of the steel plant you want to get discounted opex values for.
-        year_start (int): The year in which the model starts.
-        base_tech (str): The technology you are starting from.
-        carbon_tax_df (pd.DataFrame): The carbon tax timeseries with the carbon tax amounts on a yearly basis.
-        variable_cost_summary (pd.DataFrame): DataFrame containing the variable costs data split by technology and region.
-        other_opex_df (pd.DataFrame): A fixed opex DataFrame to be used to calculate total opex costs.
-        s1_emissions_df (pd.DataFrame): An S1 emissions DataFrame to be used to calculate opex costs.
-        s2_emissions_df (pd.DataFrame): An S2 emissions DataFrame to be used to calculate opex costs.
-        capex_df (pd.DataFrame): A capex DataFrame containing all switch capex values.
-        investment_cycle (int): The year interval for the discounting window.
-
-    Returns:
-        pd.DataFrame: A DataFrame with full tco calculations and component calculation columns.
-    """
-    other_opex_df = other_opex_df.swaplevel()
-    variable_cost_summary.rename(mapper={"cost": "value"}, axis=1, inplace=True)
-    s2_emissions_df_c = s2_emissions_df.set_index(['year', 'country_code', 'technology']).copy()
-    opex_values = get_discounted_opex_values(
-        country_code,
-        start_year,
-        carbon_tax_df,
-        variable_cost_summary,
-        other_opex_df,
-        s1_emissions_df,
-        s2_emissions_df_c,
-        year_interval=investment_cycle,
-        int_rate=DISCOUNT_RATE,
-        base_tech=base_tech
-    )
-    capex_values = calculate_capex(capex_df, start_year, base_tech)
-    opex_values.index.rename("end_technology", inplace=True)
-    capex_opex_values = capex_values.join(opex_values, on="end_technology")
-    capex_opex_values["year"] = start_year
-    capex_opex_values["country_code"] = country_code
-    capex_opex_values["start_technology"] = base_tech
-    column_order = [
-        "country_code",
-        "year",
-        "start_technology",
-        "end_technology",
-        "capex_value",
-        "discounted_opex",
-    ]
-    return capex_opex_values.reset_index()[column_order]
+    technologies = df_combined.index.unique()
+    return {technology: npf.npv(int_rate, df_combined.loc[technology]["opex"].values) for technology in technologies}

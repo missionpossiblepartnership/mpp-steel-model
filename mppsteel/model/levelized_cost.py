@@ -1,9 +1,11 @@
 """Calculation Functions used to derive various forms of Cost of Steelmaking."""
 
+import itertools
 import pandas as pd
 import numpy as np
 import numpy_financial as npf
 
+from tqdm import tqdm
 from tqdm.auto import tqdm as tqdma
 
 from mppsteel.utility.function_timer_utility import timer_func
@@ -19,18 +21,17 @@ from mppsteel.config.model_config import (
     INVESTMENT_CYCLE_DURATION_YEARS,
     STEEL_PLANT_LIFETIME_YEARS,
 )
-from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
+from mppsteel.config.reference_lists import TECH_REFERENCE_LIST, SWITCH_DICT
 
 logger = get_logger(__name__)
 
 
 def calculate_cc(
-    capex_dict: dict,
+    capex_ref: dict,
     year: int,
     year_span: range,
     technology: str,
     discount_rate: float,
-    cost_type: str,
 ) -> float:
     """Calculates the capital charges from a capex DataFrame reference and inputted function arguments.
 
@@ -46,16 +47,13 @@ def calculate_cc(
         float: The capital charge value.
     """
     year_range = range(year, year + year_span)
-    value_arr = np.array([])
-    for eval_year in year_range:
-        year_loop_val = min(MODEL_YEAR_END, eval_year)
-        value = capex_dict[cost_type].loc[technology, year_loop_val]["value"]
-        value_arr = np.append(value_arr, value)
+    year_range = [year if (year <= MODEL_YEAR_END) else min(MODEL_YEAR_END, year) for year in year_range]
+    value_arr = [capex_ref[(year, technology)] for year in year_range]
     return npf.npv(discount_rate, value_arr)
 
 
 def apply_lcost(
-    row, v_costs: pd.DataFrame, capex_costs: dict, include_greenfield: bool = True
+    row, variable_cost_ref: pd.DataFrame, combined_capex_ref: dict, include_greenfield: bool = True
 ):
     """Applies the Levelized Cost function to a given row in a DataFrame.
 
@@ -68,29 +66,27 @@ def apply_lcost(
     Returns:
         _type_: An amended vectorized DataFrame row from .apply function.
     """
-    variable_cost = v_costs.loc[row.country_code, row.year, row.technology]["cost"]
-    other_opex_cost = capex_costs["other_opex"].loc[row.technology, row.year]["value"]
+    variable_cost = variable_cost_ref[(row.year, row.country_code, row.technology)]
+    other_opex_cost = combined_capex_ref['other_opex'][(row.year, row.technology)]
     discount_rate = DISCOUNT_RATE
     relining_year_span = INVESTMENT_CYCLE_DURATION_YEARS
     life_of_plant = STEEL_PLANT_LIFETIME_YEARS
     greenfield_cost = 0
 
     renovation_cost = calculate_cc(
-        capex_costs,
+        combined_capex_ref['brownfield'],
         row.year,
         relining_year_span,
         row.technology,
-        discount_rate,
-        "brownfield",
+        discount_rate
     )
     if include_greenfield:
         greenfield_cost = calculate_cc(
-            capex_costs,
+            combined_capex_ref['greenfield'],
             row.year,
             life_of_plant,
             row.technology,
-            discount_rate,
-            "greenfield",
+            discount_rate
         )
     row["levelised_cost"] = (
         other_opex_cost + variable_cost + renovation_cost + greenfield_cost
@@ -111,12 +107,12 @@ def create_df_reference(plant_df: pd.DataFrame, cols_to_create: list) -> pd.Data
     country_codes = plant_df["country_code"].unique()
     init_cols = ["year", "country_code", "technology"]
     df_list = []
+    technologies = SWITCH_DICT.keys()
     year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
-    for year in year_range:
-        for country_code in country_codes:
-            for technology in TECH_REFERENCE_LIST:
-                entry = dict(zip(init_cols, [year, country_code, technology]))
-                df_list.append(entry)
+    product_range_full = list(itertools.product(year_range, country_codes, technologies))
+    for year, country_code, tech in tqdm(product_range_full, total=len(product_range_full), desc='DataFrame Reference'):
+        entry = dict(zip(init_cols, [year, country_code, tech]))
+        df_list.append(entry)
     combined_df = pd.DataFrame(df_list)
     for column in cols_to_create:
         combined_df[column] = ""
@@ -134,14 +130,39 @@ def create_levelised_cost(
         include_greenfield (bool, optional): A boolean flag to toggle the greenfield specific calculations. Defaults to True.
 
     Returns:
-        pd.DataFrame: A DataFrane with Levelised Cost of Steelmaking values.
+        pd.DataFrame: A DataFrame with Levelised Cost of Steelmaking values.
     """
     lev_cost = create_df_reference(plant_df, ["levelised_cost"])
+
+    year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
+    technologies = SWITCH_DICT.keys()
+    steel_plant_country_codes = list(plant_df["country_code"].unique())
+    product_range_year_tech = list(itertools.product(year_range, technologies))
+    product_range_full = list(itertools.product(year_range, steel_plant_country_codes, technologies))
+    brownfield_capex_ref = {}
+    greenfield_capex_ref = {}
+    variable_cost_ref = {}
+    other_opex_ref = {}
+
+    for year, country_code, tech in tqdm(product_range_full, total=len(product_range_full), desc='Variable Costs Reference'):
+        variable_cost_ref[(year, country_code, tech)] =  variable_costs.loc[country_code, year, tech]["cost"]
+    
+    for year, tech in tqdm(product_range_year_tech, total=len(product_range_year_tech), desc='Capex Ref Loop'):
+        brownfield_capex_ref[(year, tech)] = capex_ref['brownfield'].loc[tech, year]["value"]
+        greenfield_capex_ref[(year, tech)] = capex_ref['greenfield'].loc[tech, year]["value"]
+        other_opex_ref[(year, tech)] = capex_ref["other_opex"].loc[tech, year]["value"]
+    
+    combined_capex_ref = {
+        'brownfield': brownfield_capex_ref,
+        'greenfield': greenfield_capex_ref,
+        'other_opex': other_opex_ref
+    }
+
     tqdma.pandas(desc="Applying Levelized Cost")
     lev_cost = lev_cost.progress_apply(
         apply_lcost,
-        v_costs=variable_costs,
-        capex_costs=capex_ref,
+        variable_cost_ref=variable_cost_ref,
+        combined_capex_ref=combined_capex_ref,
         include_greenfield=include_greenfield,
         axis=1,
     )
