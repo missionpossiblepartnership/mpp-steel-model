@@ -14,12 +14,13 @@ from mppsteel.config.model_config import (
 from mppsteel.config.reference_lists import LOW_CARBON_TECHS
 
 from mppsteel.model.solver import (
-    load_materials,
     load_business_cases,
 )
 from mppsteel.data_loading.reg_steel_demand_formatter import steel_demand_getter
 from mppsteel.data_loading.steel_plant_formatter import map_plant_id_to_df
-from mppsteel.data_loading.data_interface import load_business_cases
+from mppsteel.data_loading.data_interface import (
+    load_business_cases, business_case_getter, load_materials
+)
 from mppsteel.model.emissions_reference_tables import emissivity_getter
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import add_results_metadata
@@ -30,7 +31,7 @@ from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.utility.log_utility import get_logger
 
 # Create logger
-logger = get_logger("Production Results")
+logger = get_logger(__name__)
 
 
 def generate_production_stats(
@@ -164,7 +165,6 @@ def production_stats_generator(
                     * business_case_getter(
                         standardised_business_cases, row.technology, material_category
                     )
-                    
                 )
             else:
                 df_c.loc[
@@ -229,24 +229,6 @@ def generate_production_emission_stats(
     if as_summary:
         return df_c.groupby(["year", "technology"]).sum()
     return df_c
-
-
-def business_case_getter(df: pd.DataFrame, tech: str, material: str) -> float:
-    """Get business case usage values from a DataFrame.
-
-    Args:
-        df (pd.DataFrame): The standardised and summarised business cases.
-        tech (str): The technology that you want to get values for.
-        material (str): The material that you want to get values for.
-
-    Returns:
-        float: The business case value that requested via the function arguments.
-    """
-    if material in df[(df["technology"] == tech)]["material_category"].unique():
-        return df[(df["technology"] == tech) & (df["material_category"] == material)][
-            "value"
-        ].values
-    return 0
 
 
 def get_tech_choice(tc_dict: dict, year: int, plant_name: str) -> str:
