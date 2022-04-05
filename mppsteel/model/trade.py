@@ -122,6 +122,7 @@ def calculate_cos(
 class TradeBalance:
     def __init__(self):
         self.trade_container = {}
+        self.results = {}
         
     def __repr__(self):
         return "Trade Container"
@@ -154,10 +155,16 @@ class TradeBalance:
     def assign_trade_balance(self, year: int, region: str, value: float):
         self.trade_container[year][region] = value
         
-    def output_trade_to_df(self):
+    def output_trade_summary_to_df(self):
         df = pd.DataFrame(self.trade_container).reset_index().melt(id_vars=['index'], var_name='year', value_name='trade_balance')
         df.rename({'index': 'region'}, axis=1, inplace=True)
         return df.set_index(['year', 'region'])
+
+    def record_results(self, year: int, results_df: pd.DataFrame):
+        self.results[year] = results_df
+
+    def output_trade_calculations_to_df(self):
+        return pd.concat([self.results[year] for year in self.results.keys()])
 
 DATA_ENTRY_DICT_KEYS = [
     'new_capacity_required',
