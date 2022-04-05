@@ -1,1 +1,1 @@
-from . import timeseries_generator
+from ..model import timeseries_generator
