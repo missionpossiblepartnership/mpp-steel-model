@@ -93,7 +93,7 @@ TECH_MORATORIUM = {
     'steel_demand_scenario': 'bau',
     'tech_switch_scenario': 'lowest_cost',
     'solver_logic': 'rank',
-    'trade_active': False,
+    'trade_active': True,
 }
 CARBON_COST = {
     "scenario_name": "carbon_cost",
@@ -110,7 +110,7 @@ CARBON_COST = {
     'steel_demand_scenario': 'bau',
     'tech_switch_scenario': 'lowest_cost',
     'solver_logic': 'rank',
-    'trade_active': False,
+    'trade_active': True,
 }
 BAU_SCENARIO = {
     "scenario_name": "baseline",
@@ -127,7 +127,7 @@ BAU_SCENARIO = {
     'steel_demand_scenario': 'bau',
     'tech_switch_scenario': 'lowest_cost',
     'solver_logic': 'rank',
-    'trade_active': False,
+    'trade_active': True,
 }
 BAU_HIGH_CIRC_SCENARIO = {
     "scenario_name": "baseline_high_circ",
@@ -144,7 +144,7 @@ BAU_HIGH_CIRC_SCENARIO = {
     'steel_demand_scenario': 'high',
     'tech_switch_scenario': 'lowest_cost',
     'solver_logic': 'rank',
-    'trade_active': False,
+    'trade_active': True,
 }
 ABATEMENT_SCENARIO = {
     "scenario_name": "abatement",
@@ -161,7 +161,7 @@ ABATEMENT_SCENARIO = {
     'steel_demand_scenario': 'bau',
     'tech_switch_scenario': 'max_abatement',
     'solver_logic': 'rank',
-    'trade_active': False,
+    'trade_active': True,
 }
 ABATEMENT_HIGH_CIRC_SCENARIO = {
     "scenario_name": "fastest_abatement",
@@ -178,7 +178,7 @@ ABATEMENT_HIGH_CIRC_SCENARIO = {
     'steel_demand_scenario': 'high',
     'tech_switch_scenario': 'max_abatement',
     'solver_logic': 'rank',
-    'trade_active': False,
+    'trade_active': True,
 }
 
 SCENARIO_OPTIONS = {
