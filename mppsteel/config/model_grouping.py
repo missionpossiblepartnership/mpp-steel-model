@@ -14,7 +14,7 @@ from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.data_loading.data_import import load_data
 from mppsteel.data_loading.reg_steel_demand_formatter import get_steel_demand
-from mppsteel.minimodels.timeseries_generator import generate_timeseries
+from mppsteel.model.timeseries_generator import generate_timeseries
 from mppsteel.data_loading.pe_model_formatter import format_pe_data
 from mppsteel.data_loading.steel_plant_formatter import steel_plant_processor
 from mppsteel.data_loading.data_interface import (
@@ -104,7 +104,7 @@ def data_preprocessing_generic(scenario_dict: dict) -> None:
 def data_preprocessing_scenarios(scenario_dict: dict) -> None:
     generate_timeseries(scenario_dict=scenario_dict, serialize=True)
     format_pe_data(scenario_dict=scenario_dict, serialize=True)
-    generate_preprocessed_emissions_data(scenario_dict=scenario_dict, serialize=True)
+    generate_preprocessed_emissions_data(serialize=True)
     generate_emissions_flow(scenario_dict=scenario_dict, serialize=True)
     generate_variable_plant_summary(scenario_dict, serialize=True)
     generate_levelized_cost_results(scenario_dict=scenario_dict, serialize=True)
