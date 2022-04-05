@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    scenario_args = ABATEMENT_SCENARIO
+    scenario_args = DEFAULT_SCENARIO
     scenario_args = add_currency_rates_to_scenarios(scenario_args)
 
     timestamp = datetime.today().strftime('%d-%m-%y %H-%M')
@@ -31,6 +31,9 @@ if __name__ == "__main__":
     model_output_folder = f"{scenario_args['scenario_name']} {timestamp}"
 
     create_folders_if_nonexistant(FOLDERS_TO_CHECK_IN_ORDER)
+    intermediate_path = get_scenario_pkl_path(scenario_args['scenario_name'], 'intermediate')
+    final_path = get_scenario_pkl_path(scenario_args['scenario_name'], 'final')
+    create_folders_if_nonexistant([intermediate_path, final_path])
 
     if args.custom_scenario:
         logger.info('Including custom parameter inputs.')
