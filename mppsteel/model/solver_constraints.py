@@ -142,6 +142,7 @@ class MaterialUsage:
     def __init__(self):
         self.constraints = {}
         self.usage = {}
+        self.results = {}
 
     def load_constraint(self, model: pd.DataFrame, model_type: str):
         if model_type == 'biomass':
@@ -153,10 +154,19 @@ class MaterialUsage:
 
     def set_year_balance(self, model_type: str, year: int):
         self.usage[model_type] = {year: self.constraints[model_type][year]}
+        self.results[year] = {}
 
     def get_current_balance(self, model_type: str, year: int):
         return self.usage[model_type][year]
-        
+
+    def record_results(self, year: int, dict_entry: dict):
+        self.results[year] = dict_entry
+
+    def output_results_to_df(self, year: int, dict_entry: dict):
+        df = pd.DataFrame(self.results)
+        df = df.transpose().reset_index(drop=True)
+        return df[['year', 'plant', 'technology', 'result', 'breakdown']]
+
     def constraint_transaction(self, model_type: str, year: int, amount: float, region: str = None, override_constraint: bool = False):
         if region:
             current_amount = self.usage[model_type][year][region]

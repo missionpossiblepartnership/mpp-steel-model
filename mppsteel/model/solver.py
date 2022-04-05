@@ -88,14 +88,20 @@ def apply_constraints(
                 override_constraint=False
             )
             material_check_container[resource] = material_check
-        result = ''
         if all(material_check_container.values()):
-            result = 'PASS'
             new_availability_list.append(technology)
-        else:
-            result = 'FAIL'
 
-        print(f'Plant: {plant_name} | Technology: {technology} | Year: {year} | Result: {result} --- {material_check_container}')
+        result = 'PASS' if all(material_check_container.values()) else 'FAIL'
+
+        entry = {
+            'plant': plant_name,
+            'technology': technology,
+            'year': year,
+            'result': result,
+            'breakdown': material_check_container
+        }
+
+        material_usage_dict_container.record_results(year, entry)
     return new_availability_list
 
 
@@ -273,7 +279,6 @@ def choose_technology(
         intermediate_path, "bio_constraint_model_formatted", "df"
     )
     ccs_co2 = read_pickle_folder(PKL_DATA_IMPORTS, "ccs_co2", "df")
-    # steel_demand_df = extend_steel_demand(MODEL_YEAR_END)
     steel_demand_df = read_pickle_folder(
         PKL_DATA_FORMATTED, "regional_steel_demand_formatted", "df"
     )
@@ -407,9 +412,9 @@ def choose_technology(
             )
             MaterialUsageContainer.constraint_transaction(
                 resource, year, current_usage, override_constraint=True)
-
-            print(MaterialUsageContainer.get_current_balance(resource, year))
-
+            
+            # Get current balance after non_switchers are allocated resources
+            # print(MaterialUsageContainer.get_current_balance(resource, year))
 
         logger.info(f"-- Running investment decisions for Switching Plants")
         for plant in switchers_df.itertuples():
@@ -494,8 +499,11 @@ def choose_technology(
                     current_plant_choices[str(year)][plant_name] = best_choice_tech
         capacity_results[str(year)] = create_plant_capacity_dict(model_plant_df, as_mt=True)
     
-    trade_df = trade_container.output_trade_to_df()
+    trade_summary_results = trade_container.output_trade_summary_to_df()
+    full_trade_calculations = trade_container.output_trade_calculations_to_df()
+    material_usage_results = MaterialUsageContainer.output_results_to_df()
     investment_year_ref_c = create_investment_cycle_ref_from_dict(investment_dict_c, year_end)
+    
     return {
         'tech_choice_dict': current_plant_choices, 
         'plant_result_df': model_plant_df, 
@@ -503,7 +511,9 @@ def choose_technology(
         'investment_dict_result': investment_dict_c,
         'plant_cycle_length_mapper_result': plant_cycle_length_mapper_c,
         'capacity_results': capacity_results,
-        'trade_results': trade_df
+        'trade_results': trade_summary_results,
+        'full_trade_calculations': full_trade_calculations,
+        'material_usage_results': material_usage_results
         }
 
 
@@ -568,6 +578,8 @@ def solver_flow(scenario_dict: dict, year_end: int, serialize: bool = False) -> 
         serialize_file(results_dict['investment_dict_result'], intermediate_path, "investment_dict_result")
         serialize_file(results_dict['plant_cycle_length_mapper_result'], intermediate_path, "plant_cycle_length_mapper_result")
         serialize_file(results_dict['capacity_results'], intermediate_path, "capacity_results")
-        serialize_file(results_dict['trade_results'], intermediate_path, "trade_results")
+        serialize_file(results_dict['trade_summary_results'], intermediate_path, "trade_summary_results")
+        serialize_file(results_dict['full_trade_calculations'], intermediate_path, "full_trade_calculations")
+        serialize_file(results_dict['material_usage_results'], intermediate_path, "material_usage_results")
         serialize_file(levelized_cost_updated, intermediate_path, 'levelized_cost_updated')
     return results_dict

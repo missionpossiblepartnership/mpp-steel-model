@@ -77,8 +77,6 @@ def agg_plant_capacity(plant_df: pd.DataFrame, avg: bool = False, region_string:
         if avg:
             final_stat = plant_capacities.mean()
         region_capacity_dict[region] = round(final_stat, 3)
-        
-    region_capacity_dict['Middle East'] = region_capacity_dict['Middle East']
     return region_capacity_dict
 
 
@@ -365,6 +363,8 @@ def open_close_plants(
         )
         gap_analysis_df = trade_output['production_demand_df']
         util_dict_c = trade_output['util_dict']
+
+        trade_container.record_results(year, gap_analysis_df)
 
     regions = list(gap_analysis_df.index.get_level_values(1).unique())
     regions.remove('World')
