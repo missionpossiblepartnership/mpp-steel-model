@@ -22,7 +22,7 @@ from mppsteel.config.model_scenarios import (
 from mppsteel.utility.log_utility import get_logger
 
 # Create logger
-logger = get_logger("Timeseries generator")
+logger = get_logger(__name__)
 
 # Main timeseries function
 def timeseries_generator(

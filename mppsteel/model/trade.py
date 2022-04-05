@@ -19,7 +19,7 @@ from mppsteel.config.model_config import (
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.data_loading.steel_plant_formatter import create_plant_capacities_dict
 
-logger = get_logger("Trade Functions")
+logger = get_logger(__name__)
 
 def get_xcost_from_region(lcost_df: pd.DataFrame, year: int, region: str = None, value_type: str = 'min', return_type: str = 'value'):
     lcost_df_c = lcost_df.copy()

@@ -8,7 +8,7 @@ import numpy as np
 from mppsteel.utility.log_utility import get_logger
 
 # Create logger
-logger = get_logger("Timeseries Extender")
+logger = get_logger(__name__)
 
 
 def create_timeseries_extension_components(

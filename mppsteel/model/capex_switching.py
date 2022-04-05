@@ -26,7 +26,7 @@ from mppsteel.config.reference_lists import (
 from mppsteel.data_loading.data_interface import capex_generator
 
 # Create logger
-logger = get_logger("Capex Switching")
+logger = get_logger(__name__)
 
 
 def create_switching_dfs(technology_list: list) -> dict:

@@ -36,7 +36,7 @@ from mppsteel.config.model_config import (
 )
 
 # Create logger
-logger = get_logger("Data Interface")
+logger = get_logger(__name__)
 
 COMMODITY_MATERIAL_MAPPER = {
     "4402": "charcoal",
@@ -412,3 +412,18 @@ def load_materials() -> list:
         list: A list of all untque materials in the business cases.
     """
     return load_business_cases()["material_category"].unique().tolist()
+
+
+def business_case_getter(df: pd.DataFrame, tech: str, material: str) -> float:
+    """Get business case usage values from a DataFrame.
+
+    Args:
+        df (pd.DataFrame): The standardised and summarised business cases.
+        tech (str): The technology that you want to get values for.
+        material (str): The material that you want to get values for.
+
+    Returns:
+        float: The business case value that requested via the function arguments.
+    """
+    subset = df[(df["technology"] == tech) & (df["material_category"] == material)]["value"]
+    return subset.values[0]

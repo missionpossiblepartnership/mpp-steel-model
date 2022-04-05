@@ -22,7 +22,7 @@ from mppsteel.config.model_config import PKL_DATA_FORMATTED, PKL_DATA_IMPORTS
 from mppsteel.validation.data_import_tests import STEEL_PLANT_DATA_SCHEMA
 
 # Create logger
-logger = get_logger("Steel Plant Formatter")
+logger = get_logger(__name__)
 
 COLUMNS_TO_REMOVE = [
     "Fill in data BF-BOF",

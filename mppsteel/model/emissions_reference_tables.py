@@ -34,7 +34,7 @@ from mppsteel.data_loading.data_interface import (
 )
 
 # Create logger
-logger = get_logger("Emissions Reference")
+logger = get_logger(__name__)
 
 
 def generate_s1_s3_emissions(

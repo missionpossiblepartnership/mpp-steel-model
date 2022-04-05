@@ -20,7 +20,7 @@ from mppsteel.config.model_config import PKL_DATA_IMPORTS, PKL_DATA_FORMATTED
 from mppsteel.validation.data_import_tests import COUNTRY_REF_SCHEMA
 
 # Create logger
-logger = get_logger("Country Reference")
+logger = get_logger(__name__)
 
 
 def official_name_getter(country_code: str) -> str:

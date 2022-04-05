@@ -13,7 +13,7 @@ from mppsteel.config.model_config import (
     PKL_DATA_IMPORTS
 )
 
-logger = get_logger("DataFrame Utility")
+logger = get_logger(__name__)
 
 
 def create_line_through_points(

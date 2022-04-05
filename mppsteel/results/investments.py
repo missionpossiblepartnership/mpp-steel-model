@@ -20,7 +20,7 @@ from mppsteel.data_loading.steel_plant_formatter import map_plant_id_to_df
 from mppsteel.results.production import get_tech_choice, production_stats_getter
 
 # Create logger
-logger = get_logger("Investment Results")
+logger = get_logger(__name__)
 
 
 def create_capex_dict() -> pd.DataFrame:

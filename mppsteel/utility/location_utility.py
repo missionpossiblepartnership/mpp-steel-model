@@ -8,7 +8,7 @@ import pycountry
 
 from mppsteel.utility.log_utility import get_logger
 
-logger = get_logger("Location Utility")
+logger = get_logger(__name__)
 
 
 def country_mapping_fixer(

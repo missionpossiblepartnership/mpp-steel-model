@@ -18,7 +18,7 @@ from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.utility.log_utility import get_logger
 
 # Create logger
-logger = get_logger("Green Capacity Ratio")
+logger = get_logger(__name__)
 
 def green_capacity_ratio_predata(
     plant_df: pd.DataFrame, tech_choices: dict, country_mapper: dict, inc_trans: bool = False):

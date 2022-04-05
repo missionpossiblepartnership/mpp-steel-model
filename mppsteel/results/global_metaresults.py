@@ -16,7 +16,7 @@ from mppsteel.utility.file_handling_utility import (
 from mppsteel.utility.log_utility import get_logger
 
 # Create logger
-logger = get_logger("Global Metaresults")
+logger = get_logger(__name__)
 
 
 def global_metaresults_calculator(

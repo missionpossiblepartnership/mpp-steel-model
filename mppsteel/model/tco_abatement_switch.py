@@ -24,7 +24,7 @@ from mppsteel.config.model_config import (
 
 from mppsteel.utility.log_utility import get_logger
 
-logger = get_logger("TCO & Abatement switches")
+logger = get_logger(__name__)
 
 
 def tco_regions_ref_generator(scenario_dict: dict) -> pd.DataFrame:

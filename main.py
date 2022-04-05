@@ -17,7 +17,7 @@ from mppsteel.config.model_scenarios import (
 
 from mppsteel.config.model_grouping import *
 
-logger = get_logger("Main Model Code")
+logger = get_logger(__name__)
 
 if __name__ == "__main__":
 

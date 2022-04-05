@@ -4,7 +4,7 @@ import plotly.express as px
 
 from mppsteel.utility.log_utility import get_logger
 
-logger = get_logger("Plotly graphs")
+logger = get_logger(__name__)
 
 ARCHETYPE_COLORS = {
     "Avg BF-BOF": "#59A14F",

@@ -16,7 +16,7 @@ from mppsteel.config.model_config import (
 from mppsteel.utility.log_utility import get_logger
 
 # Create logger
-logger = get_logger("Data Import")
+logger = get_logger(__name__)
 
 
 def replace_rows(df: pd.DataFrame, header_row: int) -> pd.DataFrame:

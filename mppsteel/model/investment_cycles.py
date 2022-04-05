@@ -24,7 +24,7 @@ from mppsteel.utility.file_handling_utility import (
 from mppsteel.utility.log_utility import get_logger
 
 # Create logger
-logger = get_logger("Investment Cycles")
+logger = get_logger(__name__)
 
 
 def calculate_investment_years(

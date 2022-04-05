@@ -29,7 +29,7 @@ from mppsteel.validation.shared_inputs_tests import (
 )
 
 # Create logger
-logger = get_logger("Price & Emissions Formatter")
+logger = get_logger(__name__)
 
 RE_DICT = {
     "solar": "Price of onsite solar",

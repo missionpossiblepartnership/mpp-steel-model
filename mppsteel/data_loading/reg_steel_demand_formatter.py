@@ -20,7 +20,7 @@ from mppsteel.validation.data_import_tests import REGIONAL_STEEL_DEMAND_SCHEMA
 from mppsteel.utility.log_utility import get_logger
 
 # Create logger
-logger = get_logger("Regional Steel Demand Formatter")
+logger = get_logger(__name__)
 
 RMI_MATCHER = {
     "Japan, South Korea, and Taiwan": ["JPN", "KOR", "TWN"],

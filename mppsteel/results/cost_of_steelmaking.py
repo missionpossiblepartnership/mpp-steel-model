@@ -21,7 +21,7 @@ from mppsteel.config.model_config import (
     INVESTMENT_CYCLE_DURATION_YEARS,
 )
 
-logger = get_logger("Cost of Steelmaking")
+logger = get_logger(__name__)
 
 def create_region_plant_ref(df: pd.DataFrame, region_string: str) -> dict:
     """Creates a mapping of plants to a region(s) of interest.

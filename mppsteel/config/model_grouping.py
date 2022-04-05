@@ -50,7 +50,7 @@ from mppsteel.config.model_config import (
 )
 from mppsteel.config.model_scenarios import SCENARIO_OPTIONS
 
-logger = get_logger("Main Model Code")
+logger = get_logger(__name__)
 
 
 def stdout_question(

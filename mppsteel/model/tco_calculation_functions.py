@@ -19,7 +19,7 @@ from mppsteel.config.model_config import (
 from mppsteel.config.reference_lists import SWITCH_DICT
 from mppsteel.utility.log_utility import get_logger
 
-logger = get_logger("TCO Calculation Functions")
+logger = get_logger(__name__)
 
 
 def carbon_tax_estimate(

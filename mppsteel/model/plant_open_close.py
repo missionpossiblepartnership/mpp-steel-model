@@ -29,7 +29,7 @@ from mppsteel.model.trade import TradeBalance, trade_flow, get_xcost_from_region
 from mppsteel.utility.log_utility import get_logger
 
 # Create logger
-logger = get_logger("Plant Opening and Closing")
+logger = get_logger(__name__)
 
 def replace_dict_items(base_dict: dict, repl_dict: dict): # GENERAL FUNCTION
     base_dict_c = deepcopy(base_dict)

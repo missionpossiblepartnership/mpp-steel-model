@@ -32,8 +32,7 @@ from mppsteel.data_loading.pe_model_formatter import (
 )
 
 # Create logger
-logger = get_logger("Variable Plant Cost Archetypes")
-
+logger = get_logger(__name__)
 
 def generate_feedstock_dict(eur_to_usd_rate: float = 1 / USD_TO_EUR_CONVERSION_DEFAULT) -> dict:
     """Creates a feedstock dictionary that combines all non-energy model commodities into one dictionary.

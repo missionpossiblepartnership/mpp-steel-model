@@ -14,7 +14,7 @@ from currency_converter import CurrencyConverter
 
 from mppsteel.utility.log_utility import get_logger
 
-logger = get_logger("Utils")
+logger = get_logger(__name__)
 
 
 def get_today_time(fmt: str = "%y%m%d_%H%M%S") -> str:

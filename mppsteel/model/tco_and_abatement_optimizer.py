@@ -15,7 +15,7 @@ from mppsteel.config.model_config import (
 )
 
 # Create logger
-logger = get_logger("TCO & Abatement Optimsation Functions")
+logger = get_logger(__name__)
 
 
 def normalise_data(arr: np.array) -> np.array:

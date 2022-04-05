@@ -11,7 +11,7 @@ from mppsteel.config.model_config import PKL_DATA_FINAL, PKL_DATA_INTERMEDIATE, 
 
 from mppsteel.utility.log_utility import get_logger
 
-logger = get_logger("File Handling")
+logger = get_logger(__name__)
 
 
 def read_pickle_folder(
