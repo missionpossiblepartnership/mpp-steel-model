@@ -152,7 +152,7 @@ def add_regions(
     """
     df_c = df.copy()
     country_mapper = create_country_mapper(country_ref, region_schema)
-    df_c[f"region_{region_schema}"] = df_c['country_ref'].apply(
+    df_c[f"region_{region_schema}"] = df_c['country_code'].apply(
         lambda country: country_mapper[country])
     return df_c
 
