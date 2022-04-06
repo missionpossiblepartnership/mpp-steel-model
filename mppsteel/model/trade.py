@@ -196,14 +196,14 @@ def trade_flow(
     variable_cost_df: pd.DataFrame,
     plant_df: pd.DataFrame,
     capex_dict: dict,
-    tech_choices: dict,
+    tech_choices_ref: dict,
     year: int, 
     util_min: float = CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION, 
     util_max: float = CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
     relative_boundary_from_mean: float = RELATIVE_REGIONAL_COST_BOUNDARY_FROM_MEAN_PCT
 ):
     production_demand_df_c = production_demand_df.copy()
-    cos_df = calculate_cos(plant_df, year, production_demand_df, variable_cost_df, tech_choices, capex_dict)
+    cos_df = calculate_cos(plant_df, year, production_demand_df, variable_cost_df, tech_choices_ref, capex_dict)
     relative_production_cost_df = check_relative_production_cost(cos_df, 'cost_of_steelmaking', relative_boundary_from_mean)
 
     region_list = list(plant_df['rmi_region'].unique())
