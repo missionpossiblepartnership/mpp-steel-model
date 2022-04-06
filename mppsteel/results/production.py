@@ -271,9 +271,7 @@ def production_stats_getter(
     Returns:
         float: The value of the value_col passed as a function argument.
     """
-    df_c = df.copy()
-    df_c.set_index(["year", "plant_name"], inplace=True)
-    return df_c.xs((year, plant_name))[value_col]
+    return df.xs((year, plant_name))[value_col]
 
 
 @timer_func
