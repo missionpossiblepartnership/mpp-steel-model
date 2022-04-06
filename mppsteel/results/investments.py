@@ -21,7 +21,6 @@ from mppsteel.utility.file_handling_utility import (
 )
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.data_loading.steel_plant_formatter import map_plant_id_to_df
-from mppsteel.results.production import get_tech_choice, production_stats_getter
 from mppsteel.utility.location_utility import create_country_mapper
 
 # Create logger
@@ -186,6 +185,7 @@ def get_plant_cycle(plant_cycles: dict, plant_name: str, current_year: int, mode
     cycles = plant_cycles[plant_name]
     if len(cycles) == 0:
         return None
+    first_year, second_year, third_year = (0, 0, 0)
     first_year = cycles[0]
     if len(cycles) == 1:
         if first_year > current_year:
@@ -209,8 +209,9 @@ def get_plant_cycle(plant_cycles: dict, plant_name: str, current_year: int, mode
 
 def get_investment_capital_costs(investment_df: pd.DataFrame, investment_cycles: dict, plant_name: str, current_year: int):
     range_obj = get_plant_cycle(investment_cycles, plant_name, current_year, MODEL_YEAR_START, MODEL_YEAR_END)
+    
     if range_obj:
-        return investment_df.set_index(['year']).loc[list(range_obj)]['capital_cost'].sum()
+        return investment_df.iloc[list(range_obj)]['capital_cost'].sum()
     else:
         return 0
 
@@ -251,8 +252,6 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
 
 
     year_plant_product = list(itertools.product(year_range, plant_names))
-    year_plant_tech_product = list(itertools.product(year_range, plant_names, technologies))
-    year_country_code_plant_product = list(itertools.product(year_range, country_codes, plant_names))
 
     capacity_ref = dict(zip(plant_result_df['plant_name'], plant_result_df['plant_capacity']))
     plant_country_code_ref = dict(zip(plant_result_df['plant_name'], plant_result_df['country_code']))
