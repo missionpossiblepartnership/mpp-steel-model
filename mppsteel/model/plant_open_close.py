@@ -176,10 +176,8 @@ def return_plants_from_region(plant_df: pd.DataFrame, region: str):
     return list(plant_df[plant_df['rmi_region'] == region]['plant_name'].values)
 
 
-def tc_dict_editor(tc_dict: dict, year: int, plant: str, tech: str):
-    tc_dict_c = deepcopy(tc_dict)
-    tc_dict_c[str(year)][plant] = tech
-    return tc_dict_c
+def add_new_plant_choices(tech_choices_container, year: int, plant: str, tech: str):
+    tech_choices_container.update_choices(year, plant, tech)
 
 
 def return_modified_plants(ocp_df: pd.DataFrame, year: int, change_type: str = 'open'):
@@ -319,7 +317,7 @@ def open_close_plants(
     demand_df: pd.DataFrame, steel_plant_df: pd.DataFrame, 
     lev_cost_df: pd.DataFrame, country_df: pd.DataFrame,
     variable_costs_df: pd.DataFrame, capex_dict: dict,
-    util_dict: dict, inv_dict: dict, tc_dict_ref: dict, 
+    util_dict: dict, inv_dict: dict, tech_choices_container, 
     ng_mapper: dict, plant_id_container: PlantIdContainer, 
     trade_container: TradeBalance, year: int,
     trade_scenario: bool = False, steel_demand_scenario: bool = False,
@@ -329,7 +327,6 @@ def open_close_plants(
 
     logger.info(f'Iterating through the open close loops for {year}')
     steel_plant_df_c = steel_plant_df.copy()
-    tc_dict_ref_c = deepcopy(tc_dict_ref)
     util_dict_c = deepcopy(util_dict)
 
     # YEAR LOOP
@@ -346,6 +343,7 @@ def open_close_plants(
     )
     gap_analysis_df = gap_analysis['results']
     util_dict_c = gap_analysis['utilization_dict']
+    tech_choices_ref = tech_choices_container.return_choices()
 
     if trade_scenario:
         logger.info(f"Starting the trade flow for {year}")
@@ -356,7 +354,7 @@ def open_close_plants(
             variable_cost_df=variable_costs_df,
             plant_df=steel_plant_df_c,
             capex_dict=capex_dict,
-            tech_choices=tc_dict_ref,
+            tech_choices_ref=tech_choices_ref,
             year=year,
             util_min=close_plant_util_cutoff,
             util_max=open_plant_util_cutoff
@@ -384,7 +382,7 @@ def open_close_plants(
                 idx_open = steel_plant_df_c.index[steel_plant_df_c['plant_id'] == new_plant_meta['plant_id']].tolist()[0]
                 steel_plant_df_c.loc[idx_open, 'plant_capacity'] = new_plant_meta['plant_capacity']
                 steel_plant_df_c.loc[idx_open, 'technology_in_2020'] = xcost_tech
-                tc_dict_ref_c = tc_dict_editor(tc_dict_ref_c, year, new_plant_meta['plant_name'], xcost_tech)
+                add_new_plant_choices(tech_choices_container, year, new_plant_meta['plant_name'], xcost_tech)
 
         # CLOSE PLANT
         if plants_to_close > 0:
@@ -401,9 +399,9 @@ def open_close_plants(
                 if plant_to_close in closed_list:
                     pass
                 else:
-                    tc_dict_ref_c = tc_dict_editor(tc_dict_ref_c, year, plant_to_close, 'Close plant')
+                    add_new_plant_choices(tech_choices_container, year, plant_to_close, 'Close plant')
 
-    return {'tech_choice_dict': tc_dict_ref_c, 'plant_df': steel_plant_df_c, 'util_dict': util_dict_c}
+    return {'plant_df': steel_plant_df_c, 'util_dict': util_dict_c}
 
 
 def format_wsa_production_data(df, as_dict: bool = False):
@@ -438,7 +436,7 @@ def open_close_flow(
     plant_container: PlantIdContainer, trade_container: TradeBalance, 
     plant_df: pd.DataFrame, levelized_cost: pd.DataFrame, steel_demand_df: pd.DataFrame,
     country_df: pd.DataFrame, variable_costs_df: pd.DataFrame, 
-    capex_dict: dict, tech_choice_dict: dict, investment_dict: dict, 
+    capex_dict: dict, tech_choices_container, investment_dict: dict, 
     util_dict: dict, year: int, trade_scenario: bool, steel_demand_scenario: str) -> str:
     
     logger.info(f'Running open close decisions for {year}')
@@ -453,7 +451,7 @@ def open_close_flow(
         capex_dict=capex_dict,
         util_dict=util_dict,
         inv_dict=investment_dict,
-        tc_dict_ref=tech_choice_dict,
+        tech_choices_container=tech_choices_container,
         ng_mapper=ng_mapper,
         plant_id_container=plant_container,
         trade_container=trade_container,
