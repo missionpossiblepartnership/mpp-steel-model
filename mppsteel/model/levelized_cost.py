@@ -143,7 +143,6 @@ def create_levelised_cost(
     greenfield_capex_ref = {}
     variable_cost_ref = {}
     other_opex_ref = {}
-
     for year, country_code, tech in tqdm(product_range_full, total=len(product_range_full), desc='Variable Costs Reference'):
         variable_cost_ref[(year, country_code, tech)] =  variable_costs.loc[country_code, year, tech]["cost"]
     
