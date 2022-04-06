@@ -9,7 +9,7 @@ COST_SCENARIO_MAPPER = {
     "high": "Max",
 }
 
-STEEL_DEMAND_SCENARIO_MAPPER = {"bau": "BAU", "high": "High Circ", "average": "average"}
+STEEL_DEMAND_SCENARIO_MAPPER = {"bau": "BAU", "high": "High Circ", "average": "Average"}
 
 TECH_SWITCH_SCENARIOS = {
     "max_abatement": {"tco": 0, "emissions": 1},
