@@ -59,10 +59,7 @@ def generate_feedstock_dict(eur_to_usd_rate: float = 1 / USD_TO_EUR_CONVERSION_D
     }
 
 
-def plant_variable_costs(
-    year_end: int,
-    scenario_dict: dict
-) -> pd.DataFrame:
+def plant_variable_costs(scenario_dict: dict) -> pd.DataFrame:
     """Creates a DataFrame reference of each plant's variable cost.
 
     Args:
@@ -314,10 +311,7 @@ def generate_variable_plant_summary(
         pd.DataFrame: A DataFrame containing the variable plant results.
     """
     intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
-    variable_costs = plant_variable_costs(
-        MODEL_YEAR_END,
-        scenario_dict
-    )
+    variable_costs = plant_variable_costs(scenario_dict)
     variable_costs_summary = format_variable_costs(variable_costs)
     variable_costs_summary_material_breakdown = format_variable_costs(
         variable_costs, group_data=False
