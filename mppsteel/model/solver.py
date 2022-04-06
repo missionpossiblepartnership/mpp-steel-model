@@ -1,6 +1,5 @@
 """Main solving script for deciding investment decisions."""
 from copy import deepcopy
-from typing import Union
 from typing import Tuple, Union
 
 import pandas as pd
@@ -58,6 +57,34 @@ from mppsteel.utility.log_utility import get_logger
 
 # Create logger
 logger = get_logger(__name__)
+
+class PlantChoices:
+    def __init__(self):
+        self.choices = {}
+        self.records = {}
+
+    def initiate_container(self, year_range: range):
+        for year in year_range:
+            self.choices[str(year)] = {}
+            self.records[str(year)] = {}
+            
+    def update_choices(self, year: int, plant: str, tech: str):
+        self.choices[str(year)][plant] = tech
+            
+    def update_records(self, year: int, plant: str, entry: dict):
+        self.records[str(year)][plant] = entry
+
+    def get_choice(self, year: int, plant: str):
+        return self.choices[year][plant]
+
+    def return_choices(self):
+        return self.choices
+
+    def records_to_df(self):
+        return pd.DataFrame(self.records)
+
+    def output_records_to_df(self, year: int, dict_entry: dict):
+        return pd.DataFrame(list(self.records.values())).reset_index(drop=True)
 
 
 def apply_constraints(
@@ -219,6 +246,7 @@ def return_best_tech(
 
     return best_choice
 
+
 def create_investment_cycle_ref_from_dict(inv_dict: dict, year_end: int):
     return create_investment_cycle_reference(
         list(inv_dict.keys()), 
@@ -274,7 +302,6 @@ def choose_technology(
     investment_year_ref_c = investment_year_ref.copy()
     investment_dict_c = deepcopy(investment_dict)
     plant_cycle_length_mapper_c = deepcopy(plant_cycle_length_mapper)
-    # Constraint data
     bio_constraint_model = read_pickle_folder(
         intermediate_path, "bio_constraint_model_formatted", "df"
     )
@@ -291,7 +318,7 @@ def choose_technology(
     capex_dict = read_pickle_folder(
         PKL_DATA_FORMATTED, "capex_dict", "dict"
     )
-    # TCO & Abatement Data
+    business_cases = load_business_cases()
     tco_summary_data = read_pickle_folder(
         intermediate_path, "tco_summary_data", "df"
     )
@@ -313,17 +340,11 @@ def choose_technology(
     region_list = model_plant_df['rmi_region'].unique()
     trade_container.full_instantiation(MODEL_YEAR_START, MODEL_YEAR_END, region_list)
     
-    # General Reference data
-    business_cases = load_business_cases()
-
-    year_range = range(MODEL_YEAR_START, year_end + 1)
-    current_plant_choices = {}
-
+    # Utilization & Capacity Containers
     util_dict = create_wsa_2020_utilization_dict()
     util_dict_c = deepcopy(util_dict)
-
     capacity_results = {}
-
+    
     # Initialize the Material Usage container
     MaterialUsageContainer = MaterialUsage()
     material_models = {
@@ -335,6 +356,12 @@ def choose_technology(
     for material in material_models:
         MaterialUsageContainer.load_constraint(material_models[material], material)
 
+    year_range = range(MODEL_YEAR_START, year_end + 1)
+
+    # Plant Choices
+    PlantChoiceContainer = PlantChoices()
+    PlantChoiceContainer.initiate_container(year_range)
+
     for year in tqdm(year_range, total=len(year_range), desc="Years"):
         for material in material_models:
             MaterialUsageContainer.set_year_balance(material, year)
@@ -342,10 +369,13 @@ def choose_technology(
         logger.info(f"Running investment decisions for {year}")
         if year == 2020:
             logger.info(f'Loading initial technology choices for {year}')
-            current_plant_choices[str(year)] = {row.plant_name: row.technology_in_2020 for row in model_plant_df.itertuples()}
+            for row in model_plant_df.itertuples():
+                PlantChoiceContainer.update_choices(year, row.plant_name, row.technology_in_2020)
         else:
             logger.info(f'Loading plant entries for {year}')
-            current_plant_choices[str(year)] = {row.plant_name: '' for row in model_plant_df.itertuples()}
+            for row in model_plant_df.itertuples():
+                PlantChoiceContainer.update_choices(year, row.plant_name, '')
+
         logger.info(f'Starting the open close flow for {year}')
 
         open_close_dict = open_close_flow(
@@ -357,7 +387,7 @@ def choose_technology(
             country_df=country_ref_f,
             variable_costs_df=variable_costs_regional,
             capex_dict=capex_dict,
-            tech_choice_dict=current_plant_choices,
+            tech_choices_container=PlantChoiceContainer,
             investment_dict=investment_dict_c,
             util_dict=util_dict_c,
             year=year,
@@ -366,7 +396,6 @@ def choose_technology(
         )
 
         model_plant_df = open_close_dict['plant_df']
-        current_plant_choices = open_close_dict['tech_choice_dict']
         util_dict_c = open_close_dict['util_dict']
         all_plant_names = model_plant_df["plant_name"].copy()
         plant_capacities_dict = create_plant_capacities_dict(model_plant_df)
@@ -390,21 +419,29 @@ def choose_technology(
 
         logger.info(f"-- Running investment decisions for Non Switching Plants")
         for plant_name in non_switchers:
+            current_tech = ''
             year_founded = non_switchers_df[non_switchers_df['plant_name'] == plant_name]['start_of_operation'].values[0]
             if (year == 2020) or (year == year_founded):
                 tech_in_2020 = non_switchers_df[
                     non_switchers_df["plant_name"] == plant_name
                 ]["technology_in_2020"].values[0]
-                current_plant_choices[str(year)][plant_name] = tech_in_2020
+                PlantChoiceContainer.update_choices(year, plant_name, tech_in_2020)
             else:
-                current_plant_choices[str(year)][plant_name] = current_plant_choices[
-                    str(year - 1)
-                ][plant_name]
+                current_tech = PlantChoiceContainer.get_choice(year - 1, plant_name)
+                PlantChoiceContainer.update_choices(year, plant_name, current_tech)
+            
+            entry = {
+                'year': year,
+                'current_tech': current_tech,
+                'switch_tech': current_tech,
+                'switch_type': 'not a switch year'
+            }
+            PlantChoiceContainer.update_records(year, plant_name, entry)
 
         for resource in RESOURCE_CONTAINER_REF:
             current_usage = return_current_usage(
                 non_switchers_df["plant_name"].unique(),
-                current_plant_choices,
+                PlantChoiceContainer.return_choices(),
                 plant_capacities_dict,
                 business_cases,
                 RESOURCE_CONTAINER_REF[resource],
@@ -421,22 +458,25 @@ def choose_technology(
             plant_name = plant.plant_name
             country_code = plant.country_code
             year_founded = plant.start_of_operation
-
+            current_tech = ''
             if (year == 2020) or (year == year_founded):
                 tech_in_2020 = switchers_df[switchers_df["plant_name"] == plant_name][
                     "technology_in_2020"
                 ].values[0]
                 current_tech = tech_in_2020
-
             else:
-                current_tech = current_plant_choices[str(year - 1)][plant_name]
+                current_tech = PlantChoiceContainer.get_choice(year - 1, plant_name)
+            entry = {'year': year, 'current_tech': current_tech}
 
             if (current_tech == "Not operating") or (current_tech == "Close plant"):
-                current_plant_choices[str(year)][plant_name] = "Close plant"
+                PlantChoiceContainer.update_choices(year, plant_name, "Close plant") 
+                entry['switch_tech'] = "Close plant"
+                entry['switch_type'] = 'Plant was already closed'
 
             elif (tech_in_2020 == 'EAF') & (plant.primary == 'N'):
-                best_choice_tech = 'EAF'
-                current_plant_choices[str(year)][plant_name] = best_choice_tech
+                entry['switch_tech'] = "EAF"
+                entry['switch_type'] = 'Secondary capacity is always EAF'
+                PlantChoiceContainer.update_choices(year, plant_name, 'EAF')
 
             else:
                 switch_type = (
@@ -465,12 +505,10 @@ def choose_technology(
                         material_usage_dict_container=MaterialUsageContainer,
                     )
                     if best_choice_tech == current_tech:
-                        # print(f'No change in main investment cycle in {year} for {plant_name} | {year} -> {current_tech} to {best_choice_tech}')
-                        pass
+                        entry['switch_type'] = 'No change in main investment cycle year'
                     else:
-                        # print(f'Regular change in main investment cycle in {year} for {plant_name} | {year} -> {current_tech} to {best_choice_tech}')
-                        pass
-                    current_plant_choices[str(year)][plant_name] = best_choice_tech
+                        entry['switch_type'] = 'Regular change in investment cycle year'
+                    PlantChoiceContainer.update_choices(year, plant_name, best_choice_tech)
                 if switch_type == "trans switch":
                     best_choice_tech = return_best_tech(
                         tco_slim,
@@ -491,22 +529,26 @@ def choose_technology(
                         transitional_switch_only=trans_switch_scenario,
                     )
                     if best_choice_tech != current_tech:
-                        # print(f'Transistional switch flipped for {plant_name} in {year} -> {current_tech} to {best_choice_tech}')
+                        entry['switch_type'] = 'Transitional switch in off-cycle investment year'
                         investment_dict_c = amend_investment_dict(investment_dict_c, plant_name, year)
                     else:
-                        # print(f'{plant_name} kept its current tech {current_tech} in transitional year {year}')
-                        pass
-                    current_plant_choices[str(year)][plant_name] = best_choice_tech
+                        entry['switch_type'] = 'No change during off-cycle investment year'
+                    PlantChoiceContainer.update_choices(year, plant_name, best_choice_tech)
+                entry['switch_tech'] = best_choice_tech
+            PlantChoiceContainer.update_records(year, plant_name, entry)
         capacity_results[str(year)] = create_plant_capacity_dict(model_plant_df, as_mt=True)
     
     trade_summary_results = trade_container.output_trade_summary_to_df()
     full_trade_calculations = trade_container.output_trade_calculations_to_df()
     material_usage_results = MaterialUsageContainer.output_results_to_df()
     investment_year_ref_c = create_investment_cycle_ref_from_dict(investment_dict_c, year_end)
+    tech_choice_dict = PlantChoiceContainer.return_choices()
+    tech_choice_records = PlantChoiceContainer.output_records_to_df()
     
     return {
-        'tech_choice_dict': current_plant_choices, 
-        'plant_result_df': model_plant_df, 
+        'tech_choice_dict': tech_choice_dict,
+        'tech_choice_records': tech_choice_records,
+        'plant_result_df': model_plant_df,
         'investment_cycle_ref_result': investment_year_ref_c,
         'investment_dict_result': investment_dict_c,
         'plant_cycle_length_mapper_result': plant_cycle_length_mapper_c,
@@ -573,6 +615,7 @@ def solver_flow(scenario_dict: dict, year_end: int, serialize: bool = False) -> 
     if serialize:
         logger.info("-- Serializing dataframes")
         serialize_file(results_dict['tech_choice_dict'], intermediate_path, "tech_choice_dict")
+        serialize_file(results_dict['tech_choice_records'], intermediate_path, "tech_choice_records")
         serialize_file(results_dict['plant_result_df'], intermediate_path, "plant_result_df")
         serialize_file(results_dict['investment_cycle_ref_result'], intermediate_path, "investment_cycle_ref_result")
         serialize_file(results_dict['investment_dict_result'], intermediate_path, "investment_dict_result")
