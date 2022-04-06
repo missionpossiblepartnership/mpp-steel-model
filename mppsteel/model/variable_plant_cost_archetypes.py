@@ -1,5 +1,6 @@
 """Script to determine the variable plant cost types dependent on regions."""
 
+import itertools
 import pandas as pd
 from tqdm import tqdm
 
@@ -72,12 +73,10 @@ def plant_variable_costs(
     """
     intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
     eur_to_usd_rate = scenario_dict['eur_to_usd']
-    df_list = []
 
     steel_plants = read_pickle_folder(
         PKL_DATA_FORMATTED, "steel_plants_processed", "df"
     )
-    steel_plant_country_codes = list(steel_plants["country_code"].unique())
     steel_plant_region_ng_dict = (
         steel_plants[["country_code", "cheap_natural_gas"]]
         .set_index("country_code")
@@ -106,50 +105,131 @@ def plant_variable_costs(
     static_energy_prices = convert_currency_col(static_energy_prices, 'Value', eur_to_usd_rate)
     feedstock_dict = generate_feedstock_dict(eur_to_usd_rate)
     business_cases = load_business_cases()
+    year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
+    steel_plant_country_codes = list(steel_plants["country_code"].unique())
+    product_range_year_country = list(itertools.product(year_range, steel_plant_country_codes))
 
+    ccus_transport_ref = {}
+    ccus_ccus_storage_ref = {}
     for country_code in tqdm(
         steel_plant_country_codes,
         total=len(steel_plant_country_codes),
-        desc="Regional Variable Cost Mapper",
+        desc="CCUS Ref Loop",
     ):
-        ng_flag = steel_plant_region_ng_dict[country_code]
+        ccus_transport_ref[country_code] = pe_model_data_getter(
+            ccus_transport_model_formatted,
+            rmi_mapper,
+            CCUS_COUNTRY_MAPPER,
+            region_code=country_code
+        )
+        ccus_ccus_storage_ref[country_code] = pe_model_data_getter(
+            ccus_storage_model_formatted,
+            rmi_mapper,
+            CCUS_COUNTRY_MAPPER,
+            region_code=country_code
+        )
+
+    electricity_ref = {}
+    hydrogen_ref = {}
+    bio_ref = {}
+    for year, country_code in tqdm(
+        product_range_year_country,
+        total=len(product_range_year_country),
+        desc="PE Model Ref Loop",
+    ):
+        electricity_ref[(year, country_code)] = pe_model_data_getter(
+            power_grid_prices_formatted,
+            rmi_mapper,
+            POWER_HYDROGEN_COUNTRY_MAPPER,
+            year,
+            country_code,
+        )
+        hydrogen_ref[(year, country_code)] = pe_model_data_getter(
+            hydrogen_prices_formatted,
+            rmi_mapper,
+            POWER_HYDROGEN_COUNTRY_MAPPER,
+            year,
+            country_code,
+        )
+        bio_ref[(year, country_code)] = pe_model_data_getter(
+            bio_price_model_formatted,
+            rmi_mapper,
+            BIO_COUNTRY_MAPPER,
+            year,
+            country_code,
+        )
+
+    df_list = []
+    for year, country_code in tqdm(product_range_year_country, total=len(product_range_year_country), desc="Variable Cost Loop"):
         df = generate_variable_costs(
-            business_cases_df=business_cases,
+            year=year,
             country_code=country_code,
-            ng_flag=ng_flag,
-            year_end=year_end,
+            business_cases_df=business_cases,
+            ng_dict=steel_plant_region_ng_dict,
             feedstock_dict=feedstock_dict,
             static_energy_df=static_energy_prices,
-            country_mapper=rmi_mapper,
-            power_df=power_grid_prices_formatted,
-            hydrogen_df=hydrogen_prices_formatted,
-            bio_df=bio_price_model_formatted,
-            ccus_storage=ccus_storage_model_formatted,
-            ccus_transport=ccus_transport_model_formatted
+            electricity_ref=electricity_ref,
+            hydrogen_ref=hydrogen_ref,
+            bio_ref=bio_ref,
+            ccus_ccus_storage_ref=ccus_ccus_storage_ref,
+            ccus_transport_ref=ccus_transport_ref
         )
-        df["country_code"] = country_code
         df_list.append(df)
 
     df = pd.concat(df_list).reset_index(drop=True)
     df['cost_type'] = df['material_category'].apply(
         lambda material: RESOURCE_CATEGORY_MAPPER[material])
-
     return df
 
+def vc_mapper(row: str, feedstock_dict: dict, static_energy_df: pd.DataFrame, regional_prices: dict, ng_flag: int, static_year: int):
+    
+    if RESOURCE_CATEGORY_MAPPER[row.material_category] == 'Fossil Fuels':
+        if (row.material_category == "Natural gas") and (ng_flag == 1):
+            return row.value * static_energy_prices_getter(static_energy_df, "Natural gas - low", static_year)
+        elif (row.material_category == "Natural gas") and (ng_flag == 0):
+            return row.value * static_energy_prices_getter(static_energy_df, "Natural gas - high", static_year)
+        elif row.material_category == "Plastic waste":
+            return row.value * feedstock_dict[row.material_category]
+        return row.value * static_energy_prices_getter(static_energy_df, row.material_category, static_year)
+
+    if RESOURCE_CATEGORY_MAPPER[row.material_category] == 'Feedstock':
+        return row.value * feedstock_dict[row.material_category]
+
+    if RESOURCE_CATEGORY_MAPPER[row.material_category] == 'Bio Fuels':
+        return row.value * regional_prices['bio_price']
+
+    if row.material_category == "Electricity":
+        return row.value * regional_prices['electricity_price']
+
+    if row.material_category == "Hydrogen":
+        return row.value * regional_prices['hydrogen_price']
+
+    if RESOURCE_CATEGORY_MAPPER[row.material_category] == 'Other Opex':
+        if row.material_category in {'BF slag', 'Other slag'}:
+            price = feedstock_dict[row.material_category]
+        elif row.material_category == "Steam":
+            price = static_energy_prices_getter(
+                static_energy_df, row.material_category, static_year
+            )
+        return row.value * price
+
+    if RESOURCE_CATEGORY_MAPPER[row.material_category] == 'CCS':
+        return row.value * (regional_prices['ccus_storage_price'] + regional_prices['ccus_transport_price'])
+    
+    return 0
 
 def generate_variable_costs(
-    business_cases_df: pd.DataFrame,
+    year: int,
     country_code: str,
-    ng_flag: int,
-    year_end: int = None,
+    business_cases_df: pd.DataFrame,
+    ng_dict: dict,
     feedstock_dict: dict = None,
     static_energy_df: pd.DataFrame = None,
-    country_mapper: dict = None,
-    power_df: pd.DataFrame = None,
-    hydrogen_df: pd.DataFrame = None,
-    bio_df: pd.DataFrame = None,
-    ccus_storage: pd.DataFrame = None,
-    ccus_transport: pd.DataFrame = None,
+    electricity_ref: pd.DataFrame = None,
+    hydrogen_ref: pd.DataFrame = None,
+    bio_ref: pd.DataFrame = None,
+    ccus_ccus_storage_ref: pd.DataFrame = None,
+    ccus_transport_ref: pd.DataFrame = None,
 ) -> pd.DataFrame:
     """Generates a DataFrame based on variable cost parameters for a particular region passed to it.
 
@@ -157,7 +237,6 @@ def generate_variable_costs(
         business_cases_df (pd.DataFrame): A DataFrame of standardised variable costs.
         country_code (str): The country code that you want to get energy assumption prices for.
         ng_flag (int): A flag for whether a particular country contains natural gas
-        year_end (int, optional): The year the model is projected until. Defaults to None.
         feedstock_dict (dict, optional): A dictionary containing feedstock resources and prices. Defaults to None.
         static_energy_df (pd.DataFrame, optional): A DataFrame containing static energy prices. Defaults to None.
         power_df (pd.DataFrame, optional): The shared MPP Power assumptions model. Defaults to None.
@@ -168,93 +247,28 @@ def generate_variable_costs(
     Returns:
         pd.DataFrame: A DataFrame containing variable costs for a particular region.
     """
-    df_list = []
-    # Create resources reference list
-    def vc_mapper(row: str, regional_prices: dict):
-        if RESOURCE_CATEGORY_MAPPER[row.material_category] == 'Fossil Fuels':
-            if (row.material_category == "Natural gas") and (ng_flag == 1):
-                return row.value * static_energy_prices_getter(static_energy_df, "Natural gas - low", static_year)
-            elif (row.material_category == "Natural gas") and (ng_flag == 0):
-                return row.value * static_energy_prices_getter(static_energy_df, "Natural gas - high", static_year)
-            elif row.material_category == "Plastic waste":
-                return row.value * feedstock_dict[row.material_category]
-            return row.value * static_energy_prices_getter(static_energy_df, row.material_category, static_year)
-
-        if RESOURCE_CATEGORY_MAPPER[row.material_category] == 'Feedstock':
-            return row.value * feedstock_dict[row.material_category]
-
-        if RESOURCE_CATEGORY_MAPPER[row.material_category] == 'Bio Fuels':
-            return row.value * regional_prices['bio_price']
-
-        if row.material_category == "Electricity":
-            return row.value * regional_prices['electricity_price']
-
-        if row.material_category == "Hydrogen":
-            return row.value * regional_prices['hydrogen_price']
-
-        if RESOURCE_CATEGORY_MAPPER[row.material_category] == 'Other Opex':
-            if row.material_category in {'BF slag', 'Other slag'}:
-                price = feedstock_dict[row.material_category]
-            elif row.material_category == "Steam":
-                price = static_energy_prices_getter(
-                    static_energy_df, row.material_category, static_year
-                )
-            return row.value * price
-
-        if RESOURCE_CATEGORY_MAPPER[row.material_category] == 'CCS':
-            return row.value * (regional_prices['ccus_storage_price'] + regional_prices['ccus_transport_price'])
-        
-        return 0
-
-    # Create a year range
-    year_range = range(MODEL_YEAR_START, tuple({year_end + 1 or 2021})[0])
-    for year in year_range:
-        df_c = business_cases_df.copy()
-        df_c["year"] = year
-        static_year = min(2026, year)
-        electricity_price = pe_model_data_getter(
-            power_df,
-            country_mapper,
-            POWER_HYDROGEN_COUNTRY_MAPPER,
-            year,
-            country_code,
-        )
-        hydrogen_price = pe_model_data_getter(
-            hydrogen_df,
-            country_mapper,
-            POWER_HYDROGEN_COUNTRY_MAPPER,
-            year,
-            country_code,
-        )
-        bio_price = pe_model_data_getter(
-            bio_df,
-            country_mapper,
-            BIO_COUNTRY_MAPPER,
-            year,
-            country_code,
-        )
-        ccus_transport_price = pe_model_data_getter(
-            ccus_transport,
-            country_mapper,
-            CCUS_COUNTRY_MAPPER,
-            region_code=country_code
-        )
-        ccus_storage_price = pe_model_data_getter(
-            ccus_storage,
-            country_mapper,
-            CCUS_COUNTRY_MAPPER,
-            region_code=country_code
-        )
-        regional_price_dict = {
-            'electricity_price': electricity_price,
-            'hydrogen_price': hydrogen_price,
-            'bio_price': bio_price,
-            'ccus_transport_price': ccus_transport_price,
-            'ccus_storage_price': ccus_storage_price
-        }
-        df_c['cost'] = df_c.apply(vc_mapper, regional_prices=regional_price_dict, axis=1)
-        df_list.append(df_c)
-    return pd.concat(df_list)
+    df_c = business_cases_df.copy()
+    static_year = min(2026, year)
+    regional_price_dict = {
+        'electricity_price': electricity_ref[(year, country_code)],
+        'hydrogen_price': hydrogen_ref[(year, country_code)],
+        'bio_price': bio_ref[(year, country_code)],
+        'ccus_transport_price': ccus_transport_ref[(country_code)],
+        'ccus_storage_price': ccus_ccus_storage_ref[(country_code)]
+    }
+    ng_flag = ng_dict[country_code]
+    df_c['cost'] = df_c.apply(
+        vc_mapper, 
+        feedstock_dict=feedstock_dict,
+        static_energy_df=static_energy_df,
+        regional_prices=regional_price_dict,
+        ng_flag=ng_flag,
+        static_year=static_year,
+        axis=1
+    )
+    df_c["year"] = year
+    df_c["country_code"] = country_code
+    return df_c
 
 
 def format_variable_costs(
