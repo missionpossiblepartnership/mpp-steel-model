@@ -1,8 +1,9 @@
 """Production Results generator for technology investments"""
 
-from re import L
+import itertools
 import pandas as pd
 from tqdm import tqdm
+from tqdm.auto import tqdm as tqdma
 
 from mppsteel.config.model_config import (
     MODEL_YEAR_START,
@@ -11,7 +12,7 @@ from mppsteel.config.model_config import (
     PKL_DATA_IMPORTS,
 )
 
-from mppsteel.config.reference_lists import LOW_CARBON_TECHS
+from mppsteel.config.reference_lists import LOW_CARBON_TECHS, SWITCH_DICT
 
 from mppsteel.model.solver import (
     load_business_cases,
@@ -91,9 +92,8 @@ def tech_capacity_splits(steel_plants: pd.DataFrame, tech_choices: dict) -> pd.D
     steel_plant_dict = dict(
         zip(steel_plants["plant_name"].values, steel_plants["country_code"].values)
     )
-    max_year = max([int(year) for year in tech_choices])
     steel_plant_names = capacities_dict.keys()
-    year_range = range(MODEL_YEAR_START, max_year + 1)
+    year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
     df_list = []
 
     for year in tqdm(year_range, total=len(year_range), desc="Tech Capacity Splits"):
@@ -114,6 +114,19 @@ def tech_capacity_splits(steel_plants: pd.DataFrame, tech_choices: dict) -> pd.D
     return df_combined
 
 
+def production_stats_rules(row, material_usage_ref: dict, material_category: str):
+    if row.technology:
+        value = row.production * material_usage_ref[(row.technology, material_category)]
+        if material_category == "BF slag":
+            return value / 1000
+        
+        elif material_category == "Met coal":
+            return value * 28
+
+        return value
+    return 0
+
+
 def production_stats_generator(
     production_df: pd.DataFrame, as_summary: bool = False
 ) -> pd.DataFrame:
@@ -128,50 +141,24 @@ def production_stats_generator(
     """
     logger.info(f"- Generating Production Stats")
     df_c = production_df.copy()
-
-    material_dict_mapper = load_materials_mapper()
     standardised_business_cases = load_business_cases()
+    materials = load_materials()
+    material_dict_mapper = load_materials_mapper()
+    inverse_material_dict_mapper = load_materials_mapper(reverse=True)
+    new_materials = material_dict_mapper.values()
+    tech_material_product = list(itertools.product(SWITCH_DICT.keys(), materials))
+    material_usage_ref = {}
+    for tech, material in tqdm(tech_material_product, total=len(tech_material_product), desc='Business Case Reference'):
+        material_usage_ref[(tech, material)] = business_case_getter(standardised_business_cases, tech, material)
 
     # Create columns
-    for colname in material_dict_mapper.values():
-        df_c[colname] = 0
-
-    # Create values
-    for row in tqdm(
-        df_c.itertuples(), total=df_c.shape[0], desc="Production Stats Generator"
-    ):
-        for item in material_dict_mapper.items():
-            material_category = item[0]
-            new_colname = item[1]
-            if material_category == "BF slag":
-                df_c.loc[row.Index, new_colname] = (
-                    row.production
-                    * business_case_getter(
-                        standardised_business_cases, row.technology, material_category
-                    )
-                    / 1000
-                )
-            elif material_category == "Met coal":
-                df_c.loc[row.Index, new_colname] = (
-                    row.production
-                    * business_case_getter(
-                        standardised_business_cases, row.technology, material_category
-                    )
-                    * 28
-                )
-            elif material_category == "Hydrogen":
-                df_c.loc[row.Index, new_colname] = (
-                    row.production
-                    * business_case_getter(
-                        standardised_business_cases, row.technology, material_category
-                    )
-                )
-            else:
-                df_c.loc[
-                    row.Index, new_colname
-                ] = row.production * business_case_getter(
-                    standardised_business_cases, row.technology, material_category
-                )
+    for new_material_name in tqdm(new_materials, total=len(new_materials), desc='Material Loop'):
+        df_c[new_material_name] = df_c.apply(
+            production_stats_rules,
+            material_usage_ref=material_usage_ref,
+            material_category=inverse_material_dict_mapper[new_material_name],
+            axis=1
+        )
 
     df_c["bioenergy"] = df_c["biomass"] + df_c["biomethane"]
     df_c["coal"] = df_c["met_coal"] + df_c["thermal_coal"]
@@ -182,7 +169,7 @@ def production_stats_generator(
 
 
 def generate_production_emission_stats(
-    production_df: pd.DataFrame, emissions_df: pd.DataFrame, as_summary: bool = False
+    production_df: pd.DataFrame, emissions_df: pd.DataFrame, steel_plants: pd.DataFrame, as_summary: bool = False
 ) -> pd.DataFrame:
     """Generates a DataFrame with the emissions generated for S1, S2 & S3.
 
@@ -202,29 +189,38 @@ def generate_production_emission_stats(
     emissions_name_ref = ["s1", "s2", "s3"]
 
     df_c = production_df.copy()
+    year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
+    country_codes = steel_plants['country_code'].unique()
+    full_product_ref = list(itertools.product(year_range, country_codes, SWITCH_DICT.keys()))
+    
+    s1_value_ref = {}
+    s2_value_ref = {}
+    s3_value_ref = {}
+    for year, country_code, technology in tqdm(full_product_ref, total=len(full_product_ref), desc='Business Case Reference Loop'):
+        s1_value = emissivity_getter(calculated_emissivity_combined, year, country_code, technology, 's1')
+        s2_value = emissivity_getter(calculated_emissivity_combined, year, country_code, technology, 's2')
+        s3_value = emissivity_getter(calculated_emissivity_combined, year, country_code, technology, 's3')
+        s1_value_ref[(year, country_code, technology)] = s1_value
+        s2_value_ref[(year, country_code, technology)] = s2_value
+        s3_value_ref[(year, country_code, technology)] = s3_value
 
-    # Create columns
-    for colname in emissions_name_ref:
-        df_c[f"{colname}_emissions"] = 0
+    emission_dict = {
+        's1': s1_value_ref,
+        's2': s2_value_ref,
+        's3': s3_value_ref
+    }
 
-        # Create values
-    for row in tqdm(
-        df_c.itertuples(), total=df_c.shape[0], desc="Production Emissions"
-    ):
-        if row.technology == "Close plant":
-            for colname in emissions_name_ref:
-                df_c.loc[row.Index, f"{colname}_emissions"] = 0
-        else:
-            for colname in emissions_name_ref:
-                df_c.loc[
-                    row.Index, f"{colname}_emissions"
-                ] = row.production * emissivity_getter(
-                    calculated_emissivity_combined,
-                    row.year,
-                    row.country_code,
-                    row.technology,
-                    colname,
-                )
+    def emissions_mapper(row, emission_ref: dict):
+        if (row.technology == "Close plant") or not row.technology:
+            return 0
+        return row.production * emission_ref[(row.year, row.country_code, row.technology)]
+
+    for emission_type in emissions_name_ref:
+        df_c[f"{emission_type}_emissions"] = df_c.apply(
+            emissions_mapper,
+            emission_ref=emission_dict[emission_type],
+            axis=1
+        )
 
     if as_summary:
         return df_c.groupby(["year", "technology"]).sum()
@@ -247,7 +243,7 @@ def get_tech_choice(tc_dict: dict, year: int, plant_name: str) -> str:
     return ''
 
 
-def load_materials_mapper() -> dict:
+def load_materials_mapper(reverse: bool = False) -> dict:
     """A mapper for material names to material names to be used as dataframe column references.
 
     Returns:
@@ -255,7 +251,10 @@ def load_materials_mapper() -> dict:
     """
     materials = load_materials()
     material_col_names = [material.lower().replace(" ", "_") for material in materials]
-    return dict(zip(materials, material_col_names))
+    dict_obj = dict(zip(materials, material_col_names))
+    if reverse:
+        return {v: k for k, v in dict_obj.items()}
+    return dict_obj
 
 
 def production_stats_getter(
@@ -315,7 +314,7 @@ def production_results_flow(scenario_dict: dict, serialize: bool = False) -> dic
         rmi_mapper, steel_demand_scenario, MODEL_YEAR_END
     )
     production_resource_usage = production_stats_generator(production_results)
-    production_emissions = generate_production_emission_stats(production_results, calculated_emissivity_combined)
+    production_emissions = generate_production_emission_stats(production_results, calculated_emissivity_combined, plant_result_df)
     results_dict = {
         "production_resource_usage": production_resource_usage,
         "production_emissions": production_emissions,
