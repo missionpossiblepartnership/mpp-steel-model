@@ -1,8 +1,8 @@
 """Creates graphs from model outputs"""
 import pandas as pd
 import plotly.express as px
-from mppsteel.config.model_config import PKL_DATA_FORMATTED
-
+from mppsteel.config.model_config import PKL_DATA_FORMATTED, PKL_DATA_IMPORTS
+from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import read_pickle_folder, get_scenario_pkl_path
 from mppsteel.utility.log_utility import get_logger
@@ -314,7 +314,7 @@ def resource_line_charts(
 
 
 def create_opex_capex_graph(
-    variable_cost_df: pd.DataFrame, capex_dict: dict, country_ref_dict: dict, filepath: str = None) -> px.bar:
+    variable_cost_df: pd.DataFrame, capex_dict: dict, country_mapper: dict, filepath: str = None) -> px.bar:
     """Creates a Opex Capex split graph.
 
     Args:
@@ -327,9 +327,9 @@ def create_opex_capex_graph(
     logger.info(f"Creating Opex Capex Graph Output: {filename}")
     if filepath:
         filename = f"{filepath}/{filename}"
-    return opex_capex_graph(variable_cost_df, capex_dict, country_ref_dict, save_filepath=filename)
+    return opex_capex_graph(variable_cost_df, capex_dict, country_mapper, save_filepath=filename)
 
-def create_opex_capex_graph_regional(vcsmb: pd.DataFrame, capex_dict: dict, country_ref_dict: dict, filepath: str = None, year: int = 2050, region:str='NAFTA') -> px.bar:
+def create_opex_capex_graph_regional(vcsmb: pd.DataFrame, capex_dict: dict, country_mapper: dict, filepath: str = None, year: int = 2050, region:str='NAFTA') -> px.bar:
     """Creates a Opex Capex split graph.
     Args:
         filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
@@ -340,7 +340,7 @@ def create_opex_capex_graph_regional(vcsmb: pd.DataFrame, capex_dict: dict, coun
     logger.info(f"Creating Opex Capex Graph Output: {filename}")
     if filepath:
         filename = f"{filepath}/{filename}"
-    return opex_capex_graph_regional(vcsmb, capex_dict, country_ref_dict, save_filepath=filename, year=year, region=region)
+    return opex_capex_graph_regional(vcsmb, capex_dict, country_mapper, save_filepath=filename, year=year, region=region)
 
 
 def create_investment_line_graph(
@@ -489,9 +489,8 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
     variable_cost_df = read_pickle_folder(
         intermediate_path, "variable_costs_regional_material_breakdown", "df"
     )
-    country_ref_dict = read_pickle_folder(
-        PKL_DATA_FORMATTED, "country_reference_dict", "df"
-    )
+    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
+    rmi_mapper = create_country_mapper(country_ref, 'rmi')
 
     steel_production_area_chart(
         production_emissions,
@@ -527,10 +526,10 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
             df=production_resource_usage, resource=resource, filepath=filepath
         )
 
-    create_opex_capex_graph(variable_cost_df, capex_dict, country_ref_dict, filepath)
+    create_opex_capex_graph(variable_cost_df, capex_dict, rmi_mapper, filepath)
     for year in {2030, 2050}:
         for region in {'China', 'India', 'Europe', 'NAFTA'}:
-            create_opex_capex_graph_regional(variable_cost_df, capex_dict, country_ref_dict, filepath=filepath, region=region, year=year)
+            create_opex_capex_graph_regional(variable_cost_df, capex_dict, rmi_mapper, filepath=filepath, region=region, year=year)
 
     create_investment_line_graph(investment_results, group="global", operation="cumsum", filepath=filepath)
 
