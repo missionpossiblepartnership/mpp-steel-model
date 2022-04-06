@@ -69,6 +69,12 @@ def steel_demand_creator(df: pd.DataFrame, rmi_matcher: dict) -> pd.DataFrame:
         var_name=["year"], 
         index=["year", "scenario", "metric"])
 
+def add_average_values(df: pd.DataFrame):
+    df_c = df.copy()
+    average_values = (df_c.loc[:,'BAU',:]['value'].values + df_c.loc[:,'High Circ',:]['value'].values) / 2
+    average_base = df_c.loc[:,'BAU',:].rename({'BAU': 'Average'}).copy()
+    average_base['value'] = average_values
+    return pd.concat([df_c, average_base])
 
 @timer_func
 def get_steel_demand(serialize: bool = False) -> pd.DataFrame:
@@ -82,6 +88,7 @@ def get_steel_demand(serialize: bool = False) -> pd.DataFrame:
     """
     steel_demand = read_pickle_folder(PKL_DATA_IMPORTS, "regional_steel_demand", "df")
     steel_demand_f = steel_demand_creator(steel_demand, RMI_MATCHER)
+    steel_demand_f = add_average_values(steel_demand_f)
     if serialize:
         serialize_file(
             steel_demand_f, PKL_DATA_FORMATTED, "regional_steel_demand_formatted"
@@ -150,34 +157,21 @@ def steel_demand_getter(
     MODEL_YEAR_END = 2050
     year = min(MODEL_YEAR_END, year)
     # Apply subsets
-    # Scenario: BAU, High Circ, average
+    # Scenario: BAU, High Circ, Average
     # Metric: crude, scrap
-    STEEL_DEMAND_SCENARIO_MAPPER = {"bau": "BAU", "high": "High Circ", "average": "average"}
     scenario_entry = STEEL_DEMAND_SCENARIO_MAPPER[scenario]
 
     metric_mapper = {
         "crude": "Crude steel demand",
         "scrap": "Scrap availability",
     }
-
-    if scenario_entry == "average":
-        df1_val = df_c.xs(
-            (str(year), "BAU", metric_mapper[metric]),
-            level=["year", "scenario", "metric"],
-        ).value.values[0]
-        df2_val = df_c.xs(
-            (str(year), "High Circ", metric_mapper[metric]),
-            level=["year", "scenario", "metric"],
-        ).value.values[0]
-        return (df1_val + df2_val) / 2
-    else:
-        df_c = df_c.xs(
-            (str(year), scenario_entry, metric_mapper[metric]),
-            level=["year", "scenario", "metric"],
-        )
-        df_c.reset_index(drop=True, inplace=True)
-        # Return the value figure
-        return df_c.value.values[0]
+    df_c = df_c.xs(
+        (str(year), scenario_entry, metric_mapper[metric]),
+        level=["year", "scenario", "metric"],
+    )
+    df_c.reset_index(drop=True, inplace=True)
+    # Return the value figure
+    return df_c.value.values[0]
 
 
 def extend_steel_demand(year_end: int) -> pd.DataFrame:
