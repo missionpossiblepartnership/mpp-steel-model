@@ -116,7 +116,7 @@ def column_sorter(df: pd.DataFrame, col_to_sort: List[str], col_order: List[str]
 
 
 def add_scenarios(
-    df: pd.DataFrame, scenario_dict: dict, single_line: bool = False
+    df: pd.DataFrame, scenario_dict: dict, single_line: bool = False, scenario_name: bool = True
 ) -> pd.DataFrame:
     """Adds scenario metadata column(s) with metadata to each row in a DataFrame.
 
@@ -129,6 +129,8 @@ def add_scenarios(
         pd.DataFrame: A DataFrame with additional scenario metadata column(s).
     """
     df_c = df.copy()
+    if scenario_name:
+        df_c["scenario"] = scenario_dict['scenario_name']
     if single_line:
         df_c["scenarios"] = str(scenario_dict)
     else:
