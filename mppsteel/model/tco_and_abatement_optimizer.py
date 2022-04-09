@@ -59,8 +59,7 @@ def tco_ranker_logic(x: float, min_value: float) -> int:
         int: A number between 1 and 3.
     """
 
-    if min_value is None:  # check for this
-        # print('NoneType value')
+    if min_value is None:
         return 1
     if x > min_value * TCO_RANK_2_SCALER:
         return 3
@@ -98,7 +97,6 @@ def min_ranker(
     start_tech: str,
     plant_name: str = None,
     rank: bool = False,
-    tco_summary_flag: bool = True
 ) -> pd.DataFrame:
     """Sorts (and optionally ranks) each technology from a given list for the purpose of choosing a best technology.
 
@@ -115,13 +113,7 @@ def min_ranker(
     Returns:
         pd.DataFrame: A DataFrame containing the sorted list of each technology for a given plant and technology.
     """
-    if data_type == "tco":
-        if tco_summary_flag:
-            df_subset = df.loc[year, country_code, start_tech].copy()
-        else:
-            df_subset = df.loc[year, plant_name, start_tech].copy()
-    elif data_type == "abatement":
-        df_subset = df.loc[year, country_code, start_tech].copy()
+    df_subset = df.loc[year, country_code, start_tech].copy()
     if len(df_subset) == 1:
         df_subset = df_subset.reset_index().set_index("switch_tech")
         if rank:
@@ -157,8 +149,7 @@ def get_best_choice(
     start_tech: str,
     solver_logic: str,
     weighting_dict: dict,
-    technology_list: list,
-    tco_summary_flag: bool = True
+    technology_list: list
 ) -> str:
     """Returns the best technology choice from a list of potential logic according to the paramter settings provided in the function.
 
@@ -188,7 +179,6 @@ def get_best_choice(
             start_tech=start_tech,
             plant_name=plant_name,  # only for tco
             rank=False,
-            tco_summary_flag=tco_summary_flag
         )
         abatement_values = min_ranker(
             df=emissions_df,
@@ -319,10 +309,13 @@ def subset_presolver_df(df: pd.DataFrame, subset_type: str = False):
         "country_code",
         "abated_combined_emissivity"
     ]
+    index_cols = ["year", "country_code", "base_tech"]
     if subset_type == 'tco_summary':
         df_c = change_cols_to_numeric(df_c, ['tco', 'capex_value'])
-        df_c = df_c.rename({'start_technology': 'base_tech', 'end_technology': 'switch_tech'}, axis=1).copy()
-        return df_c[tco_cols].set_index(["year", "country_code", "base_tech"]).copy()
+        df_c.rename({'start_technology': 'base_tech', 'end_technology': 'switch_tech'}, axis=1, inplace=True)
+        df_c = df_c[tco_cols].set_index(index_cols)
+        return df_c.sort_index(ascending=True)
     elif subset_type == 'abatement':
         df_c = change_cols_to_numeric(df_c, ['abated_combined_emissivity'])
-        return df_c[emissions_cols].set_index(["year", "country_code", "base_tech"]).copy()
+        df_c = df_c[emissions_cols].set_index(index_cols)
+        return df_c.sort_index(ascending=True)
