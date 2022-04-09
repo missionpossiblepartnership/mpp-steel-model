@@ -154,25 +154,6 @@ def get_plant_capacity(
     return tech_capacities[plant]
 
 
-def total_plant_capacity(plant_cap_dict: dict) -> float:
-    """Returns the total capacity of all plants listed in the `plant_cap_dict` dictionary.
-
-    Args:
-        plant_cap_dict (dict): A dictionary containing plant: capacity/inital tech key:value pairs.
-
-    Returns:
-        float: Float value of the summation of all plant capacities using the `get_plant_capacity` function.
-    """
-    all_capacities = [
-        get_plant_capacity(
-            plant_cap_dict, plant
-        )
-        for plant in plant_cap_dict
-    ]
-    all_capacities = [x for x in all_capacities if str(x) != "nan"]
-    return sum(all_capacities)
-
-
 def map_plant_id_to_df(
     df: pd.DataFrame, steel_plants: pd.DataFrame, plant_identifier: str, reverse: bool = False
 ) -> pd.DataFrame:
@@ -198,7 +179,7 @@ def map_plant_id_to_df(
 
 
 def apply_countries_to_steel_plants(
-    steel_plant_formatted: pd.DataFrame, country_ref: dict) -> pd.DataFrame:
+    steel_plant_formatted: pd.DataFrame) -> pd.DataFrame:
     """Maps a country codes and region column to the Steel Plants.
 
     Args:
@@ -240,9 +221,8 @@ def steel_plant_processor(
     """
     logger.info("Preprocessing the Steel Plant Data")
     steel_plants = read_pickle_folder(PKL_DATA_IMPORTS, "steel_plants")
-    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
     steel_plants = steel_plant_formatter(steel_plants, remove_non_operating_plants)
-    steel_plants = apply_countries_to_steel_plants(steel_plants, country_ref)
+    steel_plants = apply_countries_to_steel_plants(steel_plants)
 
     if serialize:
         serialize_file(steel_plants, PKL_DATA_FORMATTED, "steel_plants_processed")
