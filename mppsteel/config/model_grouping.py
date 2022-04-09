@@ -98,7 +98,7 @@ def data_preprocessing_generic(scenario_dict: dict) -> None:
     create_capex_opex_dict(scenario_dict=scenario_dict, serialize=True)
     create_capex_timeseries(scenario_dict=scenario_dict, serialize=True)
     format_business_cases(serialize=True)
-    investment_cycle_flow(scenario_dict=scenario_dict, serialize=True)
+    investment_cycle_flow(serialize=True)
 
 
 def data_preprocessing_scenarios(scenario_dict: dict) -> None:
@@ -111,7 +111,7 @@ def data_preprocessing_scenarios(scenario_dict: dict) -> None:
 
 
 def investment_cycles(scenario_dict: dict) -> None:
-    investment_cycle_flow(scenario_dict=scenario_dict, serialize=True)
+    investment_cycle_flow(serialize=True)
 
 
 def model_presolver(scenario_dict: dict) -> None:
