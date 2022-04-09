@@ -9,7 +9,8 @@ from tqdm import tqdm
 
 from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.model.tco_calculation_functions import (
-    get_discounted_opex_values, calculate_capex, get_opex_costs
+    get_discounted_opex_values, calculate_capex, 
+    get_opex_costs, calculate_green_premium
 )
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import add_results_metadata
@@ -67,6 +68,12 @@ def tco_regions_ref_generator(scenario_dict: dict) -> pd.DataFrame:
     steel_plants = read_pickle_folder(
         PKL_DATA_FORMATTED, "steel_plants_processed", "df"
     )
+    # Green premium preprocessing - not currently active
+    # green_premium_timeseries = read_pickle_folder(intermediate_path, "green_premium_timeseries", "df")
+    # capacity_dict = dict(zip(steel_plants['plant_name'], steel_plants['plant_capacity']))
+    # usd_to_eur_rate = scenario_dict['usd_to_eur']
+    # steel_plant_names = steel_plants["plant_name"].unique()
+    # green_premium_timeseries.set_index('year', inplace=True)
 
     # Preprocessing
     techs_to_drop = ["Charcoal mini furnace", "Close plant"]
@@ -80,11 +87,11 @@ def tco_regions_ref_generator(scenario_dict: dict) -> pd.DataFrame:
     carbon_tax_df = carbon_tax_df.set_index("year")
     # Prepare looping references
     technologies = SWITCH_DICT.keys()
-    steel_plant_country_codes = list(steel_plants["country_code"].unique())
+    steel_plant_country_codes = steel_plants["country_code"].unique()
     year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
     product_range_year_country = list(itertools.product(year_range, steel_plant_country_codes))
     product_range_year_tech = list(itertools.product(year_range, technologies))
-    product_range_full = list(itertools.product(year_range, steel_plant_country_codes, technologies))
+    product_year_country_code_tech = list(itertools.product(year_range, steel_plant_country_codes, technologies))
     column_order = [
         "country_code",
         "year",
@@ -127,7 +134,7 @@ def tco_regions_ref_generator(scenario_dict: dict) -> pd.DataFrame:
         technology_df_ref[tech] = pd.DataFrame({'end_technology': SWITCH_DICT[tech]})
 
     df_list = []
-    for year, country_code, tech in tqdm(product_range_full, total=len(product_range_full), desc='Full Opex Reference'):
+    for year, country_code, tech in tqdm(product_year_country_code_tech, total=len(product_year_country_code_tech), desc='Full Opex Reference'):
         capex_values = capex_cost_ref[(year, tech)]
         new_df = technology_df_ref[tech]
         new_df['discounted_opex'] = discounted_capex_ref[(year, country_code)][tech]
@@ -191,7 +198,7 @@ def emissivity_abatement(combined_emissivity: pd.DataFrame, scope: str) -> pd.Da
     df_list = []
     for year, country_code, base_tech in tqdm(
         product_range_full, total=len(product_range_full), desc='Emissions DataFrame'):
-        for switch_tech in SWITCH_DICT[tech]:
+        for switch_tech in SWITCH_DICT[base_tech]:
             value_difference = get_abatement_difference(
                 technology_emissions_ref,
                 year,
