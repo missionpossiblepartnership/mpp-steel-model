@@ -5,11 +5,9 @@ from itertools import zip_longest
 import pandas as pd
 import plotly.express as px
 
-from mppsteel.config.model_config import PKL_DATA_FINAL
 from mppsteel.config.reference_lists import MPP_COLOR_LIST, TECH_REFERENCE_LIST
 from mppsteel.results.investments import create_inv_stats
 
-from mppsteel.utility.file_handling_utility import read_pickle_folder
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.graphs.plotly_graphs import line_chart, bar_chart
 
@@ -63,7 +61,7 @@ def investment_per_tech(investment_df: pd.DataFrame, save_filepath: str = None, 
         px.bar: A Plotly express bar chart.
     """
     tech_investment = (
-        investment_df.groupby(["end_tech", "region_wsa_region"])
+        investment_df.groupby(["end_tech", "region_rmi"])
         .agg({"capital_cost": "sum"})
         .reset_index()
         .copy()
@@ -76,7 +74,7 @@ def investment_per_tech(investment_df: pd.DataFrame, save_filepath: str = None, 
         data=tech_investment,
         x="end_tech",
         y="capital_cost",
-        color="region_wsa_region",
+        color="region_rmi",
         color_discrete_map=tech_inv_color_map,
         array_order=TECH_REFERENCE_LIST,
         xaxis_title="End Technology",

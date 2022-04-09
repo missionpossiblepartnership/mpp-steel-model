@@ -1,4 +1,5 @@
 """Creates graphs from model outputs"""
+import itertools
 import pandas as pd
 import plotly.express as px
 from mppsteel.config.model_config import PKL_DATA_FORMATTED, PKL_DATA_IMPORTS
@@ -56,8 +57,6 @@ RESOURCE_COLS = [
     "used_co2",
     "bioenergy",
 ]
-
-REGION_COLS = ["region_wsa_region", "region_continent", "region_region"]
 
 SCENARIO_COLS = [
     "scenario_tech_moratorium",
@@ -176,6 +175,7 @@ def steel_production_area_chart(df: pd.DataFrame, filepath: str = None, region: 
     df_c = df.copy()
     region_list = df_c['region'].unique()
     if region and (region in region_list):
+        graph_title = f"{graph_title} - {region}"
         df_c = df_c[df_c['region'] == region]
         filename = f'{filename}_for_{region}'
     elif region and (region not in region_list):
@@ -184,7 +184,7 @@ def steel_production_area_chart(df: pd.DataFrame, filepath: str = None, region: 
     if filepath:
         filename = f"{filepath}/{filename}"
     if scenario_name:
-        graph_title = f"{graph_title} for {scenario_name} scenario"
+        graph_title = f"{graph_title} - {scenario_name} scenario"
     return area_chart(
         data=generate_production_emissions(df_c, "technology", ["production"]),
         x="year",
@@ -329,7 +329,7 @@ def create_opex_capex_graph(
         filename = f"{filepath}/{filename}"
     return opex_capex_graph(variable_cost_df, capex_dict, country_mapper, save_filepath=filename)
 
-def create_opex_capex_graph_regional(vcsmb: pd.DataFrame, capex_dict: dict, country_mapper: dict, filepath: str = None, year: int = 2050, region:str='NAFTA') -> px.bar:
+def create_opex_capex_graph_regional(vcsmb: pd.DataFrame, capex_dict: dict, country_mapper: dict, filepath: str = None, year: int = 2050, region: str = 'NAFTA') -> px.bar:
     """Creates a Opex Capex split graph.
     Args:
         filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
@@ -527,9 +527,9 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
         )
 
     create_opex_capex_graph(variable_cost_df, capex_dict, rmi_mapper, filepath)
-    for year in {2030, 2050}:
-        for region in {'China', 'India', 'Europe', 'NAFTA'}:
-            create_opex_capex_graph_regional(variable_cost_df, capex_dict, rmi_mapper, filepath=filepath, region=region, year=year)
+
+    for year, region in list(itertools.product({2030, 2050}, {'China', 'India', 'Europe', 'NAFTA'})):
+        create_opex_capex_graph_regional(variable_cost_df, capex_dict, rmi_mapper, year=year, region=region, filepath=filepath)
 
     create_investment_line_graph(investment_results, group="global", operation="cumsum", filepath=filepath)
 
@@ -539,16 +539,12 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
 
     create_lcost_graph(lcost_data, 2030, filepath=filepath)
 
-    for year in [2020, 2030, 2040, 2050]:
-        for reg in ['China', 'NAFTA', 'India', 'Europe']:
-            create_tco_graph(tco_ref, year, reg, 'Avg BF-BOF', filepath=filepath)
+    for year, region in list(itertools.product({2020, 2030, 2040, 2050}, {'China', 'India', 'Europe', 'NAFTA'})):
+        create_tco_graph(tco_ref, year, region, 'Avg BF-BOF', filepath=filepath)
 
-    for yrs in [2020, 2030, 2050]:
-        for reg in ['China', 'India', 'Europe', 'NAFTA']:
-            for scope in ['s2_emissivity', 'combined']:
-                create_emissions_graph(calculated_emissivity_combined_df, yrs, reg, scope, filepath=filepath)
-
-    for yrs in [2020,2030,2050]:
-        for reg in ['China']:
-            for scope in ['s1_emissivity', 's3_emissivity']:
-                create_emissions_graph(calculated_emissivity_combined_df, yrs, reg, scope, filepath=filepath)
+    for year, region, scope in list(itertools.product(
+        {2020, 2030, 2050},
+        {'China', 'India', 'Europe', 'NAFTA'},
+        {'s1_emissivity', 's2_emissivity', 's3_emissivity', 'combined'}
+    )):
+        create_emissions_graph(calculated_emissivity_combined_df, year, region, scope, filepath=filepath)

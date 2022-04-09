@@ -1,10 +1,8 @@
-from itertools import zip_longest
-
 import pandas as pd
 import plotly.express as px
 import numpy as np
 
-from mppsteel.config.reference_lists import MPP_COLOR_LIST, GRAPH_COL_ORDER
+from mppsteel.config.reference_lists import GRAPH_COL_ORDER
 
 from mppsteel.utility.log_utility import get_logger
 
@@ -39,25 +37,25 @@ def generate_emissivity_charts (
         's1_emissivity','s2_emissivity','s3_emissivity','combined_emissivity'], var_name='metric')
     sorterIndex = dict(zip(GRAPH_COL_ORDER, range(len(GRAPH_COL_ORDER))))
     # Note: Scope 1 emissivity only depends on the technology, not on the region
-    # Note: Scope 2 emissivity depends on the technolog and region
+    # Note: Scope 2 emissivity depends on the technology and region
 
     df_c =df_c.loc[
         (df_c['region'] == region) & (df_c['year'] == year)
         ] 
     if scope in {'s1_emissivity', 's2_emissivity', 's3_emissivity'}:
         df_c =df_c.loc[df_c['metric'] == scope]
-        text = f'{scope}, in {year}'
         color = 'technology'
 
     elif scope == 's1+s2' :
         df_c = df_c.loc[(df_c['metric']=='s1_emissivity') | (df_c['metric']=='s2_emissivity')]
-        text = f'{scope}, in {region}, in {year}'
         color = 'metric'
 
     elif scope == 'combined':
         df_c=df_c.loc[(df_c['metric'] == 's1_emissivity') | (df_c['metric'] == 's2_emissivity') | (df_c['metric'] == 's3_emissivity')]
-        text = f'{scope}, in {region}, in {year}'
+        
         color = 'metric'
+
+    text = '{scope} - {region} - {year}' if region else f'{scope} - {year}'
 
     df_c['tech_order'] = df_c['technology'].map(sorterIndex)
     df_c.sort_values(['tech_order'], ascending=True, inplace=True)

@@ -1,11 +1,12 @@
 """Graph fpr the OPEX CAPEX split"""
+import itertools
 from typing import Union
 import pandas as pd
 import plotly.express as px
 import numpy as np
 import numpy_financial as npf
 from mppsteel.config.model_config import DISCOUNT_RATE
-from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
+from mppsteel.config.reference_lists import SWITCH_DICT, TECH_REFERENCE_LIST
 
 from mppsteel.utility.utils import cast_to_float
 from mppsteel.utility.dataframe_utility import column_sorter
@@ -74,8 +75,7 @@ def add_opex_values(vdf: pd.DataFrame, co_df: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: The updated variable costs dataframe with the other opex values.
     """
     vdf_c = vdf.copy()
-    tech_values = vdf_c.index.get_level_values(0).unique()
-    for technology in tech_values:
+    for technology in SWITCH_DICT.keys():
         vdf_c.loc[technology, "Other Opex"]["cost"] = (
             vdf_c.loc[technology, "Other Opex"]["cost"]
             + co_df["other_opex"][technology]
@@ -94,9 +94,8 @@ def add_capex_values(vdf: pd.DataFrame, co_df: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: The updated variable costs dataframe with the capex valuess.
     """
     vdf_c = vdf.copy()
-    tech_values = vdf_c.index.get_level_values(0).unique()
     country_values = vdf_c.index.get_level_values(2).unique()
-    for technology in tech_values:
+    for technology in SWITCH_DICT.keys():
         bf_value = co_df["brownfield_capex"][technology]
         gf_value = co_df["greenfield_capex"][technology]
         for country in country_values:
@@ -152,13 +151,9 @@ def assign_country_deltas(df: pd.DataFrame, delta_dict: dict) -> pd.DataFrame:
         the lowest and highest cost values.
     """
     df_c = df.copy()
-    tech_values = df_c.index.get_level_values(0).unique()
     country_values = df_c.index.get_level_values(2).unique()
-    for technology in tech_values:
-        for country in country_values:
-            df_c.loc[(technology, "Region Cost Delta", country), "cost"] = delta_dict[
-                technology
-            ]
+    for country, technology in list(itertools.product(country_values, SWITCH_DICT.keys())):
+        df_c.loc[(technology, "Region Cost Delta", country), "cost"] = delta_dict[technology]
     return df_c
 
 
@@ -176,7 +171,7 @@ def create_capex_opex_split_data(variable_cost_df: pd.DataFrame, capex_dict: dic
         .drop(["material_category", "unit", "value"], axis=1)
         .set_index(index_sort)
         .sort_values(index_sort)
-    )
+    ).copy()
     capex_opex_df = return_capex_values(
         capex_dict=capex_dict, year=2050, investment_cycle=20, discount_rate=DISCOUNT_RATE
     )
@@ -194,7 +189,7 @@ def create_capex_opex_split_data(variable_cost_df: pd.DataFrame, capex_dict: dic
         .groupby(["technology", "cost_type"])
         .mean()
         .reset_index()
-    )
+    ).copy()
 
 
 def opex_capex_graph(variable_cost_df: pd.DataFrame, capex_dict: dict, country_mapper: dict, save_filepath: str = None, ext: str = "png") -> px.bar:
@@ -238,9 +233,8 @@ def add_capex_values_regional(vdf: pd.DataFrame, co_df: pd.DataFrame) -> pd.Data
         pd.DataFrame: The updated variable costs dataframe with the capex valuess.
     """
     vdf_c = vdf.copy()
-    tech_values = vdf_c.index.get_level_values(0).unique()
     country_values = vdf_c.index.get_level_values(2).unique()
-    for technology in tech_values:
+    for technology in SWITCH_DICT.keys():
         bf_value = co_df["brownfield_capex"][technology]
         #gf_value = co_df["greenfield_capex"][technology]
         for country in country_values:
@@ -257,9 +251,8 @@ def add_opex_values_regional(vdf: pd.DataFrame, co_df: pd.DataFrame) -> pd.DataF
         pd.DataFrame: The updated variable costs dataframe with the other opex values.
     """
     vdf_c = vdf.copy()
-    tech_values = vdf_c.index.get_level_values(0).unique()
     country_values = vdf_c.index.get_level_values(2).unique()
-    for technology in tech_values:
+    for technology in SWITCH_DICT.keys():
         other_opex=co_df["other_opex"][technology]
         for country in country_values:
             vdf_c.loc[(technology, "Other_Opex", country), "cost"] = other_opex
@@ -283,8 +276,8 @@ def return_capex_values_regional(
     other_opex_values = capex_dict["other_opex"].xs(key=year, level="Year").copy()
     for df in [greenfield_values, brownfield_values, other_opex_values]:
         df.drop(["Close plant", "Charcoal mini furnace"], axis=0, inplace=True)
-    brownfield_values["value"]=-brownfield_values["value"].apply(lambda x: npf.pmt(discount_rate, investment_cycle, x))
-    greenfield_values["value"]=-greenfield_values["value"].apply(lambda x: npf.pmt(discount_rate, investment_cycle, x))
+    brownfield_values["value"]= -brownfield_values["value"].apply(lambda x: npf.pmt(discount_rate, investment_cycle, x))
+    greenfield_values["value"]= -greenfield_values["value"].apply(lambda x: npf.pmt(discount_rate, investment_cycle, x))
     brownfield_values.rename(mapper={"value": "brownfield_capex"}, axis=1, inplace=True)
     greenfield_values.rename(mapper={"value": "greenfield_capex"}, axis=1, inplace=True)
     other_opex_values.rename(mapper={"value": "other_opex"}, axis=1, inplace=True)
@@ -292,9 +285,7 @@ def return_capex_values_regional(
     combined_values = combined_values.join(other_opex_values)
     return combined_values
 
-
-def create_capex_opex_split_data_regional(
-    vcsmb: pd.DataFrame, capex_dict: dict, country_mapper: dict, year: int = 2050, region: str= 'NAFTA') -> pd.DataFrame:
+def regional_split_of_preprocessed_data(vcsmb: pd.DataFrame, capex_dict: dict, country_mapper: dict, year: int = 2050, region: str = None):
     """Creates a DataFrame split by cost type for the purpose of creating a graph.
     Returns:
         pd.DataFrame: A DataFrame containing the split of costs and the associated metadata.
@@ -315,20 +306,19 @@ def create_capex_opex_split_data_regional(
     vcsmb_c = add_capex_values_regional(vcsmb_c, capex_opex_df).sort_values(index_sort)
     vcsmb_c.reset_index(inplace=True)
     vcsmb_c['cost_type'].replace('Other_Opex','Other Opex', inplace=True)
-
     vcsmb_c["region"] = vcsmb_c["country_code"].apply(lambda x: country_mapper[x])
-    vcsmb_c=vcsmb_c.reset_index(drop=True)
+    vcsmb_c.reset_index(drop=True)
     if region:
-        vcsmb_c=vcsmb_c.loc[(vcsmb_c['region']==region)]
-        vcsmb_c=vcsmb_c.drop_duplicates(subset=['technology','cost_type','material_category'])
-        vcsmb_c=vcsmb_c.drop(["material_category",'country_code', "region"], axis=1)
+        vcsmb_c = vcsmb_c.loc[(vcsmb_c['region'] == region)]
+        vcsmb_c = vcsmb_c.drop_duplicates(subset=['technology','cost_type','material_category'])
+        vcsmb_c = vcsmb_c.drop(["material_category",'country_code', "region"], axis=1)
     vcsmb_c = vcsmb_c.reset_index(drop=True)
-    vcsmb_c=vcsmb_c.groupby(["technology", "cost_type"]).sum().reset_index()
+    vcsmb_c = vcsmb_c.groupby(["technology", "cost_type"]).sum().reset_index()
     return vcsmb_c
 
 
 def opex_capex_graph_regional(
-    vcsmb: pd.DataFrame, capex_dict: dict, country_mapper: dict, save_filepath: str = None, ext: str = "png", year: int = 2050, region:str='NAFTA') -> px.bar:
+    vcsmb: pd.DataFrame, capex_dict: dict, country_mapper: dict, save_filepath: str = None, ext: str = "png", year: int = 2050, region: str = None) -> px.bar:
     """Creates a bar graph for the Opex Capex split graph.
     Args:
         save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
@@ -336,12 +326,12 @@ def opex_capex_graph_regional(
     Returns:
         px.bar: A plotly express bar chart.
     """
-    final_opex_capex_dataset = create_capex_opex_split_data_regional(vcsmb, capex_dict, country_mapper, year, region)
-    final_opex_capex_dataset_c = column_sorter(
+    final_opex_capex_dataset = regional_split_of_preprocessed_data(vcsmb, capex_dict, country_mapper, year=year, region=region)
+    final_opex_capex_dataset = column_sorter(
         final_opex_capex_dataset, "cost_type", BAR_CHART_ORDER.keys()
     )
     fig_ = bar_chart(
-        data=final_opex_capex_dataset_c,
+        data=final_opex_capex_dataset,
         x="technology",
         y="cost",
         color="cost_type",
@@ -349,7 +339,7 @@ def opex_capex_graph_regional(
         array_order=TECH_REFERENCE_LIST,
         xaxis_title="Technology",
         yaxis_title="Cost",
-        title_text= f"{region} - Capex / OPEX breakdown in {year}",#changes this
+        title_text= f"{region} - Capex / OPEX breakdown in {year}",
     )
     if save_filepath:
         fig_.write_image(f"{save_filepath}.{ext}")
