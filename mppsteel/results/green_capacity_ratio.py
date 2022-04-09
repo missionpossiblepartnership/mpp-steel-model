@@ -5,7 +5,7 @@ from copy import deepcopy
 import pandas as pd
 
 from mppsteel.config.model_config import (
-    PKL_DATA_IMPORTS
+    PKL_DATA_IMPORTS, MAIN_REGIONAL_SCHEMA
 )
 from mppsteel.config.reference_lists import TECHNOLOGY_STATES
 from mppsteel.utility.function_timer_utility import timer_func
@@ -54,12 +54,12 @@ def green_capacity_ratio_predata(
     for year in years:
         plants = list(tech_choices[str(year)].keys())
         capacities = [capacities_dict[plant] for plant in plants]
-        df = pd.DataFrame({'year': year, 'plant_name': plants, 'capacity': capacities, 'technology': '', 'region': ''})
+        df = pd.DataFrame({'year': year, 'plant_name': plants, 'capacity': capacities, 'technology': '', MAIN_REGIONAL_SCHEMA: ''})
         df['start_year'] = df['plant_name'].apply(lambda plant_name: fix_start_year(start_year_dict[plant_name]))
         df['technology'] = df['plant_name'].apply(lambda plant_name: tech_choices[str(year)][plant_name])
         df['green_tech'] = df['technology'].apply(lambda technology: tech_status_mapper(technology, inc_trans))
         df['active_status'] = df.apply(lambda row: active_status(row, tech_choices, year), axis=1)
-        df['region'] = df["plant_name"].apply(lambda plant_name: country_mapper[country_code_dict[plant_name]])
+        df[MAIN_REGIONAL_SCHEMA] = df["plant_name"].apply(lambda plant_name: country_mapper[country_code_dict[plant_name]])
         df_container.append(df)
     df_final = pd.concat(df_container).reset_index(drop=True)
     df_final['capacity'] /= 1000
@@ -83,8 +83,7 @@ def generate_gcr_df(scenario_dict: dict, serialize: bool = False) -> pd.DataFram
     final_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'final')
     plant_result_df = read_pickle_folder(intermediate_path, "plant_result_df", "df")
     tech_choice_dict = read_pickle_folder(intermediate_path, "tech_choice_dict", "dict")
-    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
-    rmi_mapper = create_country_mapper(country_ref, 'rmi')
+    rmi_mapper = create_country_mapper()
     green_capacity_ratio_df = green_capacity_ratio_predata(plant_result_df, tech_choice_dict, rmi_mapper, True)
     green_capacity_ratio_result = create_gcr_df(green_capacity_ratio_df)
     green_capacity_ratio_result = add_results_metadata(

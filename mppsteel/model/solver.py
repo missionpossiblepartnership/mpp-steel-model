@@ -17,6 +17,7 @@ from mppsteel.config.model_config import (
     MODEL_YEAR_START,
     PKL_DATA_FORMATTED,
     PKL_DATA_IMPORTS,
+    MAIN_REGIONAL_SCHEMA,
     INVESTMENT_CYCLE_DURATION_YEARS,
     INVESTMENT_OFFCYCLE_BUFFER_TOP,
     INVESTMENT_OFFCYCLE_BUFFER_TAIL,
@@ -46,7 +47,7 @@ from mppsteel.model.solver_constraints import (
 from mppsteel.model.tco_and_abatement_optimizer import get_best_choice, subset_presolver_df
 from mppsteel.model.plant_open_close import (
     open_close_flow, return_modified_plants, 
-    create_wsa_2020_utilization_dict, create_plant_capacity_dict
+    create_wsa_2020_utilization_dict, create_regional_capacity_dict
 )
 from mppsteel.model.trade import TradeBalance
 from mppsteel.model.levelized_cost import generate_levelized_cost_results
@@ -244,9 +245,53 @@ def return_best_tech(
 
     return best_choice
 
+class CapacityContainerClass():
+    def __init__(self):
+        self.plant_capacities = {}
+        self.regional_capacities = {}
+    
+    def instantiate_container(self, year_range: range):
+        self.plant_capacities = {year: 0 for year in year_range}
+        self.regional_capacities = {year: 0 for year in year_range}
+
+    def map_capacities(self, plant_df: pd.DataFrame, year: int):
+        self.plant_capacities[year] = create_plant_capacities_dict(plant_df)
+        self.regional_capacities[year] = create_regional_capacity_dict(plant_df, as_mt=True)
+
+    def return_regional_capacity(self, year: int = None, region: str = None):
+        if region and not year:
+            # return a year valye time series for a region
+            return {year_val: self.regional_capacities[year_val][region] for year in self.regional_capacities}
+        
+        if year and not region:
+            # return all regions for single year
+            return self.regional_capacities[year]
+        
+        if year and region:
+            # return single value
+            return self.regional_capacities[year][region]
+        
+        # return all years and regions
+        return self.regional_capacities
+        
+    def return_plant_capacity(self, year: int = None, plant: str = None):
+        if plant and not year:
+            # return a year valye time series for a region
+            return {year_val: (self.plant_capacities[year][plant] if plant in self.plant_capacities[year] else 0) for year in self.plant_capacities}
+        
+        if year and not plant:
+            # return all plants for single year
+            return self.plant_capacities[year]
+        
+        if year and plant:
+            # return single value
+            return self.plant_capacities[year][plant] if plant in self.plant_capacities[year] else 0
+        
+        # return all years and regions
+        return self.plant_capacities
+
 
 def choose_technology(
-    year_end: int,
     scenario_dict: dict
 ) -> dict:
     """Function containing the entire solver decision logic flow.
@@ -282,7 +327,7 @@ def choose_technology(
         intermediate_path, "variable_costs_regional", "df"
     )
     country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
-    rmi_mapper = create_country_mapper(country_ref, 'rmi')
+    rmi_mapper = create_country_mapper()
     country_ref_f = country_df_formatter(country_ref)
     bio_constraint_model = read_pickle_folder(
         intermediate_path, "bio_constraint_model_formatted", "df"
@@ -312,6 +357,9 @@ def choose_technology(
     )
     abatement_slim = subset_presolver_df(steel_plant_abatement_switches, subset_type='abatement')
 
+    # Year range
+    year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
+
     # Initialize plant container
     PlantIDC = PlantIdContainer()
     model_plant_df = plant_df.copy()
@@ -319,13 +367,14 @@ def choose_technology(
 
     # Instantiate Trade Container
     trade_container = TradeBalance()
-    region_list = model_plant_df['rmi_region'].unique()
-    trade_container.full_instantiation(MODEL_YEAR_START, MODEL_YEAR_END, region_list)
+    region_list = model_plant_df[MAIN_REGIONAL_SCHEMA].unique()
+    trade_container.full_instantiation(year_range, region_list)
 
     # Utilization & Capacity Containers
     util_dict = create_wsa_2020_utilization_dict()
     util_dict_c = deepcopy(util_dict)
-    capacity_results = {}
+    CapacityContainer = CapacityContainerClass()
+    CapacityContainer.instantiate_container(year_range)
 
     # Initialize the Material Usage container
     MaterialUsageContainer = MaterialUsage()
@@ -337,8 +386,6 @@ def choose_technology(
     }
     for material in material_models:
         MaterialUsageContainer.load_constraint(material_models[material], material)
-
-    year_range = range(MODEL_YEAR_START, year_end + 1)
 
     # Plant Choices
     PlantChoiceContainer = PlantChoices()
@@ -383,7 +430,8 @@ def choose_technology(
         model_plant_df = open_close_dict['plant_df']
         util_dict_c = open_close_dict['util_dict']
         all_plant_names = model_plant_df["plant_name"].copy()
-        plant_capacities_dict = create_plant_capacities_dict(model_plant_df)
+        CapacityContainer.map_capacities(model_plant_df, year)
+        plant_capacities_dict = CapacityContainer.return_plant_capacity(year=year)
         logger.info(f'Creating investment cycle for new plants')
         new_open_plants = return_modified_plants(model_plant_df, year, 'open')
         PlantInvestmentCycleContainer.add_new_plants(
@@ -516,7 +564,6 @@ def choose_technology(
                     PlantChoiceContainer.update_choices(year, plant_name, best_choice_tech)
                 entry['switch_tech'] = best_choice_tech
             PlantChoiceContainer.update_records(entry)
-        capacity_results[str(year)] = create_plant_capacity_dict(model_plant_df, as_mt=True)
     
     trade_summary_results = trade_container.output_trade_summary_to_df()
     full_trade_calculations = trade_container.output_trade_calculations_to_df()
@@ -526,6 +573,7 @@ def choose_technology(
     investment_df = PlantInvestmentCycleContainer.create_investment_df()
     tech_choice_dict = PlantChoiceContainer.return_choices()
     tech_choice_records = PlantChoiceContainer.output_records_to_df()
+    capacity_results = CapacityContainer.return_regional_capacity()
     
     return {
         'tech_choice_dict': tech_choice_dict,
@@ -542,7 +590,7 @@ def choose_technology(
 
 
 @timer_func
-def solver_flow(scenario_dict: dict, year_end: int, serialize: bool = False) -> dict:
+def solver_flow(scenario_dict: dict, serialize: bool = False) -> dict:
     """Initiates the complete solver flow and serializes the outputs. Tracks all technology choices and plant changes.
 
     Args:
@@ -554,10 +602,7 @@ def solver_flow(scenario_dict: dict, year_end: int, serialize: bool = False) -> 
         dict: A dictionary containing the best technology results and the resultant steel plants. tech_choice_dict is organised as year: plant: best tech.
     """
     intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
-    results_dict = choose_technology(
-        year_end=year_end,
-        scenario_dict=scenario_dict
-    )
+    results_dict = choose_technology(scenario_dict=scenario_dict)
     levelized_cost_updated = generate_levelized_cost_results(
         scenario_dict=scenario_dict, steel_plant_df=results_dict['plant_result_df']
         )

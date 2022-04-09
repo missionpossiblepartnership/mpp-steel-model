@@ -219,8 +219,7 @@ def emissivity_abatement(combined_emissivity: pd.DataFrame, scope: str) -> pd.Da
 
 
 def tco_calculator(tco_ref_df: pd.DataFrame):
-    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
-    rmi_mapper = create_country_mapper(country_ref, 'rmi')
+    rmi_mapper = create_country_mapper('rmi')
     df = tco_ref_df.copy()
     df["tco"] = df["discounted_opex"] + df["capex_value"]
     df["tco"] = df["tco"] / INVESTMENT_CYCLE_DURATION_YEARS

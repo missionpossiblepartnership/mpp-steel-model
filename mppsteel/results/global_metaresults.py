@@ -57,7 +57,7 @@ def global_metaresults_calculator(
             steel_market_df, year, steel_demand_scenario, "crude", region="World"
         )
     )
-    df["steel_capacity"] = df["year"].apply(lambda year: sum(list(capacity_dict[str(year)].values())))
+    df["steel_capacity"] = df["year"].apply(lambda year: sum(list(capacity_dict[year].values())))
     df["extra_capacity"] = df["steel_capacity"] - df["steel_demand"]
     df['capacity_utilization_factor'] = (df['steel_demand'] / df['steel_capacity']).round(3)
     df["scrap_availability"] = df["year"].apply(

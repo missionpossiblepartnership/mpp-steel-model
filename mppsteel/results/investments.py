@@ -10,7 +10,8 @@ from mppsteel.config.model_config import (
     MODEL_YEAR_START,
     MODEL_YEAR_END,
     PKL_DATA_IMPORTS,
-    PKL_DATA_FORMATTED
+    PKL_DATA_FORMATTED,
+    MAIN_REGIONAL_SCHEMA
 )
 from mppsteel.config.reference_lists import SWITCH_DICT
 
@@ -274,11 +275,10 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
     investment_results = (
         pd.DataFrame(data_container).set_index(["year"]).sort_values("year")
     )
-    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
-    rmi_mapper = create_country_mapper(country_ref, 'rmi')
+    rmi_mapper = create_country_mapper()
     investment_results['country_code'] = investment_results['plant_name'].apply(
         lambda x: plant_country_code_ref[x])
-    investment_results['rmi_region'] = investment_results['country_code'].apply(
+    investment_results[MAIN_REGIONAL_SCHEMA] = investment_results['country_code'].apply(
             lambda x: rmi_mapper[x])
     investment_results.reset_index(inplace=True)
     investment_results = map_plant_id_to_df(investment_results, plant_result_df, "plant_name")

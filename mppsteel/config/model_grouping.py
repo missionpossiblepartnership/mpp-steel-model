@@ -199,14 +199,13 @@ def scenario_batch_run(
     scenario_args = add_currency_rates_to_scenarios(scenario_args)
     timestamp = datetime.today().strftime('%d-%m-%y %H-%M')
     model_output_folder = f"{scenario_args['scenario_name']} {timestamp}"
-    model_presolver(scenario_args)
     model_calculation_phase(scenario_args)
     half_model_run(scenario_args, dated_output_folder, model_output_folder)
 
 def half_model_run(
     scenario_dict: dict, dated_output_folder: bool, model_output_folder: str
 ) -> None:
-    solver_flow(scenario_dict, year_end=MODEL_YEAR_END, serialize=True)
+    solver_flow(scenario_dict, serialize=True)
     model_results_phase(scenario_dict)
     model_outputs_phase(scenario_dict, dated_output_folder, model_output_folder)
     model_graphs_phase(scenario_dict, dated_output_folder, model_output_folder)
@@ -231,7 +230,8 @@ def graphs_only(scenario_dict: dict, model_output_folder: str, dated_output_fold
 
 def full_flow(scenario_dict: dict, dated_output_folder: bool, model_output_folder: str) -> None:
     data_import_and_preprocessing_refresh(scenario_dict)
-    scenario_batch_run(scenario_dict)
+    model_calculation_phase(scenario_dict)
+    half_model_run(scenario_dict, dated_output_folder, model_output_folder)
     half_model_run(scenario_dict, dated_output_folder, model_output_folder)
 
 

@@ -5,8 +5,10 @@ from collections import namedtuple
 
 import pandas as pd
 import pycountry
+from mppsteel.config.model_config import PKL_DATA_IMPORTS, MAIN_REGIONAL_SCHEMA
 
 from mppsteel.utility.log_utility import get_logger
+from mppsteel.utility.file_handling_utility import read_pickle_folder
 
 logger = get_logger(__name__)
 
@@ -136,7 +138,8 @@ def get_countries_from_group(
         return list(set(code_list).difference(exc_codes))
     return code_list
 
-def create_country_mapper(country_ref: pd.DataFrame, schema: str):
+def create_country_mapper(schema: str = 'rmi'):
+    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
     mapper = {
         'Country': 'country_name', 
         'ISO-alpha3 code': 'country_code', 

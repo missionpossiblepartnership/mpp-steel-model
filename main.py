@@ -62,7 +62,7 @@ if __name__ == "__main__":
         full_flow(scenario_dict=scenario_args, dated_output_folder=True, model_output_folder=model_output_folder)
 
     if args.solver:
-        solver_flow(scenario_dict=scenario_args, year_end=MODEL_YEAR_END, serialize=True)
+        solver_flow(scenario_dict=scenario_args, serialize=True)
 
     if args.minimodels:
         model_results_phase(scenario_dict=scenario_args)

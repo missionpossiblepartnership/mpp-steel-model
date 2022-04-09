@@ -11,6 +11,7 @@ from tqdm.auto import tqdm as tqdma
 
 from mppsteel.config.model_config import (
     MODEL_YEAR_START,
+    MAIN_REGIONAL_SCHEMA,
     CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
     CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
     RELATIVE_REGIONAL_COST_BOUNDARY_FROM_MEAN_PCT
@@ -117,7 +118,7 @@ def calculate_cos(
         capex_costs=capex_costs, 
         axis=1
     )
-    return plant_df_c[['rmi_region', 'cost_of_steelmaking']].groupby(['rmi_region']).mean().sort_values(by='cost_of_steelmaking', ascending=True).copy()
+    return plant_df_c[[MAIN_REGIONAL_SCHEMA, 'cost_of_steelmaking']].groupby([MAIN_REGIONAL_SCHEMA]).mean().sort_values(by='cost_of_steelmaking', ascending=True).copy()
 
 
 class TradeBalance:
@@ -131,8 +132,8 @@ class TradeBalance:
     def __str__(self):
         return "Trade Container Class"
     
-    def initiate_years(self, year_start: int, year_end: int):
-        self.trade_container = {year: {} for year in range(year_start, year_end)}
+    def initiate_years(self, year_range: range):
+        self.trade_container = {year: {} for year in year_range}
         
     def initiate_regions(self, region_list: list):
         for year in self.trade_container:
@@ -141,8 +142,8 @@ class TradeBalance:
     def return_container(self):
         return self.trade_container
     
-    def full_instantiation(self, year_start: int, year_end: int, region_list: list):
-        self.initiate_years(year_start, year_end + 1)
+    def full_instantiation(self, year_range: range, region_list: list):
+        self.initiate_years(year_range)
         self.initiate_regions(region_list)
     
     def trade_container_getter(self, year: int, region: str = None, agg: bool = False):
@@ -207,7 +208,7 @@ def trade_flow(
     cos_df = calculate_cos(plant_df, year, production_demand_df, variable_cost_df, tech_choices_ref, capex_dict)
     relative_production_cost_df = check_relative_production_cost(cos_df, 'cost_of_steelmaking', relative_boundary_from_mean)
 
-    region_list = list(plant_df['rmi_region'].unique())
+    region_list = list(plant_df[MAIN_REGIONAL_SCHEMA].unique())
     util_dict_c = deepcopy(util_dict)
 
     for region in tqdm(region_list, total=len(region_list), desc=f'Trade Flow for {year}'):

@@ -79,8 +79,7 @@ def plant_variable_costs(scenario_dict: dict) -> pd.DataFrame:
         .set_index("country_code")
         .to_dict()["cheap_natural_gas"]
     )
-    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
-    rmi_mapper = create_country_mapper(country_ref, 'rmi')
+    rmi_mapper = create_country_mapper()
     power_grid_prices_formatted = read_pickle_folder(
         intermediate_path, "power_grid_prices_formatted", "df"
     )

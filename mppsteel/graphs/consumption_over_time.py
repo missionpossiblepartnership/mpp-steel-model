@@ -4,6 +4,7 @@ from itertools import zip_longest
 import pandas as pd
 import plotly.express as px
 
+from mppsteel.config.model_config import MAIN_REGIONAL_SCHEMA
 from mppsteel.config.reference_lists import MPP_COLOR_LIST
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.file_handling_utility import read_pickle_folder
@@ -27,18 +28,18 @@ def format_cot_graph(
     df_c = df.copy()
     df_c = pd.melt(
         df,
-        id_vars=["year", "region"],
+        id_vars=["year", MAIN_REGIONAL_SCHEMA],
         value_vars=resource_list,
         var_name="metric",
     )
     df_c.reset_index(drop=True, inplace=True)
     df_c = (
-        df_c.groupby(["region", "year", "metric"], as_index=False)
+        df_c.groupby([MAIN_REGIONAL_SCHEMA, "year", "metric"], as_index=False)
         .agg({"value": "sum"})
         .round(2)
     )
     if regions:
-        df_c = df_c.loc[df_c["region"].isin(regions)]
+        df_c = df_c.loc[df_c[MAIN_REGIONAL_SCHEMA].isin(regions)]
     else:
         df_c = (
             df_c.groupby(["year", "metric"], as_index=False)

@@ -293,8 +293,7 @@ def regional_s2_emissivity(scenario_dict: dict) -> pd.DataFrame:
         PKL_DATA_FORMATTED, "steel_plants_processed", "df"
     )
     steel_plant_country_codes = list(steel_plants["country_code"].unique())
-    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
-    rmi_mapper = create_country_mapper(country_ref, 'rmi')
+    rmi_mapper = create_country_mapper()
     df_list = []
     year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
     for year in tqdm(
@@ -337,10 +336,7 @@ def combine_emissivity(
         pd.DataFrame: A DataFrame with scopes 1, 2 and 3 data.
     """
     logger.info("Combining S2 Emissions with S1 & S3 emissivity")
-    country_ref = read_pickle_folder(
-        PKL_DATA_IMPORTS, "country_ref", "df"
-    )
-    rmi_mapper = create_country_mapper(country_ref, 'rmi')
+    rmi_mapper = create_country_mapper()
     s2_ref = s2_ref.reset_index(drop=True).set_index(['year', 'technology']).copy()
     total_emissivity = s2_ref.join(
         s1_ref.rename({'emissions': 's1_emissivity'}, axis=1)

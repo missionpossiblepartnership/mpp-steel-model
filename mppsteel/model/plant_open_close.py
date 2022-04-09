@@ -17,6 +17,7 @@ from mppsteel.data_loading.reg_steel_demand_formatter import steel_demand_getter
 from mppsteel.config.model_config import (
     PKL_DATA_FORMATTED,
     PKL_DATA_IMPORTS,
+    MAIN_REGIONAL_SCHEMA,
     CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
     CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
 )
@@ -48,7 +49,7 @@ def pick_random_country_from_region(country_df: pd.DataFrame, region: str): # GE
     return random.choice(country_list)
 
 def pick_random_country_from_region_subset(plant_df: pd.DataFrame, region: str): # GENERAL FUNCTION
-    country_list = plant_df[plant_df['rmi_region'] == region]['country_code'].unique()
+    country_list = plant_df[plant_df[MAIN_REGIONAL_SCHEMA] == region]['country_code'].unique()
     return random.choice(country_list)
 
 
@@ -59,7 +60,7 @@ def create_new_plant(plant_df: pd.DataFrame, plant_row_dict: dict):
     return plant_df_c.append(base_dict, ignore_index=True)
 
 
-def agg_plant_capacity(plant_df: pd.DataFrame, avg: bool = False, region_string: str = 'rmi_region') -> float:
+def agg_plant_capacity(plant_df: pd.DataFrame, avg: bool = False, region_string: str = MAIN_REGIONAL_SCHEMA) -> float:
     """Returns the total capacity of all plants listed in the `plant_cap_dict` dictionary.
 
     Args:
@@ -80,15 +81,15 @@ def agg_plant_capacity(plant_df: pd.DataFrame, avg: bool = False, region_string:
     return region_capacity_dict
 
 
-def create_plant_capacity_dict(plant_df: pd.DataFrame, as_avg: bool = False, rounding: int = 3, as_mt: bool = False):
+def create_regional_capacity_dict(plant_df: pd.DataFrame, as_avg: bool = False, rounding: int = 3, as_mt: bool = False):
     logger.info('Deriving plant capacity statistics')
     plant_df_c = plant_df.copy()
-    df = plant_df_c[['rmi_region', 'plant_capacity']].groupby(['rmi_region'])
+    df = plant_df_c[[MAIN_REGIONAL_SCHEMA, 'plant_capacity']].groupby([MAIN_REGIONAL_SCHEMA])
     if as_avg:
         df = df.mean().round(rounding).reset_index()
     else:
         df = df.sum().round(rounding).reset_index()
-    dict_obj = dict(zip(df['rmi_region'], df['plant_capacity']))
+    dict_obj = dict(zip(df[MAIN_REGIONAL_SCHEMA], df['plant_capacity']))
     if as_mt:
         return {region: value / 1000 for region, value in dict_obj.items()}
     return dict_obj
@@ -159,7 +160,7 @@ def new_plant_metadata(
         'country_code': assigned_country,
         'cheap_natural_gas': ng_mapper[assigned_country],
         'plant_capacity': capacity_value,
-        'rmi_region': region
+        MAIN_REGIONAL_SCHEMA: region
     }
 
 
@@ -173,7 +174,7 @@ def return_oldest_plant(inv_dict: dict, current_year: int, plant_list: list = No
 
 
 def return_plants_from_region(plant_df: pd.DataFrame, region: str):
-    return list(plant_df[plant_df['rmi_region'] == region]['plant_name'].values)
+    return list(plant_df[plant_df[MAIN_REGIONAL_SCHEMA] == region]['plant_name'].values)
 
 
 def add_new_plant_choices(tech_choices_container, year: int, plant: str, tech: str):
@@ -202,8 +203,8 @@ def production_demand_gap(
     logger.info(f'Defining the production demand gap for {year}')
     util_dict_c = deepcopy(util_dict)
     # SUBSETTING & VALIDATION
-    capacity_dict_agg = create_plant_capacity_dict(plant_df, as_mt=True)
-    capacity_dict_avg = create_plant_capacity_dict(plant_df, as_avg=True, as_mt=True)
+    capacity_dict_agg = create_regional_capacity_dict(plant_df, as_mt=True)
+    capacity_dict_avg = create_regional_capacity_dict(plant_df, as_avg=True, as_mt=True)
     avg_plant_global_capacity = np.mean(list(capacity_dict_avg.values()))
     util_dict_c['World'] = np.mean(list(util_dict_c.values()))
 
@@ -410,9 +411,9 @@ def format_wsa_production_data(df, as_dict: bool = False):
     df_c = df_c.melt(id_vars=['WSA_Region','RMI_Region','Country','Metric','Unit'], var_name='year')
     df_c = df_c[df_c['year'] == 2020]
     df_c.columns = [col.lower() for col in df_c.columns]
-    df_c = df_c.groupby(['rmi_region', 'year']).sum().reset_index()
+    df_c = df_c.groupby([MAIN_REGIONAL_SCHEMA, 'year']).sum().reset_index()
     if as_dict:
-        return dict(zip(df_c['rmi_region'], df_c['value']))
+        return dict(zip(df_c[MAIN_REGIONAL_SCHEMA], df_c['value']))
     return df_c
 
 def return_utilization(prod_dict: dict, cap_dict: dict, value_cap: float = None):
@@ -429,7 +430,7 @@ def create_wsa_2020_utilization_dict():
     wsa_production = read_pickle_folder(PKL_DATA_IMPORTS, "wsa_production", "df")
     steel_plants_processed = read_pickle_folder(PKL_DATA_FORMATTED, "steel_plants_processed", "df")
     wsa_2020_production_dict = format_wsa_production_data(wsa_production, as_dict=True)
-    capacity_dict = create_plant_capacity_dict(steel_plants_processed, as_mt=True)
+    capacity_dict = create_regional_capacity_dict(steel_plants_processed, as_mt=True)
     return return_utilization(wsa_2020_production_dict, capacity_dict, value_cap=1)
 
 def open_close_flow(

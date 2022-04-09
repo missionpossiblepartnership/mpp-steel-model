@@ -10,6 +10,7 @@ from mppsteel.config.model_config import (
     MODEL_YEAR_END,
     PKL_DATA_FORMATTED,
     PKL_DATA_IMPORTS,
+    MAIN_REGIONAL_SCHEMA,
 )
 
 from mppsteel.config.reference_lists import LOW_CARBON_TECHS, SWITCH_DICT
@@ -64,17 +65,17 @@ def generate_production_stats(
     tech_capacity_df["low_carbon_tech"] = tech_capacity_df["technology"].apply(
         lambda tech: "Y" if tech in LOW_CARBON_TECHS else "N"
     )
-    tech_capacity_df["region"] = tech_capacity_df["country_code"].apply(
+    tech_capacity_df[MAIN_REGIONAL_SCHEMA] = tech_capacity_df["country_code"].apply(
         lambda x: country_mapper[x])
-    regions = tech_capacity_df['region'].unique()
+    regions = tech_capacity_df[MAIN_REGIONAL_SCHEMA].unique()
     for year in tqdm(year_range, total=len(year_range), desc="Production Stats"):
         df = tech_capacity_df[tech_capacity_df["year"] == year].copy()
         # Regional production split
         for region in regions:
             regional_steel_demand = steel_demand_getter(steel_df, year, steel_demand_scenario, "crude", region=region)
-            regional_capacity = capacity_results[str(year)][region]
+            regional_capacity = capacity_results[year][region]
             capacity_utilization_factor = regional_steel_demand / regional_capacity
-            df_r = df[df["region"] == region].copy()
+            df_r = df[df[MAIN_REGIONAL_SCHEMA] == region].copy()
             df_r["capacity_utilization"] = capacity_utilization_factor
             df_r['production'] = df_r.apply(apply_production_value, axis=1)
             df_list.append(df_r)
@@ -300,8 +301,7 @@ def production_results_flow(scenario_dict: dict, serialize: bool = False) -> dic
     capacity_results = read_pickle_folder(
         intermediate_path, "capacity_results", "dict"
     )
-    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
-    rmi_mapper = create_country_mapper(country_ref, 'rmi')
+    rmi_mapper = create_country_mapper()
     calculated_emissivity_combined = read_pickle_folder(
         intermediate_path, "calculated_emissivity_combined", "df"
     )
