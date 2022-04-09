@@ -362,7 +362,7 @@ def open_close_plants(
         gap_analysis_df = trade_output['production_demand_df']
         util_dict_c = trade_output['util_dict']
 
-        trade_container.record_results(year, gap_analysis_df)
+        trade_container.record_results(gap_analysis_df)
 
     regions = list(gap_analysis_df.index.get_level_values(1).unique())
     regions.remove('World')
