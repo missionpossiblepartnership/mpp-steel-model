@@ -5,7 +5,6 @@ from copy import deepcopy
 import pandas as pd
 
 from mppsteel.config.model_config import (
-    PKL_DATA_FORMATTED,
     PKL_DATA_IMPORTS
 )
 from mppsteel.config.reference_lists import TECHNOLOGY_STATES
