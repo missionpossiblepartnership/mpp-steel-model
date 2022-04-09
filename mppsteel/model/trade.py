@@ -26,6 +26,7 @@ def get_xcost_from_region(lcost_df: pd.DataFrame, year: int, region: str = None,
     
     if region:
         lcost_df_c.set_index(['year', 'region', 'technology'], inplace=True)
+        lcost_df_c.sort_values(['year', 'region', 'technology'], ascending=True, inplace=True)
         lcost_df_c_s = lcost_df_c.loc[year, region]
         
     else:
@@ -122,7 +123,7 @@ def calculate_cos(
 class TradeBalance:
     def __init__(self):
         self.trade_container = {}
-        self.results = {}
+        self.results = []
         
     def __repr__(self):
         return "Trade Container"
@@ -160,11 +161,11 @@ class TradeBalance:
         df.rename({'index': 'region'}, axis=1, inplace=True)
         return df.set_index(['year', 'region'])
 
-    def record_results(self, year: int, results_df: pd.DataFrame):
-        self.results[year] = results_df
+    def record_results(self, results_df: pd.DataFrame):
+        self.results.append(results_df)
 
     def output_trade_calculations_to_df(self):
-        return pd.concat([self.results[year] for year in self.results.keys()])
+        return pd.concat(self.results, axis=1)
 
 DATA_ENTRY_DICT_KEYS = [
     'new_capacity_required',
