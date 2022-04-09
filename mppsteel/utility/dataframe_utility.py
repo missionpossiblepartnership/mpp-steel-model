@@ -164,6 +164,7 @@ def add_results_metadata(
     scenario_dict: dict,
     include_regions: bool = True,
     single_line: bool = False,
+    scenario_name: bool = True,
 ) -> pd.DataFrame:
     """Adds scenario and (optionally) regional metadata column(s) to each row in a DataFrame.
 
@@ -178,7 +179,7 @@ def add_results_metadata(
     """
     country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
     df_c = df.copy()
-    df_c = add_scenarios(df_c, scenario_dict, single_line)
+    df_c = add_scenarios(df_c, scenario_dict, single_line, scenario_name)
     if include_regions:
         for schema in RESULTS_REGIONS_TO_MAP:
             df_c = add_regions(df_c, country_ref, schema)

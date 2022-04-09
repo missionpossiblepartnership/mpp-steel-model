@@ -283,7 +283,7 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
     investment_results.reset_index(inplace=True)
     investment_results = map_plant_id_to_df(investment_results, plant_result_df, "plant_name")
     investment_results = add_results_metadata(
-        investment_results, scenario_dict, single_line=True
+        investment_results, scenario_dict, single_line=True, scenario_name=True
     )
     cumulative_investment_results = create_inv_stats(
         investment_results, results="regional", agg=True, operation="cumsum"
