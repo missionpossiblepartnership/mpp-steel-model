@@ -3,7 +3,7 @@
 import time
 from typing import Union
 
-def format_times(start_t: float, end_t: float) -> str:
+def format_times(start_t: float, end_t: float, formatted: bool = True) -> str:
     """Formats a time duration between a start time and end time as a string.
 
     Args:
@@ -14,7 +14,9 @@ def format_times(start_t: float, end_t: float) -> str:
         str: A formatted string of the time duration.
     """
     time_diff = end_t - start_t
-    return f"{time_diff :0.2f} seconds | {time_diff / 60 :0.2f} minutes"
+    if formatted:
+        return f"{time_diff :0.2f} seconds | {time_diff / 60 :0.2f} minutes"
+    return time_diff
 
 
 class TimeContainerClass:
@@ -23,15 +25,17 @@ class TimeContainerClass:
     """
     def __init__(self):
         self.time_container = {}
+        self.raw_times = {}
 
-    def update_time(self, func_name: str, timings: str) -> None:
+    def update_time(self, func_name: str, starttime: float, endtime: float) -> None:
         """Method that stores times in the instantiated timing dictionary store.
 
         Args:
             func_name (str): The name of the function you want to time.
             timings (str): The time it took to run the function.
         """
-        self.time_container[func_name] = timings
+        self.time_container[func_name] = format_times(starttime, endtime, formatted=True)
+        self.raw_times[func_name] = endtime - starttime
 
     def return_time_container(self, return_object: bool = False) -> Union[None, dict]:
         """Returns the contents of the timer dictionary container as a printed statement or object.
@@ -42,9 +46,10 @@ class TimeContainerClass:
         Returns:
             Union[None, dict]: Returns a printed statement to the console and optionally a dictionary object depending on the `return_object` flag.
         """
-        time_container = self.time_container
-        for entry in time_container:
-            print(f"The {entry} function took {time_container[entry]}")
+        for entry in self.time_container:
+            print(f"The {entry} function took {self.time_container[entry]}")
+        total_time_seconds = sum(self.raw_times.values())
+        print(f'The total runtime for the scripts was {total_time_seconds :0.2f} seconds | {total_time_seconds / 60 :0.2f} minutes')
         if return_object:
             return time_container
 
@@ -63,7 +68,7 @@ def timer_func(func):
         starttime = time.time()
         result = func(*args, **kwargs)
         endtime = time.time()
-        TIME_CONTAINER.update_time(func.__name__, format_times(starttime, endtime))
+        TIME_CONTAINER.update_time(func.__name__, starttime, endtime)
         return result
 
     return wrap_func
