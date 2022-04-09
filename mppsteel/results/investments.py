@@ -19,6 +19,7 @@ from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder, serialize_file, get_scenario_pkl_path
 )
+from mppsteel.results.production import get_tech_choice
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.data_loading.steel_plant_formatter import map_plant_id_to_df
 from mppsteel.utility.location_utility import create_country_mapper
@@ -78,7 +79,7 @@ def investment_switch_getter(
 
 
 def investment_row_calculator(
-    investment_switch_ref: dict,
+    plant_investment_cycles: pd.DataFrame,
     capex_df: pd.DataFrame,
     tech_choices: dict,
     capacity_ref: dict,
@@ -88,7 +89,7 @@ def investment_row_calculator(
     """_summary_
 
     Args:
-        inv_df (pd.DataFrame): The Investment cycle reference DataFrame.
+        plant_investment_cycles (pd.DataFrame): The Investment cycle reference DataFrame.
         capex_df (pd.DataFrame): A switch capex reference. 
         tech_choices (dict): Dictionary containing all technology choices for every plant across every year.
         plant_name (str): The name of the reference plant.
@@ -99,8 +100,7 @@ def investment_row_calculator(
     Returns:
         dict: A dictionary containing the column-value pairs to be inserted in a DataFrame.
     """
-    switch_type = investment_switch_ref[(year, plant_name)]
-
+    switch_type = plant_investment_cycles.loc[year, plant_name]['switch_type']
     if year == 2020:
         start_tech = get_tech_choice(tech_choices, 2020, plant_name)
     else:
@@ -236,7 +236,6 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
     plant_investment_cycles = read_pickle_folder(
         intermediate_path, "investment_cycle_ref_result", "df"
     )
-    plant_investment_cycles_c = plant_investment_cycles.reset_index().set_index(["year", "plant_name"]).sort_values(["year"])
     plant_result_df = read_pickle_folder(
         intermediate_path, "plant_result_df", "df"
     )
@@ -250,19 +249,10 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
     max_year = max([int(year) for year in tech_choice_dict])
     year_range = range(MODEL_YEAR_START, max_year + 1)
 
-
     year_plant_product = list(itertools.product(year_range, plant_names))
 
     capacity_ref = dict(zip(plant_result_df['plant_name'], plant_result_df['plant_capacity']))
     plant_country_code_ref = dict(zip(plant_result_df['plant_name'], plant_result_df['country_code']))
-    
-    investment_switch_ref = {}
-    for year, plant_name in tqdm(
-        year_plant_product,
-        total=len(year_plant_product),
-        desc="Investment Reference Loop",
-    ):
-        investment_switch_ref[(year, plant_name)] = plant_investment_cycles_c.loc[year, plant_name].values[0]
 
     data_container = []
     for year, plant_name in tqdm(
@@ -272,7 +262,7 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
     ):
         data_container.append(
             investment_row_calculator(
-                investment_switch_ref,
+                plant_investment_cycles,
                 capex_df,
                 tech_choice_dict,
                 capacity_ref,
