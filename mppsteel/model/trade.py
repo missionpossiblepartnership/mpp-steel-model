@@ -151,6 +151,7 @@ def trade_flow(
     market_container: MarketContainerClass, 
     production_demand_df: pd.DataFrame, 
     utilization_container: UtilizationContainerClass,
+    capacity_container: CapacityContainerClass,
     variable_cost_df: pd.DataFrame,
     plant_df: pd.DataFrame,
     capex_dict: dict,
@@ -180,20 +181,20 @@ def trade_flow(
         # 'new_total_capacity', 'new_utilized_capacity', 'new_balance', 'new_utilization'
         data_entry_dict_values = None
         if (trade_balance > 0) and relative_cost_below_avg:
-            # export
+            # CHEAP EXCESS SUPPLY -> export
             market_container.assign_trade_balance(year, region, trade_balance)
             data_entry_dict_values = [0, 0, 0, capacity, capacity * utilization, 0, utilization]
             utilization_container.update_region(year, region, utilization)
 
         elif (trade_balance > 0) and not relative_cost_below_avg and (utilization > util_min):
-            # reduce utilization
+            # EXPENSIVE EXCESS SUPPLY -> reduce utilization if possible
             new_min_utilization_required = demand / capacity
             new_utilized_capacity = capacity * new_min_utilization_required
             data_entry_dict_values = [0, 0, 0, capacity, new_utilized_capacity, 0, new_min_utilization_required]
             utilization_container.update_region(year, region, new_min_utilization_required)
 
         elif (trade_balance > 0) and not relative_cost_below_avg and (utilization <= util_min):
-            # close plant(s)
+            # EXPENSIVE EXCESS SUPPLY -> close plant
             excess_capacity = (capacity * util_min) - demand
             plants_to_close = math.ceil(excess_capacity / avg_plant_capacity)
             new_total_capacity = capacity - (plants_to_close * avg_plant_capacity)
@@ -203,17 +204,18 @@ def trade_flow(
             utilization_container.update_region(year, region, new_min_utilization_required)
 
         elif (trade_balance < 0) and (utilization < util_max):
+            # INSUFFICIENT SUPPLY -> increase utilization (test)
             min_utilization_reqiured = demand / capacity
             new_min_utilization_required = min(min_utilization_reqiured, util_max)
             new_utilized_capacity = new_min_utilization_required * capacity
             new_balance = new_utilized_capacity - demand
             if (new_balance < 0) and not relative_cost_below_avg:
-                # if still not enough after utilization has increased
-                # import
+                # STILL INSUFFICIENT SUPPLY
+                # EXPENSIVE REGION -> import
                 market_container.assign_trade_balance(year, region, trade_balance)
                 data_entry_dict_values = [0, 0, 0, capacity, new_utilized_capacity, 0, new_min_utilization_required]
             elif (new_balance < 0) and relative_cost_below_avg:
-                # build plant(s)
+                # CHEAP REGION -> import
                 new_plants_required = math.ceil(-new_balance / avg_plant_capacity)
                 new_total_capacity = capacity + (new_plants_required * avg_plant_capacity)
                 new_min_utilization_required = demand / new_total_capacity
@@ -221,12 +223,12 @@ def trade_flow(
                 new_utilized_capacity = new_min_utilization_required * capacity
                 data_entry_dict_values = [-new_balance, new_plants_required, 0, new_total_capacity, new_utilized_capacity, 0, new_min_utilization_required]
             else:
-                # just increase utilization
+                # SUFFICIENT SUPPLY -> increase utilization
                 data_entry_dict_values = [0, 0, 0, capacity, new_utilized_capacity, 0, new_min_utilization_required]
             utilization_container.update_region(year, region, new_min_utilization_required)
 
         elif (trade_balance < 0) and (utilization >= util_max) and relative_cost_below_mean:
-            # build plant(s)
+            # INSUFFICIENT SUPPLY, CHEAP REGION, MAX UTILIZATION -> open plants
             new_capacity_required = demand - (capacity * util_max)
             new_plants_required = math.ceil(new_capacity_required / avg_plant_capacity)
             new_total_capacity = new_total_capacity + (new_plants_required * avg_plant_capacity)
@@ -238,20 +240,20 @@ def trade_flow(
             utilization_container.update_region(year, region, new_min_utilization_required)
 
         elif (trade_balance < 0) and (utilization >= util_max) and not relative_cost_below_mean:
-            # import
+            # INSUFFICIENT SUPPLY, EXPENSIVE REGION, MAX UTILIZATION -> import
             market_container.assign_trade_balance(year, region, trade_balance)
             data_entry_dict_values = [0, 0, 0, capacity, capacity * utilization, 0, utilization]
             utilization_container.update_region(year, region, utilization)
         
         if data_entry_dict_values:
+            # APPLY FINAL CHANGE, ELSE NO CHANGE
             production_demand_df_c = modify_prod_df(production_demand_df_c, data_entry_dict_values, year, region)
-            # Else no modification
 
     global_trade_balance = round(market_container.trade_container_getter(year), 3)
     if global_trade_balance > 0:
-        logger.info(f'Trade Balance Surplus of {global_trade_balance} Mt in year {year}')
+        logger.info(f'Trade Balance Surplus of {global_trade_balance} Mt in year {year}. No balancing to zero.')
     elif global_trade_balance < 0:
-        logger.info(f'Trade Balance Deficit of {global_trade_balance} Mt in year {year}')
+        logger.info(f'Trade Balance Deficit of {global_trade_balance} Mt in year {year}, balancing to zero.')
         rpc_df = relative_production_cost_df[relative_production_cost_df['relative_cost_close_to_mean'] == True].sort_values(['cost_of_steelmaking'], ascending=True)
         while global_trade_balance < 0:
             for region in rpc_df.index:
@@ -260,6 +262,7 @@ def trade_flow(
                 total_capacity = production_demand_df_c.loc[(year, region), 'new_total_capacity']
                 current_utilized_capacity = production_demand_df_c.loc[(year, region), 'new_utilized_capacity']
                 potential_extra_production = (util_max - current_utilization) * total_capacity
+                # Instantiate capacity and utilization
                 new_utilized_capacity = 0
                 new_utilization = 0
                 if potential_extra_production > abs(global_trade_balance):
@@ -283,21 +286,21 @@ def trade_flow(
                 # build new plant
                 cheapest_region = rpc_df['cost_of_steelmaking'].idxmin()
                 total_capacity = production_demand_df_c.loc[(year, cheapest_region), 'new_total_capacity']
-                new_capacity_required = demand - (total_capacity * util_max)
+                new_capacity_required = abs(global_trade_balance)
                 new_plants_required = math.ceil(new_capacity_required / avg_plant_capacity)
-                new_total_capacity = new_total_capacity + (new_plants_required * avg_plant_capacity)
-                new_min_utilization_required = demand / new_total_capacity
-                new_min_utilization_required = min(new_min_utilization_required, util_max)
-                new_utilized_capacity = new_min_utilization_required * capacity
+                new_total_capacity = total_capacity + (new_plants_required * avg_plant_capacity)
+                new_min_utilization_required = min(demand / new_total_capacity, util_max)
+                new_utilized_capacity = new_min_utilization_required * new_total_capacity
                 data_entry_dict_values = [new_capacity_required, new_plants_required, 0, new_total_capacity, new_utilized_capacity, 0, new_min_utilization_required]
-                utilization_container.update_region(year, region, new_min_utilization_required)
+                utilization_container.update_region(year, cheapest_region, new_min_utilization_required)
                 production_demand_df_c = modify_prod_df(production_demand_df_c, data_entry_dict_values, year, cheapest_region)
                 global_trade_balance = 0
 
     elif global_trade_balance == 0:
         logger.info(f'Trade Balance is completely balanced at {global_trade_balance} Mt in year {year}')
 
-    utilization_container.calculate_world_utilization(year)
+    regional_capacities = capacity_container.return_regional_capacity(year)
+    utilization_container.calculate_world_utilization(year, regional_capacities)
 
     market_container.store_results(year, production_demand_df_c)
 
