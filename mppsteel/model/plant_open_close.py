@@ -188,13 +188,13 @@ def production_demand_gap(
         excess_capacity = 0
         new_plants_required = 0
         plants_to_close = 0
-        current_capacity = deepcopy(capacity_agg)
         new_total_capacity = 0
+        current_capacity = deepcopy(capacity_agg)
 
         initial_min_utilization_reqiured = demand / capacity_agg
         new_min_utilization_required = 0
         
-        if capacity_util_min < initial_min_utilization_reqiured < capacity_util_max:
+        if capacity_util_min <= initial_min_utilization_reqiured <= capacity_util_max:
             new_total_capacity = current_capacity
             new_min_utilization_required = initial_min_utilization_reqiured
 
@@ -213,8 +213,8 @@ def production_demand_gap(
             new_min_utilization_required = min(new_min_utilization_required, capacity_util_max)
         
         utilization_container.update_region(year, region, new_min_utilization_required)
-        utilization_container.calculate_world_utilization(year)
-
+        regional_capacities = capacity_container.return_regional_capacity(year)
+        utilization_container.calculate_world_utilization(year, regional_capacities)
 
         initial_utilized_capacity = capacity_agg * initial_utilization
         new_utilized_capacity = new_total_capacity * new_min_utilization_required
@@ -287,6 +287,7 @@ def open_close_plants(
             market_container=market_container,
             production_demand_df=production_demand_gap_analysis,
             utilization_container=utilization_container,
+            capacity_container=capacity_container,
             variable_cost_df=variable_costs_df,
             plant_df=steel_plant_df_c,
             capex_dict=capex_dict,
