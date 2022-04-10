@@ -79,12 +79,8 @@ def get_capex_values(
 
     year_list = []
     for year in tqdm(year_range, total=len(year_range), desc="Get Capex Values"):
-        logger.info(f"Calculating year {year}")
-
         tech_list = []
         for technology in SWITCH_DICT:
-            # logger.info(f"-- Generating Capex values for {technology}")
-
             df_temp = df_dict_c[technology].copy()
             for new_technology in SWITCH_DICT[technology]:
                 capex_difference = (
@@ -320,7 +316,7 @@ def get_capex_values(
 
 
 @timer_func
-def create_capex_timeseries(scenario_dict: dict = None, serialize: bool = False) -> pd.DataFrame:
+def create_capex_timeseries(serialize: bool = False) -> pd.DataFrame:
     """Complete flow to create a capex dictionary.
 
     Args:
