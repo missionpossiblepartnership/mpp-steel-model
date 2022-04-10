@@ -1,7 +1,6 @@
 """Calculates Global Meta Results of the model"""
 
 import pandas as pd
-import numpy as np
 
 from mppsteel.config.model_config import (
     MODEL_YEAR_END,
@@ -53,8 +52,9 @@ def global_metaresults_calculator(
         )
     ).round(rounding)
     df["steel_capacity"] = df["year"].apply(lambda year: sum(list(capacity_results[year].values()))).round(rounding)
-    df["extra_capacity"] = (df["steel_capacity"] - df["steel_demand"]).round(rounding)
+    df["capacity_balance"] = (df["steel_capacity"] - df["steel_demand"]).round(rounding)
     df['capacity_utilization_factor'] = df["year"].apply(lambda year: utilization_results[year]['World']).round(2)
+    df['steel_production'] = (df["steel_capacity"] * df["capacity_utilization_factor"]).round(rounding)
     df["scrap_availability"] = df["year"].apply(
         lambda year: steel_demand_getter(
             steel_market_df, year, steel_demand_scenario, "scrap", region="World"
