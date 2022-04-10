@@ -8,6 +8,7 @@ from tqdm import tqdm
 import random
 from copy import deepcopy
 from mppsteel.config.reference_lists import SWITCH_DICT
+from mppsteel.model.solver_constraints import tech_availability_check
 
 from mppsteel.utility.location_utility import get_countries_from_group
 from mppsteel.utility.plant_container_class import PlantIdContainer
@@ -61,7 +62,9 @@ def create_new_plant(plant_df: pd.DataFrame, plant_row_dict: dict):
 def get_min_cost_tech_for_region(
     lcost_df: pd.DataFrame,
     business_cases: pd.DataFrame,
+    tech_availability: pd.DataFrame,
     material_container: MaterialUsage,
+    tech_moratorium: bool,
     year: int,
     region: str,
     plant_capacity: float,
@@ -71,7 +74,16 @@ def get_min_cost_tech_for_region(
     lcost_df_c = lcost_df.loc[year, region].groupby('technology').mean().copy()
 
     if with_constraints:
-        potential_technologies = apply_constraints_for_min_cost_tech(business_cases, material_container, SWITCH_DICT.keys(), plant_capacity, year, plant_name)
+        potential_technologies = apply_constraints_for_min_cost_tech(
+            business_cases, 
+            tech_availability, 
+            material_container, 
+            SWITCH_DICT.keys(), 
+            plant_capacity,
+            tech_moratorium, 
+            year, 
+            plant_name
+        )
         lcost_df_c = lcost_df_c[lcost_df_c.index.isin(potential_technologies)]
 
     return lcost_df_c['levelised_cost'].idxmin()
@@ -277,6 +289,7 @@ def open_close_plants(
     steel_plant_df: pd.DataFrame,
     lev_cost_df: pd.DataFrame,
     business_cases: pd.DataFrame,
+    tech_availability: pd.DataFrame,
     variable_costs_df: pd.DataFrame,
     capex_dict: dict,
     capacity_container: CapacityContainerClass,
@@ -290,6 +303,7 @@ def open_close_plants(
     year: int,
     trade_scenario: bool = False,
     steel_demand_scenario: bool = False,
+    tech_moratorium: bool = False,
     open_plant_util_cutoff: float = CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
     close_plant_util_cutoff: float = CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
 ):
@@ -350,7 +364,9 @@ def open_close_plants(
                 xcost_tech = get_min_cost_tech_for_region(
                     levelised_cost_for_tech,
                     business_cases,
+                    tech_availability,
                     material_container,
+                    tech_moratorium,
                     year,
                     region,
                     new_plant_capacity,
@@ -390,6 +406,7 @@ def open_close_flow(
     steel_demand_df: pd.DataFrame,
     country_df: pd.DataFrame,
     business_cases: pd.DataFrame,
+    tech_availability: pd.DataFrame,
     variable_costs_df: pd.DataFrame,
     capex_dict: dict,
     tech_choices_container: PlantChoices,
@@ -399,7 +416,8 @@ def open_close_flow(
     material_container: MaterialUsage,
     year: int,
     trade_scenario: bool,
-    steel_demand_scenario: str
+    steel_demand_scenario: str,
+    tech_moratorium: bool,
 ) -> str:
     
     logger.info(f'Running open close decisions for {year}')
@@ -410,6 +428,7 @@ def open_close_flow(
         steel_plant_df=plant_df,
         lev_cost_df=levelized_cost,
         business_cases=business_cases,
+        tech_availability=tech_availability,
         variable_costs_df=variable_costs_df,
         capex_dict=capex_dict,
         capacity_container=capacity_container,
@@ -422,5 +441,6 @@ def open_close_flow(
         market_container=market_container,
         year=year,
         trade_scenario=trade_scenario,
-        steel_demand_scenario=steel_demand_scenario
+        steel_demand_scenario=steel_demand_scenario,
+        tech_moratorium=tech_moratorium
     )

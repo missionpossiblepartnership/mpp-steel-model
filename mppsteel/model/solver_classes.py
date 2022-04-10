@@ -3,10 +3,6 @@
 import pandas as pd
 import numpy as np
 
-from copy import deepcopy
-
-from typing import Union
-
 from mppsteel.config.model_config import (
     PKL_DATA_IMPORTS, PKL_DATA_FORMATTED, MAIN_REGIONAL_SCHEMA
 )
@@ -18,7 +14,8 @@ from mppsteel.model.solver_constraints import (
     create_carbon_constraint,
     create_biomass_constraint,
     create_scrap_constraints,
-    return_projected_usage
+    return_projected_usage,
+    tech_availability_check,
 )
 from mppsteel.data_loading.data_interface import business_case_getter
 from mppsteel.utility.log_utility import get_logger
@@ -275,7 +272,7 @@ def apply_constraints(
             material_check_container[resource] = True if material_check else False
         if all(material_check_container.values()):
             new_availability_list.append(switch_technology)
-        failure_resources = [resource for resource in material_check_container if material_check_container[resource]]
+        failure_resources = [resource for resource in material_check_container if not material_check_container[resource]]
 
         result = 'PASS' if all(material_check_container.values()) else 'FAIL'
 
@@ -295,14 +292,21 @@ def apply_constraints(
 
 def apply_constraints_for_min_cost_tech(
     business_cases: pd.DataFrame,
+    tech_availability: pd.DataFrame,
     material_usage_dict_container: MaterialUsage,
     combined_available_list: list,
     plant_capacity: float,
+    tech_moratorium: bool,
     year: int,
     plant_name: str,
 ):
-    # Constraints checks
     new_availability_list = []
+    # Constraints checks
+    combined_available_list = [
+        tech for tech in combined_available_list if tech_availability_check(
+            tech_availability, tech, year, tech_moratorium=tech_moratorium
+        )
+    ]
     for technology in combined_available_list:
         material_check_container = {}
         for resource in RESOURCE_CONTAINER_REF:

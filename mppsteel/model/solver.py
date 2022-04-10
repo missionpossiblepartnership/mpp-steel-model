@@ -306,6 +306,7 @@ def choose_technology(
             steel_demand_df=steel_demand_df,
             country_df=country_ref_f,
             business_cases=business_cases,
+            tech_availability=tech_availability,
             variable_costs_df=variable_costs_regional,
             capex_dict=capex_dict,
             tech_choices_container=PlantChoiceContainer,
@@ -315,7 +316,8 @@ def choose_technology(
             material_container=MaterialUsageContainer,
             year=year,
             trade_scenario=trade_scenario,
-            steel_demand_scenario=steel_demand_scenario
+            steel_demand_scenario=steel_demand_scenario,
+            tech_moratorium=tech_moratorium,
         )
 
         all_plant_names = model_plant_df["plant_name"].copy()
