@@ -118,8 +118,13 @@ class UtilizationContainerClass:
     def get_average_utilization(self, year: int):
         return np.mean(self.utilization_container[year].values())
 
-    def calculate_world_utilization(self, year: int):
-        self.utilization_container[year]['World'] = round(np.mean(list(self.utilization_container[year].values())), 3)
+    def calculate_world_utilization(self, year: int, capacity_dict: dict):
+        region_container = []
+        for region in capacity_dict:
+            region_container.append(capacity_dict[region] * self.utilization_container[year][region])
+        
+        world_utilization = sum(region_container) / sum(capacity_dict.values())
+        self.utilization_container[year]['World'] = round(world_utilization, 3)
     
     def get_utilization_values(self, year: int = None, region: str = None):
         if region and not year:
