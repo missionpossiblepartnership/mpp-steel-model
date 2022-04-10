@@ -142,7 +142,6 @@ pandera_testing.py
 # pickle files
 # mppsteel/data/pkl_data
 # *.pickle
-tco_reference_data.pickle
 
 # output folder
 mppsteel/data/output_data
