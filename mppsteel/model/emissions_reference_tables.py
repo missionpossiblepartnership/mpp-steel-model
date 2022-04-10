@@ -40,7 +40,6 @@ logger = get_logger(__name__)
 def generate_s1_s3_emissions(
     df: pd.DataFrame,
     single_year: int = None,
-    year_end: int = 2021,
     s1_emissivity_factors: pd.DataFrame = None,
     s3_emissivity_factors: pd.DataFrame = None,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -63,7 +62,7 @@ def generate_s1_s3_emissions(
     s3_emissions_resources = s3_emissivity_factors["Fuel"].unique().tolist()
 
     # Create a year range
-    year_range = range(MODEL_YEAR_START, tuple({year_end + 1 or 2021})[0])
+    year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
     if single_year:
         year_range = [single_year]
 
@@ -180,13 +179,10 @@ def full_emissions(
     return df_c
 
 
-def generate_emissions_dataframe(
-    df: pd.DataFrame, year_end: int
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def generate_emissions_dataframe(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Creates the base of an emissions DataFrame based on S1 and S3 emissions.
     Args:
         df (pd.DataFrame): The standardised business cases DataFrame.
-        year_end (int): The last model year.
 
     Returns:
         Tuple[pd.DataFrame, pd.DataFrame]: A DataFrame of the emissivity per scope and a carbon tax DataFrame.
@@ -205,7 +201,6 @@ def generate_emissions_dataframe(
 
     return generate_s1_s3_emissions(
         df=df.copy(),
-        year_end=year_end,
         s1_emissivity_factors=s1_emissivity_factors,
         s3_emissivity_factors=s3_emissivity_factors,
     )
@@ -404,8 +399,7 @@ def generate_emissions_flow(
     )
     emissions_df = business_cases_summary.copy()
     emissions = generate_emissions_dataframe(
-        business_cases_summary.copy(), MODEL_YEAR_END
-    )
+        business_cases_summary.copy())
     emissions_s1_summary = emissions[emissions["scope"] == "S1"]
     s1_emissivity = (
         emissions_s1_summary[["technology", "year", "emissions"]]

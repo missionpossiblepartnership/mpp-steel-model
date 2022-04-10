@@ -136,9 +136,7 @@ def create_investment_cycle_reference(plant_investment_year_dict: dict) -> pd.Da
     """Creates an Investment cycle DataFrame from a plant DataFrame, and a list of main cycle and off-cycle investment years.
 
     Args:
-        plant_names (list): A list of plant names.
-        investment_years (list): A list of investment years - main cycle years as integers, transitional switch year ranges as range objects.
-        year_end (int): The last year of the model.
+        plant_investment_year_dict (dict): A list of investment years - main cycle years as integers, transitional switch year ranges as range objects.
 
     Returns:
         pd.DataFrame: _description_

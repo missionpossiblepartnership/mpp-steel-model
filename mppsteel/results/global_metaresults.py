@@ -42,7 +42,7 @@ def global_metaresults_calculator(
     logger.info("- Generating Global Metaresults")
 
     # Base DataFrame
-    year_range = list(range(MODEL_YEAR_START, year_end + 1))
+    year_range = list(range(MODEL_YEAR_START, MODEL_YEAR_END + 1))
     df = pd.DataFrame(
         {
             "year": year_range,

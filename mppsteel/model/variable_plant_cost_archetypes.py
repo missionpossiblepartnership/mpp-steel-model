@@ -63,7 +63,7 @@ def plant_variable_costs(scenario_dict: dict) -> pd.DataFrame:
     """Creates a DataFrame reference of each plant's variable cost.
 
     Args:
-        year_end (int): The year the model is projected until.
+        scenario_dict (dict): Dictionary with Scenarios.
 
     Returns:
         pd.DataFrame: A DataFrame containing each plant's variable costs.

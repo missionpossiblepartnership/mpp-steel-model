@@ -200,9 +200,9 @@ def apply_countries_to_steel_plants(
     steel_plants = country_mapping_fixer(
         df_c, "country", "country_code", country_fixer_dict
     )
-    wsa_mapper = create_country_mapper(country_ref, 'wsa')
+    wsa_mapper = create_country_mapper('wsa')
     steel_plants["wsa_region"] = steel_plants["country_code"].apply(lambda x: wsa_mapper[x])
-    rmi_mapper = create_country_mapper(country_ref, 'rmi')
+    rmi_mapper = create_country_mapper('rmi')
     steel_plants["rmi_region"] = steel_plants["country_code"].apply(lambda x: rmi_mapper[x])
     return steel_plants
 

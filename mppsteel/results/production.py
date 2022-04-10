@@ -41,8 +41,7 @@ def generate_production_stats(
     capacity_results: pd.DataFrame,
     steel_df: pd.DataFrame,
     country_mapper: dict,
-    steel_demand_scenario: str,
-    year_end: int,
+    steel_demand_scenario: str
 ) -> pd.DataFrame:
     """Creates new columns for production, capacity_utilisation and a check for whether the technology is a low carbon tech.
 
@@ -50,7 +49,6 @@ def generate_production_stats(
         tech_capacity_df (pd.DataFrame): A DataFrame containing the capacities of each steel plant
         steel_df (pd.DataFrame): A DataFrame containing the steel demand data.
         steel_demand_scenario (str): The secnario for the steel demand.
-        year_end (int): The year that the model ends.
 
     Returns:
         pd.DataFrame: A DataFrame containing the new columns: produciton, capacity_utilization, and low_carbon_tech
@@ -61,7 +59,7 @@ def generate_production_stats(
         return row.capacity * row.capacity_utilization if row.technology else 0
 
     df_list = []
-    year_range = range(MODEL_YEAR_START, year_end + 1)
+    year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
     tech_capacity_df["low_carbon_tech"] = tech_capacity_df["technology"].apply(
         lambda tech: "Y" if tech in LOW_CARBON_TECHS else "N"
     )
@@ -309,7 +307,7 @@ def production_results_flow(scenario_dict: dict, serialize: bool = False) -> dic
     steel_demand_scenario = scenario_dict["steel_demand_scenario"]
     production_results = generate_production_stats(
         tech_capacity_df, capacity_results, steel_demand_df, 
-        rmi_mapper, steel_demand_scenario, MODEL_YEAR_END
+        rmi_mapper, steel_demand_scenario
     )
     production_resource_usage = production_stats_generator(production_results)
     production_emissions = generate_production_emission_stats(production_results, calculated_emissivity_combined, plant_result_df)
