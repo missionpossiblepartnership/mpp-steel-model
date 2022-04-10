@@ -306,7 +306,7 @@ def apply_constraints_for_min_cost_tech(
     for technology in combined_available_list:
         material_check_container = {}
         for resource in RESOURCE_CONTAINER_REF:
-            projected_usage = sum([business_case_getter(business_cases, technology, material) * (plant_capacity / 1000) for material in RESOURCE_CONTAINER_REF[resource]])
+            projected_usage = sum([business_case_getter(business_cases, technology, material) * plant_capacity for material in RESOURCE_CONTAINER_REF[resource]])
             material_check = material_usage_dict_container.constraint_transaction(
                 resource,
                 year,
