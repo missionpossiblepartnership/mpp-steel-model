@@ -74,7 +74,7 @@ if __name__ == "__main__":
         half_model_run(scenario_dict=scenario_args, dated_output_folder=True, model_output_folder=model_output_folder)
 
     if args.data_import:
-        data_import_refresh(scenario_dict=scenario_args)
+        data_import_refresh()
 
     if args.preprocessing:
         data_preprocessing_scenarios(scenario_dict=scenario_args)
