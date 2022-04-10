@@ -1,9 +1,9 @@
 """Main solving script for deciding investment decisions."""
-from copy import deepcopy
-from typing import Union
 
 import pandas as pd
 from tqdm import tqdm
+
+from typing import Union
 
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.plant_container_class import PlantIdContainer
@@ -35,21 +35,17 @@ from mppsteel.config.reference_lists import (
 )
 
 from mppsteel.data_loading.data_interface import load_business_cases
-from mppsteel.data_loading.steel_plant_formatter import create_plant_capacities_dict
 from mppsteel.data_loading.country_reference import country_df_formatter
 from mppsteel.model.solver_constraints import (
     tech_availability_check,
     read_and_format_tech_availability,
-    MaterialUsage,
-    return_current_usage,
-    return_projected_usage
+    return_current_usage
 )
 from mppsteel.model.tco_and_abatement_optimizer import get_best_choice, subset_presolver_df
 from mppsteel.model.solver_classes import (
     CapacityContainerClass, UtilizationContainerClass,
-    PlantChoices, MarketContainerClass,
-    create_wsa_2020_utilization_dict,
-    regional_capacity_utilization_factor,
+    PlantChoices, MarketContainerClass, MaterialUsage,
+    create_wsa_2020_utilization_dict, apply_constraints
 )
 from mppsteel.model.plant_open_close import (
     open_close_flow, return_modified_plants
@@ -59,54 +55,6 @@ from mppsteel.utility.log_utility import get_logger
 
 # Create logger
 logger = get_logger(__name__)
-
-def apply_constraints(
-    business_cases: pd.DataFrame,
-    plant_capacities: dict,
-    material_usage_dict_container: MaterialUsage,
-    combined_available_list: list,
-    year: int,
-    plant_name: str,
-    base_tech: str
-):
-    # Constraints checks
-    new_availability_list = []
-    for switch_technology in combined_available_list:
-        material_check_container = {}
-        for resource in RESOURCE_CONTAINER_REF:
-            projected_usage = return_projected_usage(
-                plant_name,
-                switch_technology,
-                plant_capacities,
-                business_cases,
-                RESOURCE_CONTAINER_REF[resource]
-            )
-
-            material_check = material_usage_dict_container.constraint_transaction(
-                resource,
-                year,
-                projected_usage,
-                override_constraint=False
-            )
-            material_check_container[resource] = 'PASS' if material_check else 'FAIL'
-        if all(material_check_container.values()):
-            new_availability_list.append(switch_technology)
-        failure_resources = [resource for resource in material_check_container if material_check_container[resource]]
-
-        result = 'PASS' if all(material_check_container.values()) else 'FAIL'
-
-        entry = {
-            'plant': plant_name,
-            'start_technology': base_tech,
-            'switch_technology': switch_technology,
-            'year': year,
-            'result': result,
-            'failure_resources': failure_resources,
-            'pass_result_breakdown': material_check_container
-        }
-
-        material_usage_dict_container.record_results(entry)
-    return new_availability_list
 
 
 def return_best_tech(
@@ -253,7 +201,7 @@ def choose_technology(
     trade_scenario=scenario_dict["trade_active"]
     intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
 
-    plant_df = read_pickle_folder(PKL_DATA_FORMATTED, "steel_plants_processed", "df")
+    original_plant_df = read_pickle_folder(PKL_DATA_FORMATTED, "steel_plants_processed", "df")
     PlantInvestmentCycleContainer = read_pickle_folder(
         PKL_DATA_FORMATTED, "plant_investment_cycle_container", "df"
     )
@@ -296,8 +244,8 @@ def choose_technology(
 
     # Initialize plant container
     PlantIDC = PlantIdContainer()
-    model_plant_df = plant_df.copy()
-    PlantIDC.add_steel_plant_ids(model_plant_df)
+    PlantIDC.add_steel_plant_ids(original_plant_df)
+    model_plant_df = original_plant_df.copy()
 
     # Instantiate Trade Container
     market_container = MarketContainerClass()
@@ -327,8 +275,9 @@ def choose_technology(
     PlantChoiceContainer = PlantChoices()
     PlantChoiceContainer.initiate_container(year_range)
 
-    # Investment Cycles
+    
 
+    # Investment Cycles
     for year in tqdm(year_range, total=len(year_range), desc="Years"):
         for material in material_models:
             MaterialUsageContainer.set_year_balance(material, year)
@@ -338,14 +287,14 @@ def choose_technology(
             logger.info(f'Loading initial technology choices for {year}')
             for row in model_plant_df.itertuples():
                 PlantChoiceContainer.update_choices(year, row.plant_name, row.technology_in_2020)
-            CapacityContainer.map_capacities(model_plant_df, year)
+            CapacityContainer.map_capacities(original_plant_df, model_plant_df, year)
             UtilizationContainer.assign_year_utilization(2020, wsa_dict)
         else:
             logger.info(f'Loading plant entries for {year}')
             for row in model_plant_df.itertuples():
                 PlantChoiceContainer.update_choices(year, row.plant_name, '')
 
-        CapacityContainer.map_capacities(model_plant_df, year)
+        CapacityContainer.map_capacities(original_plant_df, model_plant_df, year)
         logger.info(f'Starting the open close flow for {year}')
         investment_dict = PlantInvestmentCycleContainer.return_investment_dict()
 
@@ -356,19 +305,21 @@ def choose_technology(
             levelized_cost=levelized_cost,
             steel_demand_df=steel_demand_df,
             country_df=country_ref_f,
+            business_cases=business_cases,
             variable_costs_df=variable_costs_regional,
             capex_dict=capex_dict,
             tech_choices_container=PlantChoiceContainer,
             investment_dict=investment_dict,
             capacity_container=CapacityContainer,
             utilization_container=UtilizationContainer,
+            material_container=MaterialUsageContainer,
             year=year,
             trade_scenario=trade_scenario,
             steel_demand_scenario=steel_demand_scenario
         )
 
         all_plant_names = model_plant_df["plant_name"].copy()
-        CapacityContainer.map_capacities(model_plant_df, year)
+        CapacityContainer.map_capacities(original_plant_df, model_plant_df, year)
         plant_capacities_dict = CapacityContainer.return_plant_capacity(year=year)
         logger.info(f'Creating investment cycle for new plants')
         new_open_plants = return_modified_plants(model_plant_df, year, 'open')

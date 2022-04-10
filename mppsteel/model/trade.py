@@ -1,50 +1,25 @@
 """Module that contains the trade functions"""
 
 import math
-from copy import deepcopy
 
 import pandas as pd
-import numpy as np
 
 from tqdm import tqdm
 from tqdm.auto import tqdm as tqdma
 
 from mppsteel.config.model_config import (
-    MODEL_YEAR_START,
     MAIN_REGIONAL_SCHEMA,
     CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
     CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
     RELATIVE_REGIONAL_COST_BOUNDARY_FROM_MEAN_PCT
 )
-
 from mppsteel.model.solver_classes import (
-    CapacityContainerClass, UtilizationContainerClass, MarketContainerClass
+    CapacityContainerClass, MaterialUsage, UtilizationContainerClass, MarketContainerClass
 )
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.data_loading.steel_plant_formatter import create_plant_capacities_dict
 
 logger = get_logger(__name__)
-
-def get_xcost_from_region(lcost_df: pd.DataFrame, year: int, region: str = None, value_type: str = 'min', return_type: str = 'value'):
-    lcost_df_c = lcost_df.copy()
-    
-    if region:
-        lcost_df_c.set_index(['year', 'region', 'technology'], inplace=True)
-        lcost_df_c.sort_values(['year', 'region', 'technology'], ascending=True, inplace=True)
-        lcost_df_c_s = lcost_df_c.loc[year, region]
-        
-    else:
-        lcost_df_c.set_index(['year', 'region'], inplace=True)
-        lcost_df_c_s = lcost_df_c.loc[year]
-    
-    if (value_type == 'min') & (return_type == 'value'):
-        return lcost_df_c_s['levelised_cost'].idxmin()
-    elif (value_type == 'max') & (return_type == 'value'):
-        return lcost_df_c_s['levelised_cost'].idxmax()
-    if (value_type == 'min') & (return_type == 'list'):
-        return lcost_df_c_s['levelised_cost'].sort_values(by='levelised_cost', ascending=True).index.tolist()
-    elif (value_type == 'max') & (return_type == 'list'):
-        return lcost_df_c_s['levelised_cost'].sort_values(by='levelised_cost', ascending=False).index.tolist()
 
 def get_regional_balance(prod_balance_df: pd.DataFrame, year: int, region: str):
     return prod_balance_df.loc[year, region]['initial_utilization']
