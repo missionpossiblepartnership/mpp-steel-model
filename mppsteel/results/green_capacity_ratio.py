@@ -5,7 +5,7 @@ from copy import deepcopy
 import pandas as pd
 
 from mppsteel.config.model_config import (
-    PKL_DATA_IMPORTS, MAIN_REGIONAL_SCHEMA
+    PKL_DATA_IMPORTS
 )
 from mppsteel.config.reference_lists import TECHNOLOGY_STATES
 from mppsteel.utility.function_timer_utility import timer_func
@@ -54,12 +54,12 @@ def green_capacity_ratio_predata(
     for year in years:
         plants = list(tech_choices[str(year)].keys())
         capacities = [capacities_dict[plant] for plant in plants]
-        df = pd.DataFrame({'year': year, 'plant_name': plants, 'capacity': capacities, 'technology': '', MAIN_REGIONAL_SCHEMA: ''})
+        df = pd.DataFrame({'year': year, 'plant_name': plants, 'capacity': capacities, 'technology': '', 'region': ''})
         df['start_year'] = df['plant_name'].apply(lambda plant_name: fix_start_year(start_year_dict[plant_name]))
         df['technology'] = df['plant_name'].apply(lambda plant_name: tech_choices[str(year)][plant_name])
         df['green_tech'] = df['technology'].apply(lambda technology: tech_status_mapper(technology, inc_trans))
         df['active_status'] = df.apply(lambda row: active_status(row, tech_choices, year), axis=1)
-        df[MAIN_REGIONAL_SCHEMA] = df["plant_name"].apply(lambda plant_name: country_mapper[country_code_dict[plant_name]])
+        df['region'] = df["plant_name"].apply(lambda plant_name: country_mapper[country_code_dict[plant_name]])
         df_container.append(df)
     df_final = pd.concat(df_container).reset_index(drop=True)
     df_final['capacity'] /= 1000

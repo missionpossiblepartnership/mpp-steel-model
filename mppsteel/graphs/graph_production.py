@@ -2,7 +2,7 @@
 import itertools
 import pandas as pd
 import plotly.express as px
-from mppsteel.config.model_config import PKL_DATA_FORMATTED, PKL_DATA_IMPORTS, MAIN_REGIONAL_SCHEMA
+from mppsteel.config.model_config import PKL_DATA_FORMATTED
 from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import read_pickle_folder, get_scenario_pkl_path
@@ -173,10 +173,10 @@ def steel_production_area_chart(df: pd.DataFrame, filepath: str = None, region: 
     filename = "steel_production_per_technology"
     graph_title = "Steel production per tech"
     df_c = df.copy()
-    region_list = df_c[MAIN_REGIONAL_SCHEMA].unique()
+    region_list = df_c['region'].unique()
     if region and (region in region_list):
         graph_title = f"{graph_title} - {region}"
-        df_c = df_c[df_c[MAIN_REGIONAL_SCHEMA] == region]
+        df_c = df_c[df_c['region'] == region]
         filename = f'{filename}_for_{region}'
     elif region and (region not in region_list):
         raise ValueError(f'Incorrect region listed {region}')
@@ -253,7 +253,7 @@ def steel_emissions_line_chart(df: pd.DataFrame, filepath: str = None, region: s
     filename = "scope_1_2_emissions"
     graph_title = "Scope 1 & 2 Emissions"
     if region:
-        df_c = df_c[df_c[MAIN_REGIONAL_SCHEMA] == region]
+        df_c = df_c[df_c['region'] == region]
         filename = f'{filename}_for_{region}'
         graph_title = f'{graph_title} - {region}'
     if scenario_name:
@@ -302,10 +302,10 @@ def resource_line_charts(
     if filepath:
         filename = f"{filepath}/{filename}"
     return line_chart(
-        data=generate_subset(df, MAIN_REGIONAL_SCHEMA, resource, regions),
+        data=generate_subset(df, 'region', resource, regions),
         x="year",
         y="value",
-        color=MAIN_REGIONAL_SCHEMA,
+        color='region',
         name=f"{resource_string} consumption in {region_list}",
         x_axis="year",
         y_axis=resource_string,
