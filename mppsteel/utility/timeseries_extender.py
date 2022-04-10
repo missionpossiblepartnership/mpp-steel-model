@@ -124,7 +124,7 @@ def create_timeseries_extension_array(
 
     if (
         series_type == "logarithmic"
-    ):  # slowest growth / transforms into actual logs - FIX!
+    ):  # slowest growth / transforms into actual logs
         generated_series = np.logspace(
             start=start_value, stop=terminal_value, num=series_length, endpoint=True
         )

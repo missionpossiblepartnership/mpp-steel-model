@@ -2,7 +2,6 @@
 import argparse
 
 from datetime import datetime
-import itertools
 
 import pandas as pd
 

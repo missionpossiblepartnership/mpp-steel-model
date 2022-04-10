@@ -84,7 +84,6 @@ ABATEMENT_RANK_3 = 0.932690243851946  # Switching from Avg BF-BOF to BAT BF-BOF_
 MAIN_REGIONAL_SCHEMA = 'rmi_region'
 RESULTS_REGIONS_TO_MAP = ["continent", "wsa", "rmi"]
 
-
 INTERMEDIATE_RESULT_PKL_FILES = [
     "plant_result_df",
     "calculated_emissivity_combined",
