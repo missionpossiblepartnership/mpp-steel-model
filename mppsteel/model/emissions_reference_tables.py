@@ -49,7 +49,6 @@ def generate_s1_s3_emissions(
     Args:
         df (pd.DataFrame): The standardised business cases DataFrame.
         single_year (int, optional): A single year that you want to calculate emissivity for. Defaults to None.
-        year_end (int, optional): The last year that you want to calculate emissivity for. Defaults to 2021.
         s1_emissivity_factors (pd.DataFrame, optional): Emissions Factors for S1. Defaults to None.
         s3_emissivity_factors (pd.DataFrame, optional): Emissions Factors for S3. Defaults to None.
 
