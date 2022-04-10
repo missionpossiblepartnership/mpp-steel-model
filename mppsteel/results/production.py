@@ -9,8 +9,6 @@ from mppsteel.config.model_config import (
     MODEL_YEAR_START,
     MODEL_YEAR_END,
     PKL_DATA_FORMATTED,
-    PKL_DATA_IMPORTS,
-    MAIN_REGIONAL_SCHEMA,
 )
 
 from mppsteel.config.reference_lists import LOW_CARBON_TECHS, SWITCH_DICT
@@ -38,46 +36,33 @@ logger = get_logger(__name__)
 
 def generate_production_stats(
     tech_capacity_df: pd.DataFrame,
-    capacity_results: pd.DataFrame,
-    steel_df: pd.DataFrame,
-    country_mapper: dict,
-    steel_demand_scenario: str
+    utilization_results: dict,
+    country_mapper: dict
 ) -> pd.DataFrame:
     """Creates new columns for production, capacity_utilisation and a check for whether the technology is a low carbon tech.
 
     Args:
         tech_capacity_df (pd.DataFrame): A DataFrame containing the capacities of each steel plant
-        steel_df (pd.DataFrame): A DataFrame containing the steel demand data.
-        steel_demand_scenario (str): The secnario for the steel demand.
 
     Returns:
         pd.DataFrame: A DataFrame containing the new columns: produciton, capacity_utilization, and low_carbon_tech
     """
     logger.info("- Generating Production Results from capacity")
 
-    def apply_production_value(row):
+    def utilization_mapper(row):
+        return utilization_results[row.year][row.region]
+    
+    def production_mapper(row):
         return row.capacity * row.capacity_utilization if row.technology else 0
 
-    df_list = []
-    year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
     tech_capacity_df["low_carbon_tech"] = tech_capacity_df["technology"].apply(
         lambda tech: "Y" if tech in LOW_CARBON_TECHS else "N"
     )
-    tech_capacity_df[MAIN_REGIONAL_SCHEMA] = tech_capacity_df["country_code"].apply(
+    tech_capacity_df['region'] = tech_capacity_df["country_code"].apply(
         lambda x: country_mapper[x])
-    regions = tech_capacity_df[MAIN_REGIONAL_SCHEMA].unique()
-    for year in tqdm(year_range, total=len(year_range), desc="Production Stats"):
-        df = tech_capacity_df[tech_capacity_df["year"] == year].copy()
-        # Regional production split
-        for region in regions:
-            regional_steel_demand = steel_demand_getter(steel_df, year, steel_demand_scenario, "crude", region=region)
-            regional_capacity = capacity_results[year][region]
-            capacity_utilization_factor = regional_steel_demand / regional_capacity
-            df_r = df[df[MAIN_REGIONAL_SCHEMA] == region].copy()
-            df_r["capacity_utilization"] = capacity_utilization_factor
-            df_r['production'] = df_r.apply(apply_production_value, axis=1)
-            df_list.append(df_r)
-    return pd.concat(df_list).reset_index(drop=True)
+    tech_capacity_df["capacity_utilization"] = tech_capacity_df.apply(utilization_mapper, axis=1)
+    tech_capacity_df["production"] = tech_capacity_df.apply(production_mapper, axis=1)
+    return tech_capacity_df
 
 
 def tech_capacity_splits(steel_plants: pd.DataFrame, tech_choices: dict) -> pd.DataFrame:
@@ -96,12 +81,8 @@ def tech_capacity_splits(steel_plants: pd.DataFrame, tech_choices: dict) -> pd.D
     df_list = []
 
     for year in tqdm(year_range, total=len(year_range), desc="Tech Capacity Splits"):
-        df = pd.DataFrame(
-            {"year": year, "plant_name": steel_plant_names, "technology": "", "capacity": 0}
-        )
-        df["technology"] = df["plant_name"].apply(
-            lambda plant: get_tech_choice(tech_choices, year, plant)
-        )
+        df = pd.DataFrame({"year": year, "plant_name": steel_plant_names})
+        df["technology"] = df["plant_name"].apply(lambda plant: get_tech_choice(tech_choices, year, plant))
         df['capacity'] = df['plant_name'].apply(lambda plant_name: capacities_dict[plant_name] / 1000)
         df_list.append(df)
 
@@ -287,27 +268,22 @@ def production_results_flow(scenario_dict: dict, serialize: bool = False) -> dic
     intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
     final_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'final')
     logger.info("- Starting Production Results Model Flow")
-    steel_demand_df = read_pickle_folder(
-        PKL_DATA_FORMATTED, "regional_steel_demand_formatted", "df"
-    )
     plant_result_df = read_pickle_folder(
         intermediate_path, "plant_result_df", "df"
     )
     tech_choices_dict = read_pickle_folder(
         intermediate_path, "tech_choice_dict", "dict"
     )
-    capacity_results = read_pickle_folder(
-        intermediate_path, "capacity_results", "dict"
+    utilization_results = read_pickle_folder(
+        intermediate_path, "utilization_results", "dict"
     )
     rmi_mapper = create_country_mapper()
     calculated_emissivity_combined = read_pickle_folder(
         intermediate_path, "calculated_emissivity_combined", "df"
     )
     tech_capacity_df = tech_capacity_splits(plant_result_df, tech_choices_dict)
-    steel_demand_scenario = scenario_dict["steel_demand_scenario"]
     production_results = generate_production_stats(
-        tech_capacity_df, capacity_results, steel_demand_df, 
-        rmi_mapper, steel_demand_scenario
+        tech_capacity_df, utilization_results, rmi_mapper,
     )
     production_resource_usage = production_stats_generator(production_results)
     production_emissions = generate_production_emission_stats(production_results, calculated_emissivity_combined, plant_result_df)
