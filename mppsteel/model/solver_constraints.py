@@ -121,7 +121,7 @@ def return_projected_usage(
 ):
     return sum([
         business_case_getter(business_cases, technology, material) \
-            * (capacities_dict[plant_name] / 1000) for material in materials 
+            * capacities_dict[plant_name] for material in materials 
     ])
 
 
@@ -133,7 +133,7 @@ def return_current_usage(
     for material in materials:
         agg = sum([
             business_case_getter(business_cases, technology_choices[str(year)][plant_name], material) \
-            * (capacities_dict[plant_name] / 1000) for plant_name in plant_list
+            * capacities_dict[plant_name] for plant_name in plant_list
         ])
         usage_sum.append(agg)
     return sum(usage_sum)
