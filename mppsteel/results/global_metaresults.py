@@ -25,7 +25,8 @@ def global_metaresults_calculator(
     capacity_results: dict,
     utilization_results: dict,
     production_results_df: pd.DataFrame,
-    steel_demand_scenario: str
+    steel_demand_scenario: str,
+    rounding: int = 1
 ) -> pd.DataFrame:
     """_summary_
 
@@ -50,18 +51,17 @@ def global_metaresults_calculator(
         lambda year: steel_demand_getter(
             steel_market_df, year, steel_demand_scenario, "crude", region="World"
         )
-    )
-    df["steel_capacity"] = df["year"].apply(lambda year: sum(list(capacity_results[year].values())))
-    df["extra_capacity"] = df["steel_capacity"] - df["steel_demand"]
-    df['capacity_utilization_factor'] = df["year"].apply(lambda year: np.mean(list(utilization_results[year].values())))
+    ).round(rounding)
+    df["steel_capacity"] = df["year"].apply(lambda year: sum(list(capacity_results[year].values()))).round(rounding)
+    df["extra_capacity"] = (df["steel_capacity"] - df["steel_demand"]).round(rounding)
+    df['capacity_utilization_factor'] = df["year"].apply(lambda year: utilization_results[year]['World']).round(2)
     df["scrap_availability"] = df["year"].apply(
         lambda year: steel_demand_getter(
             steel_market_df, year, steel_demand_scenario, "scrap", region="World"
-        )) # Mt
+        )).round(rounding) # Mt
     df["scrap_consumption"] = df["year"].apply(
-        lambda year: production_results_df_c.loc[year]["scrap"].sum())
-    df["scrap_consumption"] *= 1000
-    df["scrap_avail_above_cons"] = df["scrap_availability"] - df["scrap_consumption"]
+        lambda year: production_results_df_c.loc[year]["scrap"].sum()).round(rounding)
+    df["scrap_avail_above_cons"] = (df["scrap_availability"] - df["scrap_consumption"]).round(rounding)
     return df
 
 
@@ -100,7 +100,8 @@ def metaresults_flow(scenario_dict: dict, serialize: bool = False) -> pd.DataFra
         steel_demand_scenario
     )
     global_metaresults = add_results_metadata(
-        global_metaresults, scenario_dict, include_regions=False, single_line=True
+        global_metaresults, scenario_dict, include_regions=False, 
+        single_line=True, scenario_name=True
     )
 
     if serialize:

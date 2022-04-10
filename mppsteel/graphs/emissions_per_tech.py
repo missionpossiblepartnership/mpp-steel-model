@@ -55,11 +55,11 @@ def generate_emissivity_charts (
         
         color = 'metric'
 
-    text = '{scope} - {region} - {year}' if region else f'{scope} - {year}'
+    text = f'{scope} - {region} - {year}' if region else f'{scope} - {year}'
 
     df_c['tech_order'] = df_c['technology'].map(sorterIndex)
     df_c.sort_values(['tech_order'], ascending=True, inplace=True)
-    df_c.drop('tech_order', 1, inplace=True)
+    df_c.drop(labels='tech_order', axis=1, inplace=True)
         
     fig_= px.bar(
         df_c,

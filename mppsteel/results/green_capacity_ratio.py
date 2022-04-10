@@ -65,8 +65,8 @@ def green_capacity_ratio_predata(
     df_final['capacity'] /= 1000
     return df_final
     
-def create_gcr_df(green_capacity_ratio_df: pd.DataFrame, rounding: int = 3):
-    gcr = green_capacity_ratio_df[['year', 'capacity', 'green_tech', 'active_status']].set_index(['active_status','green_tech']).copy()
+def create_gcr_df(green_capacity_ratio_df: pd.DataFrame, rounding: int = 1):
+    gcr = green_capacity_ratio_df[['year', 'capacity', 'green_tech', 'active_status']].set_index(['active_status','green_tech']).sort_index(ascending=True).copy()
     gcr_green = gcr.loc[True, True].reset_index().groupby(['year']).sum()[['capacity']].copy()
     gcr_green.rename({'capacity': 'green_capacity'}, axis=1, inplace=True)
     gcr_nongreen = gcr.loc[True, False].reset_index().groupby(['year']).sum()[['capacity']].copy()
@@ -87,7 +87,8 @@ def generate_gcr_df(scenario_dict: dict, serialize: bool = False) -> pd.DataFram
     green_capacity_ratio_df = green_capacity_ratio_predata(plant_result_df, tech_choice_dict, rmi_mapper, True)
     green_capacity_ratio_result = create_gcr_df(green_capacity_ratio_df)
     green_capacity_ratio_result = add_results_metadata(
-        green_capacity_ratio_result, scenario_dict, include_regions=False, single_line=True
+        green_capacity_ratio_result, scenario_dict, include_regions=False, 
+        single_line=True, scenario_name=True
     )
     if serialize:
         logger.info("-- Serializing dataframes")

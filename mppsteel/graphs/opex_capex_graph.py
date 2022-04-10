@@ -78,7 +78,7 @@ def add_opex_values(vdf: pd.DataFrame, co_df: pd.DataFrame) -> pd.DataFrame:
     for technology in SWITCH_DICT.keys():
         vdf_c.loc[technology, "Other Opex"]["cost"] = (
             vdf_c.loc[technology, "Other Opex"]["cost"]
-            + co_df["other_opex"][technology]
+            + co_df.loc[:,"other_opex"][technology]
         )
     return vdf_c
 
@@ -164,19 +164,19 @@ def create_capex_opex_split_data(variable_cost_df: pd.DataFrame, capex_dict: dic
         pd.DataFrame: A DataFrame containing the split of costs and the associated metadata.
     """
     vcsmb_c = variable_cost_df.copy()
-    index_sort = ["technology", "cost_type", "country_code"]
     vcsmb_c = (
         vcsmb_c.set_index("year")
+        .sort_index(ascending=True)
         .loc[2050]
         .drop(["material_category", "unit", "value"], axis=1)
-        .set_index(index_sort)
-        .sort_values(index_sort)
+        .set_index(["technology", "cost_type", "country_code"])
+        .sort_index(ascending=True)
     ).copy()
     capex_opex_df = return_capex_values(
         capex_dict=capex_dict, year=2050, investment_cycle=20, discount_rate=DISCOUNT_RATE
     )
     vcsmb_c = add_opex_values(vcsmb_c, capex_opex_df)
-    vcsmb_c = add_capex_values(vcsmb_c, capex_opex_df).sort_values(index_sort)
+    vcsmb_c = add_capex_values(vcsmb_c, capex_opex_df).sort_index(ascending=True)
     vcsmb_c, country_deltas = get_country_deltas(vcsmb_c)
     vcsmb_c = assign_country_deltas(vcsmb_c, country_deltas)
     vcsmb_c.reset_index(inplace=True)
@@ -291,19 +291,19 @@ def regional_split_of_preprocessed_data(vcsmb: pd.DataFrame, capex_dict: dict, c
         pd.DataFrame: A DataFrame containing the split of costs and the associated metadata.
     """
     vcsmb_c = vcsmb.copy()
-    index_sort = ["technology", "cost_type", "country_code"]
     vcsmb_c = (
         vcsmb_c.set_index("year")
+        .sort_index(ascending=True)
         .loc[year]
         .drop(["unit", "value"], axis=1)
-        .set_index(index_sort)
-        .sort_values(index_sort)
+        .set_index(["technology", "cost_type", "country_code"])
+        .sort_index(ascending=True)
     )
     capex_opex_df = return_capex_values_regional(
         capex_dict=capex_dict, year=year, investment_cycle=20, discount_rate=0.07
     )
     vcsmb_c = add_opex_values_regional(vcsmb_c, capex_opex_df)
-    vcsmb_c = add_capex_values_regional(vcsmb_c, capex_opex_df).sort_values(index_sort)
+    vcsmb_c = add_capex_values_regional(vcsmb_c, capex_opex_df).sort_index(ascending=True)
     vcsmb_c.reset_index(inplace=True)
     vcsmb_c['cost_type'].replace('Other_Opex','Other Opex', inplace=True)
     vcsmb_c["region"] = vcsmb_c["country_code"].apply(lambda x: country_mapper[x])
@@ -313,8 +313,7 @@ def regional_split_of_preprocessed_data(vcsmb: pd.DataFrame, capex_dict: dict, c
         vcsmb_c = vcsmb_c.drop_duplicates(subset=['technology','cost_type','material_category'])
         vcsmb_c = vcsmb_c.drop(["material_category",'country_code', "region"], axis=1)
     vcsmb_c = vcsmb_c.reset_index(drop=True)
-    vcsmb_c = vcsmb_c.groupby(["technology", "cost_type"]).sum().reset_index()
-    return vcsmb_c
+    return vcsmb_c.groupby(["technology", "cost_type"]).sum().reset_index()
 
 
 def opex_capex_graph_regional(

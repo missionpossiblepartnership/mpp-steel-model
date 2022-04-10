@@ -35,7 +35,7 @@ def generate_tco_charts (
 
     df_c['switch_tech_rank'] = df_c['end_technology'].map(sorterIndex)
     df_c.sort_values(['switch_tech_rank'], ascending=True, inplace=True)
-    df_c.drop('switch_tech_rank', 1, inplace=True)
+    df_c.drop(labels='switch_tech_rank', axis=1, inplace=True)
 
     fig_ = px.bar(
         df_c,
