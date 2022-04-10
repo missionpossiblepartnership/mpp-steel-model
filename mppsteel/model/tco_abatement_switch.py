@@ -65,6 +65,7 @@ def tco_regions_ref_generator(scenario_dict: dict) -> pd.DataFrame:
         'Year': 'year', 
         'value': 'capex_value'}, axis=1, inplace=True
     )
+    capex_df = capex_df.set_index(['start_technology', 'year']).sort_index(ascending=True)
     steel_plants = read_pickle_folder(
         PKL_DATA_FORMATTED, "steel_plants_processed", "df"
     )
@@ -83,6 +84,7 @@ def tco_regions_ref_generator(scenario_dict: dict) -> pd.DataFrame:
     variable_cost_summary.drop(techs_to_drop, level='technology', inplace=True)
     calculated_s2_emissivity.set_index(['year', 'country_code', 'technology'], inplace=True)
     calculated_s2_emissivity.rename(mapper={'s2_emissivity': 'emissions'}, axis=1, inplace=True)
+    calculated_s2_emissivity = calculated_s2_emissivity.sort_index(ascending=True)
     calculated_s1_emissivity.drop(techs_to_drop, level='technology', inplace=True)
     carbon_tax_df = carbon_tax_df.set_index("year")
     # Prepare looping references

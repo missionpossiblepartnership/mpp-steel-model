@@ -132,7 +132,7 @@ def calculate_capex(
     Returns:
         pd.DataFrame: A DataFrame with the Capex values with a multiindex as year and start_technology.
     """
-    df_c = capex_df.set_index(['start_technology', 'year']).loc[base_tech, start_year].copy()
+    df_c = capex_df.loc[base_tech, start_year].copy()
     df_c = df_c[df_c['end_technology'].isin(SWITCH_DICT[base_tech])]
     return df_c.loc[base_tech].set_index('end_technology')
 
