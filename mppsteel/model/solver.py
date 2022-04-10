@@ -371,9 +371,6 @@ def choose_technology(
             )
             MaterialUsageContainer.constraint_transaction(
                 resource, year, current_usage, override_constraint=True)
-            
-            # Get current balance after non_switchers are allocated resources
-            # print(MaterialUsageContainer.get_current_balance(resource, year))
 
         logger.info(f"-- Running investment decisions for Switching Plants")
         for plant in switchers_df.itertuples():
