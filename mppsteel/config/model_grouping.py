@@ -44,9 +44,7 @@ from mppsteel.graphs.graph_production import create_graphs
 from mppsteel.config.model_config import (
     PKL_DATA_FORMATTED,
     USD_TO_EUR_CONVERSION_DEFAULT,
-    MODEL_YEAR_END,
     OUTPUT_FOLDER,
-    PKL_DATA_FINAL,
 )
 from mppsteel.config.model_scenarios import SCENARIO_OPTIONS
 
@@ -141,6 +139,8 @@ def model_outputs_phase(scenario_dict: dict, new_folder: bool = False, output_fo
 
     # Save Intermediate Pickle Files
     intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
+    final_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'final')
+
     pickle_to_csv(save_path, PKL_DATA_FORMATTED, "capex_switching_df", reset_index=True)
     pickle_to_csv(save_path, intermediate_path, "plant_result_df")
     pickle_to_csv(save_path, intermediate_path, "calculated_emissivity_combined")
@@ -157,7 +157,7 @@ def model_outputs_phase(scenario_dict: dict, new_folder: bool = False, output_fo
         'green_capacity_ratio'
     ]
     for pkl_file in pkl_files:
-        pickle_to_csv(save_path, PKL_DATA_FINAL, pkl_file)
+        pickle_to_csv(save_path, final_path, pkl_file)
 
 
 def model_graphs_phase(scenario_dict: dict, new_folder: bool = False, model_output_folder: str = "") -> None:
@@ -170,7 +170,7 @@ def model_graphs_phase(scenario_dict: dict, new_folder: bool = False, model_outp
 
 
 # Group phases
-def data_import_refresh(scenario_dict: dict) -> None:
+def data_import_refresh() -> None:
     data_import_stage()
 
 
