@@ -11,8 +11,10 @@ from mppsteel.utility.function_timer_utility import TIME_CONTAINER
 from mppsteel.config.model_config import FOLDERS_TO_CHECK_IN_ORDER
 
 from mppsteel.config.model_scenarios import (
-    DEFAULT_SCENARIO, SCENARIO_SETTINGS, SCENARIO_OPTIONS,
-    ABATEMENT_SCENARIO, BAU_SCENARIO, CARBON_COST, TECH_MORATORIUM
+    MAIN_SCENARIO_RUNS, DEFAULT_SCENARIO,
+    SCENARIO_SETTINGS, SCENARIO_OPTIONS,
+    ABATEMENT_SCENARIO, BAU_SCENARIO,
+    CARBON_COST, TECH_MORATORIUM
 )
 
 from mppsteel.config.model_grouping import *
@@ -23,7 +25,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    scenario_args = DEFAULT_SCENARIO
+    scenario_args = BAU_SCENARIO
     scenario_args = add_currency_rates_to_scenarios(scenario_args)
 
     timestamp = datetime.today().strftime('%d-%m-%y %H-%M')
@@ -49,11 +51,10 @@ if __name__ == "__main__":
 
     if args.main_scenarios:
         
-        options = ['baseline', 'tech_moratorium', 'abatement', 'carbon_cost']
-        logger.info(f'Running {options} scenario options')
-
-        # Multiprocessing
-        multiprocessing_scenarios(options, scenario_batch_run)
+        logger.info(f'Running {MAIN_SCENARIO_RUNS} scenario options')
+        data_import_and_preprocessing_refresh()
+        multiprocessing_scenarios(MAIN_SCENARIO_RUNS, scenario_batch_run)
+        join_scenario_data(scenario_options=MAIN_SCENARIO_RUNS, new_folder=True, timestamp=timestamp, final_only=True)
 
     logger.info(f'''Running model with the following parameters:  
     {scenario_args}''')
@@ -115,8 +116,8 @@ if __name__ == "__main__":
     if args.investment:
         investment_flow(scenario_dict=scenario_args)
 
-    if args.ta:
-        model_presolver(scenario_dict=scenario_args)
+    if args.join_final_data:
+        join_scenario_data(scenario_options=MAIN_SCENARIO_RUNS, new_folder=True, timestamp=timestamp, final_only=True)
 
     if args.tco:
         tco_switch_reference(scenario_dict=scenario_args)

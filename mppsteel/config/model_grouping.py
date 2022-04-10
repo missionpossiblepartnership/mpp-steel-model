@@ -2,12 +2,18 @@
 import argparse
 
 from datetime import datetime
+import itertools
+
+import pandas as pd
+
 from mppsteel.utility.utils import stdout_query, get_currency_rate
 from mppsteel.utility.file_handling_utility import (
     pickle_to_csv,
     create_folder_if_nonexist,
     get_scenario_pkl_path,
-    create_folders_if_nonexistant
+    create_folders_if_nonexistant,
+    read_pickle_folder,
+    serialize_file
 )
 
 from mppsteel.utility.log_utility import get_logger
@@ -43,8 +49,11 @@ from mppsteel.graphs.graph_production import create_graphs
 
 from mppsteel.config.model_config import (
     PKL_DATA_FORMATTED,
+    PKL_FOLDER,
     USD_TO_EUR_CONVERSION_DEFAULT,
     OUTPUT_FOLDER,
+    INTERMEDIATE_RESULT_PKL_FILES,
+    FINAL_RESULT_PKL_FILES
 )
 from mppsteel.config.model_scenarios import SCENARIO_OPTIONS
 
@@ -91,10 +100,10 @@ def data_import_stage() -> None:
     get_steel_demand(serialize=True)
 
 
-def data_preprocessing_generic(scenario_dict: dict) -> None:
+def data_preprocessing_generic() -> None:
     steel_plant_processor(serialize=True, remove_non_operating_plants=True)
-    create_capex_opex_dict(scenario_dict=scenario_dict, serialize=True)
-    create_capex_timeseries(scenario_dict=scenario_dict, serialize=True)
+    create_capex_opex_dict(serialize=True)
+    create_capex_timeseries(serialize=True)
     format_business_cases(serialize=True)
     investment_cycle_flow(serialize=True)
 
@@ -117,7 +126,7 @@ def model_presolver(scenario_dict: dict) -> None:
     abatement_presolver_reference(scenario_dict, serialize=True)
 
 
-def model_calculation_phase(scenario_dict: dict) -> None:
+def scenario_calculation_phase(scenario_dict: dict) -> None:
     data_preprocessing_scenarios(scenario_dict)
     model_presolver(scenario_dict)
 
@@ -142,22 +151,45 @@ def model_outputs_phase(scenario_dict: dict, new_folder: bool = False, output_fo
     final_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'final')
 
     pickle_to_csv(save_path, PKL_DATA_FORMATTED, "capex_switching_df", reset_index=True)
-    pickle_to_csv(save_path, intermediate_path, "plant_result_df")
-    pickle_to_csv(save_path, intermediate_path, "calculated_emissivity_combined")
-    pickle_to_csv(save_path, intermediate_path, "levelized_cost")
-    pickle_to_csv(save_path, intermediate_path, "emissivity_abatement_switches")
-    pickle_to_csv(save_path, intermediate_path, "tco_summary_data")
 
     # Save Final Pickle Files
-    pkl_files = [
-        "production_resource_usage",
-        "production_emissions",
-        "global_metaresults",
-        "investment_results",
-        'green_capacity_ratio'
-    ]
-    for pkl_file in pkl_files:
+    for pkl_file in INTERMEDIATE_RESULT_PKL_FILES:
+        pickle_to_csv(save_path, intermediate_path, pkl_file)
+
+    for pkl_file in FINAL_RESULT_PKL_FILES:
         pickle_to_csv(save_path, final_path, pkl_file)
+
+def join_scenario_data(scenario_options: list, new_folder: bool = True, timestamp: str = "", final_only: bool = True):
+    logger.info(f'Joining the Following Scenario Data {scenario_options}')
+    combined_ouptut_pkl_folder = f"{PKL_FOLDER}/combined_output"
+    create_folder_if_nonexist(combined_ouptut_pkl_folder)
+    output_save_path = OUTPUT_FOLDER
+    output_folder_name = f'combined_output {timestamp}'
+    if new_folder:
+        output_folder_filepath = f"{OUTPUT_FOLDER}/{output_folder_name}"
+        create_folder_if_nonexist(output_folder_filepath)
+        output_save_path = output_folder_filepath
+
+    if not final_only:
+        for output_file in INTERMEDIATE_RESULT_PKL_FILES:
+            output_container = []
+            for scenario_name in scenario_options:
+                path = get_scenario_pkl_path(scenario_name, 'intermediate')
+                output_container.append(read_pickle_folder(path, output_file, "df"))
+
+            combined_output = pd.concat(output_container).reset_index(drop=True)
+            serialize_file(combined_output, combined_ouptut_pkl_folder, output_file)
+            combined_output.to_csv(f"{output_save_path}/{output_file}.csv", index=False)
+
+    for output_file in FINAL_RESULT_PKL_FILES:
+        output_container = []
+        for scenario_name in scenario_options:
+            path = get_scenario_pkl_path(scenario_name, 'final')
+            output_container.append(read_pickle_folder(path, output_file, "df"))
+
+        combined_output = pd.concat(output_container).reset_index(drop=True)
+        serialize_file(combined_output, combined_ouptut_pkl_folder, output_file)
+        combined_output.to_csv(f"{output_save_path}/{output_file}.csv", index=False)
 
 
 def model_graphs_phase(scenario_dict: dict, new_folder: bool = False, model_output_folder: str = "") -> None:
@@ -179,9 +211,9 @@ def data_preprocessing_refresh(scenario_dict: dict) -> None:
     data_preprocessing_scenarios(scenario_dict)
 
 
-def data_import_and_preprocessing_refresh(scenario_dict: dict) -> None:
+def data_import_and_preprocessing_refresh() -> None:
     data_import_stage()
-    data_preprocessing_generic(scenario_dict)
+    data_preprocessing_generic()
 
 
 def tco_and_abatement_calculations(scenario_dict: dict) -> None:
@@ -199,7 +231,9 @@ def scenario_batch_run(
     scenario_args = add_currency_rates_to_scenarios(scenario_args)
     timestamp = datetime.today().strftime('%d-%m-%y %H-%M')
     model_output_folder = f"{scenario_args['scenario_name']} {timestamp}"
-    model_calculation_phase(scenario_args)
+    
+    # Model run
+    scenario_calculation_phase(scenario_args)
     half_model_run(scenario_args, dated_output_folder, model_output_folder)
 
 def half_model_run(
@@ -229,9 +263,8 @@ def graphs_only(scenario_dict: dict, model_output_folder: str, dated_output_fold
 
 
 def full_flow(scenario_dict: dict, dated_output_folder: bool, model_output_folder: str) -> None:
-    data_import_and_preprocessing_refresh(scenario_dict)
-    model_calculation_phase(scenario_dict)
-    half_model_run(scenario_dict, dated_output_folder, model_output_folder)
+    data_import_and_preprocessing_refresh()
+    scenario_calculation_phase(scenario_dict)
     half_model_run(scenario_dict, dated_output_folder, model_output_folder)
 
 
@@ -387,7 +420,7 @@ parser.add_argument(
     help="Runs the global metaresults script directly",
 )  # cost of steelmaking
 parser.add_argument(
-    "-x", "--ta", action="store_true", help="Runs the tco and abatement scripts only"
+    "-x", "--join_final_data", action="store_true", help="Joins final data sets from different scenarios"
 )  # tco_and_abatement_calculations
 parser.add_argument(
     "-y", "--tco", action="store_true", help="Runs the tco script only"

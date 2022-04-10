@@ -190,3 +190,10 @@ SCENARIO_OPTIONS = {
     'abatement': ABATEMENT_SCENARIO,
     'fastest_abatement': ABATEMENT_HIGH_CIRC_SCENARIO
 }
+
+MAIN_SCENARIO_RUNS = [
+    'baseline',
+    'tech_moratorium',
+    'abatement',
+    'carbon_cost'
+]
