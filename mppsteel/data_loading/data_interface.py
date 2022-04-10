@@ -322,7 +322,7 @@ def format_business_cases(serialize: bool):
 
 
 @timer_func
-def create_capex_opex_dict(scenario_dict: dict, serialize: bool = False) -> dict:
+def create_capex_opex_dict(serialize: bool = False) -> dict:
     """Creates a Dictionary containing Greenfield, Brownfield and Opex values.
 
     Args:
@@ -331,12 +331,11 @@ def create_capex_opex_dict(scenario_dict: dict, serialize: bool = False) -> dict
     Returns:
         dict: A dictionary containing the capex/opex values.
     """
-    eur_to_usd_rate = scenario_dict['eur_to_usd']
     greenfield_capex_df = read_pickle_folder(PKL_DATA_IMPORTS, "greenfield_capex")
     brownfield_capex_df = read_pickle_folder(PKL_DATA_IMPORTS, "brownfield_capex")
     other_opex_df = read_pickle_folder(PKL_DATA_IMPORTS, "other_opex")
     capex_dict = capex_dictionary_generator(
-        greenfield_capex_df, brownfield_capex_df, other_opex_df, eur_to_usd_rate
+        greenfield_capex_df, brownfield_capex_df, other_opex_df, 1 / USD_TO_EUR_CONVERSION_DEFAULT
     )
     if serialize:
         serialize_file(capex_dict, PKL_DATA_FORMATTED, "capex_dict")

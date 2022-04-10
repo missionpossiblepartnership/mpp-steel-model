@@ -265,6 +265,10 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
     cumulative_investment_results = create_inv_stats(
         investment_results, results="regional", agg=True, operation="cumsum"
     )
+    cumulative_investment_results = add_results_metadata(
+        cumulative_investment_results, scenario_dict, single_line=True, 
+        include_regions=False, scenario_name=True
+    )
 
     if serialize:
         logger.info(f"-- Serializing dataframes")

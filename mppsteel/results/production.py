@@ -295,7 +295,7 @@ def production_results_flow(scenario_dict: dict, serialize: bool = False) -> dic
     for key in results_dict:
         if key in ["production_resource_usage", "production_emissions"]:
             results_dict[key] = add_results_metadata(
-                results_dict[key], scenario_dict, single_line=True
+                results_dict[key], scenario_dict, single_line=True, scenario_name=True
             )
 
     if serialize:
