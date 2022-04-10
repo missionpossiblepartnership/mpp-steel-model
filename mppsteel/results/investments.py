@@ -9,9 +9,7 @@ from tqdm import tqdm
 from mppsteel.config.model_config import (
     MODEL_YEAR_START,
     MODEL_YEAR_END,
-    PKL_DATA_IMPORTS,
-    PKL_DATA_FORMATTED,
-    MAIN_REGIONAL_SCHEMA
+    PKL_DATA_FORMATTED
 )
 from mppsteel.config.reference_lists import SWITCH_DICT
 
@@ -61,22 +59,6 @@ def capex_getter_f(
         return 0
     capex_ref = capex_df.loc[year, start_tech]
     return capex_ref.loc[capex_ref["new_technology"] == new_tech]["value"].values[0]
-
-
-def investment_switch_getter(
-    inv_df: pd.DataFrame, year: int, plant_name: str
-) -> str:
-    """Returns the switch type of an investment made in a particular year for a particular plant.
-
-    Args:
-        inv_df (pd.DataFrame): The Investment cycle reference DataFrame.
-        year (int): The year that you want to reference.
-        plant_name (str): The name of the reference plant.
-
-    Returns:
-        str: The switch type [`no switch`, `trans switch`, `main cycle`].
-    """
-    return inv_df_ref.loc[year, plant_name].values[0]
 
 
 def investment_row_calculator(
@@ -146,7 +128,7 @@ def create_inv_stats(
             "end_tech",
             "switch_type",
             "capital_cost",
-            "rmi_region",
+            "region_rmi",
         ]
     ].copy()
 
@@ -161,10 +143,10 @@ def create_inv_stats(
         return create_global_stats(df_c, operation).reset_index()
 
     if results == "regional":
-        regions = df_c["rmi_region"].unique()
+        regions = df_c["region_rmi"].unique()
         region_dict = {}
         for region in regions:
-            calc = df_c[df_c["rmi_region"] == region].groupby(["year"]).sum()
+            calc = df_c[df_c["region_rmi"] == region].groupby(["year"]).sum()
             if operation == "sum":
                 pass
             if operation == "cumsum":
@@ -241,11 +223,6 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
         intermediate_path, "plant_result_df", "df"
     )
     plant_names = plant_result_df["plant_name"].unique()
-    country_codes = plant_result_df["country_code"].unique()
-    technologies = SWITCH_DICT.keys()
-    production_resource_usage = read_pickle_folder(
-        final_path, "production_resource_usage", "df"
-    )
     capex_df = create_capex_dict()
     max_year = max([int(year) for year in tech_choice_dict])
     year_range = range(MODEL_YEAR_START, max_year + 1)
@@ -278,7 +255,7 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
     rmi_mapper = create_country_mapper()
     investment_results['country_code'] = investment_results['plant_name'].apply(
         lambda x: plant_country_code_ref[x])
-    investment_results[MAIN_REGIONAL_SCHEMA] = investment_results['country_code'].apply(
+    investment_results['region'] = investment_results['country_code'].apply(
             lambda x: rmi_mapper[x])
     investment_results.reset_index(inplace=True)
     investment_results = map_plant_id_to_df(investment_results, plant_result_df, "plant_name")
