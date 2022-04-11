@@ -1,11 +1,14 @@
 """Functions to format and access data imports"""
 
 # For Data Manipulation
+import itertools
 import pandas as pd
 import pandera as pa
 import numpy as np
 
 from typing import Tuple, Union
+
+from tqdm import tqdm
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.log_utility import get_logger
 
@@ -31,10 +34,15 @@ from mppsteel.config.model_config import (
     PKL_DATA_IMPORTS,
     PKL_DATA_FORMATTED,
     EMISSIONS_FACTOR_SLAG,
-    ENERGY_DENSITY_MET_COAL_MJ_KG,
+    MET_COAL_ENERGY_DENSITY_MJ_PER_KG,
+    MEGATON_TO_KILOTON_FACTOR,
+    KILOTON_TO_TON_FACTOR,
+    TON_TO_KILOGRAM_FACTOR,
     USD_TO_EUR_CONVERSION_DEFAULT
 )
-
+from mppsteel.config.reference_lists import (
+    GJ_RESOURCES, KG_RESOURCES, TECH_REFERENCE_LIST, TON_RESOURCES
+)
 # Create logger
 logger = get_logger(__name__)
 
@@ -190,8 +198,8 @@ def scope1_emissions_getter(df: pd.DataFrame, metric: str, as_ton: bool = True) 
     df_c = df.copy()
     df_c.set_index(["Metric"], inplace=True)
     values = df_c.loc[metric]["Value"]
-    if as_ton:
-        return values / 1000
+    if as_ton: # Kg to T
+        return values / TON_TO_KILOGRAM_FACTOR
     return values
 
 
@@ -310,15 +318,12 @@ def scope3_ef_getter(df: pd.DataFrame, fuel: str, year: str) -> float:
 
 
 @timer_func
-def format_business_cases(serialize: bool):
-    bc_df = read_pickle_folder(
-        PKL_DATA_IMPORTS, "excel_business_cases"
-    )
-    bc_df =  bc_df.melt(id_vars=['Material', 'Type of metric', 'Unit'], var_name='technology', value_name='value').copy()
-    bc_df.rename({'Material': 'material_category', 'Type of metric': 'metric_type', 'Unit': 'unit'}, axis=1, inplace=True)
-    if serialize:
-        serialize_file(bc_df, PKL_DATA_FORMATTED, "standardised_business_cases")
-    return bc_df
+def format_business_cases(bc_df: pd.DataFrame):
+    bc_df_c = bc_df.copy()
+    bc_df_c =  bc_df_c.melt(id_vars=['Material', 'Type of metric', 'Unit'], var_name='technology', value_name='value').copy()
+    bc_df_c.rename({'Material': 'material_category', 'Type of metric': 'metric_type', 'Unit': 'unit'}, axis=1, inplace=True)
+    bc_df_c["material_category"] = bc_df_c["material_category"].apply(lambda x: x.strip())
+    return bc_df_c.set_index(['technology', 'material_category'])
 
 
 @timer_func
@@ -370,7 +375,7 @@ def generate_preprocessed_emissions_data(
         PKL_DATA_IMPORTS, "s3_emissions_factors_1"
     )
     final_scope3_ef_df = modify_scope3_ef_1(
-        s3_emissions_factors_1, slag_new_values, ENERGY_DENSITY_MET_COAL_MJ_KG
+        s3_emissions_factors_1, slag_new_values, MET_COAL_ENERGY_DENSITY_MJ_PER_KG
     )
     if serialize:
         serialize_file(commodities_df, PKL_DATA_FORMATTED, "commodities_df")
@@ -378,42 +383,7 @@ def generate_preprocessed_emissions_data(
     return commodities_df, final_scope3_ef_df
 
 
-def format_bc(df: pd.DataFrame) -> pd.DataFrame:
-    """Formula to format the standardised business cases DataFrame.
-
-    Args:
-        df (pd.DataFrame): The standardised business cases.
-
-    Returns:
-        pd.DataFrame: The formatted standardised business cases.
-    """
-    df_c = df.copy()
-    df_c["material_category"] = df_c["material_category"].apply(lambda x: x.strip())
-    return df_c
-
-
-def load_business_cases() -> pd.DataFrame:
-    """Loads the standardised business cases and returns the formatted DataFrame.
-
-    Returns:
-        pd.DataFrame: The formatted standardised business cases.
-    """
-    standardised_business_cases = read_pickle_folder(
-        PKL_DATA_FORMATTED, "standardised_business_cases", "df"
-    )
-    return format_bc(standardised_business_cases)
-
-
-def load_materials() -> list:
-    """Loads the standarised and formatted business cases and returns the unique materials.
-
-    Returns:
-        list: A list of all untque materials in the business cases.
-    """
-    return load_business_cases()["material_category"].unique().tolist()
-
-
-def business_case_getter(df: pd.DataFrame, tech: str, material: str) -> float:
+def business_case_getter(df: pd.DataFrame, technology: str, material: str, as_mt: bool = False) -> float:
     """Get business case usage values from a DataFrame.
 
     Args:
@@ -424,5 +394,24 @@ def business_case_getter(df: pd.DataFrame, tech: str, material: str) -> float:
     Returns:
         float: The business case value that requested via the function arguments.
     """
-    subset = df[(df["technology"] == tech) & (df["material_category"] == material)]["value"]
-    return subset.values[0]
+    value = df.loc[technology, material]["value"]
+    if as_mt:
+        if material in KG_RESOURCES:
+            return value / (MEGATON_TO_KILOTON_FACTOR * KILOTON_TO_TON_FACTOR * TON_TO_KILOGRAM_FACTOR)
+        if material in TON_RESOURCES:
+            return value / (MEGATON_TO_KILOTON_FACTOR * KILOTON_TO_TON_FACTOR)
+    return value
+
+@timer_func
+def create_business_case_reference(serialize: bool = True):
+    business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "excel_business_cases")
+    business_cases = format_business_cases(business_cases)
+    materials = business_cases.index.get_level_values(1)
+    tech_material_product = list(itertools.product(TECH_REFERENCE_LIST, materials))
+    business_case_reference = {}
+    for tech, material in tqdm(tech_material_product, total=len(tech_material_product), desc='Business Case Reference'):
+        business_case_reference[(tech, material)] = business_case_getter(business_cases, tech, material, as_mt=True)
+    if serialize:
+        serialize_file(business_cases, PKL_DATA_FORMATTED, "standardised_business_cases")
+        serialize_file(business_case_reference, PKL_DATA_FORMATTED, "business_case_reference")
+    return business_case_reference
