@@ -85,8 +85,8 @@ def metaresults_flow(scenario_dict: dict, serialize: bool = False) -> pd.DataFra
     production_resource_usage = read_pickle_folder(
         final_path, "production_resource_usage", "df"
     )
-    capacity_results = read_pickle_folder(
-        intermediate_path, "capacity_results", "dict"
+    regional_capacity_results = read_pickle_folder(
+        intermediate_path, "regional_capacity_results", "dict"
     )
     utilization_results = read_pickle_folder(
         intermediate_path, "utilization_results", "dict"
@@ -94,7 +94,7 @@ def metaresults_flow(scenario_dict: dict, serialize: bool = False) -> pd.DataFra
     steel_demand_scenario = scenario_dict["steel_demand_scenario"]
     global_metaresults = global_metaresults_calculator(
         steel_demand_df,
-        capacity_results,
+        regional_capacity_results,
         utilization_results,
         production_resource_usage,
         steel_demand_scenario

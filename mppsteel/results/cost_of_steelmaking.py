@@ -4,9 +4,8 @@ import pandas as pd
 import numpy_financial as npf
 
 from tqdm import tqdm
-from mppsteel.config.reference_lists import SWITCH_DICT, TECH_REFERENCE_LIST
+from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
 
-from mppsteel.data_loading.steel_plant_formatter import create_plant_capacities_dict
 from mppsteel.model.levelized_cost import calculate_cc
 from mppsteel.results.production import production_stats_getter
 from mppsteel.results.investments import get_investment_capital_costs
@@ -171,7 +170,7 @@ def cost_of_steelmaking(
         cos_values = df_c.apply(
             apply_cos,
             year=year,
-            cap_dict=capacities_dict,
+            cap_dict=capacities_dict[year],
             variable_costs_ref=variable_costs_ref,
             capex_ref=capex_ref,
             investment_cost_ref=investment_cost_ref,
@@ -255,11 +254,9 @@ def create_cost_of_steelmaking_data(
     """
 
     year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
-    plant_names = steel_plant_df['plant_name'].unique()
     steel_plant_country_codes = list(steel_plant_df["country_code"].unique())
     product_range_year_tech = list(itertools.product(year_range, TECH_REFERENCE_LIST))
     product_range_full = list(itertools.product(year_range, steel_plant_country_codes, TECH_REFERENCE_LIST))
-    product_year_plant = list(itertools.product(year_range, plant_names))
 
     production_df_c = production_df.set_index(["year", "plant_name"]).copy()
 
@@ -289,12 +286,14 @@ def create_cost_of_steelmaking_data(
 
     investment_cost_ref = {}
     production_ref = {}
-    for year, plant_name in tqdm(product_year_plant, total=len(product_year_plant), desc='COS Investment Reference Loop'):
-        investment_cost_ref[(year, plant_name)] = get_investment_capital_costs(
-            investment_df, investment_dict_result_cycles_only, plant_name, year)
-        production_ref[(year, plant_name)] = production_stats_getter(production_df_c, year, plant_name, 'production')
+    for year in tqdm(year_range, total=len(year_range), desc='COS Investment Reference Loop'):
+        for plant_name in capacities_ref[year].keys():
+            investment_cost_ref[(year, plant_name)] = get_investment_capital_costs(
+                investment_df, investment_dict_result_cycles_only, plant_name, year)
+            production_ref[(year, plant_name)] = production_stats_getter(production_df_c, year, plant_name, 'production')
 
     relining_span_ref = {}
+    plant_names = steel_plant_df['plant_name'].unique()
     for plant_name in tqdm(plant_names, total=len(plant_names), desc='Relining Year Span Loop'):
         relining_span_ref[plant_name] = investment_cycle_lengths.get(plant_name, INVESTMENT_CYCLE_DURATION_YEARS)
 
@@ -363,7 +362,7 @@ def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize: bool = 
     plant_result_df = read_pickle_folder(
         intermediate_path, "plant_result_df", "df"
     )
-    capacities_dict = create_plant_capacities_dict(plant_result_df)
+    plant_capacity_results = read_pickle_folder(intermediate_path, "plant_capacity_results", "df")
     investment_results = read_pickle_folder(
         final_path, "investment_results", "df"
     )
@@ -380,7 +379,7 @@ def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize: bool = 
         variable_costs_regional,
         investment_results,
         capex_dict,
-        capacities_dict,
+        plant_capacity_results,
         plant_cycle_length_mapper_result,
         investment_dict_result,
         "region_rmi",
