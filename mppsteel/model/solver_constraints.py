@@ -2,12 +2,13 @@
 
 import pandas as pd
 
-from mppsteel.config.model_config import TECH_MORATORIUM_DATE
+from mppsteel.config.model_config import (
+    EXAJOULE_TO_GIGAJOULE,
+    TECH_MORATORIUM_DATE, 
+    BIOMASS_ENERGY_DENSITY_GJ_PER_TON
+)
 from mppsteel.config.reference_lists import (
     TECHNOLOGY_PHASES
-)
-from mppsteel.data_loading.data_interface import (
-    business_case_getter
 )
 from mppsteel.utility.log_utility import get_logger
 
@@ -95,14 +96,16 @@ def tech_availability_check(
         return False
 
 
-def create_carbon_constraint(model: pd.DataFrame, model_type: str):
+def create_carbon_constraint(model: pd.DataFrame, model_type: str): # Mt CO2
     mapper = {'co2': 'Steel CO2 use market', 'ccs': 'Total Steel CCS capacity'}
     return model[model['Metric'] == mapper[model_type]][['Value', 'Year']].set_index(['Year']).to_dict()['Value']
 
 
-def create_biomass_constraint(model: pd.DataFrame):
-    return model[['value']].to_dict()['value']
-
+def create_biomass_constraint(model: pd.DataFrame, as_gj_per_t: bool = True): # EJ
+    values_dict = model[['value']].to_dict()['value']
+    if as_gj_per_t:
+        values_dict = {year: value * (EXAJOULE_TO_GIGAJOULE / BIOMASS_ENERGY_DENSITY_GJ_PER_TON) for year, value in values_dict.items()}
+    return values_dict
 
 def create_scrap_constraints(model: pd.DataFrame, world: bool = True):
     rsd = model[['region', 'value']] \
@@ -117,23 +120,20 @@ def create_scrap_constraints(model: pd.DataFrame, world: bool = True):
 
 def return_projected_usage(
     plant_name: str, technology: str, capacities_dict: dict,
-    business_cases: pd.DataFrame, materials: list
+    business_case_ref: dict, materials: list
 ):
     return sum([
-        business_case_getter(business_cases, technology, material) \
+        business_case_ref[(technology, material)] \
             * capacities_dict[plant_name] for material in materials 
     ])
 
 
 def return_current_usage(
     plant_list: list, technology_choices: dict, capacities_dict: dict,
-    business_cases: pd.DataFrame, materials: list, year: int
+    business_case_ref: dict, materials: list, year: int
 ):
     usage_sum = []
     for material in materials:
-        agg = sum([
-            business_case_getter(business_cases, technology_choices[str(year)][plant_name], material) \
-            * capacities_dict[plant_name] for plant_name in plant_list
-        ])
+        agg = sum([ business_case_ref[(technology_choices[str(year)][plant_name], material)] * capacities_dict[plant_name] for plant_name in plant_list ])
         usage_sum.append(agg)
     return sum(usage_sum)

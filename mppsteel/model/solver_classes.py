@@ -4,7 +4,10 @@ import pandas as pd
 import numpy as np
 
 from mppsteel.config.model_config import (
-    PKL_DATA_IMPORTS, PKL_DATA_FORMATTED, MAIN_REGIONAL_SCHEMA
+    PKL_DATA_IMPORTS, 
+    PKL_DATA_FORMATTED, 
+    MAIN_REGIONAL_SCHEMA,
+    GIGATON_TO_MEGATON_FACTOR
 )
 from mppsteel.config.reference_lists import RESOURCE_CONTAINER_REF
 from mppsteel.utility.file_handling_utility import (
@@ -17,7 +20,6 @@ from mppsteel.model.solver_constraints import (
     return_projected_usage,
     tech_availability_check,
 )
-from mppsteel.data_loading.data_interface import business_case_getter
 from mppsteel.utility.log_utility import get_logger
 logger = get_logger(__name__)
 
@@ -48,23 +50,32 @@ class PlantChoices:
 
 class MaterialUsage:
     def __init__(self):
-        self.constraints = {}
+        self.constraint = {}
         self.usage = {}
+        self.balance = {}
         self.results = []
+
+    def initiate_years(self, year_range: range, resource_list: list):
+        for year in year_range:
+            self.usage[year] = {resource: 0 for resource in resource_list}
+            self.balance[year] = {resource: 0 for resource in resource_list}
 
     def load_constraint(self, model: pd.DataFrame, model_type: str):
         if model_type == 'biomass':
-            self.constraints[model_type] = create_biomass_constraint(model)
+            self.constraint[model_type] = create_biomass_constraint(model)
         elif model_type == 'scrap':
-            self.constraints[model_type] = create_scrap_constraints(model)
+            self.constraint[model_type] = create_scrap_constraints(model)
         elif model_type in {'ccs', 'co2'}:
-            self.constraints[model_type] = create_carbon_constraint(model, model_type)
+            self.constraint[model_type] = create_carbon_constraint(model, model_type)
 
-    def set_year_balance(self, model_type: str, year: int):
-        self.usage[model_type] = {year: self.constraints[model_type][year]}
+    def set_year_balance(self, year: int, model_type: str):
+        self.balance[year][model_type] = self.constraint[model_type][year]
 
-    def get_current_balance(self, model_type: str, year: int):
-        return self.usage[model_type][year]
+    def get_current_balance(self, year: int, model_type: str):
+        return self.balance[year][model_type]
+
+    def get_current_usage(self, year: int, model_type: str):
+        return self.usage[year][model_type]
 
     def record_results(self, dict_entry: dict):
         self.results.append(dict_entry)
@@ -72,20 +83,14 @@ class MaterialUsage:
     def output_results_to_df(self):
         return pd.DataFrame(self.results)
 
-    def constraint_transaction(self, model_type: str, year: int, amount: float, region: str = None, override_constraint: bool = False):
-        if region:
-            current_amount = self.usage[model_type][year][region]
-        else:
-            current_amount = self.usage[model_type][year]
-        if (current_amount >= amount) or override_constraint:
-            if region:
-                self.usage[model_type][year][region] = current_amount - amount
-            else:
-                self.usage[model_type][year] = current_amount - amount
-            return True
-        else:
+    def constraint_transaction(self, year: int, model_type: str, amount: float, override_constraint: bool = False):
+        current_balance = self.balance[year][model_type]
+        current_usage = self.usage[year][model_type]
+        if (current_balance < amount) and not override_constraint:
             return False
-
+        self.balance[year][model_type] = current_balance - amount
+        self.usage[year][model_type] = current_usage + amount
+        return True
 
 class CapacityContainerClass():
     def __init__(self):
@@ -100,10 +105,10 @@ class CapacityContainerClass():
 
     def map_capacities(self, original_plant_df: pd.DataFrame, plant_df: pd.DataFrame, year: int):
         # Map capacities of plants that are still active for aggregates, else use averages
-        plant_capacity_dict, regional_capacity_dict = create_annual_capacity_dict(plant_df, year, as_mt=True)
+        plant_capacity_dict, regional_capacity_dict = create_annual_capacity_dict(plant_df, year, as_gt=True)
         self.plant_capacities[year] = plant_capacity_dict
         self.regional_capacities_agg[year] = regional_capacity_dict
-        self.regional_capacities_avg[year] = create_regional_capacity_dict(original_plant_df, as_avg=True, as_mt=True)
+        self.regional_capacities_avg[year] = create_regional_capacity_dict(original_plant_df, as_avg=True, as_gt=True)
 
     def return_regional_capacity(self, year: int = None, region: str = None, capacity_type: str = 'agg'):
         capacity_dict = self.regional_capacities_agg if capacity_type == 'agg' else self.regional_capacities_avg
@@ -242,7 +247,7 @@ class MarketContainerClass:
 
 
 def apply_constraints(
-    business_cases: pd.DataFrame,
+    business_case_ref: dict,
     plant_capacities: dict,
     material_usage_dict_container: MaterialUsage,
     combined_available_list: list,
@@ -259,13 +264,13 @@ def apply_constraints(
                 plant_name,
                 switch_technology,
                 plant_capacities,
-                business_cases,
+                business_case_ref,
                 RESOURCE_CONTAINER_REF[resource]
             )
 
             material_check = material_usage_dict_container.constraint_transaction(
-                resource,
                 year,
+                resource,
                 projected_usage,
                 override_constraint=False
             )
@@ -291,7 +296,7 @@ def apply_constraints(
     return new_availability_list
 
 def apply_constraints_for_min_cost_tech(
-    business_cases: pd.DataFrame,
+    business_case_ref: dict,
     tech_availability: pd.DataFrame,
     material_usage_dict_container: MaterialUsage,
     combined_available_list: list,
@@ -310,10 +315,10 @@ def apply_constraints_for_min_cost_tech(
     for technology in combined_available_list:
         material_check_container = {}
         for resource in RESOURCE_CONTAINER_REF:
-            projected_usage = sum([business_case_getter(business_cases, technology, material) * plant_capacity for material in RESOURCE_CONTAINER_REF[resource]])
+            projected_usage = sum([business_case_ref[(technology, material)] * plant_capacity for material in RESOURCE_CONTAINER_REF[resource]] )
             material_check = material_usage_dict_container.constraint_transaction(
-                resource,
                 year,
+                resource,
                 projected_usage,
                 override_constraint=False
             )
@@ -339,7 +344,7 @@ def apply_constraints_for_min_cost_tech(
         material_usage_dict_container.record_results(entry)
     return new_availability_list
 
-def create_regional_capacity_dict(plant_df: pd.DataFrame, rounding: int = 3, as_avg: bool = False, as_mt: bool = False):
+def create_regional_capacity_dict(plant_df: pd.DataFrame, rounding: int = 3, as_avg: bool = False, as_gt: bool = False):
     logger.info('Deriving average plant capacity statistics')
     plant_df_c = plant_df.copy()
     df = plant_df_c[[MAIN_REGIONAL_SCHEMA, 'plant_capacity']].groupby([MAIN_REGIONAL_SCHEMA])
@@ -348,12 +353,12 @@ def create_regional_capacity_dict(plant_df: pd.DataFrame, rounding: int = 3, as_
     else:
         df = df.sum().round(rounding).reset_index()
     dict_obj = dict(zip(df[MAIN_REGIONAL_SCHEMA], df['plant_capacity']))
-    if as_mt:
-        return {region: value / 1000 for region, value in dict_obj.items()}
+    if as_gt:
+        return {region: value / GIGATON_TO_MEGATON_FACTOR for region, value in dict_obj.items()} # Mt to Gt
     return dict_obj
 
 
-def create_annual_capacity_dict(plant_df: pd.DataFrame, year: int, rounding: int = 3, as_mt: bool = False):
+def create_annual_capacity_dict(plant_df: pd.DataFrame, year: int, rounding: int = 3, as_gt: bool = False):
     plant_capacity_dict = {}
     regional_capacity_dict = {}
     for row in plant_df.itertuples():
@@ -365,9 +370,9 @@ def create_annual_capacity_dict(plant_df: pd.DataFrame, year: int, rounding: int
     regions = plant_df[MAIN_REGIONAL_SCHEMA].unique()
     regional_capacity_dict_list = {region: [plant_capacity_dict[plant_name] for plant_name in set(plant_capacity_dict.keys()).intersection(set(plant_df[plant_df[MAIN_REGIONAL_SCHEMA] == region]['plant_name'].unique()))] for region in regions}
     regional_capacity_dict = {region: sum(value_list) for region, value_list in regional_capacity_dict_list.items()}
-    if as_mt:
-        plant_capacity_dict = {plant_name: value / 1000 for plant_name, value in plant_capacity_dict.items()}
-        regional_capacity_dict = {region: value / 1000 for region, value in regional_capacity_dict.items()}
+    if as_gt: # Mt to Gt
+        plant_capacity_dict = {plant_name: value / GIGATON_TO_MEGATON_FACTOR for plant_name, value in plant_capacity_dict.items()}
+        regional_capacity_dict = {region: value / GIGATON_TO_MEGATON_FACTOR for region, value in regional_capacity_dict.items()}
     return plant_capacity_dict, regional_capacity_dict
 
 
@@ -399,5 +404,5 @@ def create_wsa_2020_utilization_dict():
     wsa_production = read_pickle_folder(PKL_DATA_IMPORTS, "wsa_production", "df")
     steel_plants_processed = read_pickle_folder(PKL_DATA_FORMATTED, "steel_plants_processed", "df")
     wsa_2020_production_dict = format_wsa_production_data(wsa_production, as_dict=True)
-    capacity_dict = create_regional_capacity_dict(steel_plants_processed, as_mt=True)
+    capacity_dict = create_regional_capacity_dict(steel_plants_processed, as_gt=True)
     return return_utilization(wsa_2020_production_dict, capacity_dict, value_cap=1)
