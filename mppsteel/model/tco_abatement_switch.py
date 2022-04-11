@@ -131,7 +131,7 @@ def tco_regions_ref_generator(scenario_dict: dict) -> pd.DataFrame:
         discounted_capex_ref[(year, country_code)] = discounted_opex_values
 
     technology_df_ref = {}
-    for tech in tqdm(technologies, total=len(technologies), desc='Technology DF Loop'):
+    for tech in tqdm(TECH_REFERENCE_LIST, total=len(TECH_REFERENCE_LIST), desc='Technology DF Loop'):
         technology_df_ref[tech] = pd.DataFrame({'end_technology': SWITCH_DICT[tech]})
 
     df_list = []
@@ -187,9 +187,8 @@ def emissivity_abatement(combined_emissivity: pd.DataFrame, scope: str) -> pd.Da
     )
     
     country_codes = combined_emissivity.index.get_level_values(1).unique()
-    technologies = combined_emissivity.index.get_level_values(2).unique()
     year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
-    product_range_full = list(itertools.product(year_range, country_codes, technologies))
+    product_range_full = list(itertools.product(year_range, country_codes, TECH_REFERENCE_LIST))
 
     technology_emissions_ref = {}
     for year, country_code, tech in tqdm(product_range_full, total=len(product_range_full), desc='Emissions Reference'):
