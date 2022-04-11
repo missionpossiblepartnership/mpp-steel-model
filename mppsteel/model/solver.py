@@ -29,11 +29,12 @@ from mppsteel.config.model_scenarios import (
 
 from mppsteel.config.reference_lists import (
     SWITCH_DICT,
+    TECH_REFERENCE_LIST,
     TECHNOLOGY_STATES,
     FURNACE_GROUP_DICT,
     RESOURCE_CONTAINER_REF,
 )
-
+from mppsteel.model.tco_calculation_functions import calculate_green_premium
 from mppsteel.data_loading.country_reference import country_df_formatter
 from mppsteel.model.solver_constraints import (
     tech_availability_check,
@@ -59,19 +60,17 @@ logger = get_logger(__name__)
 def return_best_tech(
     tco_reference_data: pd.DataFrame,
     abatement_reference_data: pd.DataFrame,
-    solver_logic: str,
-    proportions_dict: dict,
     business_case_ref: dict,
+    variable_costs_df: pd.DataFrame,
+    green_premium_timeseries: pd.DataFrame,
     tech_availability: pd.DataFrame,
     tech_avail_from_dict: dict,
     plant_capacities: dict,
+    scenario_dict: dict,
     year: int,
     plant_name: str,
     country_code: str,
     base_tech: str = None,
-    tech_moratorium: bool = False,
-    transitional_switch_only: bool = False,
-    enforce_constraints: bool = False,
     material_usage_dict_container: MaterialUsage = None,
 ) -> Union[str, dict]:
     """Function generates the best technology choice from a number of key data and scenario inputs.
@@ -101,7 +100,29 @@ def return_best_tech(
     Returns:
         Union[str, dict]: Returns the best technology as a string, and optionally the `material_usage_dict_container` if the `return_material_container` switch is activated.
     """
+    proportions_dict = TECH_SWITCH_SCENARIOS[scenario_dict["tech_switch_scenario"]]
+    solver_logic = SOLVER_LOGICS[scenario_dict['solver_logic']]
+    transitional_switch_only = scenario_dict["transitional_switch"]
+    tech_moratorium = scenario_dict["tech_moratorium"]
+    enforce_constraints = scenario_dict["enforce_constraints"]
+    green_premium_scenario = scenario_dict['green_premium_scenario']
+
     tco_ref_data = tco_reference_data.copy()
+
+    if green_premium_scenario != 'off':
+        usd_to_eur_rate = scenario_dict['usd_to_eur']
+        discounted_green_premium_values = calculate_green_premium(
+            variable_costs_df,
+            plant_capacities,
+            green_premium_timeseries,
+            country_code,
+            plant_name,
+            year,
+            usd_to_eur_rate
+        )
+        for technology in TECH_REFERENCE_LIST:
+            current_tco_value = tco_ref_data.loc[year, country_code, technology]['tco']
+            tco_ref_data.loc[(year, country_code, technology), 'tco'] = current_tco_value - discounted_green_premium_values[technology]
 
     if not base_tech:
         raise ValueError(f'Issue with base_tech not existing: {plant_name} | {year} | {base_tech}')
@@ -167,7 +188,7 @@ def return_best_tech(
     )
 
     if not isinstance(best_choice, str):
-        raise ValueError(f'Issue with get_best_choice function returning a nan: {plant_name} | {year} | {combined_available_list}')
+        raise ValueError(f'Issue with get_best_choice function returning a nan: {plant_name} | {year} | {base_tech} | {combined_available_list}')
 
     return best_choice
 
@@ -188,15 +209,8 @@ def choose_technology(
     """
 
     logger.info("Creating Steel plant df")
-
-    solver_logic = SOLVER_LOGICS[scenario_dict["solver_logic"]]
     tech_moratorium = scenario_dict["tech_moratorium"]
-    enforce_constraints = scenario_dict["enforce_constraints"]
     steel_demand_scenario = scenario_dict["steel_demand_scenario"]
-    trans_switch_scenario = scenario_dict["transitional_switch"]
-    tech_switch_scenario = TECH_SWITCH_SCENARIOS[
-        scenario_dict["tech_switch_scenario"]
-    ]
     trade_scenario=scenario_dict["trade_active"]
     intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
 
@@ -229,6 +243,9 @@ def choose_technology(
     business_case_ref = read_pickle_folder(
         PKL_DATA_FORMATTED, "business_case_reference", "df"
     )
+    green_premium_timeseries = read_pickle_folder(
+        intermediate_path, "green_premium_timeseries", "df"
+    ).set_index('year')
     tco_summary_data = read_pickle_folder(
         intermediate_path, "tco_summary_data", "df"
     )
@@ -401,20 +418,19 @@ def choose_technology(
 
                 if switch_type == "main cycle":
                     best_choice_tech = return_best_tech(
-                        tco_slim,
-                        abatement_slim,
-                        solver_logic,
-                        tech_switch_scenario,
-                        business_case_ref,
-                        tech_availability,
-                        ta_dict,
-                        plant_capacities_dict,
-                        year,
-                        plant_name,
-                        country_code,
-                        current_tech,
-                        tech_moratorium=tech_moratorium,
-                        enforce_constraints=enforce_constraints,
+                        tco_reference_data=tco_slim,
+                        abatement_reference_data=abatement_slim,
+                        business_case_ref=business_case_ref,
+                        variable_costs_df=variable_costs_regional,
+                        green_premium_timeseries=green_premium_timeseries,
+                        tech_availability=tech_availability,
+                        tech_avail_from_dict=ta_dict,
+                        plant_capacities=plant_capacities_dict,
+                        scenario_dict=scenario_dict,
+                        year=year,
+                        plant_name=plant_name,
+                        country_code=country_code,
+                        base_tech=current_tech,
                         material_usage_dict_container=MaterialUsageContainer,
                     )
                     if best_choice_tech == current_tech:
@@ -424,22 +440,20 @@ def choose_technology(
                     PlantChoiceContainer.update_choices(year, plant_name, best_choice_tech)
                 if switch_type == "trans switch":
                     best_choice_tech = return_best_tech(
-                        tco_slim,
-                        abatement_slim,
-                        solver_logic,
-                        tech_switch_scenario,
-                        business_case_ref,
-                        tech_availability,
-                        ta_dict,
-                        plant_capacities_dict,
-                        year,
-                        plant_name,
-                        country_code,
-                        current_tech,
-                        tech_moratorium=tech_moratorium,
-                        enforce_constraints=enforce_constraints,
+                        tco_reference_data=tco_slim,
+                        abatement_reference_data=abatement_slim,
+                        business_case_ref=business_case_ref,
+                        variable_costs_df=variable_costs_regional,
+                        green_premium_timeseries=green_premium_timeseries,
+                        tech_availability=tech_availability,
+                        tech_avail_from_dict=ta_dict,
+                        plant_capacities=plant_capacities_dict,
+                        scenario_dict=scenario_dict,
+                        year=year,
+                        plant_name=plant_name,
+                        country_code=country_code,
+                        base_tech=current_tech,
                         material_usage_dict_container=MaterialUsageContainer,
-                        transitional_switch_only=trans_switch_scenario,
                     )
                     if best_choice_tech != current_tech:
                         entry['switch_type'] = 'Transitional switch in off-cycle investment year'
@@ -458,7 +472,8 @@ def choose_technology(
     investment_df = PlantInvestmentCycleContainer.create_investment_df()
     tech_choice_dict = PlantChoiceContainer.return_choices()
     tech_choice_records = PlantChoiceContainer.output_records_to_df()
-    capacity_results = CapacityContainer.return_regional_capacity()
+    regional_capacity_results = CapacityContainer.return_regional_capacity()
+    plant_capacity_results = CapacityContainer.return_plant_capacity()
     utilization_results = UtilizationContainer.get_utilization_values()
 
     return {
@@ -468,7 +483,8 @@ def choose_technology(
         'investment_cycle_ref_result': investment_df,
         'investment_dict_result': investment_dict,
         'plant_cycle_length_mapper_result': plant_cycle_length_mapper,
-        'capacity_results': capacity_results,
+        'regional_capacity_results': regional_capacity_results,
+        'plant_capacity_results': plant_capacity_results,
         'utilization_results': utilization_results,
         'trade_summary_results': trade_summary_results,
         'full_trade_calculations': full_trade_calculations,
@@ -500,7 +516,8 @@ def solver_flow(scenario_dict: dict, serialize: bool = False) -> dict:
         serialize_file(results_dict['investment_cycle_ref_result'], intermediate_path, "investment_cycle_ref_result")
         serialize_file(results_dict['investment_dict_result'], intermediate_path, "investment_dict_result")
         serialize_file(results_dict['plant_cycle_length_mapper_result'], intermediate_path, "plant_cycle_length_mapper_result")
-        serialize_file(results_dict['capacity_results'], intermediate_path, "capacity_results")
+        serialize_file(results_dict['regional_capacity_results'], intermediate_path, "regional_capacity_results")
+        serialize_file(results_dict['plant_capacity_results'], intermediate_path, "plant_capacity_results")
         serialize_file(results_dict['utilization_results'], intermediate_path, "utilization_results")
         serialize_file(results_dict['trade_summary_results'], intermediate_path, "trade_summary_results")
         serialize_file(results_dict['full_trade_calculations'], intermediate_path, "full_trade_calculations")

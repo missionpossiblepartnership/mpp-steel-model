@@ -23,7 +23,6 @@ from mppsteel.config.model_config import (
     MODEL_YEAR_START,
     PKL_DATA_FORMATTED,
     INVESTMENT_CYCLE_DURATION_YEARS,
-    PKL_DATA_IMPORTS,
     DISCOUNT_RATE,
 )
 
@@ -69,12 +68,6 @@ def tco_regions_ref_generator(scenario_dict: dict) -> pd.DataFrame:
     steel_plants = read_pickle_folder(
         PKL_DATA_FORMATTED, "steel_plants_processed", "df"
     )
-    # Green premium preprocessing - not currently active
-    # green_premium_timeseries = read_pickle_folder(intermediate_path, "green_premium_timeseries", "df")
-    # capacity_dict = dict(zip(steel_plants['plant_name'], steel_plants['plant_capacity']))
-    # usd_to_eur_rate = scenario_dict['usd_to_eur']
-    # steel_plant_names = steel_plants["plant_name"].unique()
-    # green_premium_timeseries.set_index('year', inplace=True)
 
     # Preprocessing
     techs_to_drop = ["Charcoal mini furnace", "Close plant"]

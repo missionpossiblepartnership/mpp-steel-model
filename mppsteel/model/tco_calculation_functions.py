@@ -4,6 +4,10 @@ import pandas as pd
 import numpy_financial as npf
 
 from mppsteel.config.model_config import (
+    DISCOUNT_RATE,
+    INVESTMENT_CYCLE_DURATION_YEARS,
+    KILOTON_TO_TON_FACTOR,
+    MEGATON_TO_KILOTON_FACTOR,
     MODEL_YEAR_END
 )
 from mppsteel.config.reference_lists import SWITCH_DICT
@@ -29,14 +33,13 @@ def carbon_tax_estimate(
 
 
 def calculate_green_premium(
-    variable_cost_ref: dict,
+    variable_cost_ref: pd.DataFrame,
     capacity_ref: dict,
     green_premium_timeseries: pd.DataFrame,
     country_code: str,
     plant_name: str,
-    tech: str,
     year: int,
-    usd_eur_rate: float,
+    usd_eur_rate: float
 ) -> float:
     """Calculates a green premium amout based on the product of the green premium capacity and the green premium timeseries value.
 
@@ -53,11 +56,20 @@ def calculate_green_premium(
     Returns:
         float: A green premium value product.
     """
-    variable_tech_cost = variable_cost_ref[(year, country_code, tech)]
-    plant_capacity = capacity_ref[plant_name]
-    green_premium = green_premium_timeseries.loc[year]["value"]
-    steel_making_cost = (variable_tech_cost / plant_capacity) * usd_eur_rate
-    return steel_making_cost * green_premium
+
+    def green_premium_calc(loop_year: int):
+        variable_tech_costs = variable_cost_ref.loc[country_code, loop_year] # ts
+        plant_capacity = capacity_ref[plant_name] # float
+        green_premium = green_premium_timeseries.loc[loop_year]["value"] # float
+        return (variable_tech_costs * green_premium * usd_eur_rate) / (plant_capacity * MEGATON_TO_KILOTON_FACTOR * KILOTON_TO_TON_FACTOR) # ts
+
+    year_range = range(year, year + INVESTMENT_CYCLE_DURATION_YEARS + 1)
+    year_range = [year if (year <= MODEL_YEAR_END) else min(MODEL_YEAR_END, year) for year in year_range]
+    df_list = [green_premium_calc(loop_year) for loop_year in year_range]
+    df_combined = pd.concat(df_list)
+    technologies = df_combined.index.unique()
+    return {technology: npf.npv(DISCOUNT_RATE, df_combined.loc[technology]["cost"].values) for technology in technologies}
+
 
 
 def get_opex_costs(
