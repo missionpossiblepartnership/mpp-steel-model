@@ -5,7 +5,6 @@ import pandera as pa
 
 from mppsteel.config.model_config import (
     PKL_DATA_IMPORTS,
-    PKL_DATA_FORMATTED,
     MODEL_YEAR_END,
 )
 from mppsteel.config.model_scenarios import (
@@ -159,10 +158,8 @@ def subset_bio_prices(
 
 def subset_bio_constraints(
     bdf: pd.DataFrame,
-    scenario_dict: dict,
     sector: str = "Steel",
     const_scenario: str = "Prudent",
-    currency_conversion_factor: float = None,
 ) -> float:
     """A getter function for the formatted Bio Constraints model.
 
@@ -179,8 +176,6 @@ def subset_bio_constraints(
     year_pairs = [(2020, 2030), (2030, 2040), (2040, 2050)]
     bdf_c = expand_melt_and_sort_years(bdf_c, year_pairs)
     bdf_c.columns = [col.lower().strip() for col in bdf_c.columns]
-    if currency_conversion_factor:
-        bdf_c = convert_currency_col(bdf_c, 'value', currency_conversion_factor)
     return bdf_c[['year', 'unit', 'value']].set_index(['year'])
 
 
@@ -278,7 +273,7 @@ def format_pe_data(scenario_dict: dict, serialize: bool = False) -> dict:
     power_grid_prices_f = subset_power(power_grid_prices, scenario_dict, as_gj=True)
     power_grid_emissions_f = subset_power(power_grid_emissions, scenario_dict)
     bio_model_prices_f = subset_bio_prices(bio_model_prices, scenario_dict)
-    bio_model_constraints_f = subset_bio_constraints(bio_model_constraints, scenario_dict)
+    bio_model_constraints_f = subset_bio_constraints(bio_model_constraints)
     ccus_model_storage_f = subset_ccus_storage(ccus_model_storage, scenario_dict)
     ccus_model_transport_f = subset_ccus_transport(ccus_model_transport, scenario_dict)
 

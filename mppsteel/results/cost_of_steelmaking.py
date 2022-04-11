@@ -4,7 +4,7 @@ import pandas as pd
 import numpy_financial as npf
 
 from tqdm import tqdm
-from mppsteel.config.reference_lists import SWITCH_DICT
+from mppsteel.config.reference_lists import SWITCH_DICT, TECH_REFERENCE_LIST
 
 from mppsteel.data_loading.steel_plant_formatter import create_plant_capacities_dict
 from mppsteel.model.levelized_cost import calculate_cc
@@ -255,11 +255,10 @@ def create_cost_of_steelmaking_data(
     """
 
     year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
-    technologies = SWITCH_DICT.keys()
     plant_names = steel_plant_df['plant_name'].unique()
     steel_plant_country_codes = list(steel_plant_df["country_code"].unique())
-    product_range_year_tech = list(itertools.product(year_range, technologies))
-    product_range_full = list(itertools.product(year_range, steel_plant_country_codes, technologies))
+    product_range_year_tech = list(itertools.product(year_range, TECH_REFERENCE_LIST))
+    product_range_full = list(itertools.product(year_range, steel_plant_country_codes, TECH_REFERENCE_LIST))
     product_year_plant = list(itertools.product(year_range, plant_names))
 
     production_df_c = production_df.set_index(["year", "plant_name"]).copy()

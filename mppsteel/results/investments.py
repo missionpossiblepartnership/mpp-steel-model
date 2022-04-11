@@ -9,9 +9,10 @@ from tqdm import tqdm
 from mppsteel.config.model_config import (
     MODEL_YEAR_START,
     MODEL_YEAR_END,
-    PKL_DATA_FORMATTED
+    PKL_DATA_FORMATTED,
+    MEGATON_TO_KILOTON_FACTOR, 
+    KILOTON_TO_TON_FACTOR
 )
-from mppsteel.config.reference_lists import SWITCH_DICT
 
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import add_results_metadata
@@ -93,7 +94,7 @@ def investment_row_calculator(
     actual_capex = 0
     if new_tech:
         capex_value = capex_getter_f(capex_df, year, start_tech, new_tech, switch_type)
-        actual_capex = capex_value * (capacity_ref[plant_name] * 1000 * 1000)  # convert from Mt to T
+        actual_capex = capex_value * (capacity_ref[plant_name] * MEGATON_TO_KILOTON_FACTOR * KILOTON_TO_TON_FACTOR)  # convert from Mt to T
     return {
         "plant_name": plant_name,
         "year": year,

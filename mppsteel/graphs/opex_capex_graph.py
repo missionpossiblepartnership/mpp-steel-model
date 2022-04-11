@@ -75,7 +75,7 @@ def add_opex_values(vdf: pd.DataFrame, co_df: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: The updated variable costs dataframe with the other opex values.
     """
     vdf_c = vdf.copy()
-    for technology in SWITCH_DICT.keys():
+    for technology in TECH_REFERENCE_LIST:
         vdf_c.loc[technology, "Other Opex"]["cost"] = (
             vdf_c.loc[technology, "Other Opex"]["cost"]
             + co_df.loc[:,"other_opex"][technology]
@@ -95,7 +95,7 @@ def add_capex_values(vdf: pd.DataFrame, co_df: pd.DataFrame) -> pd.DataFrame:
     """
     vdf_c = vdf.copy()
     country_values = vdf_c.index.get_level_values(2).unique()
-    for technology in SWITCH_DICT.keys():
+    for technology in TECH_REFERENCE_LIST:
         bf_value = co_df["brownfield_capex"][technology]
         gf_value = co_df["greenfield_capex"][technology]
         for country in country_values:
@@ -152,7 +152,7 @@ def assign_country_deltas(df: pd.DataFrame, delta_dict: dict) -> pd.DataFrame:
     """
     df_c = df.copy()
     country_values = df_c.index.get_level_values(2).unique()
-    for country, technology in list(itertools.product(country_values, SWITCH_DICT.keys())):
+    for country, technology in list(itertools.product(country_values, TECH_REFERENCE_LIST)):
         df_c.loc[(technology, "Region Cost Delta", country), "cost"] = delta_dict[technology]
     return df_c
 
@@ -234,7 +234,7 @@ def add_capex_values_regional(vdf: pd.DataFrame, co_df: pd.DataFrame) -> pd.Data
     """
     vdf_c = vdf.copy()
     country_values = vdf_c.index.get_level_values(2).unique()
-    for technology in SWITCH_DICT.keys():
+    for technology in TECH_REFERENCE_LIST:
         bf_value = co_df["brownfield_capex"][technology]
         #gf_value = co_df["greenfield_capex"][technology]
         for country in country_values:
@@ -252,7 +252,7 @@ def add_opex_values_regional(vdf: pd.DataFrame, co_df: pd.DataFrame) -> pd.DataF
     """
     vdf_c = vdf.copy()
     country_values = vdf_c.index.get_level_values(2).unique()
-    for technology in SWITCH_DICT.keys():
+    for technology in TECH_REFERENCE_LIST:
         other_opex=co_df["other_opex"][technology]
         for country in country_values:
             vdf_c.loc[(technology, "Other_Opex", country), "cost"] = other_opex

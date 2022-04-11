@@ -107,9 +107,8 @@ def create_df_reference(plant_df: pd.DataFrame, cols_to_create: list) -> pd.Data
     country_codes = plant_df["country_code"].unique()
     init_cols = ["year", "country_code", "technology"]
     df_list = []
-    technologies = SWITCH_DICT.keys()
     year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
-    product_range_full = list(itertools.product(year_range, country_codes, technologies))
+    product_range_full = list(itertools.product(year_range, country_codes, TECH_REFERENCE_LIST))
     for year, country_code, tech in tqdm(product_range_full, total=len(product_range_full), desc='DataFrame Reference'):
         entry = dict(zip(init_cols, [year, country_code, tech]))
         df_list.append(entry)
@@ -135,10 +134,9 @@ def create_levelised_cost(
     lev_cost = create_df_reference(plant_df, ["levelised_cost"])
 
     year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
-    technologies = SWITCH_DICT.keys()
     steel_plant_country_codes = list(plant_df["country_code"].unique())
-    product_range_year_tech = list(itertools.product(year_range, technologies))
-    product_range_full = list(itertools.product(year_range, steel_plant_country_codes, technologies))
+    product_range_year_tech = list(itertools.product(year_range, TECH_REFERENCE_LIST))
+    product_range_full = list(itertools.product(year_range, steel_plant_country_codes, TECH_REFERENCE_LIST))
     brownfield_capex_ref = {}
     greenfield_capex_ref = {}
     variable_cost_ref = {}

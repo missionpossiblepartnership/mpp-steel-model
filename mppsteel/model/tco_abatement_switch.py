@@ -17,7 +17,7 @@ from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder, serialize_file, get_scenario_pkl_path
 )
-from mppsteel.config.reference_lists import SWITCH_DICT
+from mppsteel.config.reference_lists import SWITCH_DICT, TECH_REFERENCE_LIST
 from mppsteel.config.model_config import (
     MODEL_YEAR_END,
     MODEL_YEAR_START,
@@ -88,12 +88,11 @@ def tco_regions_ref_generator(scenario_dict: dict) -> pd.DataFrame:
     calculated_s1_emissivity.drop(techs_to_drop, level='technology', inplace=True)
     carbon_tax_df = carbon_tax_df.set_index("year")
     # Prepare looping references
-    technologies = SWITCH_DICT.keys()
     steel_plant_country_codes = steel_plants["country_code"].unique()
     year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
     product_range_year_country = list(itertools.product(year_range, steel_plant_country_codes))
-    product_range_year_tech = list(itertools.product(year_range, technologies))
-    product_year_country_code_tech = list(itertools.product(year_range, steel_plant_country_codes, technologies))
+    product_range_year_tech = list(itertools.product(year_range, TECH_REFERENCE_LIST))
+    product_year_country_code_tech = list(itertools.product(year_range, steel_plant_country_codes, TECH_REFERENCE_LIST))
     column_order = [
         "country_code",
         "year",

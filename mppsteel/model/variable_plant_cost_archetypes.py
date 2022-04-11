@@ -12,7 +12,6 @@ from mppsteel.config.model_config import (
     MODEL_YEAR_START,
 )
 from mppsteel.config.reference_lists import RESOURCE_CATEGORY_MAPPER
-from mppsteel.model.solver import load_business_cases
 from mppsteel.utility.utils import cast_to_float
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import (
@@ -95,12 +94,14 @@ def plant_variable_costs(scenario_dict: dict) -> pd.DataFrame:
     ccus_storage_model_formatted = read_pickle_folder(
         intermediate_path, "ccus_storage_model_formatted", "df"
     )
+    business_cases = read_pickle_folder(
+        PKL_DATA_FORMATTED, "standardised_business_cases", "df"
+    ).reset_index()
     static_energy_prices = read_pickle_folder(
         PKL_DATA_IMPORTS, "static_energy_prices", "df"
     )[["Metric", "Year", "Value"]]
     static_energy_prices = convert_currency_col(static_energy_prices, 'Value', eur_to_usd_rate)
     feedstock_dict = generate_feedstock_dict(eur_to_usd_rate)
-    business_cases = load_business_cases()
     year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
     steel_plant_country_codes = list(steel_plants["country_code"].unique())
     product_range_year_country = list(itertools.product(year_range, steel_plant_country_codes))
