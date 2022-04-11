@@ -25,17 +25,17 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    scenario_args = CARBON_COST
+    scenario_args = TECH_MORATORIUM
     scenario_args = add_currency_rates_to_scenarios(scenario_args)
 
     timestamp = datetime.today().strftime('%d-%m-%y %H-%M')
     logger.info(f'Model running at {timestamp}')
     model_output_folder = f"{scenario_args['scenario_name']} {timestamp}"
 
-    create_folders_if_nonexistant(FOLDERS_TO_CHECK_IN_ORDER)
     intermediate_path = get_scenario_pkl_path(scenario_args['scenario_name'], 'intermediate')
     final_path = get_scenario_pkl_path(scenario_args['scenario_name'], 'final')
     create_folders_if_nonexistant([intermediate_path, final_path])
+    create_folders_if_nonexistant(FOLDERS_TO_CHECK_IN_ORDER)
 
     if args.custom_scenario:
         logger.info('Including custom parameter inputs.')
@@ -53,8 +53,8 @@ if __name__ == "__main__":
         
         logger.info(f'Running {MAIN_SCENARIO_RUNS} scenario options')
         data_import_and_preprocessing_refresh()
-        multiprocessing_scenarios(MAIN_SCENARIO_RUNS, scenario_batch_run)
-        join_scenario_data(scenario_options=MAIN_SCENARIO_RUNS, new_folder=True, timestamp=timestamp, final_only=True)
+        multiprocessing_scenarios(scenario_options=MAIN_SCENARIO_RUNS, func=scenario_batch_run)
+        join_scenario_data(scenario_options=MAIN_SCENARIO_RUNS, timestamp=timestamp, final_outputs_only=True)
 
     logger.info(f'''Running model with the following parameters:  
     {scenario_args}''')
@@ -80,8 +80,8 @@ if __name__ == "__main__":
     if args.preprocessing:
         data_preprocessing_scenarios(scenario_dict=scenario_args)
 
-    if args.data_refresh:
-        data_import_and_preprocessing_refresh(scenario_dict=scenario_args)
+    if args.presolver:
+        model_presolver(scenario_dict=scenario_args)
 
     if args.results:
         model_results_phase(scenario_dict=scenario_args)

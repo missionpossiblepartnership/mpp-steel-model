@@ -24,7 +24,7 @@ from mppsteel.data_loading.pe_model_formatter import format_pe_data
 from mppsteel.data_loading.steel_plant_formatter import steel_plant_processor
 from mppsteel.data_loading.data_interface import (
     create_capex_opex_dict,
-    format_business_cases,
+    create_business_case_reference,
     generate_preprocessed_emissions_data,
 )
 from mppsteel.model.emissions_reference_tables import generate_emissions_flow
@@ -103,7 +103,7 @@ def data_preprocessing_generic() -> None:
     steel_plant_processor(serialize=True, remove_non_operating_plants=True)
     create_capex_opex_dict(serialize=True)
     create_capex_timeseries(serialize=True)
-    format_business_cases(serialize=True)
+    create_business_case_reference(serialize=True)
     investment_cycle_flow(serialize=True)
 
 
@@ -158,7 +158,7 @@ def model_outputs_phase(scenario_dict: dict, new_folder: bool = False, output_fo
     for pkl_file in FINAL_RESULT_PKL_FILES:
         pickle_to_csv(save_path, final_path, pkl_file)
 
-def join_scenario_data(scenario_options: list, new_folder: bool = True, timestamp: str = "", final_only: bool = True):
+def join_scenario_data(scenario_options: list, new_folder: bool = True, timestamp: str = "", final_outputs_only: bool = True):
     logger.info(f'Joining the Following Scenario Data {scenario_options}')
     combined_ouptut_pkl_folder = f"{PKL_FOLDER}/combined_output"
     create_folder_if_nonexist(combined_ouptut_pkl_folder)
@@ -169,7 +169,7 @@ def join_scenario_data(scenario_options: list, new_folder: bool = True, timestam
         create_folder_if_nonexist(output_folder_filepath)
         output_save_path = output_folder_filepath
 
-    if not final_only:
+    if not final_outputs_only:
         for output_file in INTERMEDIATE_RESULT_PKL_FILES:
             output_container = []
             for scenario_name in scenario_options:
@@ -219,8 +219,7 @@ def tco_and_abatement_calculations(scenario_dict: dict) -> None:
     model_presolver(scenario_dict)
 
 
-def scenario_batch_run(
-    scenario: str, dated_output_folder: bool) -> None:
+def scenario_batch_run(scenario: str, dated_output_folder: bool) -> None:
     # create new folders for path
     intermediate_path = get_scenario_pkl_path(scenario, 'intermediate')
     final_path = get_scenario_pkl_path(scenario, 'final')
@@ -229,11 +228,12 @@ def scenario_batch_run(
     scenario_args = SCENARIO_OPTIONS[scenario]
     scenario_args = add_currency_rates_to_scenarios(scenario_args)
     timestamp = datetime.today().strftime('%d-%m-%y %H-%M')
-    model_output_folder = f"{scenario_args['scenario_name']} {timestamp}"
-    
+    model_output_folder = f"{scenario} {timestamp}"
+
     # Model run
     scenario_calculation_phase(scenario_args)
     half_model_run(scenario_args, dated_output_folder, model_output_folder)
+
 
 def half_model_run(
     scenario_dict: dict, dated_output_folder: bool, model_output_folder: str
@@ -351,10 +351,10 @@ parser.add_argument(
 )  # data_import_refresh
 parser.add_argument(
     "-d",
-    "--data_refresh",
+    "--presolver",
     action="store_true",
-    help="Runs the data refresh scripts directly",
-)  # data_import_and_preprocessing_refresh
+    help="Runs the model_presolver scripts directly",
+)  # model_presolver
 parser.add_argument(
     "-r",
     "--results",

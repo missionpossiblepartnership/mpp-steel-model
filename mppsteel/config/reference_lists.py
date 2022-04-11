@@ -1,29 +1,6 @@
 """Reference Lists for the Application"""
 
-MPP_COLOR_LIST = [
-    "#A0522D",
-    "#7F6000",
-    "#1E3B63",
-    "#9DB1CF",
-    "#FFC000",
-    "#59A270",
-    "#BCDAC6",
-    "#E76B67",
-    "#A5A5A5",
-    "#F2F2F2",
-]
-
-NEW_COUNTRY_COL_LIST = [
-    "country_code",
-    "country",
-    "official_name",
-    "m49_code",
-    "region",
-    "continent",
-    "wsa_region",
-    "rmi_region",
-]
-
+# RESOURCE GROUPINGS
 RESOURCE_CATEGORY_MAPPER = {
     'Iron ore': 'Feedstock',
     'Scrap': 'Feedstock',
@@ -50,43 +27,14 @@ RESOURCE_CATEGORY_MAPPER = {
     'Emissivity': 'Emissivity'
 }
 
-PER_T_STEEL_DICT_UNITS = {
-    "Iron ore": "t / t steel",
-    "Scrap": "t / t steel",
-    "DRI": "t / t steel",
-    "Met coal": "t / t steel",
-    "Coke": "GJ / t steel",
-    "Thermal coal": "GJ / t steel",
-    "BF gas": "GJ / t steel",
-    "COG": "GJ / t steel",
-    "BOF gas": "GJ / t steel",
-    "Natural gas": "GJ / t steel",
-    "Plastic waste": "GJ / t steel",
-    "Biomass": "GJ / t steel",
-    "Biomethane": "GJ / t steel",
-    "Hydrogen": "GJ / t steel",
-    "Electricity": "GJ / t steel",
-    "Steam": "GJ / t steel",
-    "BF slag": "kg / t steel",
-    "Other slag": "kg / t steel",
-    "Process emissions": "t CO2 / t steel",
-    "Emissivity wout CCS": "t CO2 / t steel",
-    "Captured CO2": "t CO2 / t steel",
-    "Used CO2": "t CO2 / t steel",
-    "Emissivity": "t CO2 / t steel",
+RESOURCE_CONTAINER_REF = {
+    'scrap': ['Scrap'],
+    'biomass': ['Biomass', 'Biomethane'],
+    'ccs': ['Captured CO2'],
+    'co2': ['Used CO2']
 }
 
-NEW_COUNTRY_COL_LIST = [
-    "country_code",
-    "country",
-    "official_name",
-    "m49_code",
-    "region",
-    "continent",
-    "wsa_region",
-    "rmi_region",
-]
-
+# TECHNOLOGY GROUPINGS
 FURNACE_GROUP_DICT = {
     "blast_furnace": [
         "Avg BF-BOF",
@@ -123,19 +71,6 @@ FURNACE_GROUP_DICT["dri"] = (
 FURNACE_GROUP_DICT["eaf-all"] = (
     FURNACE_GROUP_DICT["eaf-basic"] + FURNACE_GROUP_DICT["eaf-advanced"]
 )
-
-NON_END_STATE_TECH = [
-    "Avg BF-BOF",
-    "BAT BF-BOF",
-    "BAT BF-BOF_bio PCI",
-    "BAT BF-BOF_H2 PCI",
-    "DRI-EAF",
-    "DRI-EAF_50% green H2",
-    "DRI-EAF_50% bio-CH4",
-    "Smelting Reduction",
-    "EAF",
-    "DRI-Melt-BOF",
-]
 
 SWITCH_DICT = {
     "Avg BF-BOF": [
@@ -258,23 +193,6 @@ SWITCH_DICT = {
 
 TECH_REFERENCE_LIST = list(SWITCH_DICT.keys())
 
-HARD_CODED_FACTORS = {
-    "dri": {"Coke Production": 0, "Sintering": 0},
-    "eaf-basic": {
-        "Coke Production": 1,
-        "Sintering": 1,
-        "Pelletisation": 1,
-        "Blast Furnace": 1,
-    },
-    "eaf-advanced": {
-        "Coke Production": 0,
-        "Sintering": 0,
-    },
-    "smelting_reduction": {
-        "Coke Production": 0,
-    },
-}
-
 LOW_CARBON_TECHS = [
     "BAT BF-BOF+CCUS",
     "BAT BF-BOF+CCU",
@@ -334,242 +252,20 @@ TECHNOLOGY_PHASES = {
     ],
 }
 
-# Define Groups
-bosc_factor_group = (
-    FURNACE_GROUP_DICT["blast_furnace"]
-    + FURNACE_GROUP_DICT["smelting_reduction"]
-    + FURNACE_GROUP_DICT["dri-bof"]
-)
-eaf_factor_group = FURNACE_GROUP_DICT["dri-eaf"] + FURNACE_GROUP_DICT["eaf-all"]
-electricity_and_steam_self_gen_group = FURNACE_GROUP_DICT["smelting_reduction"]
-electricity_self_gen_group = (
-    FURNACE_GROUP_DICT["blast_furnace"] + FURNACE_GROUP_DICT["smelting_reduction"]
-)
+# GRAPH REFRENCE LISTS
 
-RESOURCE_CONTAINER_REF = {
-    'scrap': ['Scrap'],
-    'biomass': ['Biomass', 'Biomethane'],
-    'ccs': ['Captured CO2'],
-    'co2': ['Used CO2']
-}
-
-FILES_TO_REFRESH = []
-
-EU_COUNTRIES = [
-    "AUT",
-    "BEL",
-    "BGR",
-    "CYP",
-    "CZE",
-    "DEU",
-    "DNK",
-    "ESP",
-    "EST",
-    "FIN",
-    "FRA",
-    "GRC",
-    "HRV",
-    "HUN",
-    "IRL",
-    "ITA",
-    "LTU",
-    "LUX",
-    "LVA",
-    "MLT",
-    "NLD",
-    "POL",
-    "PRT",
-    "ROU",
-    "SVK",
-    "SVN",
-    "SWE",
+MPP_COLOR_LIST = [
+    "#A0522D",
+    "#7F6000",
+    "#1E3B63",
+    "#9DB1CF",
+    "#FFC000",
+    "#59A270",
+    "#BCDAC6",
+    "#E76B67",
+    "#A5A5A5",
+    "#F2F2F2",
 ]
-
-TECHNOLOGY_PROCESSES = {
-    "Avg BF-BOF": [
-        "Coke Production",
-        "Sintering",
-        "Pelletisation",
-        "Blast Furnace",
-        "Oxygen Generation",
-        "Basic Oxygen Steelmaking + Casting",
-        "Limestone",
-        "Self-Generation Of Electricity",
-    ],
-    "BAT BF-BOF": [
-        "Coke Production",
-        "Sintering",
-        "Pelletisation",
-        "Blast Furnace",
-        "Oxygen Generation",
-        "Basic Oxygen Steelmaking + Casting",
-        "Limestone",
-        "Self-Generation Of Electricity",
-    ],
-    "BAT BF-BOF_bio PCI": [
-        "Coke Production",
-        "Sintering",
-        "Pelletisation",
-        "Blast Furnace",
-        "Oxygen Generation",
-        "Basic Oxygen Steelmaking + Casting",
-        "Limestone",
-        "Self-Generation Of Electricity",
-    ],
-    "BAT BF-BOF_H2 PCI": [
-        "Coke Production",
-        "Sintering",
-        "Pelletisation",
-        "Blast Furnace",
-        "Oxygen Generation",
-        "Basic Oxygen Steelmaking + Casting",
-        "Limestone",
-        "Self-Generation Of Electricity",
-    ],
-    "BAT BF-BOF+CCUS": [
-        "Coke Production",
-        "Sintering",
-        "Pelletisation",
-        "Blast Furnace",
-        "Oxygen Generation",
-        "Basic Oxygen Steelmaking + Casting",
-        "Limestone",
-        "Self-Generation Of Electricity",
-        "CCS",
-    ],
-    "DRI-EAF": [
-        "Coke Production",
-        "Sintering",
-        "Pelletisation",
-        "Shaft Furnace",
-        "EAF (Steel-making) + Casting",
-    ],
-    "DRI-EAF_50% green H2": [
-        "Coke Production",
-        "Sintering",
-        "Pelletisation",
-        "Shaft Furnace",
-        "EAF (Steel-making) + Casting",
-    ],
-    "DRI-EAF_50% bio-CH4": [
-        "Coke Production",
-        "Sintering",
-        "Pelletisation",
-        "Shaft Furnace",
-        "EAF (Steel-making) + Casting",
-    ],
-    "DRI-EAF+CCUS": [
-        "Coke Production",
-        "Sintering",
-        "Pelletisation",
-        "Shaft Furnace",
-        "EAF (Steel-making) + Casting",
-        "CCS",
-    ],
-    "DRI-EAF_100% green H2": [
-        "Coke Production",
-        "Sintering",
-        "Pelletisation",
-        "Shaft Furnace",
-        "EAF (Steel-making) + Casting",
-    ],
-    "Smelting Reduction": [
-        "Coke Production",
-        "Sintering",
-        "Pelletisation",
-        "Smelting Furnace",
-        "Oxygen Generation",
-        "Limestone",
-        "Basic Oxygen Steelmaking + Casting",
-        "Self-Generation Of Electricity",
-    ],
-    "Smelting Reduction+CCUS": [
-        "Coke Production",
-        "Sintering",
-        "Pelletisation",
-        "Smelting Furnace",
-        "Oxygen Generation",
-        "Limestone",
-        "Basic Oxygen Steelmaking + Casting",
-        "Self-Generation Of Electricity",
-        "CCS",
-    ],
-    "EAF": [
-        "Coke Production",
-        "Sintering",
-        "Pelletisation",
-        "Blast Furnace",
-        "EAF (Steel-making) + Casting",
-    ],
-    "Electrolyzer-EAF": [
-        "Coke Production",
-        "Sintering",
-        "Pelletisation",
-        "Electrolyzer",
-        "EAF (Steel-making) + Casting",
-    ],
-    "BAT BF-BOF+CCU": [
-        "Coke Production",
-        "Sintering",
-        "Pelletisation",
-        "Blast Furnace",
-        "Oxygen Generation",
-        "Basic Oxygen Steelmaking + Casting",
-        "Limestone",
-        "Self-Generation Of Electricity",
-        "CCU -CO-based",
-        "CCU -CO2-based",
-    ],
-    "DRI-Melt-BOF": [
-        "Coke Production",
-        "Sintering",
-        "Pelletisation",
-        "Shaft Furnace",
-        "Remelt",
-        "Oxygen Generation",
-        "Limestone",
-        "Basic Oxygen Steelmaking + Casting",
-    ],
-    "DRI-Melt-BOF+CCUS": [
-        "Coke Production",
-        "Sintering",
-        "Pelletisation",
-        "Shaft Furnace",
-        "Remelt",
-        "Oxygen Generation",
-        "Limestone",
-        "Basic Oxygen Steelmaking + Casting",
-        "CCS",
-    ],
-    "DRI-Melt-BOF_100% zero-C H2": [
-        "Coke Production",
-        "Sintering",
-        "Pelletisation",
-        "Shaft Furnace",
-        "Remelt",
-        "Oxygen Generation",
-        "Limestone",
-        "Basic Oxygen Steelmaking + Casting",
-    ],
-    "Electrowinning-EAF": [
-        "Coke Production",
-        "Sintering",
-        "Pelletisation",
-        "Electrolyzer",
-        "EAF (Steel-making) + Casting",
-    ],
-    "BAT BF-BOF+BECCUS": [
-        "Coke Production",
-        "Sintering",
-        "Pelletisation",
-        "Blast Furnace",
-        "Oxygen Generation",
-        "Basic Oxygen Steelmaking + Casting",
-        "Limestone",
-        "Self-Generation Of Electricity",
-        "CCS",
-    ],
-}
 
 GRAPH_CAPEX_OPEX_DICT_SPLIT = {
     "Feedstock": ["Iron Ore", "Scrap", "DRI"],
@@ -615,4 +311,35 @@ GRAPH_COL_ORDER = [
     "Electrowinning-EAF",
     "Smelting Reduction+CCUS",
     "EAF"
+]
+
+# BUSINESS CASE UNITS
+GJ_RESOURCES = [
+    "BF gas",
+    "COG",
+    "BOF gas",
+    "Natural gas",
+    "Plastic waste",
+    "Biomass",
+    "Biomethane",
+    "Hydrogen",
+    "Electricity",
+    "Steam"
+]
+
+KG_RESOURCES = [
+    "BF slag",
+    "Other slag"
+]
+
+TON_RESOURCES = [
+    "Iron ore",
+    "Scrap",
+    "DRI",
+    "Met coal",
+    "Process emissions",
+    "Emissivity wout CCS",
+    "Captured CO2",
+    "Used CO2",
+    "Emissivity"
 ]
