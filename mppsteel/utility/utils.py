@@ -161,14 +161,14 @@ def return_bin_rank(x: float, bin_dict: dict) -> float:
             if x <= val:
                 return bin_dict[val]
 
-def multiprocessing_scenarios(options: list, func):
+def multiprocessing_scenarios(scenario_options: list, func):
     # Multiprocessing
     n_cores = mp.cpu_count()
     logger.info(f"{n_cores} cores detected")
     pool = mp.Pool(processes=n_cores)
 
     # Model flow - Load reusable data
-    for scenario in options:
+    for scenario in scenario_options:
         # run the multiprocessing pool over the cores
         pool.apply_async(
             func,
