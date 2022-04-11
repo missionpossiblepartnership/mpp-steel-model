@@ -34,7 +34,6 @@ from mppsteel.config.reference_lists import (
     RESOURCE_CONTAINER_REF,
 )
 
-from mppsteel.data_loading.data_interface import load_business_cases
 from mppsteel.data_loading.country_reference import country_df_formatter
 from mppsteel.model.solver_constraints import (
     tech_availability_check,
@@ -62,7 +61,7 @@ def return_best_tech(
     abatement_reference_data: pd.DataFrame,
     solver_logic: str,
     proportions_dict: dict,
-    business_cases: pd.DataFrame,
+    business_case_ref: dict,
     tech_availability: pd.DataFrame,
     tech_avail_from_dict: dict,
     plant_capacities: dict,
@@ -82,7 +81,7 @@ def return_best_tech(
         abatement_reference_data (pd.DataFrame): DataFrame containing all Emissions Abatement components by plant, technology and year.
         solver_logic (str): Scenario setting that decides the logic used to choose the best technology `scale`, `ranke` or `bins`.
         proportions_dict (dict): Scenario seeting that decides the weighting given to TCO or Emissions Abatement in the technology selector part of the solver logic.
-        business_cases (pd.DataFrame): Standardised Business Cases.
+        business_case_ref (dict): Standardised Business Cases.
         tech_availability (pd.DataFrame): Technology Availability DataFrame
         tech_avail_from_dict (dict): _description_
         plant_capacities (dict): A dictionary containing plant: capacity/inital tech key:value pairs.
@@ -146,7 +145,7 @@ def return_best_tech(
 
     if enforce_constraints:
         combined_available_list = apply_constraints(
-            business_cases,
+            business_case_ref,
             plant_capacities,
             material_usage_dict_container,
             combined_available_list,
@@ -227,7 +226,9 @@ def choose_technology(
     capex_dict = read_pickle_folder(
         PKL_DATA_FORMATTED, "capex_dict", "dict"
     )
-    business_cases = load_business_cases()
+    business_case_ref = read_pickle_folder(
+        PKL_DATA_FORMATTED, "business_case_reference", "df"
+    )
     tco_summary_data = read_pickle_folder(
         intermediate_path, "tco_summary_data", "df"
     )
@@ -261,26 +262,26 @@ def choose_technology(
     CapacityContainer.instantiate_container(year_range)
 
     # Initialize the Material Usage container
-    MaterialUsageContainer = MaterialUsage()
-    material_models = {
+    resource_models = {
         'biomass': bio_constraint_model,
         'scrap': steel_demand_df,
         'co2': ccs_co2,
         'ccs': ccs_co2
     }
-    for material in material_models:
-        MaterialUsageContainer.load_constraint(material_models[material], material)
+    MaterialUsageContainer = MaterialUsage()
+    MaterialUsageContainer.initiate_years(year_range, resource_list=resource_models.keys())
+
+    for resource in resource_models:
+        MaterialUsageContainer.load_constraint(resource_models[resource], resource)
 
     # Plant Choices
     PlantChoiceContainer = PlantChoices()
     PlantChoiceContainer.initiate_container(year_range)
 
-    
-
     # Investment Cycles
     for year in tqdm(year_range, total=len(year_range), desc="Years"):
-        for material in material_models:
-            MaterialUsageContainer.set_year_balance(material, year)
+        for resource in resource_models:
+            MaterialUsageContainer.set_year_balance(year, resource)
 
         logger.info(f"Running investment decisions for {year}")
         if year == 2020:
@@ -305,7 +306,7 @@ def choose_technology(
             levelized_cost=levelized_cost,
             steel_demand_df=steel_demand_df,
             country_df=country_ref_f,
-            business_cases=business_cases,
+            business_case_ref=business_case_ref,
             tech_availability=tech_availability,
             variable_costs_df=variable_costs_regional,
             capex_dict=capex_dict,
@@ -344,14 +345,10 @@ def choose_technology(
             current_tech = ''
             year_founded = PlantInvestmentCycleContainer.plant_start_years[plant_name]
             if (year == 2020) or (year == year_founded):
-                tech_in_2020 = non_switchers_df[
-                    non_switchers_df["plant_name"] == plant_name
-                ]["technology_in_2020"].values[0]
-                current_tech = tech_in_2020
-                PlantChoiceContainer.update_choices(year, plant_name, tech_in_2020)
+                current_tech = non_switchers_df[non_switchers_df["plant_name"] == plant_name]["technology_in_2020"].values[0]
             else:
                 current_tech = PlantChoiceContainer.get_choice(year - 1, plant_name)
-                PlantChoiceContainer.update_choices(year, plant_name, current_tech)
+            PlantChoiceContainer.update_choices(year, plant_name, current_tech)
             
             entry = {
                 'year': year,
@@ -367,12 +364,12 @@ def choose_technology(
                 non_switchers_df["plant_name"].unique(),
                 PlantChoiceContainer.return_choices(),
                 plant_capacities_dict,
-                business_cases,
+                business_case_ref,
                 RESOURCE_CONTAINER_REF[resource],
                 year
             )
             MaterialUsageContainer.constraint_transaction(
-                resource, year, current_usage, override_constraint=True)
+                year, resource, current_usage, override_constraint=True)
 
         logger.info(f"-- Running investment decisions for Switching Plants")
         for plant in switchers_df.itertuples():
@@ -408,7 +405,7 @@ def choose_technology(
                         abatement_slim,
                         solver_logic,
                         tech_switch_scenario,
-                        business_cases,
+                        business_case_ref,
                         tech_availability,
                         ta_dict,
                         plant_capacities_dict,
@@ -431,7 +428,7 @@ def choose_technology(
                         abatement_slim,
                         solver_logic,
                         tech_switch_scenario,
-                        business_cases,
+                        business_case_ref,
                         tech_availability,
                         ta_dict,
                         plant_capacities_dict,

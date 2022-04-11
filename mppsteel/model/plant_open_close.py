@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 import random
 from copy import deepcopy
-from mppsteel.config.reference_lists import SWITCH_DICT
+from mppsteel.config.reference_lists import SWITCH_DICT, TECH_REFERENCE_LIST
 from mppsteel.model.solver_constraints import tech_availability_check
 
 from mppsteel.utility.location_utility import get_countries_from_group
@@ -15,6 +15,7 @@ from mppsteel.utility.plant_container_class import PlantIdContainer
 from mppsteel.data_loading.reg_steel_demand_formatter import steel_demand_getter
 
 from mppsteel.config.model_config import (
+    GIGATON_TO_MEGATON_FACTOR,
     MAIN_REGIONAL_SCHEMA,
     CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
     CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
@@ -61,7 +62,7 @@ def create_new_plant(plant_df: pd.DataFrame, plant_row_dict: dict):
 
 def get_min_cost_tech_for_region(
     lcost_df: pd.DataFrame,
-    business_cases: pd.DataFrame,
+    business_case_ref: dict,
     tech_availability: pd.DataFrame,
     material_container: MaterialUsage,
     tech_moratorium: bool,
@@ -75,10 +76,10 @@ def get_min_cost_tech_for_region(
 
     if with_constraints:
         potential_technologies = apply_constraints_for_min_cost_tech(
-            business_cases, 
+            business_case_ref, 
             tech_availability, 
             material_container, 
-            SWITCH_DICT.keys(), 
+            TECH_REFERENCE_LIST, 
             plant_capacity,
             tech_moratorium, 
             year, 
@@ -129,7 +130,7 @@ def current_plant_year(investment_dict: pd.DataFrame, plant: str, current_year: 
 
 
 def new_plant_metadata(
-    plant_container: PlantIdContainer, gap_analysis_df: pd.DataFrame,
+    plant_container: PlantIdContainer, production_demand_dict: dict,
     levelized_cost_df: pd.DataFrame, plant_df: pd.DataFrame, ng_mapper: dict,
     year: int, region: str = None, low_cost_region: bool = False):
 
@@ -138,7 +139,7 @@ def new_plant_metadata(
     new_id = plant_container.generate_plant_id(add_to_container=True)
     if low_cost_region:
         region = get_min_cost_region(levelized_cost_df, year=year)
-    capacity_value = gap_analysis_df.loc[year, region]['avg_plant_capacity'] * 1000
+    capacity_value = production_demand_dict[region]['avg_plant_capacity'] * GIGATON_TO_MEGATON_FACTOR
     country_specific_mapper = {'China': 'CHN', 'India': 'IND'}
     if region in country_specific_mapper:
         assigned_country = country_specific_mapper[region]
@@ -189,22 +190,22 @@ def production_demand_gap(
     demand_df: pd.DataFrame,
     capacity_container: CapacityContainerClass,
     utilization_container: UtilizationContainerClass,
-    market_container: MarketContainerClass,
     year: int, steel_demand_scenario: str,
     regional_capacity: bool = False,
     all_regions: bool = False, 
     capacity_util_max: float = 0.95,
-    capacity_util_min: float = 0.6):
+    capacity_util_min: float = 0.6
+):
     
     logger.info(f'Defining the production demand gap for {year}')
     # SUBSETTING & VALIDATION
     avg_plant_global_capacity = capacity_container.return_avg_capacity_value(year, 'avg')
 
     region_list = list(capacity_container.regional_capacities_agg[year].keys()) if all_regions else ['World',]
-    results_container = []
+    results_container = {}
 
     for region in region_list:
-        initial_utilization = utilization_container.get_utilization_values(year, region)
+        initial_utilization = utilization_container.get_utilization_values(year, region) if year == 2020 else utilization_container.get_utilization_values(year - 1, region)
         demand = steel_demand_getter(
             demand_df, year=year, scenario=steel_demand_scenario, metric='crude', region=region)
         if region == 'World':
@@ -277,18 +278,15 @@ def production_demand_gap(
         if not all_regions:
             return region_result
 
-        results_container.append(region_result)
+        results_container[region] = region_result
 
-    results_container_df = pd.DataFrame(results_container).set_index(['year', 'region']).round(3)
-    market_container.store_results(year, results_container_df)
-
-    return results_container_df
+    return results_container
 
 def open_close_plants(
     demand_df: pd.DataFrame,
     steel_plant_df: pd.DataFrame,
     lev_cost_df: pd.DataFrame,
-    business_cases: pd.DataFrame,
+    business_case_ref: pd.DataFrame,
     tech_availability: pd.DataFrame,
     variable_costs_df: pd.DataFrame,
     capex_dict: dict,
@@ -314,7 +312,6 @@ def open_close_plants(
         demand_df=demand_df,
         capacity_container=capacity_container,
         utilization_container=utilization_container,
-        market_container=market_container,
         year=year,
         steel_demand_scenario=steel_demand_scenario,
         all_regions=True,
@@ -328,7 +325,7 @@ def open_close_plants(
         logger.info(f"Starting the trade flow for {year}")
         production_demand_gap_analysis = trade_flow(
             market_container=market_container,
-            production_demand_df=production_demand_gap_analysis,
+            production_demand_dict=production_demand_gap_analysis,
             utilization_container=utilization_container,
             capacity_container=capacity_container,
             variable_cost_df=variable_costs_df,
@@ -340,16 +337,20 @@ def open_close_plants(
             util_max=open_plant_util_cutoff
         )
 
-    regions = list(production_demand_gap_analysis.index.get_level_values(1).unique())
+    production_demand_gap_analysis_df = pd.DataFrame(
+        production_demand_gap_analysis.values()).set_index(['year', 'region']).round(3)
+    market_container.store_results(year, production_demand_gap_analysis_df)
+    regional_capacities = capacity_container.return_regional_capacity(year)
+    utilization_container.calculate_world_utilization(year, regional_capacities)
+    regions = production_demand_gap_analysis.keys()
 
     levelised_cost_for_regions = lev_cost_df.set_index(['year', 'region']).sort_index(ascending=True).copy()
     levelised_cost_for_tech = lev_cost_df.set_index(['year', 'region', 'technology']).sort_index(ascending=True).copy()
 
     # REGION LOOP
     for region in tqdm(regions, total=len(regions), desc=f'Open Close Plants for {year}'):
-        sd_df_c = production_demand_gap_analysis.loc[year, region].copy()
-        plants_required = sd_df_c['plants_required']
-        plants_to_close = sd_df_c['plants_to_close']
+        plants_required = production_demand_gap_analysis[region]['plants_required']
+        plants_to_close = production_demand_gap_analysis[region]['plants_to_close']
 
         # OPEN PLANT
         if plants_required > 0:
@@ -363,7 +364,7 @@ def open_close_plants(
                 steel_plant_df_c = create_new_plant(steel_plant_df_c, new_plant_meta)
                 xcost_tech = get_min_cost_tech_for_region(
                     levelised_cost_for_tech,
-                    business_cases,
+                    business_case_ref,
                     tech_availability,
                     material_container,
                     tech_moratorium,
@@ -405,7 +406,7 @@ def open_close_flow(
     levelized_cost: pd.DataFrame,
     steel_demand_df: pd.DataFrame,
     country_df: pd.DataFrame,
-    business_cases: pd.DataFrame,
+    business_case_ref: dict,
     tech_availability: pd.DataFrame,
     variable_costs_df: pd.DataFrame,
     capex_dict: dict,
@@ -427,7 +428,7 @@ def open_close_flow(
         demand_df=steel_demand_df,
         steel_plant_df=plant_df,
         lev_cost_df=levelized_cost,
-        business_cases=business_cases,
+        business_case_ref=business_case_ref,
         tech_availability=tech_availability,
         variable_costs_df=variable_costs_df,
         capex_dict=capex_dict,

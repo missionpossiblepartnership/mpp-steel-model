@@ -1,6 +1,7 @@
 """Module that contains the trade functions"""
 
 import math
+from copy import deepcopy
 
 import pandas as pd
 
@@ -14,18 +15,12 @@ from mppsteel.config.model_config import (
     RELATIVE_REGIONAL_COST_BOUNDARY_FROM_MEAN_PCT
 )
 from mppsteel.model.solver_classes import (
-    CapacityContainerClass, MaterialUsage, UtilizationContainerClass, MarketContainerClass
+    CapacityContainerClass, UtilizationContainerClass, MarketContainerClass
 )
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.data_loading.steel_plant_formatter import create_plant_capacities_dict
 
 logger = get_logger(__name__)
 
-def get_regional_balance(prod_balance_df: pd.DataFrame, year: int, region: str):
-    return prod_balance_df.loc[year, region]['initial_utilization']
-
-def get_utilization(prod_balance_df: pd.DataFrame, year: int, region: str):
-    return prod_balance_df.loc[year, region]['initial_balance']
 
 def check_relative_production_cost(cost_df: pd.DataFrame, value_col: str, pct_boundary: float):
     df_c = cost_df.copy()
@@ -57,39 +52,35 @@ def single_year_cos(
     Returns:
         float: The cost of Steelmaking value to be applied.
     """
-    if utilization_rate == 0:
-        return 0
-
-    return plant_capacity * (
-            (variable_cost * utilization_rate) + other_opex_cost
-        )
+    return 0 if utilization_rate == 0 else (plant_capacity * utilization_rate * variable_cost) + other_opex_cost
 
 def create_cos_table(
-    row, year: int, production_demand_df: pd.DataFrame, v_costs: pd.DataFrame, 
+    row, year: int, production_demand_dict: dict, v_costs: pd.DataFrame, 
     capacity_dict: dict, tech_choices: dict, capex_costs: dict):
 
-    plant_capacity = capacity_dict[row.plant_name]
+    
     technology = ''
     if year == 2020:
         technology = tech_choices[str(year)][row.plant_name]
     else:
         technology = tech_choices[str(year - 1)][row.plant_name]
-    utilization_rate = get_utilization(production_demand_df, year, row.rmi_region)
+    plant_capacity = capacity_dict[row.plant_name]
+    utilization_rate = production_demand_dict[row.rmi_region]['initial_utilization']
     variable_cost = v_costs.loc[row.country_code, year, technology]["cost"]
     other_opex_cost = capex_costs["other_opex"].loc[technology, year]["value"]
     return single_year_cos(plant_capacity, utilization_rate, variable_cost, other_opex_cost)
 
 def calculate_cos(
-    plant_df: pd.DataFrame, year: int, production_demand_df: pd.DataFrame, 
-    v_costs: pd.DataFrame, tech_choices: dict, capex_costs: dict):
+    plant_df: pd.DataFrame, year: int, production_demand_dict: dict, 
+    v_costs: pd.DataFrame, tech_choices: dict, capex_costs: dict,
+    capacity_dict: dict):
 
     plant_df_c = plant_df.copy()
-    capacity_dict = create_plant_capacities_dict(plant_df_c)
     tqdma.pandas(desc="Cost of Steelmaking (Single Year)")
     plant_df_c['cost_of_steelmaking'] = plant_df_c.progress_apply(
         create_cos_table, 
         year=year, 
-        production_demand_df=production_demand_df, 
+        production_demand_dict=production_demand_dict, 
         v_costs=v_costs, 
         capacity_dict=capacity_dict, 
         tech_choices=tech_choices, 
@@ -109,22 +100,22 @@ DATA_ENTRY_DICT_KEYS = [
     'new_utilization',
 ]
 
-def modify_prod_df(df: pd.DataFrame, data_entry_values: list, year: int, region: str):
-    df_c = df.copy()
+def modify_production_demand_dict(production_demand_dict: dict, data_entry_values: list, region: str):
+    production_demand_dict_c = deepcopy(production_demand_dict)
     data_entry_dict = dict(zip(DATA_ENTRY_DICT_KEYS, data_entry_values))
-    df_c.loc[(year, region), 'new_capacity_required'] = data_entry_dict['new_capacity_required']
-    df_c.loc[(year, region), 'plants_required'] = data_entry_dict['plants_required']
-    df_c.loc[(year, region), 'plants_to_close'] = data_entry_dict['plants_to_close']
-    df_c.loc[(year, region), 'new_total_capacity'] = data_entry_dict['new_total_capacity']
-    df_c.loc[(year, region), 'new_utilized_capacity'] = data_entry_dict['new_utilized_capacity']
-    df_c.loc[(year, region), 'new_balance'] = data_entry_dict['new_balance']
-    df_c.loc[(year, region), 'new_utilization'] = data_entry_dict['new_utilization']
-    return df_c
+    
+    for dict_key in [
+        'new_capacity_required', 'plants_required',
+        'plants_to_close', 'new_total_capacity',
+        'new_utilized_capacity', 'new_balance', 
+        'new_utilization']:
+        production_demand_dict_c[region][dict_key] = data_entry_dict[dict_key]
+    return production_demand_dict_c
 
 
 def trade_flow(
     market_container: MarketContainerClass, 
-    production_demand_df: pd.DataFrame, 
+    production_demand_dict: dict, 
     utilization_container: UtilizationContainerClass,
     capacity_container: CapacityContainerClass,
     variable_cost_df: pd.DataFrame,
@@ -136,18 +127,19 @@ def trade_flow(
     util_max: float = CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
     relative_boundary_from_mean: float = RELATIVE_REGIONAL_COST_BOUNDARY_FROM_MEAN_PCT
 ):
-    production_demand_df_c = production_demand_df.copy()
-    cos_df = calculate_cos(plant_df, year, production_demand_df, variable_cost_df, tech_choices_ref, capex_dict)
+    capacity_dict = capacity_container.return_plant_capacity(year)
+    production_demand_dict_c = deepcopy(production_demand_dict)
+    cos_df = calculate_cos(plant_df, year, production_demand_dict_c, variable_cost_df, tech_choices_ref, capex_dict, capacity_dict)
     relative_production_cost_df = check_relative_production_cost(cos_df, 'cost_of_steelmaking', relative_boundary_from_mean)
 
     region_list = list(plant_df[MAIN_REGIONAL_SCHEMA].unique())
 
     for region in tqdm(region_list, total=len(region_list), desc=f'Trade Region Flow for {year}'):
-        trade_balance = get_regional_balance(production_demand_df_c, year, region)
+        trade_balance = production_demand_dict_c[region]['initial_balance']
         utilization = utilization_container.get_utilization_values(year, region)
-        demand = production_demand_df_c.loc[(year, region), 'demand']
-        capacity = production_demand_df_c.loc[(year, region), 'capacity']
-        avg_plant_capacity = production_demand_df_c.loc[(year, region), 'avg_plant_capacity']
+        demand = production_demand_dict_c[region]['demand']
+        capacity = production_demand_dict_c[region]['capacity']
+        avg_plant_capacity = production_demand_dict_c[region]['avg_plant_capacity']
         relative_cost_below_avg = relative_production_cost_df.loc[region]['relative_cost_below_avg']
         relative_cost_below_mean = relative_production_cost_df.loc[region]['relative_cost_close_to_mean']
 
@@ -206,7 +198,7 @@ def trade_flow(
             # INSUFFICIENT SUPPLY, CHEAP REGION, MAX UTILIZATION -> open plants
             new_capacity_required = demand - (capacity * util_max)
             new_plants_required = math.ceil(new_capacity_required / avg_plant_capacity)
-            new_total_capacity = new_total_capacity + (new_plants_required * avg_plant_capacity)
+            new_total_capacity = capacity + (new_plants_required * avg_plant_capacity)
             new_min_utilization_required = demand / new_total_capacity
             new_min_utilization_required = min(new_min_utilization_required, util_max)
             new_utilized_capacity = new_min_utilization_required * capacity
@@ -222,7 +214,7 @@ def trade_flow(
         
         if data_entry_dict_values:
             # APPLY FINAL CHANGE, ELSE NO CHANGE
-            production_demand_df_c = modify_prod_df(production_demand_df_c, data_entry_dict_values, year, region)
+            production_demand_dict_c = modify_production_demand_dict(production_demand_dict_c, data_entry_dict_values, region)
 
     global_trade_balance = round(market_container.trade_container_getter(year), 3)
     if global_trade_balance > 0:
@@ -234,8 +226,8 @@ def trade_flow(
             for region in rpc_df.index:
                 # increase utilization
                 current_utilization = utilization_container.get_utilization_values(year, region)
-                total_capacity = production_demand_df_c.loc[(year, region), 'new_total_capacity']
-                current_utilized_capacity = production_demand_df_c.loc[(year, region), 'new_utilized_capacity']
+                total_capacity = production_demand_dict_c[region]['new_total_capacity']
+                current_utilized_capacity = production_demand_dict_c[region]['new_utilized_capacity']
                 potential_extra_production = (util_max - current_utilization) * total_capacity
                 # Instantiate capacity and utilization
                 new_utilized_capacity = 0
@@ -255,28 +247,23 @@ def trade_flow(
                     utilization_container.update_region(year, region, new_utilization)
                     global_trade_balance = global_trade_balance + potential_extra_production
                 
-                production_demand_df_c = modify_prod_df(production_demand_df_c, data_entry_dict_values, year, region)
+                production_demand_dict_c = modify_production_demand_dict(production_demand_dict_c, data_entry_dict_values, region)
             
             if global_trade_balance < 0:
                 # build new plant
                 cheapest_region = rpc_df['cost_of_steelmaking'].idxmin()
-                total_capacity = production_demand_df_c.loc[(year, cheapest_region), 'new_total_capacity']
+                capacity = production_demand_dict_c[region]['new_total_capacity']
                 new_capacity_required = abs(global_trade_balance)
                 new_plants_required = math.ceil(new_capacity_required / avg_plant_capacity)
-                new_total_capacity = total_capacity + (new_plants_required * avg_plant_capacity)
+                new_total_capacity = capacity + (new_plants_required * avg_plant_capacity)
                 new_min_utilization_required = min(demand / new_total_capacity, util_max)
                 new_utilized_capacity = new_min_utilization_required * new_total_capacity
                 data_entry_dict_values = [new_capacity_required, new_plants_required, 0, new_total_capacity, new_utilized_capacity, 0, new_min_utilization_required]
                 utilization_container.update_region(year, cheapest_region, new_min_utilization_required)
-                production_demand_df_c = modify_prod_df(production_demand_df_c, data_entry_dict_values, year, cheapest_region)
+                production_demand_dict_c = modify_production_demand_dict(production_demand_dict_c, data_entry_dict_values, cheapest_region)
                 global_trade_balance = 0
 
     elif global_trade_balance == 0:
         logger.info(f'Trade Balance is completely balanced at {global_trade_balance} Mt in year {year}')
 
-    regional_capacities = capacity_container.return_regional_capacity(year)
-    utilization_container.calculate_world_utilization(year, regional_capacities)
-
-    market_container.store_results(year, production_demand_df_c)
-
-    return production_demand_df_c
+    return production_demand_dict_c
