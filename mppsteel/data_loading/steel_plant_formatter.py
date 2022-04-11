@@ -130,15 +130,6 @@ def extract_steel_plant_capacity(df: pd.DataFrame) -> pd.DataFrame:
     return df_c
 
 
-def create_plant_capacities_dict(plant_df: pd.DataFrame) -> dict:
-    """Generates a dictionary that contains each steel plants capacity.
-
-    Returns:
-        dict: A diction containing the plant name as the key and the capacity values + technology in 2020 as dict values.
-    """
-    return {row.plant_name: row.plant_capacity for row in plant_df.itertuples()}
-
-
 def get_plant_capacity(
     tech_capacities: dict, plant: str,
 ) -> float:
