@@ -87,7 +87,7 @@ if __name__ == "__main__":
         model_results_phase(scenario_dict=scenario_args)
 
     if args.generic_preprocessing:
-        data_preprocessing_generic(scenario_dict=scenario_args)
+        data_preprocessing_generic()
 
     if args.variable_costs:
         generate_variable_plant_summary(scenario_dict=scenario_args, serialize=True)
