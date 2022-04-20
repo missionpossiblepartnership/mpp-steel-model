@@ -1,16 +1,12 @@
 """Formats Regional Steel Demand and defines getter function"""
 
-import logging
 import pandas as pd
 import pandera as pa
 
 from mppsteel.config.model_config import (
     PKL_DATA_IMPORTS,
-    PKL_DATA_FORMATTED,
-    MODEL_YEAR_END,
+    PKL_DATA_FORMATTED
 )
-from mppsteel.utility.utils import create_list_permutations
-from mppsteel.utility.timeseries_extender import full_model_flow
 from mppsteel.config.model_scenarios import STEEL_DEMAND_SCENARIO_MAPPER
 from mppsteel.utility.dataframe_utility import melt_and_index
 from mppsteel.utility.function_timer_utility import timer_func
@@ -172,57 +168,3 @@ def steel_demand_getter(
     df_c.reset_index(drop=True, inplace=True)
     # Return the value figure
     return df_c.value.values[0]
-
-
-def extend_steel_demand(year_end: int) -> pd.DataFrame:
-    """Extends the Steel Demand data beyond its range to a specified point in the future.
-    Args:
-        year_end (int): The year you intend to extend the steel demand data towards.
-
-    Returns:
-        pd.DataFrame: A DataFrame of Steel Demand with an extended year range.
-    """
-    # Need to amend to regional steel demand data.
-    logger.info(f"-- Extedning the Steel Demand DataFrame to {year_end}")
-    scenarios = ["Circular", "BAU"]
-    steel_types = ["Crude", "Scrap"]
-    steel_demand_perms = create_list_permutations(steel_types, scenarios)
-    global_demand = read_pickle_folder(PKL_DATA_IMPORTS, "steel_demand", "df")
-    df_list = []
-    for permutation in steel_demand_perms:
-        steel_type = permutation[0]
-        scenario = permutation[1]
-        if steel_type == "Crude" and scenario == "BAU":
-            series_type = "geometric"
-            growth_type = "fixed"
-            value_change = 2850
-        if steel_type == "Crude" and scenario == "Circular":
-            series_type = "linear"
-            growth_type = "fixed"
-            value_change = 1500
-        if steel_type == "Scrap" and scenario == "BAU":
-            series_type = "geometric"
-            growth_type = "pct"
-            value_change = 15
-        if steel_type == "Scrap" and scenario == "Circular":
-            series_type = "geometric"
-            growth_type = "pct"
-            value_change = 20
-        df = full_model_flow(
-            df=global_demand[
-                (global_demand["Steel Type"] == steel_type)
-                & (global_demand["Scenario"] == scenario)
-            ],
-            year_value_col_dict={"year": "year", "value": "value"},
-            static_value_override_dict={
-                "Source": "RMI + Model Extension beyond 2050",
-                "Excel Tab": "Extended from Excel",
-            },
-            new_end_year=year_end,
-            series_type=series_type,
-            growth_type=growth_type,
-            value_change=value_change,
-            year_only=True,
-        )
-        df_list.append(df)
-    return pd.concat(df_list).reset_index(drop=True)
