@@ -108,11 +108,6 @@ def load_data(serialize: bool = False) -> dict:
     # Import technology availability
     tech_availability = extract_data(IMPORT_DATA_PATH, "Technology Availability", "csv")
 
-    # Import Technology Business Cases
-    business_cases = replace_rows(
-        extract_data(IMPORT_DATA_PATH, "Business Cases One Table", "xlsx"), 0
-    ).fillna(0)
-
     # Import Commodities Data
     ethanol_plastic_charcoal = extract_data(
         IMPORT_DATA_PATH, "Ethanol Plastic Charcoal", "csv"
