@@ -17,6 +17,11 @@ from mppsteel.graphs.cost_of_steelmaking_graphs import lcost_graph
 from mppsteel.graphs.investment_graph import investment_line_chart, investment_per_tech
 from mppsteel.graphs.emissions_per_tech import generate_emissivity_charts
 from mppsteel.graphs.tco_graph import generate_tco_charts
+from mppsteel.graphs.combined_scenario_graphs import (
+    create_combined_investment_chart,
+    create_combined_emissions_chart,
+    create_combined_energy_chart
+)
 
 logger = get_logger(__name__)
 
@@ -525,3 +530,24 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
         {'s1_emissivity', 's2_emissivity', 's3_emissivity', 'combined'}
     )):
         create_emissions_graph(calculated_emissivity_combined_df, year, region, scope, filepath=filepath)
+
+
+@timer_func
+def create_combined_scenario_graphs(filepath: str):
+    combined_path = get_scenario_pkl_path(pkl_folder_type='combined')
+    production_resource_usage = read_pickle_folder(
+        combined_path, "production_resource_usage", "df"
+    )
+    production_emissions = read_pickle_folder(
+        combined_path, "production_emissions", "df"
+    )
+    investment_results = read_pickle_folder(
+        combined_path, "investment_results", "df")
+
+    create_combined_investment_chart(investment_results, filepath=filepath)
+    
+    create_combined_emissions_chart(production_emissions, cumulative=False, filepath=filepath)
+    create_combined_emissions_chart(production_emissions, cumulative=True, filepath=filepath)
+
+    create_combined_energy_chart(production_resource_usage, 'hydrogen_pj')
+    create_combined_energy_chart(production_resource_usage, 'electricity_pj')
