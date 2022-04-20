@@ -1,22 +1,11 @@
 """Script that generates a country code mapper to be used to access country metadata"""
 
 # For Data Manipulation
-from collections import namedtuple
-
 import pandas as pd
 import pandera as pa
 import pycountry
-
-from tqdm.auto import tqdm as tqdma
-
 # For logger and units dict
-from mppsteel.utility.utils import enumerate_iterable
-from mppsteel.utility.function_timer_utility import timer_func
-from mppsteel.utility.file_handling_utility import (
-    read_pickle_folder, serialize_file
-)
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.config.model_config import PKL_DATA_IMPORTS, PKL_DATA_FORMATTED
 from mppsteel.validation.data_import_tests import COUNTRY_REF_SCHEMA
 
 # Create logger
