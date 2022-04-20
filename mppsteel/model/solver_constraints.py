@@ -3,9 +3,8 @@
 import pandas as pd
 
 from mppsteel.config.model_config import (
-    EXAJOULE_TO_GIGAJOULE,
-    TECH_MORATORIUM_DATE, 
-    BIOMASS_ENERGY_DENSITY_GJ_PER_TON
+    CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
+    TECH_MORATORIUM_DATE,
 )
 from mppsteel.config.reference_lists import (
     TECHNOLOGY_PHASES
@@ -96,18 +95,16 @@ def tech_availability_check(
         return False
 
 
-def create_carbon_constraint(model: pd.DataFrame, model_type: str): # Mt CO2
-    mapper = {'co2': 'Steel CO2 use market', 'ccs': 'Total Steel CCS capacity'}
-    return model[model['Metric'] == mapper[model_type]][['Value', 'Year']].set_index(['Year']).to_dict()['Value']
+def create_co2_use_constraint(model: pd.DataFrame): # Mt CO2
+    return model[model['Metric'] == 'Steel CO2 use market'][['Value', 'Year']].set_index(['Year']).to_dict()['Value']
 
+def create_ccs_constraint(model: pd.DataFrame): # Mt CO2
+    return model.swaplevel().loc['Global'][['value']].to_dict()['value']
 
-def create_biomass_constraint(model: pd.DataFrame, as_gj_per_t: bool = True): # EJ
-    values_dict = model[['value']].to_dict()['value']
-    if as_gj_per_t:
-        values_dict = {year: value * (EXAJOULE_TO_GIGAJOULE / BIOMASS_ENERGY_DENSITY_GJ_PER_TON) for year, value in values_dict.items()}
-    return values_dict
+def create_biomass_constraint(model: pd.DataFrame): # GJ Energy
+    return model[['value']].to_dict()['value']
 
-def create_scrap_constraints(model: pd.DataFrame, world: bool = True):
+def create_scrap_constraints(model: pd.DataFrame, world: bool = True): # Mt Scrap
     rsd = model[['region', 'value']] \
         .loc[:,:,'Scrap availability'].reset_index() \
         .drop(['scenario', 'metric'], axis=1) \
@@ -123,17 +120,18 @@ def return_projected_usage(
     business_case_ref: dict, materials: list
 ):
     return sum([
-        business_case_ref[(technology, material)] \
-            * capacities_dict[plant_name] for material in materials 
+        business_case_ref[(technology, material)] * (capacities_dict[plant_name] * CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION) for material in materials 
     ])
 
 
 def return_current_usage(
     plant_list: list, technology_choices: dict, capacities_dict: dict,
-    business_case_ref: dict, materials: list, year: int
+    utilization_dict: dict, plant_region_dict: dict,
+    business_case_ref: dict, materials: list,
 ):
     usage_sum = []
     for material in materials:
-        agg = sum([ business_case_ref[(technology_choices[str(year)][plant_name], material)] * capacities_dict[plant_name] for plant_name in plant_list ])
+        agg = sum([
+            business_case_ref[(technology_choices[plant_name], material)] * (capacities_dict[plant_name] * utilization_dict[plant_region_dict[plant_name]] )  for plant_name in plant_list ])
         usage_sum.append(agg)
     return sum(usage_sum)
