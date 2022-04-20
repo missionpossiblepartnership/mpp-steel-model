@@ -363,6 +363,7 @@ def choose_technology(
             capacity_adjusted_active_plants.set_index(["plant_name"]).drop(non_switchers).reset_index()
         ).copy()
         switchers_df.rename({"index": "plant_name"}, axis=1, inplace=True)
+        switchers_df = switchers_df.sample(frac=1)
         non_switchers_df = (
             capacity_adjusted_active_plants.set_index(["plant_name"]).drop(switchers).reset_index()
         ).copy()

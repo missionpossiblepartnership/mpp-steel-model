@@ -350,7 +350,8 @@ def open_close_plants(
     market_balance_test(production_demand_gap_analysis_df, year)
     market_container.store_results(year, production_demand_gap_analysis_df)
 
-    regions = production_demand_gap_analysis.keys()
+    regions = list(production_demand_gap_analysis.keys())
+    random.shuffle(regions)
     levelised_cost_for_regions = lev_cost_df.set_index(['year', 'region']).sort_index(ascending=True).copy()
     levelised_cost_for_tech = lev_cost_df.set_index(['year', 'region', 'technology']).sort_index(ascending=True).copy()
 
