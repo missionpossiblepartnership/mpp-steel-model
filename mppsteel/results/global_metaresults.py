@@ -3,8 +3,7 @@
 import pandas as pd
 
 from mppsteel.config.model_config import (
-    MODEL_YEAR_END,
-    MODEL_YEAR_START,
+    MODEL_YEAR_RANGE,
     PKL_DATA_FORMATTED
 )
 from mppsteel.data_loading.reg_steel_demand_formatter import steel_demand_getter
@@ -43,26 +42,32 @@ def global_metaresults_calculator(
     production_results_df_c = production_results_df.copy()
     production_results_df_c.set_index('year', inplace=True)
     # Base DataFrame
-    year_range = list(range(MODEL_YEAR_START, MODEL_YEAR_END + 1))
+    year_range = list(MODEL_YEAR_RANGE)
     df = pd.DataFrame({"year": year_range})
     # Assign initial values
     df["steel_demand"] = df["year"].apply(
         lambda year: steel_demand_getter(
             steel_market_df, year, steel_demand_scenario, "crude", region="World"
-        )
+        ) # Mt
     ).round(rounding)
-    df["steel_capacity"] = df["year"].apply(lambda year: sum(list(capacity_results[year].values()))).round(rounding)
-    df["capacity_balance"] = (df["steel_capacity"] - df["steel_demand"]).round(rounding)
-    df['capacity_utilization_factor'] = df["year"].apply(lambda year: utilization_results[year]['World']).round(2)
-    df['steel_production'] = (df["steel_capacity"] * df["capacity_utilization_factor"]).round(rounding)
+    df["steel_capacity"] = df["year"].apply(lambda year: sum(capacity_results[year].values())).round(rounding) # Mt
+    df["capacity_balance"] = (df["steel_capacity"] - df["steel_demand"]).round(rounding) # Mt
+    df['capacity_utilization_factor'] = df["year"].apply(lambda year:  utilization_results[year]['World'])
+    df['steel_production'] = (df["steel_capacity"] * df["capacity_utilization_factor"]).round(rounding) # Mt
+    df['market_balance'] = (df["steel_production"] - df["steel_demand"]).round(rounding) # Mt
     df["scrap_availability"] = df["year"].apply(
         lambda year: steel_demand_getter(
             steel_market_df, year, steel_demand_scenario, "scrap", region="World"
         )).round(rounding) # Mt
     df["scrap_consumption"] = df["year"].apply(
-        lambda year: production_results_df_c.loc[year]["scrap"].sum()).round(rounding)
+        lambda year: production_results_df_c.loc[year]["scrap_mt"].sum()).round(rounding) # Mt
     df["scrap_avail_above_cons"] = (df["scrap_availability"] - df["scrap_consumption"]).round(rounding)
-    return df
+    return df[[
+        'year', 'steel_capacity', 'capacity_utilization_factor', 
+        'steel_production', 'steel_demand', 'capacity_balance', 
+        'market_balance', 'scrap_availability', 'scrap_consumption', 
+        'scrap_avail_above_cons'
+    ]]
 
 
 @timer_func
