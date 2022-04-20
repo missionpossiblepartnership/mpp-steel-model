@@ -2,6 +2,7 @@
 # For Data Manipulation
 import pandas as pd
 import numpy as np
+from mppsteel.utility.dataframe_utility import convert_currency_col
 
 # For logger and units dict
 from mppsteel.utility.file_handling_utility import serialize_file, get_scenario_pkl_path
@@ -129,6 +130,9 @@ def generate_timeseries(scenario_dict: dict = None, serialize: bool = False) -> 
         carbon_tax_scenario_values[1],
         carbon_tax_scenario_values[0],
     )
+    carbon_tax_timeseries = convert_currency_col(
+        carbon_tax_timeseries, 'value', scenario_dict["eur_to_usd"])
+
     green_premium_timeseries = timeseries_generator(
         "green_premium",
         MODEL_YEAR_START,
@@ -137,6 +141,8 @@ def generate_timeseries(scenario_dict: dict = None, serialize: bool = False) -> 
         green_premium_scenario_values[1],
         green_premium_scenario_values[0],
     )
+    green_premium_timeseries = convert_currency_col(
+        green_premium_timeseries, 'value', scenario_dict["eur_to_usd"])
 
     if serialize:
         # Serialize timeseries
