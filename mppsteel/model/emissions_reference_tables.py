@@ -2,14 +2,12 @@
 
 # For Data Manipulation
 import itertools
-from typing import Tuple, Union
+from typing import Tuple
 import pandas as pd
 
 from tqdm import tqdm
-from tqdm.auto import tqdm as tqdma
 
 # For logger and units dict
-from mppsteel.utility.utils import enumerate_iterable
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import move_cols_to_front
 from mppsteel.utility.file_handling_utility import (
@@ -17,22 +15,13 @@ from mppsteel.utility.file_handling_utility import (
 )
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.location_utility import create_country_mapper
-from mppsteel.data_loading.pe_model_formatter import (
-    POWER_HYDROGEN_COUNTRY_MAPPER,
-    pe_model_data_getter,
-)
 from mppsteel.config.model_config import (
-    MODEL_YEAR_END,
-    MODEL_YEAR_START,
+    MODEL_YEAR_RANGE,
     PKL_DATA_FORMATTED,
-    PKL_DATA_IMPORTS
+    PKL_DATA_IMPORTS,
+    TON_TO_KILOGRAM_FACTOR,
 )
 from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
-from mppsteel.data_loading.data_interface import (
-    scope1_emissions_getter,
-    scope3_ef_getter,
-)
-
 # Create logger
 logger = get_logger(__name__)
 
@@ -59,9 +48,12 @@ def generate_s1_s3_emissions(
     # Create resources reference list
     s1_emissivity_resources = s1_emissivity_factors["Metric"].unique().tolist()
     s3_emissions_resources = s3_emissivity_factors["Fuel"].unique().tolist()
+    s1_emissivity_factors.set_index(["Metric"], inplace=True)
+    s3_emissivity_factors.set_index(["Fuel", "Year"], inplace=True)
+    s1_emissivity_factors['Value'] = s1_emissivity_factors['Value'] / TON_TO_KILOGRAM_FACTOR
 
     # Create a year range
-    year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
+    year_range = MODEL_YEAR_RANGE
     if single_year:
         year_range = [single_year]
 
@@ -69,26 +61,17 @@ def generate_s1_s3_emissions(
 
     logger.info(f"calculating emissions reference tables")
 
-    def value_mapper(row):
-        resource = row["material_category"]
-        resource_consumed = row["value"]
-
-        if resource in s1_emissivity_resources:
-            emission_unit_value = scope1_emissions_getter(
-                s1_emissivity_factors, resource
-            )
+    def s1_s2_emissions_mapper(row):
+        if row.material_category in s1_emissivity_resources: # kgCO2 / GJ
             # S1 emissions without process emissions or CCS/CCU
-            row["S1"] = resource_consumed * emission_unit_value
+            row["S1"] = row.value * s1_emissivity_factors.loc[row.material_category]["Value"]
         else:
             row["S1"] = 0
-
-        if resource in s3_emissions_resources:
-            emission_unit_value = scope3_ef_getter(
-                s3_emissivity_factors, resource, year
-            )
-            if resource == 'BF slag':
+        if row.material_category in s3_emissions_resources:  # kgCO2 / GJ
+            emission_unit_value = s3_emissivity_factors.loc[row.material_category, year]["value"]
+            if row.material_category == 'BF slag':
                 emission_unit_value = emission_unit_value * -1
-            row["S3"] = resource_consumed * emission_unit_value
+            row["S3"] = row.value * emission_unit_value
         else:
             row["S3"] = 0
 
@@ -97,18 +80,13 @@ def generate_s1_s3_emissions(
     for year in tqdm(
         year_range, total=len(year_range), desc="Emissions Reference Table"
     ):
-
         df_c = business_cases.copy()
         df_c["year"] = year
         df_c["S1"] = ""
         df_c["S2"] = ""
         df_c["S3"] = ""
-
-        tqdma.pandas(desc="Apply Emissions to Technology Resource Usage")
-        df_c = df_c.progress_apply(value_mapper, axis=1,)
-
+        df_c = df_c.apply(s1_s2_emissions_mapper, axis=1,)
         df_list.append(df_c)
-
     combined_df = pd.concat(df_list)
     combined_df.drop(labels=["value"], axis=1, inplace=True)
     combined_df = combined_df.melt(
@@ -145,7 +123,7 @@ def create_emissions_ref_dict(df: pd.DataFrame, tech_list: list) -> dict:
     return value_ref_dict
 
 
-def full_emissions(
+def scope1_emissions_calculator(
     df: pd.DataFrame, emissions_exceptions_dict: dict, tech_list: list
 ) -> pd.DataFrame:
     """Combines regular emissions with process emissions and ccs/ccu emissions to get a complete
@@ -203,9 +181,8 @@ def generate_emissions_dataframe(business_cases: pd.DataFrame) -> Tuple[pd.DataF
 
 
 def get_s2_emissions(
-    power_model: dict,
+    power_grid_emissions_ref: dict,
     business_case_ref: dict,
-    country_mapper: dict,
     year: int,
     country_code: str,
     technology: str
@@ -225,39 +202,21 @@ def get_s2_emissions(
     """
     # Scope 2 Emissions: These are the emissions it makes indirectly
     # like when the electricity or energy it buys for heating and cooling buildings
-
-    electricity_emissions = pe_model_data_getter(
-        power_model,
-        country_mapper,
-        POWER_HYDROGEN_COUNTRY_MAPPER,
-        year,
-        country_code
-    )
-    electricity_consumption = business_case_ref[(technology, 'Electricity')]
-    return (
-        electricity_emissions * electricity_consumption
-    )
+    return power_grid_emissions_ref[(year, country_code)] * business_case_ref[(technology, 'Electricity')]
 
 def add_hydrogen_emissions_to_s3_column(
     combined_emissions_df: pd.DataFrame, 
-    hydrogen_model: dict,
+    h2_emissions_ref: dict,
     business_case_ref: dict,
     country_codes: list,
 ):
-    rmi_mapper = create_country_mapper()
     df = combined_emissions_df.copy()
     years = df.index.get_level_values(0).unique()
     technologies = df.index.get_level_values(1).unique()
     year_tech_country_product = list(itertools.product(years, technologies, country_codes))
     for year, technology, country_code in tqdm(
         year_tech_country_product, total=len(year_tech_country_product), desc='Hydrogen S3 emission additions'):
-        h2_emissions = pe_model_data_getter(
-            hydrogen_model,
-            rmi_mapper,
-            POWER_HYDROGEN_COUNTRY_MAPPER,
-            year,
-            country_code
-        ) / 1000
+        h2_emissions = h2_emissions_ref[(year, country_code)]
         hydrogen_consumption = business_case_ref[(technology, 'Hydrogen')]
         current_s3_value = df.loc[(year, technology), 's3_emissivity'].copy()
         df.loc[(year, technology), 's3_emissivity'] = current_s3_value + (h2_emissions * hydrogen_consumption)
@@ -265,7 +224,7 @@ def add_hydrogen_emissions_to_s3_column(
 
 
 def regional_s2_emissivity(
-    power_model: pd.DataFrame, 
+    power_grid_emissions_ref: dict, 
     plant_country_code_mapper: dict, 
     business_case_ref: dict
 ) -> pd.DataFrame:
@@ -276,20 +235,16 @@ def regional_s2_emissivity(
     Returns:
         pd.DataFrame: A DataFrame with the S2 emissivity values for each country within a reference of steel plants.
     """
-    
-    rmi_mapper = create_country_mapper()
     df_list = []
-    year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
     for year in tqdm(
-        year_range,
-        total=len(year_range),
+        MODEL_YEAR_RANGE,
+        total=len(MODEL_YEAR_RANGE),
         desc="All Country Code S2 Emission: Year Loop",
     ):
         for country_code, technology in itertools.product(plant_country_code_mapper, TECH_REFERENCE_LIST):
             value = get_s2_emissions(
-                power_model,
+                power_grid_emissions_ref,
                 business_case_ref,
-                rmi_mapper,
                 year,
                 country_code,
                 technology
@@ -332,43 +287,18 @@ def combine_emissivity(
     total_emissivity['region'] = total_emissivity['country_code'].apply(lambda x: rmi_mapper[x])
     return total_emissivity
 
-def final_combined_emissions_formatting(combined_emissions_df: pd.DataFrame):
+def final_combined_emissions_formatting(combined_emissions_df: pd.DataFrame, as_ton: bool = False):
     df_c = combined_emissions_df.copy()
     df_c = df_c.reset_index().set_index(["year", "country_code", "technology"])
     # change_column_order
     new_col_order = move_cols_to_front(
         df_c,
-        ["region","s1_emissivity", "s2_emissivity", "s3_emissivity", "combined_emissivity"],
+        ["region", "s1_emissivity", "s2_emissivity", "s3_emissivity", "combined_emissivity"],
     )
+    if as_ton:
+        for col in ["s1_emissivity", "s2_emissivity", "s3_emissivity", "combined_emissivity"]:
+            df_c[col] = df_c[col] / TON_TO_KILOGRAM_FACTOR
     return df_c[new_col_order].reset_index()
-
-
-def emissivity_getter(
-    df_ref: pd.DataFrame, year: int, country_code: str, technology: str, scope: str
-) -> Union[pd.DataFrame, float]:
-    """A getter function for the combined emissions DataFrame.
-
-    Args:
-        df_ref (pd.DataFrame): The combined S1, S2 & S3 emissions DataFrame reference.
-        year (int): The requested year.
-        country_code (str): The requested region (varies S2 emissions).
-        technology (str): The requested technology.
-        scope (str): The requested scope level of the emissions.
-
-    Returns:
-        Union[pd.DataFrame, float]: A float value of the emissions based on the scope specified as a parameter. 
-    """
-    year = min(2050, year)
-    if not technology:
-        return 0
-    if scope not in {"s1", "s2", "s3"}:
-        return df_ref.loc[year, country_code, technology]["combined_emissivity"]
-    emissivity_mapper = {
-        "s1": "s1_emissivity",
-        "s2": "s2_emissivity",
-        "s3": "s3_emissivity",
-    }
-    return df_ref.loc[year, country_code, technology][emissivity_mapper[scope]]
 
 
 @timer_func
@@ -391,11 +321,11 @@ def generate_emissions_flow(
     business_case_ref = read_pickle_folder(
         PKL_DATA_FORMATTED, "business_case_reference", "df"
     )
-    power_grid_emissions_formatted = read_pickle_folder(
-        intermediate_path, "power_grid_emissions_formatted", "df"
+    power_grid_emissions_ref = read_pickle_folder(
+        intermediate_path, "power_grid_emissions_ref", "df"
     )
-    hydrogen_emissions_formatted = read_pickle_folder(
-        intermediate_path, "hydrogen_emissions_formatted", "df"
+    h2_emissions_ref = read_pickle_folder(
+        intermediate_path, "h2_emissions_ref", "df"
     )
     steel_plants = read_pickle_folder(
         PKL_DATA_FORMATTED, "steel_plants_processed", "df"
@@ -411,18 +341,18 @@ def generate_emissions_flow(
         .sum()
     )
     em_exc_ref_dict = create_emissions_ref_dict(emissions_df, TECH_REFERENCE_LIST)
-    s1_emissivity = full_emissions(s1_emissivity, em_exc_ref_dict, TECH_REFERENCE_LIST)
+    s1_emissivity = scope1_emissions_calculator(s1_emissivity, em_exc_ref_dict, TECH_REFERENCE_LIST)
     s3_emissivity = (
         emissions[emissions["scope"] == "S3"][["technology", "year", "emissions"]]
         .groupby(by=["year", "technology"])
         .sum()
     )
-    s2_emissivity = regional_s2_emissivity(power_grid_emissions_formatted, steel_plant_country_codes, business_case_ref)
+    s2_emissivity = regional_s2_emissivity(power_grid_emissions_ref, steel_plant_country_codes, business_case_ref)
     combined_emissivity = combine_emissivity(
         s1_emissivity, s2_emissivity, s3_emissivity
     )
-    combined_emissivity = add_hydrogen_emissions_to_s3_column(combined_emissivity, hydrogen_emissions_formatted, business_case_ref, steel_plant_country_codes)
-    combined_emissivity = final_combined_emissions_formatting(combined_emissivity)
+    combined_emissivity = add_hydrogen_emissions_to_s3_column(combined_emissivity, h2_emissions_ref, business_case_ref, steel_plant_country_codes)
+    combined_emissivity = final_combined_emissions_formatting(combined_emissivity, as_ton=True)
     if serialize:
         serialize_file(em_exc_ref_dict, intermediate_path, "em_exc_ref_dict")
         serialize_file(s1_emissivity, intermediate_path, "calculated_s1_emissivity")
