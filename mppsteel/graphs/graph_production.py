@@ -30,32 +30,33 @@ INITIAL_COLS = [
     "low_carbon_tech",
 ]
 
-EMISSION_COLS = ["s1_emissions", "s2_emissions", "s3_emissions"]
+EMISSION_COLS = ["s1_emissions_mt", "s2_emissions_mt", "s3_emissions_mt"]
 
 RESOURCE_COLS = [
-    "bf_gas",
-    "bf_slag",
-    "bof_gas",
-    "biomass",
-    "biomethane",
-    "cog",
-    "coke",
-    "dri",
-    "electricity",
-    "hydrogen",
-    "iron_ore",
-    "met_coal",
-    "natural_gas",
-    "other_slag",
-    "plastic_waste",
-    "process_emissions",
-    "scrap",
-    "steam",
-    "thermal_coal",
-    "captured_co2",
-    "coal",
-    "used_co2",
-    "bioenergy",
+    "bf_gas_pj",
+    "bf_slag_mt",
+    "bof_gas_pj",
+    "biomass_pj",
+    "biomethane_pj",
+    "cog_pj",
+    "coke_pj",
+    "dri_mt",
+    "electricity_pj",
+    "hydrogen_pj",
+    "iron_ore_mt",
+    "met_coal_pj",
+    "met_coal_mt",
+    "natural_gas_pj",
+    "other_slag_mt",
+    "plastic_waste_pj",
+    "process_emissions_mt",
+    "scrap_mt",
+    "steam_pj",
+    "thermal_coal_pj",
+    "captured_co2_mt",
+    "coal_pj",
+    "used_co2_mt",
+    "bioenergy_pj",
 ]
 
 SCENARIO_COLS = [
@@ -122,7 +123,7 @@ def generate_production_stats(
 
 
 def generate_subset(
-    df: pd.DataFrame, grouping_col: str, value_col: str, region_select: list = None
+    df: pd.DataFrame, grouping_col: str, value_col: str, region: list = None
 ) -> pd.DataFrame:
     """Subsets a Production DataFrame based on parameters.
 
@@ -136,27 +137,11 @@ def generate_subset(
         pd.DataFrame: An aggregated DataFrame by the `grouping col`.
     """
     df_c = df.copy()
-    df_c = pd.melt(
-        df,
-        id_vars=["year", "plant_name", grouping_col],
-        value_vars=value_col,
-        var_name="metric",
-    )
-    df_c.reset_index(drop=True, inplace=True)
-    if region_select != None:
-        df_c = (
-            df_c.groupby([grouping_col, "year", "metric"], as_index=False)
-            .agg({"value": "sum"})
-            .round(2)
-        )
-        df_c = df_c[df_c[grouping_col].isin(region_select)]
-    else:
-        df_c = (
-            df_c.groupby([grouping_col, "year"], as_index=False)
-            .agg({"value": "sum"})
-            .round(2)
-        )
-    return df_c
+    if region:
+        df_c = df_c[df_c[grouping_col] == region]
+    df_c = df_c[['year', grouping_col, value_col]].copy()
+    df_c = df_c.groupby(['year', grouping_col]).agg('sum').round(2)
+    return df_c.reset_index()
 
 
 def steel_production_area_chart(df: pd.DataFrame, filepath: str = None, region: str = None, scenario_name: str = None) -> px.area:
@@ -192,7 +177,7 @@ def steel_production_area_chart(df: pd.DataFrame, filepath: str = None, region: 
         color="technology",
         name=graph_title,
         x_axis="year",
-        y_axis="Steel Production (Mt)",
+        y_axis="Steel Production (gt)",
         hoverdata=None,
         save_filepath=filename,
     )
@@ -215,23 +200,22 @@ def emissions_area_chart(
     emission_cols = EMISSION_COLS
     if scope in scope_mapper:
         emission_cols = [scope_mapper[scope]]
-    filename_string = "".join(emission_cols)
     filename = f"{scope}_emissions_per_technology"
     logger.info(f"Creating area graph output: {filename}")
     if filepath:
         filename = f"{filepath}/{filename}"
 
+    data = generate_production_emissions(
+        df, "technology", emission_cols).groupby(["year", "technology"]).agg("sum").reset_index()
+
     return area_chart(
-        data=generate_production_emissions(df, "technology", emission_cols)
-        .groupby(["year", "technology"])
-        .agg("sum")
-        .reset_index(),
+        data=data,
         x="year",
         y="value",
         color="technology",
         name="Steel production emissions per tech for run scenario",
         x_axis="year",
-        y_axis="Carbon Emissions",
+        y_axis="CO2 Emissions [CO2/year]",
         hoverdata=None,
         save_filepath=filename,
     )
@@ -249,7 +233,7 @@ def steel_emissions_line_chart(df: pd.DataFrame, filepath: str = None, region: s
     """
     
     df_c = df.copy()
-    df_c['s1_s2_emissions'] = df_c['s1_emissions'] + df_c['s2_emissions']
+    df_c['s1_s2_emissions_mt'] = df_c['s1_emissions_mt'] + df_c['s2_emissions_mt']
     filename = "scope_1_2_emissions"
     graph_title = "Scope 1 & 2 Emissions"
     if region:
@@ -263,22 +247,22 @@ def steel_emissions_line_chart(df: pd.DataFrame, filepath: str = None, region: s
     if filepath:
         filename = f"{filepath}/{filename}"
 
-    df_c = df_c.groupby('year').agg({'s1_s2_emissions': 'sum'}).reset_index()
+    df_c = df_c.groupby('year').agg({'s1_s2_emissions_mt': 'sum'}).reset_index()
 
     return line_chart(
         data=df_c,
         x="year",
-        y="s1_s2_emissions",
+        y="s1_s2_emissions_mt",
         color=None,
         name=graph_title,
         x_axis="Year",
-        y_axis="Scope 1 & 2 Emisions",
+        y_axis="Scope 1 & 2 Emisions [Mt/year]",
         save_filepath=filename,
     )
 
 
 def resource_line_charts(
-    df: pd.DataFrame, resource: str, regions: list = None, filepath: str = None
+    df: pd.DataFrame, resource: str, region: str = None, filepath: str = None
 ) -> px.line:
     """[summary]
 
@@ -291,22 +275,19 @@ def resource_line_charts(
     Returns:
         px.line: A plotly express line graph.
     """
-    region_list = regions
     filename = f"{resource}_multiregional_line_graph"
-    if not regions:
-        region_list = ["Global"]
+    if not region:
         filename = f"{resource}_global_line_graph"
-    region_list = ", ".join(region_list)
     resource_string = resource.replace("_", " ").capitalize()
     logger.info(f"Creating line graph output: {filename}")
     if filepath:
         filename = f"{filepath}/{filename}"
     return line_chart(
-        data=generate_subset(df, 'region', resource, regions),
+        data=generate_subset(df, 'region', resource, region),
         x="year",
-        y="value",
+        y=resource,
         color='region',
-        name=f"{resource_string} consumption in {region_list}",
+        name=f"{resource_string} consumption in {region}",
         x_axis="year",
         y_axis=resource_string,
         save_filepath=filename,
@@ -381,7 +362,7 @@ def create_investment_per_tech_graph(investment_results: pd.DataFrame, filepath:
     return investment_per_tech(investment_results, save_filepath=filename)
 
 
-def create_cot_graph(production_resource_usage: pd.DataFrame, regions: list = None, filepath: str = None) -> px.bar:
+def create_cot_graph(production_resource_usage: pd.DataFrame, resource_type: str, region: str = None, filepath: str = None) -> px.bar:
     """Generates a Graph showing the consumption over time of a material resource.
 
     Args:
@@ -391,15 +372,13 @@ def create_cot_graph(production_resource_usage: pd.DataFrame, regions: list = No
     Returns:
         px.bar: A plotly express bar graph.
     """
-    region_ref = "global"
-    filename = "consumption_over_time"
-    if regions:
-        region_ref = ", ".join(regions)
-        filename = f"{filename}_for_{region_ref}"
+    filename = f"{resource_type}_consumption_over_time"
+    if region:
+        filename = f"{filename}_in_{region}"
     logger.info(f"Consumption Over Time Output: {filename}")
     if filepath:
         filename = f"{filepath}/{filename}"
-    return consumption_over_time_graph(production_resource_usage, regions=regions, save_filepath=filename)
+    return consumption_over_time_graph(production_resource_usage, resource_type=resource_type, region=region, save_filepath=filename)
 
 
 def create_lcost_graph(lcost_df: pd.DataFrame, chosen_year: int, filepath: str = None) -> px.bar:
@@ -452,10 +431,10 @@ def create_emissions_graph(df: pd.DataFrame, year: int = None, region: str = Non
     Returns:
         px.bar: _description_
     """
-    filename = f'emissions_chart {scope}'
+    filename = f'emissivity_chart {scope}'
     if region:
-        filename = f'emissions_chart_{scope}_in_{region}'
-    logger.info(f"Emissions_chart: {filename}")
+        filename = f'emissivity_chart_{scope}_in_{region}'
+    logger.info(f"Emissivity_chart: {filename}")
     if filepath:
         filename = f"{filepath}/{filename}"
     return generate_emissivity_charts(df, year, region, scope, save_filepath=filename)
@@ -510,19 +489,17 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
             scenario_name=scenario_dict['scenario_name']
         )
 
-    resource_line_charts(
-        production_resource_usage,
-        "electricity",
-        ["Europe", "China", "India", "NAFTA"],
-        filepath,
-    )
-
     for scope in ["s1", "s2", "s3", "combined"]:
         emissions_area_chart(production_emissions, filepath, scope)
 
     for resource in RESOURCE_COLS:
         resource_line_charts(
             df=production_resource_usage, resource=resource, filepath=filepath
+        )
+
+    for resource, region in list(itertools.product(RESOURCE_COLS, ["Europe", "China", "India", "NAFTA"])):
+        resource_line_charts(
+            df=production_resource_usage, resource=resource, region=region, filepath=filepath
         )
 
     create_opex_capex_graph(variable_cost_df, capex_dict, rmi_mapper, filepath)
@@ -534,7 +511,8 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
 
     create_investment_per_tech_graph(investment_results, filepath=filepath)
 
-    create_cot_graph(production_resource_usage, regions=['China', 'India', 'Europe', 'NAFTA'], filepath=filepath)
+    for resource_type, region in list(itertools.product({'energy', 'material'}, {'China', 'India', 'Europe', 'NAFTA'})):
+        create_cot_graph(production_resource_usage, resource_type=resource_type, region=region, filepath=filepath)
 
     create_lcost_graph(lcost_data, 2030, filepath=filepath)
 

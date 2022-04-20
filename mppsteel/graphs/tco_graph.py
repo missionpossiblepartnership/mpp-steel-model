@@ -1,9 +1,8 @@
-from itertools import zip_longest
-
+"""Script to create the TCO graph"""
 import pandas as pd
 import plotly.express as px
 
-from mppsteel.config.reference_lists import MPP_COLOR_LIST, GRAPH_COL_ORDER
+from mppsteel.config.reference_lists import GRAPH_COL_ORDER
 
 from mppsteel.utility.log_utility import get_logger
 

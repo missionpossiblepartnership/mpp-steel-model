@@ -3,10 +3,9 @@ import itertools
 from typing import Union
 import pandas as pd
 import plotly.express as px
-import numpy as np
 import numpy_financial as npf
 from mppsteel.config.model_config import DISCOUNT_RATE
-from mppsteel.config.reference_lists import SWITCH_DICT, TECH_REFERENCE_LIST
+from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
 
 from mppsteel.utility.utils import cast_to_float
 from mppsteel.utility.dataframe_utility import column_sorter
@@ -329,6 +328,7 @@ def opex_capex_graph_regional(
     final_opex_capex_dataset = column_sorter(
         final_opex_capex_dataset, "cost_type", BAR_CHART_ORDER.keys()
     )
+    final_opex_capex_dataset = final_opex_capex_dataset[~final_opex_capex_dataset['technology'].isin(['Charcoal mini furnace', 'Close plant'])]
     fig_ = bar_chart(
         data=final_opex_capex_dataset,
         x="technology",

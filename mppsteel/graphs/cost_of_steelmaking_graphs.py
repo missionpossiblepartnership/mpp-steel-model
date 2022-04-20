@@ -24,16 +24,13 @@ def get_lcost_lowest_vals(
         Union[pd.DataFrame, dict]: Returns the subsetted DataFrame with the lowest costs and 
         also a dictionary with the delta values between the lowest and highest cost regions.
     """
-    df_c = df.copy()
-    df_c.rename(
-        mapper={"levelised_cost": value_col}, axis=1, inplace=True
-    )
-    df_s = df_c.set_index(["year", "technology", "country_code"]).copy()
-    df_y = df_s.loc[chosen_year]
     tech_delta_dict = {}
     tech_list = []
+    df_c = df.copy()
+    df_c.rename(mapper={"levelised_cost": value_col}, axis=1, inplace=True)
+    df_s = df_c.set_index(["year", "technology", "country_code"]).loc[chosen_year]
     for technology in TECH_REFERENCE_LIST:
-        df_t = df_y.loc[technology]
+        df_t = df_s.loc[technology]
         min_region = df_t.idxmin().values[0]
         min_val = df_t[value_col].min()
         max_val = df_t[value_col].max()
@@ -44,8 +41,7 @@ def get_lcost_lowest_vals(
             & (df_c["country_code"] == min_region)
         ]
         tech_list.append(df_subset)
-    df_combined = pd.concat(tech_list).set_index(["technology"])
-    df_combined.drop(["year", "country_code"], axis=1, inplace=True)
+    df_combined = pd.concat(tech_list).set_index(["technology"]).drop(["year", "country_code"], axis=1)
     return df_combined, tech_delta_dict
 
 

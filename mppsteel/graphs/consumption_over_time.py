@@ -6,14 +6,35 @@ import plotly.express as px
 
 from mppsteel.config.reference_lists import MPP_COLOR_LIST
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.utility.file_handling_utility import read_pickle_folder
 
 from mppsteel.graphs.plotly_graphs import bar_chart
 
 logger = get_logger(__name__)
 
+ENERGY_RESOURCES_COT = [
+    "biomass_pj",
+    "biomethane_pj",
+    "bioenergy_pj",
+    "electricity_pj",
+    "hydrogen_pj",
+    "thermal_coal_pj",
+    "met_coal_pj",
+    "coal_pj",
+    "natural_gas_pj",
+]
+
+MATERIAL_RESOURCES_COT = [
+    "iron_ore_mt",
+    "scrap_mt",
+    "dri_mt",
+    "used_co2_mt",
+    "captured_co2_mt",
+    "bf_slag_mt",
+    "other_slag_mt"
+]
+
 def format_cot_graph(
-    df: pd.DataFrame, regions: list = None, resource_list: list = None
+    df: pd.DataFrame, region: list = None, resource_list: list = None
 ) -> pd.DataFrame:
     """Formats the Consumption over time graph to create a DataFrame ready to be used to create graphs.
     Args:
@@ -37,19 +58,18 @@ def format_cot_graph(
         .agg({"value": "sum"})
         .round(2)
     )
-    if regions:
-        df_c = df_c.loc[df_c["region"].isin(regions)]
-    else:
-        df_c = (
-            df_c.groupby(["year", "metric"], as_index=False)
-            .agg({"value": "sum"})
-            .round(2)
-        )
+    if region:
+        df_c = df_c.loc[df_c["region"] == region]
+    df_c = (
+        df_c.groupby(["year", "metric"], as_index=False)
+        .agg({"value": "sum"})
+        .round(2)
+    )
     return df_c
 
 
 def consumption_over_time_graph(
-    production_resource_usage: pd.DataFrame, regions: list = None, save_filepath: str = None, ext: str = "png"
+    production_resource_usage: pd.DataFrame, resource_type: str = 'energy', region: str = None, save_filepath: str = None, ext: str = "png"
 ) -> px.bar:
     """Generates a Graph showing the consumption over time of a material resource.
 
@@ -62,21 +82,21 @@ def consumption_over_time_graph(
         px.bar: A Plotly express bar chart.
     """
 
-    resources = [
-        "biomass",
-        "biomethane",
-        "electricity",
-        "hydrogen",
-        "thermal_coal",
-        "met_coal",
-        "natural_gas",
-    ]
+    if resource_type == 'energy':
+        resource_list = ENERGY_RESOURCES_COT
+        y_axis_title = '[PJ/year]'
+
+    elif resource_type == 'material':
+        resource_list = MATERIAL_RESOURCES_COT
+        y_axis_title = '[Mt/year]'
 
     production_resource_usage = format_cot_graph(
-        production_resource_usage, regions, resource_list=resources
+        production_resource_usage, 
+        region, 
+        resource_list=resource_list
     )
 
-    color_mapper = dict(zip_longest(resources, MPP_COLOR_LIST))
+    color_mapper = dict(zip_longest(resource_list, MPP_COLOR_LIST))
 
     fig_ = bar_chart(
         data=production_resource_usage,
@@ -85,7 +105,7 @@ def consumption_over_time_graph(
         color="metric",
         color_discrete_map=color_mapper,
         xaxis_title="Year",
-        yaxis_title="[PJ/year]",
+        yaxis_title=y_axis_title,
         title_text="Consumption chart",
     )
 

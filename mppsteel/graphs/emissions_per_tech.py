@@ -8,11 +8,11 @@ from mppsteel.utility.log_utility import get_logger
 
 logger = get_logger(__name__)
 
-def generate_emissivity_charts (
+def generate_emissivity_charts(
     df: pd.DataFrame, year: int = None, region: str = None, 
     scope: str= None, save_filepath: str = None, ext: str = "png"
 ):
-    """generates bar chart with emissions [t CO2/ t steel] per technology. Displays scope1, scope2, scope2 or combination of scopes
+    """generates bar chart with emissivity [t CO2/ t steel] per technology. Displays scope1, scope2, scope2 or combination of scopes
 
     Args:
         df (pd.DataFrame): calculated_emissivity_combined_
@@ -42,20 +42,23 @@ def generate_emissivity_charts (
     df_c =df_c.loc[
         (df_c['region'] == region) & (df_c['year'] == year)
         ] 
+    scope_label = ''
     if scope in {'s1_emissivity', 's2_emissivity', 's3_emissivity'}:
         df_c =df_c.loc[df_c['metric'] == scope]
+        scope_label = scope
         color = 'technology'
 
-    elif scope == 's1+s2' :
+    elif scope == 's1+s2':
         df_c = df_c.loc[(df_c['metric']=='s1_emissivity') | (df_c['metric']=='s2_emissivity')]
+        scope_label = 'S1&S2 emissivity'
         color = 'metric'
 
     elif scope == 'combined':
         df_c=df_c.loc[(df_c['metric'] == 's1_emissivity') | (df_c['metric'] == 's2_emissivity') | (df_c['metric'] == 's3_emissivity')]
-        
+        scope_label = 'combined emissivity'
         color = 'metric'
 
-    text = f'{scope} - {region} - {year}' if region else f'{scope} - {year}'
+    text = f'{scope_label} - {region} - {year}' if region else f'{scope} - {year}'
 
     df_c['tech_order'] = df_c['technology'].map(sorterIndex)
     df_c.sort_values(['tech_order'], ascending=True, inplace=True)
@@ -67,7 +70,7 @@ def generate_emissivity_charts (
         y = 'value',
         color = color,
         text_auto = '.2f',
-        labels = {'value': '[t CO2/t steel]'},
+        labels = {'value': '[tCO2/t steel]'},
         title = text
     )
 
