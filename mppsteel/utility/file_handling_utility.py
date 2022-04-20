@@ -140,7 +140,7 @@ def pickle_to_csv(
 def create_folder_if_nonexist(folder_path: str):
     Path(folder_path).mkdir(parents=True, exist_ok=True)
 
-def get_scenario_pkl_path(scenario: str, pkl_folder_type: str, default_path: bool = False):
+def get_scenario_pkl_path(scenario: str = None, pkl_folder_type: str = None, default_path: bool = False):
     if pkl_folder_type == 'intermediate':
         if default_path:
             return PKL_DATA_INTERMEDIATE
@@ -149,3 +149,5 @@ def get_scenario_pkl_path(scenario: str, pkl_folder_type: str, default_path: boo
         if default_path:
             return PKL_DATA_FINAL
         return f'{PKL_FOLDER}/{scenario}/final_data'
+    if pkl_folder_type == 'combined':
+        return f'{PKL_FOLDER}/combined_output'
