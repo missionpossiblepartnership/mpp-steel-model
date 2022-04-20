@@ -109,14 +109,14 @@ def data_preprocessing_generic() -> None:
 
 def data_preprocessing_scenarios(scenario_dict: dict) -> None:
     generate_timeseries(scenario_dict=scenario_dict, serialize=True)
-    format_pe_data(scenario_dict=scenario_dict, serialize=True)
+    format_pe_data(scenario_dict=scenario_dict, serialize=True, standarside_units=True)
     generate_preprocessed_emissions_data(serialize=True)
     generate_emissions_flow(scenario_dict=scenario_dict, serialize=True)
     generate_variable_plant_summary(scenario_dict, serialize=True)
     generate_levelized_cost_results(scenario_dict=scenario_dict, serialize=True)
 
 
-def investment_cycles(scenario_dict: dict) -> None:
+def investment_cycles() -> None:
     investment_cycle_flow(serialize=True)
 
 
