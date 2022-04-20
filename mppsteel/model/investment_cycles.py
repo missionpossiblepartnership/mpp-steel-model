@@ -10,6 +10,7 @@ from copy import deepcopy
 from mppsteel.config.model_config import (
     MODEL_YEAR_START,
     MODEL_YEAR_END,
+    MODEL_YEAR_RANGE,
     PKL_DATA_FORMATTED,
     NET_ZERO_TARGET,
     NET_ZERO_VARIANCE_YEARS,
@@ -53,17 +54,6 @@ def calculate_investment_years(
             decision_years.append(x)
         x += cycle_length
     return decision_years
-
-def convert_start_year(year_value: str):
-    if pd.isna(year_value):
-        return MODEL_YEAR_START
-    elif "(anticipated)" in str(year_value):
-        return int(year_value[:4])
-    else: 
-        try:
-            return int(float(year_value))
-        except:
-            return int(year_value[:4])
 
 def return_cycle_length(inv_intervals: int = INVESTMENT_CYCLE_DURATION_YEARS):
     return inv_intervals + random.randrange(
@@ -142,11 +132,10 @@ def create_investment_cycle_reference(plant_investment_year_dict: dict) -> pd.Da
         pd.DataFrame: _description_
     """
     df_list = []
-    year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
-    for plant_name, investment_cycle in tqdm(plant_investment_year_dict.items(), total=len(plant_investment_year_dict), desc='Investment Cycle Ref'):
+    for plant_name, investment_cycle in plant_investment_year_dict.items():
         off_cycle_years = [inv_range for inv_range in investment_cycle if isinstance(inv_range, range)]
         main_cycle_years = [inv_year for inv_year in investment_cycle if isinstance(inv_year, int)]
-        for year in year_range:
+        for year in MODEL_YEAR_RANGE:
             if year in main_cycle_years:
                 entry = {'plant_name': plant_name, 'year': year, 'switch_type': 'main cycle'}
                 df_list.append(entry) 
@@ -159,7 +148,7 @@ def create_investment_cycle_reference(plant_investment_year_dict: dict) -> pd.Da
     return pd.DataFrame(df_list).set_index(["year", "plant_name"])
 
 def extract_tech_plant_switchers(
-    plant_investment_year_dict: pd.DataFrame, year: int) -> Union[list, Tuple[list, list]]:
+    plant_investment_year_dict: pd.DataFrame, active_plants: list, year: int) -> Union[list, Tuple[list, list]]:
     """Extracts the list of plants that are due for a main cycle switch or a transitional switch in a given year according to an investment cycle DataFrame.
 
     Args:
@@ -172,8 +161,8 @@ def extract_tech_plant_switchers(
     """
     main_cycle_switchers = []
     trans_cycle_switchers = []
-    non_switchers = []
-    for plant_name, investment_cycle in tqdm(plant_investment_year_dict.items(), total=len(plant_investment_year_dict), desc='Investment Cycle Ref'):
+    adjusted_plant_investment_dict = {plant_name: plant_investment_year_dict[plant_name] for plant_name in active_plants}
+    for plant_name, investment_cycle in adjusted_plant_investment_dict.items():
         off_cycle_years = [inv_range for inv_range in investment_cycle if isinstance(inv_range, range)]
         main_cycle_years = [inv_year for inv_year in investment_cycle if isinstance(inv_year, int)]
         if year in main_cycle_years:
@@ -182,7 +171,8 @@ def extract_tech_plant_switchers(
             if year in range_object:
                 trans_cycle_switchers.append(plant_name)
     combined_switchers = main_cycle_switchers + trans_cycle_switchers
-    for plant_name in plant_investment_year_dict:
+    non_switchers = []
+    for plant_name in adjusted_plant_investment_dict:
         if plant_name not in combined_switchers:
             non_switchers.append(plant_name)
     return main_cycle_switchers, trans_cycle_switchers, non_switchers, combined_switchers
@@ -212,7 +202,7 @@ class PlantInvestmentCycle():
         self.plant_names = plant_names
         start_year_dict = dict(zip(plant_names, plant_start_years))
         for plant_name in self.plant_names:
-            self.plant_start_years[plant_name] = convert_start_year(start_year_dict[plant_name])
+            self.plant_start_years[plant_name] = start_year_dict[plant_name]
             self.plant_investment_cycle_length[plant_name] = return_cycle_length()
             self.plant_cycles[plant_name] = calculate_investment_years(self.plant_start_years[plant_name], self.plant_investment_cycle_length[plant_name])
             self.plant_cycles_with_off_cycle[plant_name] = add_off_cycle_investment_years(self.plant_cycles[plant_name])
@@ -239,11 +229,11 @@ class PlantInvestmentCycle():
     def return_investment_dict(self):
         return self.plant_cycles_with_off_cycle
     
-    def return_cycle_lengths(self):
-        return self.plant_investment_cycle_length
+    def return_cycle_lengths(self, plant_name: str = None):
+        return self.plant_investment_cycle_length[plant_name] if plant_name else self.plant_investment_cycle_length
 
-    def return_plant_switchers(self, year: int, value_type: str):
-        main_cycle_switchers, trans_cycle_switchers, non_switchers, combined_switchers = extract_tech_plant_switchers(self.plant_cycles_with_off_cycle, year)
+    def return_plant_switchers(self, active_plants: list, year: int, value_type: str):
+        main_cycle_switchers, trans_cycle_switchers, non_switchers, combined_switchers = extract_tech_plant_switchers(self.plant_cycles_with_off_cycle, active_plants, year)
         if value_type == 'main cycle':
             return main_cycle_switchers
         elif value_type == 'trans switch':
@@ -252,7 +242,7 @@ class PlantInvestmentCycle():
             return non_switchers
         elif value_type == 'combined':
             return combined_switchers
-        
+
 
 @timer_func
 def investment_cycle_flow(serialize: bool = False) -> pd.DataFrame:
