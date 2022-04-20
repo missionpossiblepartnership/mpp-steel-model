@@ -41,6 +41,7 @@ BIOMASS_SCENARIOS = {
 }
 
 CCUS_SCENARIOS = {"high": "high", "low": "low"}
+CCUS_CAPACITY_SCENARIOS = {"low": "Low", "average": "Medium", "high": "High"}
 
 SOLVER_LOGICS = {"rank": "ranked", "scale": "scaled", 'bins': 'scaled_bins'}
 
@@ -55,6 +56,7 @@ SCENARIO_SETTINGS = {
     "hydrogen_cost_scenario": COST_SCENARIO_MAPPER.keys(),
     "biomass_cost_scenario": BIOMASS_SCENARIOS.keys(),
     "ccus_cost_scenario": CCUS_SCENARIOS.keys(),
+    "ccus_capacity_scenario": CCUS_CAPACITY_SCENARIOS.keys(),
     "steel_demand_scenario": STEEL_DEMAND_SCENARIO_MAPPER.keys(),
     "tech_switch_scenario": TECH_SWITCH_SCENARIOS.keys(),
     "solver_logic": SOLVER_LOGICS.keys(),
@@ -73,6 +75,7 @@ DEFAULT_SCENARIO = {
     "hydrogen_cost_scenario": "average",  # low / average / high
     "biomass_cost_scenario": "average",  # average
     "ccus_cost_scenario": "low",  # low / average
+    "ccus_capacity_scenario": "average", # low / average / high
     "steel_demand_scenario": "average",  # bau / average / high
     "tech_switch_scenario": "lowest_cost",  # max_abatement / lowest_cost / equal_weight
     "solver_logic": "scale",  # scale / rank / bins
@@ -90,6 +93,7 @@ TECH_MORATORIUM = {
     'hydrogen_cost_scenario': 'average',
     'biomass_cost_scenario': 'average',
     'ccus_cost_scenario': 'low',
+    "ccus_capacity_scenario": "average",
     'steel_demand_scenario': 'bau',
     'tech_switch_scenario': 'lowest_cost',
     'solver_logic': 'rank',
@@ -107,6 +111,7 @@ CARBON_COST = {
     'hydrogen_cost_scenario': 'average',
     'biomass_cost_scenario': 'average',
     'ccus_cost_scenario': 'low',
+    "ccus_capacity_scenario": "average",
     'steel_demand_scenario': 'bau',
     'tech_switch_scenario': 'lowest_cost',
     'solver_logic': 'rank',
@@ -124,6 +129,7 @@ BAU_SCENARIO = {
     'hydrogen_cost_scenario': 'average',
     'biomass_cost_scenario': 'average',
     'ccus_cost_scenario': 'low',
+    "ccus_capacity_scenario": "average",
     'steel_demand_scenario': 'bau',
     'tech_switch_scenario': 'lowest_cost',
     'solver_logic': 'rank',
@@ -141,6 +147,7 @@ BAU_HIGH_CIRC_SCENARIO = {
     'hydrogen_cost_scenario': 'average',
     'biomass_cost_scenario': 'average',
     'ccus_cost_scenario': 'low',
+    "ccus_capacity_scenario": "average",
     'steel_demand_scenario': 'high',
     'tech_switch_scenario': 'lowest_cost',
     'solver_logic': 'rank',
@@ -158,6 +165,7 @@ ABATEMENT_SCENARIO = {
     'hydrogen_cost_scenario': 'average',
     'biomass_cost_scenario': 'average',
     'ccus_cost_scenario': 'low',
+    "ccus_capacity_scenario": "average",
     'steel_demand_scenario': 'bau',
     'tech_switch_scenario': 'max_abatement',
     'solver_logic': 'rank',
@@ -175,6 +183,7 @@ ABATEMENT_HIGH_CIRC_SCENARIO = {
     'hydrogen_cost_scenario': 'average',
     'biomass_cost_scenario': 'average',
     'ccus_cost_scenario': 'low',
+    "ccus_capacity_scenario": "average",
     'steel_demand_scenario': 'high',
     'tech_switch_scenario': 'max_abatement',
     'solver_logic': 'rank',
