@@ -324,7 +324,9 @@ GJ_RESOURCES = [
     "Biomethane",
     "Hydrogen",
     "Electricity",
-    "Steam"
+    "Steam",
+    "Coke",
+    "Thermal coal"
 ]
 
 KG_RESOURCES = [
