@@ -1,14 +1,12 @@
 """Functions to format and access data imports"""
 
 # For Data Manipulation
-import itertools
 import pandas as pd
 import pandera as pa
 import numpy as np
 
 from typing import Tuple, Union
 
-from tqdm import tqdm
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.log_utility import get_logger
 
@@ -30,28 +28,24 @@ from mppsteel.utility.dataframe_utility import (
 
 # Get model parameters
 from mppsteel.config.model_config import (
-    MODEL_YEAR_END,
+    GIGAJOULE_TO_MEGAJOULE_FACTOR,
     PKL_DATA_IMPORTS,
     PKL_DATA_FORMATTED,
     EMISSIONS_FACTOR_SLAG,
     MET_COAL_ENERGY_DENSITY_MJ_PER_KG,
-    MEGATON_TO_KILOTON_FACTOR,
-    KILOTON_TO_TON_FACTOR,
+    PLASTIC_WASTE_ENERGY_DENSITY_MJ_PER_KG,
     TON_TO_KILOGRAM_FACTOR,
     USD_TO_EUR_CONVERSION_DEFAULT
 )
-from mppsteel.config.reference_lists import (
-    GJ_RESOURCES, KG_RESOURCES, TECH_REFERENCE_LIST, TON_RESOURCES
-)
+from mppsteel.config.reference_lists import KG_RESOURCES
 # Create logger
 logger = get_logger(__name__)
 
 COMMODITY_MATERIAL_MAPPER = {
     "4402": "charcoal",
     "220710": "ethanol",
-    "391510": "plastic",
+    "391510": "Plastic waste",
 }
-
 
 @pa.check_input(SCOPE3_EF_SCHEMA_2)
 def format_scope3_ef_2(df: pd.DataFrame, emissions_factor_slag: float) -> pd.DataFrame:
@@ -88,19 +82,24 @@ def modify_scope3_ef_1(
         pd.DataFrame: A DataFrame of the reformatted data.
     """
     df_c = df.copy()
-    scope3df_index = df_c.set_index(["Category", "Fuel", "Unit"])
-    scope3df_index.loc[
+    scope3_df = df_c.set_index(["Category", "Fuel", "Unit"])
+    scope3_df.loc[
         "Scope 3 Emissions Factor", "BF slag", "ton CO2eq / ton slag"
-    ] = slag_values/1000 # from [t CO2/ t slag] to [t CO2/ kg slag] see standardized BC
-    met_coal_values = scope3df_index.loc[
+    ] = slag_values
+    met_coal_values = scope3_df.loc[
         "Scope 3 Emissions Factor", "Met coal", "MtCO2eq / PJ"
     ]
     met_coal_values = met_coal_values.apply(lambda x: x * met_coal_density)
-    scope3df_index.loc[
+    scope3_df.loc[
         "Scope 3 Emissions Factor", "Met coal", "MtCO2eq / PJ"
     ] = met_coal_values
-    scope3df_index.reset_index(inplace=True)
-    return scope3df_index.melt(id_vars=["Category", "Fuel", "Unit"], var_name="Year")
+    scope3_df.reset_index(inplace=True)
+    scope3_df = scope3_df.melt(id_vars=["Category", "Fuel", "Unit"], var_name="Year")
+    def standardise_units(row):
+        return row.value / 1000 if row.Fuel in {'Natural gas', 'Met coal', 'Thermal coal'} else row.value
+    scope3_df['value'] = scope3_df.apply(standardise_units, axis=1)
+    # standardise to kg per PJ or ton
+    return scope3_df
 
 
 def capex_generator(
@@ -168,77 +167,8 @@ def capex_dictionary_generator(
     }
 
 
-def carbon_tax_getter(df: pd.DataFrame, year: int) -> float:
-    """Function to get a carbon tax value at a particular year.
-
-    Args:
-        df (pd.DataFrame): A DataFrame containing the carbon tax timeseries
-        year (int): The year that you want to query.
-
-    Returns:
-        float: The value of the carbon tax at a particular year
-    """
-    df_c = df.copy()
-    df_c.columns = [col.lower() for col in df_c.columns]
-    df_c.set_index(["year"], inplace=True)
-    return df_c.loc[year]["value"]
-
-
-def scope1_emissions_getter(df: pd.DataFrame, metric: str, as_ton: bool = True) -> float:
-    """Function to get the Scope 1 Emissions value at a particular year.
-
-    Args:
-        df (pd.DataFrame): The DataFrame containing the Scope 1 Emissions metrics and values.
-        metric (str): The metric you are querying.
-        as_ton (bool): Convert from kg to ton. Defaults to True.
-
-    Returns:
-        float: The value of the Scope 1 Emission Metric at a particular year.
-    """
-    df_c = df.copy()
-    df_c.set_index(["Metric"], inplace=True)
-    values = df_c.loc[metric]["Value"]
-    if as_ton: # Kg to T
-        return values / TON_TO_KILOGRAM_FACTOR
-    return values
-
-
-def ccs_co2_getter(df: pd.DataFrame, metric: str, year: int) -> float:
-    """Function to get the CCS CO2 value at a particular year.
-
-    Args:
-        df (pd.DataFrame): The DataFrame containing the CCS & CO2 figures.
-        metric (str): The metric you are querying (CCS or CO2).
-        year (int): The year that you want to query.
-
-    Returns:
-        float: The value of the metric at a particular year.
-    """
-    year = min(MODEL_YEAR_END, year)
-    df_c = df.copy()
-    df_c.set_index(["Metric", "Year"], inplace=True)
-    return df_c.loc[metric, year]["Value"]
-
-
-def static_energy_prices_getter(df: pd.DataFrame, metric: str, year: str) -> float:
-    """Function to get the static energy price at a particular year.
-
-    Args:
-        df (pd.DataFrame): A DataFrame containing the static energy metrics and prices.
-        metric (str): The metric you are querying.
-        year (str): The year that you want to query.
-
-    Returns:
-        float: The value of the metric at a particular year.
-    """
-    year = min(MODEL_YEAR_END, year)
-    df_c = df.copy()
-    df_c.set_index(["Metric", "Year"], inplace=True)
-    return df_c.loc[metric, year]["Value"]
-
-
 @pa.check_input(ETHANOL_PLASTIC_CHARCOAL_SCHEMA)
-def format_commodities_data(df: pd.DataFrame, material_mapper: dict) -> pd.DataFrame:
+def format_commodities_data(df: pd.DataFrame, material_mapper: dict, as_t: bool = False) -> pd.DataFrame:
     """Formats the Commodities dataset.
 
     Args:
@@ -250,6 +180,9 @@ def format_commodities_data(df: pd.DataFrame, material_mapper: dict) -> pd.DataF
     """
     df_c = df.copy()
     logger.info("Formatting the ethanol_plastics_charcoal data")
+    def generate_implied_prices(row):
+        return 0 if row.netenergy_gj == 0 else row.trade_value / row.netenergy_gj
+
     columns_of_interest = [
         "Year",
         "Reporter",
@@ -258,64 +191,13 @@ def format_commodities_data(df: pd.DataFrame, material_mapper: dict) -> pd.DataF
         "Trade Value (US$)",
     ]
     df_c = df_c[columns_of_interest]
-    df_c.columns = ["year", "reporter", "commodity_code", "netweight", "trade_value"]
-    df_c["commodity_code"] = df_c["commodity_code"].apply(
-        lambda x: material_mapper[str(x)]
-    )
-    df_c["implied_price"] = ""
-    df_c["netweight"].fillna(0, inplace=True)
-    for row in df_c.itertuples():
-        if row.netweight == 0:
-            df_c.loc[row.Index, "implied_price"] = 0
-        else:
-            df_c.loc[row.Index, "implied_price"] = row.trade_value / row.netweight
+    df_c.columns = ["year", "reporter", "commodity_code", "netweight_kg", "trade_value"]
+    df_c["commodity"] = df_c["commodity_code"].apply(lambda x: material_mapper[str(x)])
+    df_c = df_c[df_c["commodity"] == 'Plastic waste'].copy()
+    df_c["netweight_kg"].fillna(0, inplace=True)
+    df_c["netenergy_gj"] = df_c["netweight_kg"] * (PLASTIC_WASTE_ENERGY_DENSITY_MJ_PER_KG / GIGAJOULE_TO_MEGAJOULE_FACTOR)
+    df_c["implied_price"] = df_c.apply(generate_implied_prices, axis=1)
     return df_c
-
-
-def commodity_data_getter(df: pd.DataFrame, commodity: str = None) -> float:
-    """A getter function for the commodities data.
-
-    Args:
-        df (pd.DataFrame): A DataFrame containing the preprocessed commodities data.
-        commodity (str, optional): The commodity you want to get the value for. Defaults to None.
-
-    Returns:
-        float: The value of the commodity data for the parameters you have entered.
-    """
-    df_c = df.copy()
-    if commodity:
-        df_c = df_c[df_c["commodity_code"] == commodity]
-        value_productsum = (
-            sum(df_c["netweight"] * df_c["implied_price"]) / df_c["netweight"].sum()
-        )
-        return value_productsum
-    else:
-        values_dict = {}
-        for commodity_ref in list(COMMODITY_MATERIAL_MAPPER.values()):
-            new_df = df_c[df_c["commodity_code"] == commodity_ref]
-            value_productsum = (
-                sum(new_df["netweight"] * new_df["implied_price"])
-                / new_df["netweight"].sum()
-            )
-            values_dict[commodity_ref] = value_productsum
-    return values_dict
-
-
-def scope3_ef_getter(df: pd.DataFrame, fuel: str, year: str) -> float:
-    """A getter function for Scope 3 Emissions Factors
-
-    Args:
-        df (pd.DataFrame): A DataFrame containing the S3 Emissions Factors.
-        fuel (str): The fuel you would like to get a value for.
-        year (str): The year you would like to get a value for.
-
-    Returns:
-        float: The value of the S3 Emissions Factors data for the parameters you have entered.
-    """
-    df_c = df.copy()
-    df_c.set_index(["Fuel", "Year"], inplace=True)
-    return df_c.loc[fuel, year]["value"]
-
 
 @timer_func
 def format_business_cases(bc_df: pd.DataFrame):
@@ -362,7 +244,7 @@ def generate_preprocessed_emissions_data(
         PKL_DATA_IMPORTS, "ethanol_plastic_charcoal"
     )
     commodities_df = format_commodities_data(
-        ethanol_plastic_charcoal, COMMODITY_MATERIAL_MAPPER
+        ethanol_plastic_charcoal, COMMODITY_MATERIAL_MAPPER, as_t=True
     )
     s3_emissions_factors_2 = read_pickle_folder(
         PKL_DATA_IMPORTS, "s3_emissions_factors_2"
@@ -383,34 +265,17 @@ def generate_preprocessed_emissions_data(
     return commodities_df, final_scope3_ef_df
 
 
-def business_case_getter(df: pd.DataFrame, technology: str, material: str, as_mt: bool = False) -> float:
-    """Get business case usage values from a DataFrame.
-
-    Args:
-        df (pd.DataFrame): The standardised and summarised business cases.
-        tech (str): The technology that you want to get values for.
-        material (str): The material that you want to get values for.
-
-    Returns:
-        float: The business case value that requested via the function arguments.
-    """
-    value = df.loc[technology, material]["value"]
-    if as_mt:
-        if material in KG_RESOURCES:
-            return value / (MEGATON_TO_KILOTON_FACTOR * KILOTON_TO_TON_FACTOR * TON_TO_KILOGRAM_FACTOR)
-        if material in TON_RESOURCES:
-            return value / (MEGATON_TO_KILOTON_FACTOR * KILOTON_TO_TON_FACTOR)
-    return value
+def bc_unit_adjustments(row):
+    return row.value / TON_TO_KILOGRAM_FACTOR if row.material_category in KG_RESOURCES else row.value
 
 @timer_func
 def create_business_case_reference(serialize: bool = True):
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "excel_business_cases")
     business_cases = format_business_cases(business_cases)
-    materials = business_cases.index.get_level_values(1)
-    tech_material_product = list(itertools.product(TECH_REFERENCE_LIST, materials))
-    business_case_reference = {}
-    for tech, material in tqdm(tech_material_product, total=len(tech_material_product), desc='Business Case Reference'):
-        business_case_reference[(tech, material)] = business_case_getter(business_cases, tech, material, as_mt=True)
+    business_cases.reset_index(inplace=True)
+    business_cases['value'] = business_cases.apply(bc_unit_adjustments, axis=1)
+    business_cases.set_index(['technology', 'material_category'], inplace=True)
+    business_case_reference = business_cases.to_dict()['value']
     if serialize:
         serialize_file(business_cases, PKL_DATA_FORMATTED, "standardised_business_cases")
         serialize_file(business_case_reference, PKL_DATA_FORMATTED, "business_case_reference")
