@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    scenario_args = TECH_MORATORIUM
+    scenario_args = ABATEMENT_SCENARIO
     scenario_args = add_currency_rates_to_scenarios(scenario_args)
 
     timestamp = datetime.today().strftime('%d-%m-%y %H-%M')
@@ -117,7 +117,7 @@ if __name__ == "__main__":
         investment_flow(scenario_dict=scenario_args)
 
     if args.join_final_data:
-        join_scenario_data(scenario_options=MAIN_SCENARIO_RUNS, new_folder=True, timestamp=timestamp, final_only=True)
+        join_scenario_data(scenario_options=MAIN_SCENARIO_RUNS, new_folder=True, timestamp=timestamp, final_outputs_only=True)
 
     if args.tco:
         tco_switch_reference(scenario_dict=scenario_args)

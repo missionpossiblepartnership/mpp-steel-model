@@ -44,7 +44,7 @@ from mppsteel.results.cost_of_steelmaking import generate_cost_of_steelmaking_re
 from mppsteel.results.global_metaresults import metaresults_flow
 from mppsteel.results.investments import investment_results
 from mppsteel.results.green_capacity_ratio import generate_gcr_df
-from mppsteel.graphs.graph_production import create_graphs
+from mppsteel.graphs.graph_production import create_graphs, create_combined_scenario_graphs
 
 from mppsteel.config.model_config import (
     PKL_DATA_FORMATTED,
@@ -163,11 +163,15 @@ def join_scenario_data(scenario_options: list, new_folder: bool = True, timestam
     combined_ouptut_pkl_folder = f"{PKL_FOLDER}/combined_output"
     create_folder_if_nonexist(combined_ouptut_pkl_folder)
     output_save_path = OUTPUT_FOLDER
+    output_folder_graphs = f"{output_save_path}/graphs"
     output_folder_name = f'combined_output {timestamp}'
     if new_folder:
         output_folder_filepath = f"{OUTPUT_FOLDER}/{output_folder_name}"
+        output_folder_graphs = f"{output_folder_filepath}/graphs"
         create_folder_if_nonexist(output_folder_filepath)
+        create_folder_if_nonexist(output_folder_graphs)
         output_save_path = output_folder_filepath
+        output_save_path_graphs = output_folder_graphs
 
     if not final_outputs_only:
         for output_file in INTERMEDIATE_RESULT_PKL_FILES:
@@ -189,6 +193,8 @@ def join_scenario_data(scenario_options: list, new_folder: bool = True, timestam
         combined_output = pd.concat(output_container).reset_index(drop=True)
         serialize_file(combined_output, combined_ouptut_pkl_folder, output_file)
         combined_output.to_csv(f"{output_save_path}/{output_file}.csv", index=False)
+
+    create_combined_scenario_graphs(filepath=output_save_path_graphs)
 
 
 def model_graphs_phase(scenario_dict: dict, new_folder: bool = False, model_output_folder: str = "") -> None:
