@@ -5,7 +5,6 @@ import pandera as pa
 from tqdm.auto import tqdm as tqdma
 
 # For logger and units dict
-from mppsteel.utility.utils import enumerate_iterable
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.location_utility import (
     country_mapping_fixer,
@@ -18,7 +17,7 @@ from mppsteel.utility.file_handling_utility import (
     serialize_file,
 )
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.config.model_config import PKL_DATA_FORMATTED, PKL_DATA_IMPORTS
+from mppsteel.config.model_config import MODEL_YEAR_START, PKL_DATA_FORMATTED, PKL_DATA_IMPORTS
 from mppsteel.validation.data_import_tests import STEEL_PLANT_DATA_SCHEMA
 
 # Create logger
@@ -50,7 +49,7 @@ NEW_COLUMN_NAMES = [
     "ccs_available",
     "cheap_natural_gas",
     "industrial_cluster",
-    "technology_in_2020",
+    "initial_technology",
     "primary",
 ]
 
@@ -78,7 +77,7 @@ def steel_plant_formatter(
     df_c = extract_steel_plant_capacity(df_c)
 
     if remove_non_operating_plants:
-        df_c = df_c[df_c["technology_in_2020"] != "Not operating"].reset_index(
+        df_c = df_c[df_c["initial_technology"] != "Not operating"].reset_index(
             drop=True
         )
 
@@ -116,7 +115,7 @@ def extract_steel_plant_capacity(df: pd.DataFrame) -> pd.DataFrame:
     df_c = df.copy()
 
     def assign_plant_capacity(row):
-        tech = row["technology_in_2020"]
+        tech = row["initial_technology"]
         if tech == "EAF":
             return convert_to_float(row["EAF_capacity"])
         elif tech in {"Avg BF-BOF", "BAT BF-BOF"}:
@@ -197,6 +196,21 @@ def apply_countries_to_steel_plants(
     steel_plants["rmi_region"] = steel_plants["country_code"].apply(lambda x: rmi_mapper[x])
     return steel_plants
 
+def convert_start_year(year_value: str):
+    if pd.isna(year_value):
+        return MODEL_YEAR_START
+    elif "(anticipated)" in str(year_value):
+        return int(year_value[:4])
+    else: 
+        try:
+            return int(float(year_value))
+        except:
+            return int(year_value[:4])
+
+def create_active_check_col(row: pd.DataFrame, year: int):
+    if (row.status in ['operating', 'proposed', 'construction', 'new model plant']) and (row.start_of_operation <= year):
+        return True
+    return False
 
 @timer_func
 def steel_plant_processor(
@@ -214,8 +228,10 @@ def steel_plant_processor(
     steel_plants = read_pickle_folder(PKL_DATA_IMPORTS, "steel_plants")
     steel_plants = steel_plant_formatter(steel_plants, remove_non_operating_plants)
     steel_plants = apply_countries_to_steel_plants(steel_plants)
-
+    steel_plants['start_of_operation'] = steel_plants['start_of_operation'].apply(
+        lambda plant: convert_start_year(plant))
+    steel_plants['end_of_operation'] = ''
+    steel_plants['active_check'] = steel_plants.apply(create_active_check_col, year=MODEL_YEAR_START, axis=1)
     if serialize:
         serialize_file(steel_plants, PKL_DATA_FORMATTED, "steel_plants_processed")
-
     return steel_plants
