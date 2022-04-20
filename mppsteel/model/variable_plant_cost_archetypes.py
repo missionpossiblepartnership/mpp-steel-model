@@ -6,10 +6,10 @@ from tqdm import tqdm
 
 from mppsteel.config.model_config import (
     PKL_DATA_FORMATTED,
+    TON_TO_KILOGRAM_FACTOR,
     USD_TO_EUR_CONVERSION_DEFAULT,
-    MODEL_YEAR_END,
+    MODEL_YEAR_RANGE,
     PKL_DATA_IMPORTS,
-    MODEL_YEAR_START,
 )
 from mppsteel.config.reference_lists import RESOURCE_CATEGORY_MAPPER
 from mppsteel.utility.utils import cast_to_float
@@ -17,19 +17,9 @@ from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder, serialize_file, get_scenario_pkl_path
 )
-from mppsteel.utility.location_utility import create_country_mapper
+from mppsteel.tests.df_tests import test_negative_df_values, test_negative_list_values
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.dataframe_utility import convert_currency_col
-from mppsteel.data_loading.data_interface import (
-    commodity_data_getter,
-    static_energy_prices_getter,
-)
-from mppsteel.data_loading.pe_model_formatter import (
-    pe_model_data_getter,
-    POWER_HYDROGEN_COUNTRY_MAPPER,
-    BIO_COUNTRY_MAPPER,
-    CCUS_COUNTRY_MAPPER
-)
 
 # Create logger
 logger = get_logger(__name__)
@@ -41,17 +31,15 @@ def generate_feedstock_dict(eur_to_usd_rate: float = 1 / USD_TO_EUR_CONVERSION_D
     Returns:
         dict: A dictionary containing the pairing of feedstock name and price.
     """
-    commodities_df = read_pickle_folder(PKL_DATA_FORMATTED, "commodities_df", "df")
+    def standardise_units(row):
+        return row.Value * TON_TO_KILOGRAM_FACTOR if row.Metric in {'BF slag', 'Other slag'} else row.Value
     feedstock_prices = read_pickle_folder(PKL_DATA_IMPORTS, "feedstock_prices", "df")
     feedstock_prices = convert_currency_col(feedstock_prices, 'Value', eur_to_usd_rate)
-    commodities_dict = commodity_data_getter(commodities_df)
-    commodity_dictname_mapper = {
-        "plastic": "Plastic waste",
-        "ethanol": "Ethanol",
-        "charcoal": "Charcoal",
+    feedstock_prices['Value'] = feedstock_prices.apply(standardise_units, axis=1)
+    commodities_df = read_pickle_folder(PKL_DATA_FORMATTED, "commodities_df", "df")
+    commodities_dict = {
+        'Plastic waste': sum(commodities_df["netenergy_gj"] * commodities_df["implied_price"]) / commodities_df["netenergy_gj"].sum()
     }
-    for key in commodity_dictname_mapper:
-        commodities_dict[commodity_dictname_mapper[key]] = commodities_dict.pop(key)
     return {
         **commodities_dict,
         **dict(zip(feedstock_prices["Metric"], feedstock_prices["Value"])),
@@ -78,21 +66,20 @@ def plant_variable_costs(scenario_dict: dict) -> pd.DataFrame:
         .set_index("country_code")
         .to_dict()["cheap_natural_gas"]
     )
-    rmi_mapper = create_country_mapper()
-    power_grid_prices_formatted = read_pickle_folder(
-        intermediate_path, "power_grid_prices_formatted", "df"
+    power_grid_prices_ref = read_pickle_folder(
+        intermediate_path, "power_grid_prices_ref", "df"
     )
-    hydrogen_prices_formatted = read_pickle_folder(
-        intermediate_path, "hydrogen_prices_formatted", "df"
+    h2_prices_ref = read_pickle_folder(
+        intermediate_path, "h2_prices_ref", "df"
     )
-    bio_price_model_formatted = read_pickle_folder(
-        intermediate_path, "bio_price_model_formatted", "df"
+    bio_model_prices_ref = read_pickle_folder(
+        intermediate_path, "bio_model_prices_ref", "df"
     )
-    ccus_transport_model_formatted = read_pickle_folder(
-        intermediate_path, "ccus_transport_model_formatted", "df"
+    ccus_model_transport_ref = read_pickle_folder(
+        intermediate_path, "ccus_model_transport_ref", "df"
     )
-    ccus_storage_model_formatted = read_pickle_folder(
-        intermediate_path, "ccus_storage_model_formatted", "df"
+    ccus_model_storage_ref = read_pickle_folder(
+        intermediate_path, "ccus_model_storage_ref", "df"
     )
     business_cases = read_pickle_folder(
         PKL_DATA_FORMATTED, "standardised_business_cases", "df"
@@ -100,62 +87,10 @@ def plant_variable_costs(scenario_dict: dict) -> pd.DataFrame:
     static_energy_prices = read_pickle_folder(
         PKL_DATA_IMPORTS, "static_energy_prices", "df"
     )[["Metric", "Year", "Value"]]
-    static_energy_prices = convert_currency_col(static_energy_prices, 'Value', eur_to_usd_rate)
+    static_energy_prices.set_index(['Metric', 'Year'], inplace=True)
     feedstock_dict = generate_feedstock_dict(eur_to_usd_rate)
-    year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
     steel_plant_country_codes = list(steel_plants["country_code"].unique())
-    product_range_year_country = list(itertools.product(year_range, steel_plant_country_codes))
-
-    ccus_transport_ref = {}
-    ccus_ccus_storage_ref = {}
-    for country_code in tqdm(
-        steel_plant_country_codes,
-        total=len(steel_plant_country_codes),
-        desc="CCUS Ref Loop",
-    ):
-        ccus_transport_ref[country_code] = pe_model_data_getter(
-            ccus_transport_model_formatted,
-            rmi_mapper,
-            CCUS_COUNTRY_MAPPER,
-            region_code=country_code
-        )
-        ccus_ccus_storage_ref[country_code] = pe_model_data_getter(
-            ccus_storage_model_formatted,
-            rmi_mapper,
-            CCUS_COUNTRY_MAPPER,
-            region_code=country_code
-        )
-
-    electricity_ref = {}
-    hydrogen_ref = {}
-    bio_ref = {}
-    for year, country_code in tqdm(
-        product_range_year_country,
-        total=len(product_range_year_country),
-        desc="PE Model Ref Loop",
-    ):
-        electricity_ref[(year, country_code)] = pe_model_data_getter(
-            power_grid_prices_formatted,
-            rmi_mapper,
-            POWER_HYDROGEN_COUNTRY_MAPPER,
-            year,
-            country_code,
-        )
-        hydrogen_ref[(year, country_code)] = pe_model_data_getter(
-            hydrogen_prices_formatted,
-            rmi_mapper,
-            POWER_HYDROGEN_COUNTRY_MAPPER,
-            year,
-            country_code,
-        )
-        bio_ref[(year, country_code)] = pe_model_data_getter(
-            bio_price_model_formatted,
-            rmi_mapper,
-            BIO_COUNTRY_MAPPER,
-            year,
-            country_code,
-        )
-
+    product_range_year_country = list(itertools.product(MODEL_YEAR_RANGE, steel_plant_country_codes))
     df_list = []
     for year, country_code in tqdm(product_range_year_country, total=len(product_range_year_country), desc="Variable Cost Loop"):
         df = generate_variable_costs(
@@ -165,11 +100,11 @@ def plant_variable_costs(scenario_dict: dict) -> pd.DataFrame:
             ng_dict=steel_plant_region_ng_dict,
             feedstock_dict=feedstock_dict,
             static_energy_df=static_energy_prices,
-            electricity_ref=electricity_ref,
-            hydrogen_ref=hydrogen_ref,
-            bio_ref=bio_ref,
-            ccus_ccus_storage_ref=ccus_ccus_storage_ref,
-            ccus_transport_ref=ccus_transport_ref
+            electricity_ref=power_grid_prices_ref,
+            hydrogen_ref=h2_prices_ref,
+            bio_ref=bio_model_prices_ref,
+            ccus_ccus_storage_ref=ccus_model_storage_ref,
+            ccus_transport_ref=ccus_model_transport_ref
         )
         df_list.append(df)
 
@@ -178,41 +113,53 @@ def plant_variable_costs(scenario_dict: dict) -> pd.DataFrame:
         lambda material: RESOURCE_CATEGORY_MAPPER[material])
     return df
 
-def vc_mapper(row: str, feedstock_dict: dict, static_energy_df: pd.DataFrame, regional_prices: dict, ng_flag: int, static_year: int):
-    
-    if RESOURCE_CATEGORY_MAPPER[row.material_category] == 'Fossil Fuels':
-        if (row.material_category == "Natural gas") and (ng_flag == 1):
-            return row.value * static_energy_prices_getter(static_energy_df, "Natural gas - low", static_year)
-        elif (row.material_category == "Natural gas") and (ng_flag == 0):
-            return row.value * static_energy_prices_getter(static_energy_df, "Natural gas - high", static_year)
-        elif row.material_category == "Plastic waste":
-            return row.value * feedstock_dict[row.material_category]
-        return row.value * static_energy_prices_getter(static_energy_df, row.material_category, static_year)
+def vc_mapper(
+    row: str,
+    country_code: str,
+    year: int,
+    static_year: int,
+    electricity_ref: dict,
+    hydrogen_ref: dict,
+    bio_ref: dict,
+    ccus_transport_ref: dict,
+    ccus_ccus_storage_ref: dict,
+    feedstock_dict: dict, 
+    static_energy_df: pd.DataFrame,
+    ng_flag: int, 
+):
+    if row.material_category == "Electricity":
+        return row.value * electricity_ref[(year, country_code)]
 
-    if RESOURCE_CATEGORY_MAPPER[row.material_category] == 'Feedstock':
+    elif row.material_category == "Hydrogen":
+        return row.value * hydrogen_ref[(year, country_code)]
+
+    elif RESOURCE_CATEGORY_MAPPER[row.material_category] == 'Bio Fuels':
+        return row.value * bio_ref[(year, country_code)]
+
+    elif RESOURCE_CATEGORY_MAPPER[row.material_category] == 'CCS':
+        return row.value * (ccus_transport_ref[country_code] + ccus_ccus_storage_ref[country_code])
+
+    elif (row.material_category == "Natural gas") and (ng_flag == 1):
+        return row.value * static_energy_df.loc["Natural gas - low", static_year]["Value"]
+
+    elif (row.material_category == "Natural gas") and (ng_flag == 0):
+        return row.value * static_energy_df.loc["Natural gas - high", static_year]["Value"]
+
+    elif row.material_category == "Plastic waste":
+        return row.value * feedstock_dict["Plastic waste"]
+        
+    elif (RESOURCE_CATEGORY_MAPPER[row.material_category] == 'Fossil Fuels') and (row.material_category not in ["Natural gas", "Plastic waste"]):
+        return row.value * static_energy_df.loc[row.material_category, static_year]["Value"]
+
+    elif RESOURCE_CATEGORY_MAPPER[row.material_category] == 'Feedstock':
         return row.value * feedstock_dict[row.material_category]
 
-    if RESOURCE_CATEGORY_MAPPER[row.material_category] == 'Bio Fuels':
-        return row.value * regional_prices['bio_price']
-
-    if row.material_category == "Electricity":
-        return row.value * regional_prices['electricity_price']
-
-    if row.material_category == "Hydrogen":
-        return row.value * regional_prices['hydrogen_price']
-
-    if RESOURCE_CATEGORY_MAPPER[row.material_category] == 'Other Opex':
+    elif RESOURCE_CATEGORY_MAPPER[row.material_category] == 'Other Opex':
         if row.material_category in {'BF slag', 'Other slag'}:
-            price = feedstock_dict[row.material_category]
-        elif row.material_category == "Steam":
-            price = static_energy_prices_getter(
-                static_energy_df, row.material_category, static_year
-            )
-        return row.value * price
+            return row.value * feedstock_dict[row.material_category]
 
-    if RESOURCE_CATEGORY_MAPPER[row.material_category] == 'CCS':
-        return row.value * (regional_prices['ccus_storage_price'] + regional_prices['ccus_transport_price'])
-    
+        elif row.material_category == "Steam":
+            return row.value * static_energy_df.loc["Steam", static_year]["Value"]
     return 0
 
 def generate_variable_costs(
@@ -246,25 +193,24 @@ def generate_variable_costs(
     """
     df_c = business_cases_df.copy()
     static_year = min(2026, year)
-    regional_price_dict = {
-        'electricity_price': electricity_ref[(year, country_code)],
-        'hydrogen_price': hydrogen_ref[(year, country_code)],
-        'bio_price': bio_ref[(year, country_code)],
-        'ccus_transport_price': ccus_transport_ref[(country_code)],
-        'ccus_storage_price': ccus_ccus_storage_ref[(country_code)]
-    }
     ng_flag = ng_dict[country_code]
-    df_c['cost'] = df_c.apply(
-        vc_mapper, 
-        feedstock_dict=feedstock_dict,
-        static_energy_df=static_energy_df,
-        regional_prices=regional_price_dict,
-        ng_flag=ng_flag,
-        static_year=static_year,
-        axis=1
-    )
     df_c["year"] = year
     df_c["country_code"] = country_code
+    df_c['cost'] = df_c.apply(
+        vc_mapper,
+        country_code=country_code,
+        year=year,
+        static_year=static_year,
+        electricity_ref=electricity_ref,
+        hydrogen_ref=hydrogen_ref,
+        bio_ref=bio_ref,
+        ccus_transport_ref=ccus_transport_ref,
+        ccus_ccus_storage_ref=ccus_ccus_storage_ref,
+        feedstock_dict=feedstock_dict,
+        static_energy_df=static_energy_df,
+        ng_flag=ng_flag,
+        axis=1
+    )
     return df_c
 
 
