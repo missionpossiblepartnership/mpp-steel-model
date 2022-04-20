@@ -4,9 +4,6 @@ from copy import deepcopy
 
 import pandas as pd
 
-from mppsteel.config.model_config import (
-    PKL_DATA_IMPORTS
-)
 from mppsteel.config.reference_lists import TECHNOLOGY_STATES
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import add_results_metadata
@@ -20,7 +17,7 @@ from mppsteel.utility.log_utility import get_logger
 logger = get_logger(__name__)
 
 def green_capacity_ratio_predata(
-    plant_df: pd.DataFrame, tech_choices: dict, country_mapper: dict, inc_trans: bool = False):
+    plant_df: pd.DataFrame, tech_choices: dict, capacity_dict: dict, country_mapper: dict, inc_trans: bool = False):
 
     def tech_status_mapper(tech_choice: dict, inc_trans: bool):
         check_list = deepcopy(TECHNOLOGY_STATES['end_state'])
@@ -37,39 +34,29 @@ def green_capacity_ratio_predata(
         elif "(anticipated)" in str(start_year):
             return int(start_year[:4])
         return int(start_year)
-    
-    def active_status(row, tech_choices: dict, current_year: int):
-        plant_name = row.plant_name
-        start_year = row.start_year
-        current_tech_choice = tech_choices[str(current_year)][plant_name]
-        if current_tech_choice == 'Close plant':
-            return False
-        return start_year <= current_year
 
     df_container = []
     years = [int(key) for key in tech_choices.keys()]
-    capacities_dict = dict(zip(plant_df['plant_name'], plant_df['plant_capacity']))
     start_year_dict = dict(zip(plant_df['plant_name'], plant_df['start_of_operation']))
     country_code_dict = dict(zip(plant_df['plant_name'], plant_df['country_code']))
     for year in years:
-        plants = list(tech_choices[str(year)].keys())
-        capacities = [capacities_dict[plant] for plant in plants]
+        plant_capacity_dict = capacity_dict[year]
+        plants = list(plant_capacity_dict.keys())
+        capacities = [plant_capacity_dict[plant] for plant in plants]
         df = pd.DataFrame({'year': year, 'plant_name': plants, 'capacity': capacities, 'technology': '', 'region': ''})
-        df['start_year'] = df['plant_name'].apply(lambda plant_name: fix_start_year(start_year_dict[plant_name]))
-        df['technology'] = df['plant_name'].apply(lambda plant_name: tech_choices[str(year)][plant_name])
-        df['green_tech'] = df['technology'].apply(lambda technology: tech_status_mapper(technology, inc_trans))
-        df['active_status'] = df.apply(lambda row: active_status(row, tech_choices, year), axis=1)
-        df['region'] = df["plant_name"].apply(lambda plant_name: country_mapper[country_code_dict[plant_name]])
+        df['technology'] = df['plant_name'].apply(lambda plant_name: tech_choices[year][plant_name])
         df_container.append(df)
     df_final = pd.concat(df_container).reset_index(drop=True)
-    df_final['capacity'] /= 1000
+    df_final['start_year'] = df_final['plant_name'].apply(lambda plant_name: fix_start_year(start_year_dict[plant_name]))
+    df_final['green_tech'] = df_final['technology'].apply(lambda technology: tech_status_mapper(technology, inc_trans))
+    df_final['region'] = df_final["plant_name"].apply(lambda plant_name: country_mapper[country_code_dict[plant_name]])
     return df_final
     
 def create_gcr_df(green_capacity_ratio_df: pd.DataFrame, rounding: int = 1):
-    gcr = green_capacity_ratio_df[['year', 'capacity', 'green_tech', 'active_status']].set_index(['active_status','green_tech']).sort_index(ascending=True).copy()
-    gcr_green = gcr.loc[True, True].reset_index().groupby(['year']).sum()[['capacity']].copy()
+    gcr = green_capacity_ratio_df[['year', 'capacity', 'green_tech']].set_index(['green_tech']).sort_index(ascending=True).copy()
+    gcr_green = gcr.loc[True].reset_index().groupby(['year']).sum()[['capacity']].copy()
     gcr_green.rename({'capacity': 'green_capacity'}, axis=1, inplace=True)
-    gcr_nongreen = gcr.loc[True, False].reset_index().groupby(['year']).sum()[['capacity']].copy()
+    gcr_nongreen = gcr.loc[False].reset_index().groupby(['year']).sum()[['capacity']].copy()
     gcr_nongreen.rename({'capacity': 'nongreen_capacity'}, axis=1, inplace=True)
     gcr_combined = gcr_green.join(gcr_nongreen)
     gcr_combined['nongreen_capacity'] = gcr_combined['nongreen_capacity'].fillna(0)
@@ -84,7 +71,8 @@ def generate_gcr_df(scenario_dict: dict, serialize: bool = False) -> pd.DataFram
     plant_result_df = read_pickle_folder(intermediate_path, "plant_result_df", "df")
     tech_choice_dict = read_pickle_folder(intermediate_path, "tech_choice_dict", "dict")
     rmi_mapper = create_country_mapper()
-    green_capacity_ratio_df = green_capacity_ratio_predata(plant_result_df, tech_choice_dict, rmi_mapper, True)
+    plant_capacity_results = read_pickle_folder(intermediate_path, "plant_capacity_results", "df")
+    green_capacity_ratio_df = green_capacity_ratio_predata(plant_result_df, tech_choice_dict, plant_capacity_results, rmi_mapper, True)
     green_capacity_ratio_result = create_gcr_df(green_capacity_ratio_df)
     green_capacity_ratio_result = add_results_metadata(
         green_capacity_ratio_result, scenario_dict, include_regions=False, 

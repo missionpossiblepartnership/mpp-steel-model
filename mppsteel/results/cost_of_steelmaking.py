@@ -1,13 +1,10 @@
 """Calculation Functions used to derive various forms of Cost of Steelmaking."""
-import itertools
 import pandas as pd
 import numpy_financial as npf
 
 from tqdm import tqdm
-from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
 
 from mppsteel.model.levelized_cost import calculate_cc
-from mppsteel.results.production import production_stats_getter
 from mppsteel.results.investments import get_investment_capital_costs
 
 from mppsteel.utility.function_timer_utility import timer_func
@@ -16,8 +13,7 @@ from mppsteel.utility.file_handling_utility import (
 )
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.config.model_config import (
-    MODEL_YEAR_END,
-    MODEL_YEAR_START,
+    MODEL_YEAR_RANGE,
     PKL_DATA_FORMATTED,
     DISCOUNT_RATE,
     INVESTMENT_CYCLE_DURATION_YEARS,
@@ -253,24 +249,10 @@ def create_cost_of_steelmaking_data(
         pd.DataFrame: A DataFrame containing the new columns.
     """
 
-    year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
-    steel_plant_country_codes = list(steel_plant_df["country_code"].unique())
-    product_range_year_tech = list(itertools.product(year_range, TECH_REFERENCE_LIST))
-    product_range_full = list(itertools.product(year_range, steel_plant_country_codes, TECH_REFERENCE_LIST))
-
-    production_df_c = production_df.set_index(["year", "plant_name"]).copy()
-
-    variable_cost_ref = {}
-    for year, country_code, tech in tqdm(product_range_full, total=len(product_range_full), desc='Variable Costs Loop'):
-        variable_cost_ref[(year, country_code, tech)] =  variable_costs_df.loc[country_code, year, tech]["cost"]
-
-    brownfield_capex_ref = {}
-    greenfield_capex_ref = {}
-    other_opex_ref = {}
-    for year, tech in tqdm(product_range_year_tech, total=len(product_range_year_tech), desc='Capex Ref Loop'):
-        other_opex_ref[(year, tech)] = capex_ref["other_opex"].loc[tech, year]["value"]
-        brownfield_capex_ref[(year, tech)] = capex_ref['brownfield'].loc[tech, year]["value"]
-        greenfield_capex_ref[(year, tech)] = capex_ref['greenfield'].loc[tech, year]["value"]
+    variable_cost_ref = variable_costs_df.reset_index().set_index(['year', 'country_code', 'technology']).to_dict()['cost']
+    brownfield_capex_ref = capex_ref['brownfield'].reset_index().set_index(['Year', 'Technology']).to_dict()['value']
+    greenfield_capex_ref = capex_ref['greenfield'].reset_index().set_index(['Year', 'Technology']).to_dict()['value']
+    other_opex_ref = capex_ref['other_opex'].reset_index().set_index(['Year', 'Technology']).to_dict()['value']
 
     combined_capex_ref = {
         'brownfield': brownfield_capex_ref,
@@ -285,12 +267,11 @@ def create_cost_of_steelmaking_data(
     investment_df.set_index(['year'], inplace=True)
 
     investment_cost_ref = {}
-    production_ref = {}
-    for year in tqdm(year_range, total=len(year_range), desc='COS Investment Reference Loop'):
+    production_ref = production_df[['year', 'plant_name', 'production']].set_index(['year', 'plant_name']).to_dict()['production']
+    for year in tqdm(MODEL_YEAR_RANGE, total=len(MODEL_YEAR_RANGE), desc='COS Investment Reference Loop'):
         for plant_name in capacities_ref[year].keys():
             investment_cost_ref[(year, plant_name)] = get_investment_capital_costs(
                 investment_df, investment_dict_result_cycles_only, plant_name, year)
-            production_ref[(year, plant_name)] = production_stats_getter(production_df_c, year, plant_name, 'production')
 
     relining_span_ref = {}
     plant_names = steel_plant_df['plant_name'].unique()

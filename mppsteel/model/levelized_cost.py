@@ -15,7 +15,7 @@ from mppsteel.utility.file_handling_utility import (
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.config.model_config import (
     MODEL_YEAR_END,
-    MODEL_YEAR_START,
+    MODEL_YEAR_RANGE,
     PKL_DATA_FORMATTED,
     DISCOUNT_RATE,
     INVESTMENT_CYCLE_DURATION_YEARS,
@@ -107,8 +107,7 @@ def create_df_reference(plant_df: pd.DataFrame, cols_to_create: list) -> pd.Data
     country_codes = plant_df["country_code"].unique()
     init_cols = ["year", "country_code", "technology"]
     df_list = []
-    year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
-    product_range_full = list(itertools.product(year_range, country_codes, TECH_REFERENCE_LIST))
+    product_range_full = list(itertools.product(MODEL_YEAR_RANGE, country_codes, TECH_REFERENCE_LIST))
     for year, country_code, tech in tqdm(product_range_full, total=len(product_range_full), desc='DataFrame Reference'):
         entry = dict(zip(init_cols, [year, country_code, tech]))
         df_list.append(entry)
@@ -133,21 +132,11 @@ def create_levelised_cost(
     """
     lev_cost = create_df_reference(plant_df, ["levelised_cost"])
 
-    year_range = range(MODEL_YEAR_START, MODEL_YEAR_END + 1)
-    steel_plant_country_codes = list(plant_df["country_code"].unique())
-    product_range_year_tech = list(itertools.product(year_range, TECH_REFERENCE_LIST))
-    product_range_full = list(itertools.product(year_range, steel_plant_country_codes, TECH_REFERENCE_LIST))
-    brownfield_capex_ref = {}
-    greenfield_capex_ref = {}
-    variable_cost_ref = {}
-    other_opex_ref = {}
-    for year, country_code, tech in tqdm(product_range_full, total=len(product_range_full), desc='Variable Costs Reference'):
-        variable_cost_ref[(year, country_code, tech)] =  variable_costs.loc[country_code, year, tech]["cost"]
+    brownfield_capex_ref = capex_ref['brownfield'].reset_index().set_index(['Year', 'Technology']).to_dict()['value']
+    greenfield_capex_ref = capex_ref['greenfield'].reset_index().set_index(['Year', 'Technology']).to_dict()['value']
+    other_opex_ref = capex_ref['other_opex'].reset_index().set_index(['Year', 'Technology']).to_dict()['value']
     
-    for year, tech in tqdm(product_range_year_tech, total=len(product_range_year_tech), desc='Capex Ref Loop'):
-        brownfield_capex_ref[(year, tech)] = capex_ref['brownfield'].loc[tech, year]["value"]
-        greenfield_capex_ref[(year, tech)] = capex_ref['greenfield'].loc[tech, year]["value"]
-        other_opex_ref[(year, tech)] = capex_ref["other_opex"].loc[tech, year]["value"]
+    variable_cost_ref = variable_costs.reset_index().set_index(['year', 'country_code', 'technology']).to_dict()['cost']
     
     combined_capex_ref = {
         'brownfield': brownfield_capex_ref,
