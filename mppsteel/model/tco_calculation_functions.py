@@ -6,12 +6,12 @@ import numpy_financial as npf
 from mppsteel.config.model_config import (
     DISCOUNT_RATE,
     INVESTMENT_CYCLE_DURATION_YEARS,
-    KILOTON_TO_TON_FACTOR,
-    MEGATON_TO_KILOTON_FACTOR,
+    MEGATON_TO_TON,
     MODEL_YEAR_END
 )
 from mppsteel.config.reference_lists import SWITCH_DICT
 from mppsteel.utility.log_utility import get_logger
+from mppsteel.tests.df_tests import test_negative_df_values
 
 logger = get_logger(__name__)
 
@@ -61,7 +61,7 @@ def calculate_green_premium(
         variable_tech_costs = variable_cost_ref.loc[country_code, loop_year] # ts
         plant_capacity = capacity_ref[plant_name] # float
         green_premium = green_premium_timeseries.loc[loop_year]["value"] # float
-        return (variable_tech_costs * green_premium * usd_eur_rate) / (plant_capacity * MEGATON_TO_KILOTON_FACTOR * KILOTON_TO_TON_FACTOR) # ts
+        return (variable_tech_costs * green_premium * usd_eur_rate) / (plant_capacity * MEGATON_TO_TON) # ts
 
     year_range = range(year, year + INVESTMENT_CYCLE_DURATION_YEARS + 1)
     year_range = [year if (year <= MODEL_YEAR_END) else min(MODEL_YEAR_END, year) for year in year_range]
@@ -111,27 +111,6 @@ def get_opex_costs(
     return total_opex.rename(mapper={"value": "opex"}, axis=1)
 
 
-def capex_getter(
-    capex_df: pd.DataFrame, switch_dict: dict, year: int, start_tech: str, end_tech: str
-) -> float:
-    """Returns the capex value for a given year and valid techology from a capex switching dictionary.
-
-    Args:
-        capex_df (pd.DataFrame): A capex switching dictionary with relevant brownfield and greenfield values.
-        switch_dict (dict): A dictionary mapping each technology to a list of possible switches.
-        year (int): The year that you want to get the capex switch value for.
-        start_tech (str): The start technology.
-        end_tech (str): The end technology.
-
-    Returns:
-        float: The capex value.
-    """
-    year = min(MODEL_YEAR_END, year)
-    if end_tech in switch_dict[start_tech]:
-        return capex_df.loc[year, start_tech, end_tech][0]
-    raise ValueError(f'Invalid technology switch from {start_tech} to {end_tech}')
-
-
 def calculate_capex(
     capex_df: pd.DataFrame, start_year: int, base_tech: str) -> pd.DataFrame:
     """Creates a capex DataFrame for a given base tech along with capex values for potential switches. 
@@ -176,8 +155,9 @@ def get_discounted_opex_values(
     """
 
     year_range = range(year_start, year_start + year_interval + 1)
-    year_range = [year if (year <= MODEL_YEAR_END) else min(MODEL_YEAR_END, year) for year in year_range]
-    df_list = [opex_cost_ref[(year, country_code)] for year in year_range]
+    loop_year_range = [year if (year <= MODEL_YEAR_END) else min(MODEL_YEAR_END, year) for year in year_range]
+    df_list = [opex_cost_ref[(year, country_code)] for year in loop_year_range]
     df_combined = pd.concat(df_list)
+    test_negative_df_values(df_combined)
     technologies = df_combined.index.unique()
     return {technology: npf.npv(int_rate, df_combined.loc[technology]["opex"].values) for technology in technologies}
