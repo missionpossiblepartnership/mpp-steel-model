@@ -218,7 +218,9 @@ def choose_technology(
     enforce_constraints = scenario_dict["enforce_constraints"]
     intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
 
-    original_plant_df = read_pickle_folder(PKL_DATA_FORMATTED, "steel_plants_processed", "df")
+    original_plant_df = read_pickle_folder(
+        PKL_DATA_FORMATTED, "steel_plants_processed", "df"
+    )
     PlantInvestmentCycleContainer = read_pickle_folder(
         PKL_DATA_FORMATTED, "plant_investment_cycle_container", "df"
     )
@@ -232,10 +234,9 @@ def choose_technology(
         intermediate_path, "bio_constraint_model_formatted", "df"
     )
     co2_constraint = read_pickle_folder(PKL_DATA_IMPORTS, "ccs_co2", "df")
-    steel_demand_df = read_pickle_folder(
-        PKL_DATA_FORMATTED, "regional_steel_demand_formatted", "df"
+    ccs_constraint = read_pickle_folder(
+        intermediate_path, "ccus_constraints_model_formatted", "df"
     )
-    ccs_constraint = read_pickle_folder(intermediate_path, "ccus_constraints_model_formatted", "df")
     steel_demand_df = read_pickle_folder(
         PKL_DATA_FORMATTED, "regional_steel_demand_formatted", "df"
     )
