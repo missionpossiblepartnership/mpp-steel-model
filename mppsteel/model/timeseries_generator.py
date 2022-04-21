@@ -1,7 +1,6 @@
 """Module that generates a timeseries for various purposes"""
 # For Data Manipulation
 import pandas as pd
-import numpy as np
 from mppsteel.utility.dataframe_utility import convert_currency_col
 
 # For logger and units dict

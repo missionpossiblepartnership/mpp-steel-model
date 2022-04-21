@@ -4,7 +4,6 @@ import random
 from typing import Tuple, Union
 
 import pandas as pd
-from tqdm import tqdm
 from copy import deepcopy
 
 from mppsteel.config.model_config import (

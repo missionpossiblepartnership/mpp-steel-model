@@ -1,7 +1,6 @@
 """Utility library for managing location"""
 
 import itertools
-from collections import namedtuple
 
 import pandas as pd
 import pycountry
@@ -52,23 +51,6 @@ def match_country(country: str) -> str:
         return match[0].alpha_3
     except:  # Currently no exception specification.
         return ""
-
-
-def official_country_attr_getter(country_code: str, attr: str = 'official_name') -> str:
-    """Gets an attribute from a given country code. Using the pycountry library.
-
-    Args:
-        country_code (str): The official ISO Alpha-3 country code that you want to match.
-        attr (str) : The attribute of the matched pycountry object. Defaults to 'official_name'.
-
-    Returns:
-        str: The attribute of the matched country object.
-    """
-    match = pycountry.countries.get(alpha_3=country_code)
-    match_attributes = dir(match)
-    if attr in match_attributes:
-        return getattr(match, attr)
-    return ""
 
 
 def country_matcher(country_list: list, output_type: str = "all") -> dict:

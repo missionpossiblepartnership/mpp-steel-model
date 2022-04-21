@@ -1,8 +1,5 @@
 """Scenario references for model runs"""
 
-from mppsteel.config.model_config import MODEL_YEAR_END, MODEL_YEAR_START
-
-
 COST_SCENARIO_MAPPER = {
     "low": "Min",
     "average": "Baseline",

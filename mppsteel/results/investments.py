@@ -1,6 +1,5 @@
 """Investment Results generator for technology investments"""
 
-import itertools
 from typing import Union
 
 import pandas as pd

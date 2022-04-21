@@ -7,10 +7,7 @@ from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import read_pickle_folder, get_scenario_pkl_path
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.graphs.plotly_graphs import (
-    line_chart,
-    area_chart,
-)
+from mppsteel.graphs.plotly_graphs import line_chart, area_chart
 from mppsteel.graphs.opex_capex_graph import opex_capex_graph, opex_capex_graph_regional
 from mppsteel.graphs.consumption_over_time import consumption_over_time_graph
 from mppsteel.graphs.cost_of_steelmaking_graphs import lcost_graph

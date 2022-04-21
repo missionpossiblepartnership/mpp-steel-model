@@ -5,8 +5,6 @@ from copy import deepcopy
 
 import pandas as pd
 
-from tqdm import tqdm
-
 from mppsteel.config.model_config import (
     MAIN_REGIONAL_SCHEMA,
     CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
