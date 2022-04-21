@@ -5,6 +5,7 @@ from tqdm import tqdm
 
 from mppsteel.config.model_config import (
     EXAJOULE_TO_GIGAJOULE,
+    GIGAJOULE_TO_MEGAJOULE_FACTOR,
     GIGATON_TO_MEGATON_FACTOR,
     MEGATON_TO_TON,
     MEGAWATT_HOURS_TO_GIGAJOULES,
@@ -231,9 +232,9 @@ def subset_hydrogen(
     if currency_conversion_factor:
         h2df_c = convert_currency_col(h2df_c, 'value', currency_conversion_factor)
     if price_per_gj:
-        h2df_c['value'] = h2df_c['value'] / HYDROGEN_ENERGY_DENSITY_MJ_PER_KG
+        h2df_c['value'] = (h2df_c['value'] / HYDROGEN_ENERGY_DENSITY_MJ_PER_KG) * GIGAJOULE_TO_MEGAJOULE_FACTOR
     if emissions_per_gj:
-        h2df_c['value'] = h2df_c['value'] / HYDROGEN_ENERGY_DENSITY_MJ_PER_KG
+        h2df_c['value'] = (h2df_c['value'] / HYDROGEN_ENERGY_DENSITY_MJ_PER_KG) * GIGAJOULE_TO_MEGAJOULE_FACTOR
     return h2df_c[['year', 'region', 'unit', 'value']].set_index(['year', 'region'])
 
 

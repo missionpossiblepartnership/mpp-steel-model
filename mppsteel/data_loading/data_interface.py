@@ -29,6 +29,8 @@ from mppsteel.utility.dataframe_utility import (
 # Get model parameters
 from mppsteel.config.model_config import (
     GIGAJOULE_TO_MEGAJOULE_FACTOR,
+    MEGATON_TO_TON,
+    PETAJOULE_TO_GIGAJOULE,
     PKL_DATA_IMPORTS,
     PKL_DATA_FORMATTED,
     EMISSIONS_FACTOR_SLAG,
@@ -96,7 +98,7 @@ def modify_scope3_ef_1(
     scope3_df.reset_index(inplace=True)
     scope3_df = scope3_df.melt(id_vars=["Category", "Fuel", "Unit"], var_name="Year")
     def standardise_units(row):
-        return row.value / 1000 if row.Fuel in {'Natural gas', 'Met coal', 'Thermal coal'} else row.value
+        return row.value * (MEGATON_TO_TON * TON_TO_KILOGRAM_FACTOR / PETAJOULE_TO_GIGAJOULE) if row.Fuel in {'Natural gas', 'Met coal', 'Thermal coal'} else row.value * TON_TO_KILOGRAM_FACTOR
     scope3_df['value'] = scope3_df.apply(standardise_units, axis=1)
     # standardise to kg per PJ or ton
     return scope3_df

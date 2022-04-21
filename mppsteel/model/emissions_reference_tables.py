@@ -50,7 +50,7 @@ def generate_s1_s3_emissions(
     s3_emissions_resources = s3_emissivity_factors["Fuel"].unique().tolist()
     s1_emissivity_factors.set_index(["Metric"], inplace=True)
     s3_emissivity_factors.set_index(["Fuel", "Year"], inplace=True)
-    s1_emissivity_factors['Value'] = s1_emissivity_factors['Value'] / TON_TO_KILOGRAM_FACTOR
+    s1_emissivity_factors['Value'] = s1_emissivity_factors['Value']
 
     # Create a year range
     year_range = MODEL_YEAR_RANGE
@@ -67,7 +67,7 @@ def generate_s1_s3_emissions(
             row["S1"] = row.value * s1_emissivity_factors.loc[row.material_category]["Value"]
         else:
             row["S1"] = 0
-        if row.material_category in s3_emissions_resources:  # kgCO2 / GJ
+        if row.material_category in s3_emissions_resources:  # kgCO2 / GJ or ton
             emission_unit_value = s3_emissivity_factors.loc[row.material_category, year]["value"]
             if row.material_category == 'BF slag':
                 emission_unit_value = emission_unit_value * -1
