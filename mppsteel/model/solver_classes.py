@@ -36,6 +36,9 @@ class PlantChoices:
             
     def update_choices(self, year: int, plant: str, tech: str):
         self.choices[year][plant] = tech
+
+    def remove_choice(self, year: int, plant: str):
+        del self[year][plant]
             
     def update_records(self, df_entry: pd.DataFrame):
         self.records.append(df_entry)
@@ -90,8 +93,14 @@ class MaterialUsage:
             constraint = self.constraint[model_type][year]
             usage = self.usage[year][model_type]
             balance = self.balance[year][model_type]
-            pct_used = (usage/constraint)*100
-            pct_remaining = (balance/constraint)*100
+            pct_used = 100
+            pct_remaining = 0
+            try:
+                pct_used = (usage/constraint)*100
+                pct_remaining = (balance/constraint)*100
+            except ZeroDivisionError:
+                pct_used = 100
+                pct_remaining = 0
             logger.info(f"""{model_type.upper()} USAGE SUMMARY {year}  -> Constraint: {constraint :0.4f} | Usage: {usage :0.4f} ({pct_used :0.1f}%) | Balance: {balance :0.4f} ({pct_remaining :0.1f}%)""")
     
     def output_constraints_summary(self, year_range: range):

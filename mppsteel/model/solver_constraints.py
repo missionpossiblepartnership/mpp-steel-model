@@ -129,6 +129,7 @@ def return_current_usage(
     utilization_dict: dict, plant_region_dict: dict,
     business_case_ref: dict, materials: list,
 ):
+
     usage_sum = []
     for material in materials:
         agg = sum([

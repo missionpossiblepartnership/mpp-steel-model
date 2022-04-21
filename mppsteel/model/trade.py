@@ -56,8 +56,6 @@ def single_year_cos(
 def create_cos_table(
     row, year: int, production_demand_dict: dict, v_costs: pd.DataFrame, 
     capacity_dict: dict, tech_choices: dict, capex_costs: dict):
-
-    
     technology = tech_choices[year][row.plant_name] if year == 2020 else tech_choices[year - 1][row.plant_name]
     plant_capacity = capacity_dict[row.plant_name]
     utilization_rate = production_demand_dict[row.rmi_region]['initial_utilization']
