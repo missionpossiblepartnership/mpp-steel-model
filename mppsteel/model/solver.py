@@ -312,6 +312,7 @@ def choose_technology(
         for resource in resource_models:
             MaterialUsageContainer.set_year_balance(year, resource)
 
+        # Assign initial technologies for plants in the first year
         logger.info(f"Running investment decisions for {year}")
         if year == 2020:
             logger.info(f'Loading initial technology choices for {year}')
@@ -319,18 +320,91 @@ def choose_technology(
                 PlantChoiceContainer.update_choices(year, row.plant_name, row.initial_technology)
             UtilizationContainer.assign_year_utilization(2020, wsa_dict)
 
-        else:
-            logger.info(f'Loading plant entries for {year}')
-            for row in active_plant_df.itertuples():
-                PlantChoiceContainer.update_choices(year, row.plant_name, '')
-
+        # Exceptions for plants in plants database that are scheduled to open by 2023, to have their prior technology as their previous choice
         if year in list(range(2020, 2023)):
             for row in inactive_year_start_df.itertuples():
                 if row.start_of_operation == year + 1:
                     PlantChoiceContainer.update_choices(year, row.plant_name, row.initial_technology)
 
-        logger.info(f'Starting the open close flow for {year}')
+        all_active_plant_names = active_plant_df["plant_name"].copy()
+        plant_to_region_mapper = dict(zip(all_active_plant_names, active_plant_df[MAIN_REGIONAL_SCHEMA]))
+        plant_capacities_dict = CapacityContainer.return_plant_capacity(year=year)
+        switchers = PlantInvestmentCycleContainer.return_plant_switchers(all_active_plant_names, year, 'combined')
+        non_switchers = list(set(all_active_plant_names).difference(switchers))
+        switchers_df = (
+            active_plant_df.set_index(["plant_name"]).drop(non_switchers).reset_index()
+        ).copy()
+        switchers_df.rename({"index": "plant_name"}, axis=1, inplace=True)
+        non_switchers_df = (
+            active_plant_df.set_index(["plant_name"]).drop(switchers).reset_index()
+        ).copy()
+        non_switchers_df.rename({"index": "plant_name"}, axis=1, inplace=True)
+        logger.info(f"-- Assigning usage for exisiting plants")
 
+        # check resource allocation for non-switchers
+        for row in non_switchers_df.itertuples():
+            plant_name = row.plant_name
+            current_tech = ''
+            year_founded = PlantInvestmentCycleContainer.plant_start_years[plant_name]
+        
+            if (year == 2020) or (year == year_founded):
+                current_tech = row.initial_technology
+            else:
+                current_tech = PlantChoiceContainer.get_choice(year - 1, plant_name)
+            PlantChoiceContainer.update_choices(year, plant_name, current_tech)
+            
+            entry = {
+                'year': year,
+                'plant_name': plant_name,
+                'current_tech': current_tech,
+                'switch_tech': current_tech,
+                'switch_type': 'not a switch year'
+            }
+            PlantChoiceContainer.update_records(entry)
+        current_utilization = UtilizationContainer.get_utilization_values(year)
+
+        for resource in RESOURCE_CONTAINER_REF:
+            current_usage = return_current_usage(
+                non_switchers_df["plant_name"].unique(),
+                PlantChoiceContainer.return_choices(year),
+                plant_capacities_dict,
+                current_utilization,
+                plant_to_region_mapper,
+                business_case_ref,
+                RESOURCE_CONTAINER_REF[resource],
+            )
+            MaterialUsageContainer.constraint_transaction(
+                year, resource, current_usage, override_constraint=True)
+
+        # check resource allocation for EAF secondary capacity
+        secondary_eaf_switchers = switchers_df[switchers_df['primary'] == 'N'].copy()
+        secondary_eaf_switchers_plants = secondary_eaf_switchers['plant_name'].unique()
+
+        for plant_name in secondary_eaf_switchers_plants:
+            entry = {
+                'year': year, 
+                'plant_name': plant_name, 
+                'current_tech': 'EAF', 
+                'switch_tech': 'EAF', 
+                'switch_type': 'Secondary capacity is always EAF'
+            }
+            PlantChoiceContainer.update_records(entry)
+            PlantChoiceContainer.update_choices(year, plant_name, 'EAF')
+
+        for resource in RESOURCE_CONTAINER_REF:
+            current_usage = return_current_usage(
+                secondary_eaf_switchers_plants,
+                PlantChoiceContainer.return_choices(year),
+                plant_capacities_dict,
+                current_utilization,
+                plant_to_region_mapper,
+                business_case_ref,
+                RESOURCE_CONTAINER_REF[resource],
+            )
+            MaterialUsageContainer.constraint_transaction(
+                year, resource, current_usage, override_constraint=True)
+
+        # Run open/close capacity
         capacity_adjusted_df = open_close_flow(
             plant_container=PlantIDC,
             market_container=market_container,
@@ -355,7 +429,6 @@ def choose_technology(
         )
         capacity_adjusted_active_plants = capacity_adjusted_df[capacity_adjusted_df['active_check'] == True].copy()
         all_active_plant_names = capacity_adjusted_active_plants["plant_name"].copy()
-        plant_to_region_mapper = dict(zip(all_active_plant_names, capacity_adjusted_active_plants[MAIN_REGIONAL_SCHEMA]))
         plant_capacities_dict = CapacityContainer.return_plant_capacity(year=year)
         switchers = PlantInvestmentCycleContainer.return_plant_switchers(all_active_plant_names, year, 'combined')
         non_switchers = list(set(all_active_plant_names).difference(switchers))
@@ -364,83 +437,34 @@ def choose_technology(
         ).copy()
         switchers_df.rename({"index": "plant_name"}, axis=1, inplace=True)
         switchers_df = switchers_df.sample(frac=1)
-        non_switchers_df = (
-            capacity_adjusted_active_plants.set_index(["plant_name"]).drop(switchers).reset_index()
-        ).copy()
-        non_switchers_df.rename({"index": "plant_name"}, axis=1, inplace=True)
         logger.info(f"-- Running investment decisions for Non Switching Plants")
 
-        for plant_name in non_switchers:
-            current_tech = ''
+        primary_switchers_df = switchers_df[switchers_df['primary'] == 'Y'].copy()
+
+        for row in primary_switchers_df.itertuples():
+            # set initial metadata
+            plant_name = row.plant_name
+            country_code = row.country_code
             year_founded = PlantInvestmentCycleContainer.plant_start_years[plant_name]
-        
-            if (year == 2020) or (year == year_founded):
-                current_tech = non_switchers_df[non_switchers_df["plant_name"] == plant_name]["initial_technology"].values[0]
-            else:
-                current_tech = PlantChoiceContainer.get_choice(year - 1, plant_name)
-            PlantChoiceContainer.update_choices(year, plant_name, current_tech)
-            
-            entry = {
-                'year': year,
-                'plant_name': plant_name,
-                'current_tech': current_tech,
-                'switch_tech': current_tech,
-                'switch_type': 'not a switch year'
-            }
-            PlantChoiceContainer.update_records(entry)
-
-        current_utilization = UtilizationContainer.get_utilization_values(year)
-
-        for resource in RESOURCE_CONTAINER_REF:
-            current_usage = return_current_usage(
-                non_switchers_df["plant_name"].unique(),
-                PlantChoiceContainer.return_choices(year),
-                plant_capacities_dict,
-                current_utilization,
-                plant_to_region_mapper,
-                business_case_ref,
-                RESOURCE_CONTAINER_REF[resource],
-            )
-            MaterialUsageContainer.constraint_transaction(
-                year, resource, current_usage, override_constraint=True)
-
-        logger.info(f"-- Running investment decisions for Switching Plants")
-        for plant in switchers_df.itertuples():
-            plant_name = plant.plant_name
-            country_code = plant.country_code
             current_tech = ''
-            if (year == 2020) or (year == plant.start_of_operation):
-                current_tech = switchers_df[switchers_df["plant_name"] == plant_name][
-                    "initial_technology"
-                ].values[0]
+            if (year == 2020) or (year == year_founded):
+                current_tech = row.initial_technology
             else:
                 current_tech = PlantChoiceContainer.get_choice(year - 1, plant_name)
             entry = {'year': year, 'plant_name': plant_name, 'current_tech': current_tech}
-
+            
+            # CASE 1: CLOSE PLANT
             if current_tech == "Close plant":
+                
                 PlantChoiceContainer.update_choices(year, plant_name, "Close plant") 
                 entry['switch_tech'] = "Close plant"
                 entry['switch_type'] = 'Plant was already closed'
 
-            elif (current_tech == 'EAF') & (plant.primary == 'N'):
-                entry['switch_tech'] = "EAF"
-                entry['switch_type'] = 'Secondary capacity is always EAF'
-                PlantChoiceContainer.update_choices(year, plant_name, 'EAF')
-                for resource in RESOURCE_CONTAINER_REF:
-                    current_usage = return_current_usage(
-                        [plant_name,],
-                        {plant_name: 'EAF'},
-                        plant_capacities_dict,
-                        current_utilization,
-                        plant_to_region_mapper,
-                        business_case_ref,
-                        RESOURCE_CONTAINER_REF[resource],
-                    )
-                    MaterialUsageContainer.constraint_transaction(
-                        year, resource, current_usage, override_constraint=True)
+            # CASE 2: SWITCH TECH
             else:
                 switch_type = PlantInvestmentCycleContainer.return_plant_switch_type(plant_name, year)
-
+                
+                # CASE 2-A: MAIN CYCLE
                 if switch_type == "main cycle":
                     best_choice_tech = return_best_tech(
                         tco_reference_data=tco_slim,
@@ -464,6 +488,8 @@ def choose_technology(
                     else:
                         entry['switch_type'] = 'Regular change in investment cycle year'
                     PlantChoiceContainer.update_choices(year, plant_name, best_choice_tech)
+                
+                # CASE 2-B: TRANSITIONARY SWITCH
                 if switch_type == "trans switch":
                     best_choice_tech = return_best_tech(
                         tco_reference_data=tco_slim,
@@ -488,10 +514,11 @@ def choose_technology(
                     else:
                         entry['switch_type'] = 'No change during off-cycle investment year'
                     PlantChoiceContainer.update_choices(year, plant_name, best_choice_tech)
+
                 entry['switch_tech'] = best_choice_tech
+
             PlantChoiceContainer.update_records(entry)
         year_start_df = pd.concat([capacity_adjusted_df, inactive_year_start_df]).reset_index(drop=True)
-        # market_container.return_results(year)
         MaterialUsageContainer.print_year_summary(year)
 
     final_steel_plant_df = year_start_df.copy()
