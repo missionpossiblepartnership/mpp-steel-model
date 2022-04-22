@@ -17,34 +17,34 @@ from mppsteel.utility.file_handling_utility import (
 
 from mppsteel.utility.log_utility import get_logger
 
-from mppsteel.data_loading.data_import import load_data
-from mppsteel.data_loading.reg_steel_demand_formatter import get_steel_demand
-from mppsteel.model.timeseries_generator import generate_timeseries
-from mppsteel.data_loading.pe_model_formatter import format_pe_data
-from mppsteel.data_loading.steel_plant_formatter import steel_plant_processor
-from mppsteel.data_loading.data_interface import (
+from mppsteel.data_load_and_format.data_import import load_data
+from mppsteel.data_load_and_format.reg_steel_demand_formatter import get_steel_demand
+from mppsteel.data_preprocessing.timeseries_generator import generate_timeseries
+from mppsteel.data_load_and_format.pe_model_formatter import format_pe_data
+from mppsteel.data_load_and_format.steel_plant_formatter import steel_plant_processor
+from mppsteel.data_load_and_format.data_interface import (
     create_capex_opex_dict,
     create_business_case_reference,
     generate_preprocessed_emissions_data,
 )
-from mppsteel.model.emissions_reference_tables import generate_emissions_flow
-from mppsteel.model.capex_switching import create_capex_timeseries
-from mppsteel.model.investment_cycles import investment_cycle_flow
-from mppsteel.model.variable_plant_cost_archetypes import (
+from mppsteel.data_preprocessing.emissions_reference_tables import generate_emissions_flow
+from mppsteel.data_preprocessing.capex_switching import create_capex_timeseries
+from mppsteel.data_preprocessing.investment_cycles import investment_cycle_flow
+from mppsteel.data_preprocessing.variable_plant_cost_archetypes import (
     generate_variable_plant_summary,
 )
-from mppsteel.model.levelized_cost import generate_levelized_cost_results
-from mppsteel.model.solver import solver_flow
-from mppsteel.model.tco_abatement_switch import (
+from mppsteel.data_preprocessing.levelized_cost import generate_levelized_cost_results
+from mppsteel.model_solver.solver import solver_flow
+from mppsteel.data_preprocessing.tco_abatement_switch import (
     tco_presolver_reference,
     abatement_presolver_reference,
 )
-from mppsteel.results.production import production_results_flow
-from mppsteel.results.cost_of_steelmaking import generate_cost_of_steelmaking_results
-from mppsteel.results.global_metaresults import metaresults_flow
-from mppsteel.results.investments import investment_results
-from mppsteel.results.green_capacity_ratio import generate_gcr_df
-from mppsteel.graphs.graph_production import create_graphs, create_combined_scenario_graphs
+from mppsteel.model_results.production import production_results_flow
+from mppsteel.model_results.cost_of_steelmaking import generate_cost_of_steelmaking_results
+from mppsteel.model_results.global_metaresults import metaresults_flow
+from mppsteel.model_results.investments import investment_results
+from mppsteel.model_results.green_capacity_ratio import generate_gcr_df
+from mppsteel.model_graphs.graph_production import create_graphs, create_combined_scenario_graphs
 
 from mppsteel.config.model_config import (
     PKL_DATA_FORMATTED,
