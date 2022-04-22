@@ -11,7 +11,6 @@ PKL_DATA_IMPORTS = f"{PKL_FOLDER}/imported_data"
 PKL_DATA_FORMATTED = f"{PKL_FOLDER}/formatted_import_data"
 PKL_DATA_INTERMEDIATE = f"{PKL_FOLDER}/intermediate_data"
 PKL_DATA_FINAL = f"{PKL_FOLDER}/final_data"
-BC_TEST_FOLDER = f"{TEST_FOLDER}/business_case_tests"
 
 FOLDERS_TO_CHECK_IN_ORDER = [
     # Top level folders
@@ -22,28 +21,12 @@ FOLDERS_TO_CHECK_IN_ORDER = [
     IMPORT_DATA_PATH,
     PKL_FOLDER,
     OUTPUT_FOLDER,
-    BC_TEST_FOLDER,
     # Third level folders
     PKL_DATA_IMPORTS,
     PKL_DATA_FORMATTED,
     PKL_DATA_INTERMEDIATE,
     PKL_DATA_FINAL,
 ]
-
-# POWER & ENERGY FILE & TAB NAMES
-PE_MODEL_FILENAME_DICT = {
-    "power": "Power Model.xlsx",
-    "hydrogen": "H2 Model.xlsx",
-    "bio": "Bio Model.xlsx",
-    "ccus": "CCUS Model.xlsx",
-}
-
-PE_MODEL_SHEETNAME_DICT = {
-    "power": ["GridPrice", "GridEmissions", "RESPrice"],
-    "hydrogen": ["Prices", "Emissions"],
-    "bio": ["Feedstock_Prices", "Biomass_constraint"],
-    "ccus": ["Transport", "Storage", "Constraint"],
-}
 
 # MODEL YEAR PARAMETERS
 MODEL_YEAR_START = 2020
@@ -118,7 +101,8 @@ INTERMEDIATE_RESULT_PKL_FILES = [
     "calculated_emissivity_combined",
     "levelized_cost",
     "emissivity_abatement_switches",
-    "tco_summary_data"
+    "tco_summary_data",
+    "trade_summary_results"
 ]
 
 FINAL_RESULT_PKL_FILES = [
