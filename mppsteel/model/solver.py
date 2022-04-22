@@ -23,7 +23,7 @@ from mppsteel.config.model_config import (
 )
 
 from mppsteel.config.model_scenarios import (
-    TECH_SWITCH_SCENARIOS, SOLVER_LOGICS, STEEL_DEMAND_SCENARIO_MAPPER
+    TECH_SWITCH_SCENARIOS, SOLVER_LOGICS
 )
 
 from mppsteel.config.reference_lists import (
@@ -213,7 +213,6 @@ def choose_technology(
 
     logger.info("Creating Steel plant df")
     tech_moratorium = scenario_dict["tech_moratorium"]
-    steel_demand_scenario = scenario_dict["steel_demand_scenario"]
     trade_scenario=scenario_dict["trade_active"]
     enforce_constraints = scenario_dict["enforce_constraints"]
     intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
@@ -238,9 +237,8 @@ def choose_technology(
         intermediate_path, "ccus_constraints_model_formatted", "df"
     )
     steel_demand_df = read_pickle_folder(
-        PKL_DATA_FORMATTED, "regional_steel_demand_formatted", "df"
+        intermediate_path, "regional_steel_demand_formatted", "df"
     )
-    steel_demand_df = steel_demand_df.loc[:,STEEL_DEMAND_SCENARIO_MAPPER[steel_demand_scenario],:].copy()
     tech_availability = read_pickle_folder(PKL_DATA_IMPORTS, "tech_availability", "df")
     ta_dict = dict(
         zip(tech_availability["Technology"], tech_availability["Year available from"])
@@ -424,7 +422,6 @@ def choose_technology(
             material_container=MaterialUsageContainer,
             year=year,
             trade_scenario=trade_scenario,
-            steel_demand_scenario=steel_demand_scenario,
             tech_moratorium=tech_moratorium,
             enforce_constraints=enforce_constraints
         )

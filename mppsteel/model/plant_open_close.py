@@ -192,10 +192,10 @@ def ng_flag_mapper(plant_df: pd.DataFrame, country_ref: pd.DataFrame):
 
 
 def production_demand_gap(
-    demand_df: pd.DataFrame,
+    steel_demand_df: pd.DataFrame,
     capacity_container: CapacityContainerClass,
     utilization_container: UtilizationContainerClass,
-    year: int, steel_demand_scenario: str,
+    year: int,
     capacity_util_max: float = 0.95,
     capacity_util_min: float = 0.6
 ):
@@ -209,7 +209,7 @@ def production_demand_gap(
     for region in capacity_container.regional_capacities_agg[year]:
         initial_utilization = utilization_container.get_utilization_values(year, region) if year == 2020 else utilization_container.get_utilization_values(year - 1, region)
         demand = steel_demand_getter(
-            demand_df, year=year, scenario=steel_demand_scenario, metric='crude', region=region)
+            steel_demand_df, year=year, metric='crude', region=region)
         current_capacity = capacity_container.return_regional_capacity(year, region)
 
         avg_plant_capacity_value = avg_plant_global_capacity
@@ -290,7 +290,7 @@ def market_balance_test(production_supply_df: pd.DataFrame, year: int, rounding:
     assert production_sum >= demand_sum
 
 def open_close_plants(
-    demand_df: pd.DataFrame,
+    steel_demand_df: pd.DataFrame,
     steel_plant_df: pd.DataFrame,
     lev_cost_df: pd.DataFrame,
     business_case_ref: pd.DataFrame,
@@ -307,7 +307,6 @@ def open_close_plants(
     ng_mapper: dict,
     year: int,
     trade_scenario: bool = False,
-    steel_demand_scenario: bool = False,
     tech_moratorium: bool = False,
     enforce_constraints: bool = False,
     open_plant_util_cutoff: float = CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
@@ -317,11 +316,10 @@ def open_close_plants(
     logger.info(f'Iterating through the open close loops for {year}')
     investment_dict = investment_container.return_investment_dict()
     production_demand_gap_analysis = production_demand_gap(
-        demand_df=demand_df,
+        steel_demand_df=steel_demand_df,
         capacity_container=capacity_container,
         utilization_container=utilization_container,
         year=year,
-        steel_demand_scenario=steel_demand_scenario,
         capacity_util_max=open_plant_util_cutoff,
         capacity_util_min=close_plant_util_cutoff
     )
@@ -414,7 +412,7 @@ def open_close_plants(
     capacity_container.map_capacities(new_active_plants, year)
     regional_capacities = capacity_container.return_regional_capacity(year)
     global_demand = steel_demand_getter(
-        demand_df, year=year, scenario=steel_demand_scenario, metric='crude', region='World')
+        steel_demand_df, year=year, metric='crude', region='World')
     utilization_container.calculate_world_utilization(year, regional_capacities, global_demand)
     new_open_plants = return_modified_plants(new_active_plants, year, 'open')
     investment_container.add_new_plants(new_open_plants['plant_name'], new_open_plants['start_of_operation'])
@@ -454,7 +452,6 @@ def open_close_flow(
     material_container: MaterialUsage,
     year: int,
     trade_scenario: bool,
-    steel_demand_scenario: str,
     tech_moratorium: bool,
     enforce_constraints: bool,
 ) -> str:
@@ -463,7 +460,7 @@ def open_close_flow(
     ng_mapper = ng_flag_mapper(plant_df, country_df)
 
     return open_close_plants(
-        demand_df=steel_demand_df,
+        steel_demand_df=steel_demand_df,
         steel_plant_df=plant_df,
         lev_cost_df=levelized_cost,
         business_case_ref=business_case_ref,
@@ -480,7 +477,6 @@ def open_close_flow(
         market_container=market_container,
         year=year,
         trade_scenario=trade_scenario,
-        steel_demand_scenario=steel_demand_scenario,
         tech_moratorium=tech_moratorium,
         enforce_constraints=enforce_constraints
     )

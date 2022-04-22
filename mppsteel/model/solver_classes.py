@@ -269,7 +269,7 @@ class MarketContainerClass:
     def output_trade_summary_to_df(self):
         df = pd.DataFrame(self.trade_container).reset_index().melt(id_vars=['index'], var_name='year', value_name='trade_balance')
         df.rename({'index': 'region'}, axis=1, inplace=True)
-        return df.set_index(['year', 'region'])
+        return df
 
     def store_results(self, year: int, results_df: pd.DataFrame):
         self.market_results[year] = results_df

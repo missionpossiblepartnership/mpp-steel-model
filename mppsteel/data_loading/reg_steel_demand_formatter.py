@@ -4,14 +4,13 @@ import pandas as pd
 import pandera as pa
 
 from mppsteel.config.model_config import (
-    PKL_DATA_IMPORTS,
-    PKL_DATA_FORMATTED
+    PKL_DATA_IMPORTS
 )
 from mppsteel.config.model_scenarios import STEEL_DEMAND_SCENARIO_MAPPER
 from mppsteel.utility.dataframe_utility import melt_and_index
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.location_utility import get_unique_countries, get_countries_from_group
-from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
+from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file, get_scenario_pkl_path
 from mppsteel.validation.data_import_tests import REGIONAL_STEEL_DEMAND_SCHEMA
 from mppsteel.utility.log_utility import get_logger
 
@@ -73,7 +72,7 @@ def add_average_values(df: pd.DataFrame):
     return pd.concat([df_c, average_base])
 
 @timer_func
-def get_steel_demand(serialize: bool = False) -> pd.DataFrame:
+def get_steel_demand(scenario_dict: dict, serialize: bool = False) -> pd.DataFrame:
     """Complete preprocessing flow for the regional steel demand data.
 
     Args:
@@ -82,12 +81,16 @@ def get_steel_demand(serialize: bool = False) -> pd.DataFrame:
     Returns:
         pd.DataFrame: The formatted DataFrame of regional Steel Demand data.
     """
+    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
     steel_demand = read_pickle_folder(PKL_DATA_IMPORTS, "regional_steel_demand", "df")
     steel_demand_f = steel_demand_creator(steel_demand, RMI_MATCHER)
     steel_demand_f = add_average_values(steel_demand_f)
+    scenario_entry = STEEL_DEMAND_SCENARIO_MAPPER[scenario_dict['steel_demand_scenario']]
+    steel_demand_f = steel_demand_f.loc[:,scenario_entry,:].copy()
+    steel_demand_f.reset_index().set_index(["year", "metric"])
     if serialize:
         serialize_file(
-            steel_demand_f, PKL_DATA_FORMATTED, "regional_steel_demand_formatted"
+            steel_demand_f, intermediate_path, "regional_steel_demand_formatted"
         )
     return steel_demand_f
 
@@ -95,7 +98,6 @@ def get_steel_demand(serialize: bool = False) -> pd.DataFrame:
 def steel_demand_getter(
     df: pd.DataFrame,
     year: int,
-    scenario: str,
     metric: str,
     region: str = None,
     country_code: str = None,
@@ -155,15 +157,14 @@ def steel_demand_getter(
     # Apply subsets
     # Scenario: BAU, High Circ, Average
     # Metric: crude, scrap
-    scenario_entry = STEEL_DEMAND_SCENARIO_MAPPER[scenario]
 
     metric_mapper = {
         "crude": "Crude steel demand",
         "scrap": "Scrap availability",
     }
     df_c = df_c.xs(
-        (str(year), scenario_entry, metric_mapper[metric]),
-        level=["year", "scenario", "metric"],
+        (str(year), metric_mapper[metric]),
+        level=["year", "metric"],
     )
     df_c.reset_index(drop=True, inplace=True)
     # Return the value figure

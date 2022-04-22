@@ -6,7 +6,8 @@ from pandera import DataFrameSchema, Column, Index, MultiIndex, Check
 from pandera.typing import DataFrame, Series
 
 from mppsteel.utility.file_handling_utility import read_pickle_folder
-from mppsteel.config.model_config import PKL_DATA_IMPORTS, PE_MODEL_SHEETNAME_DICT
+from mppsteel.config.model_config import PKL_DATA_IMPORTS
+from mppsteel.data_loading.data_import import PE_MODEL_SHEETNAME_DICT
 
 RE_YEAR_COL_TEST = "^[12][0-9]{3}$"
 YEAR_VALUE_TEST = Column(int, Check.greater_than_or_equal_to(2020))

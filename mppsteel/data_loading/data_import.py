@@ -9,14 +9,27 @@ from mppsteel.utility.function_timer_utility import timer_func
 # Get model parameters
 from mppsteel.config.model_config import (
     IMPORT_DATA_PATH,
-    PKL_DATA_IMPORTS,
-    PE_MODEL_FILENAME_DICT,
-    PE_MODEL_SHEETNAME_DICT,
+    PKL_DATA_IMPORTS
 )
 from mppsteel.utility.log_utility import get_logger
 
 # Create logger
 logger = get_logger(__name__)
+
+# POWER & ENERGY FILE & TAB NAMES
+PE_MODEL_FILENAME_DICT = {
+    "power": "Power Model.xlsx",
+    "hydrogen": "H2 Model.xlsx",
+    "bio": "Bio Model.xlsx",
+    "ccus": "CCUS Model.xlsx",
+}
+
+PE_MODEL_SHEETNAME_DICT = {
+    "power": ["GridPrice", "GridEmissions", "RESPrice"],
+    "hydrogen": ["Prices", "Emissions"],
+    "bio": ["Feedstock_Prices", "Biomass_constraint"],
+    "ccus": ["Transport", "Storage", "Constraint"],
+}
 
 
 def replace_rows(df: pd.DataFrame, header_row: int) -> pd.DataFrame:

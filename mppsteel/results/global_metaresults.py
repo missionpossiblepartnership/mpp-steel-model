@@ -23,7 +23,6 @@ def global_metaresults_calculator(
     capacity_results: dict,
     utilization_results: dict,
     production_results_df: pd.DataFrame,
-    steel_demand_scenario: str,
     rounding: int = 1
 ) -> pd.DataFrame:
     """_summary_
@@ -32,7 +31,6 @@ def global_metaresults_calculator(
         steel_market_df (pd.DataFrame): The DataFrame of Steel Demand values.
         tech_capacity_df (pd.DataFrame): The DataFrame of Technology Capacity values.
         production_results_df (pd.DataFrame): The Production Stats Results DataFrame.
-        steel_demand_scenario (str): Specifies the steel demand scenario.
 
     Returns:
         pd.DataFrame: A DataFrame containing all of the Metaresults for the model run.
@@ -47,7 +45,7 @@ def global_metaresults_calculator(
     # Assign initial values
     df["steel_demand"] = df["year"].apply(
         lambda year: steel_demand_getter(
-            steel_market_df, year, steel_demand_scenario, "crude", region="World"
+            steel_market_df, year, "crude", region="World"
         ) # Mt
     ).round(rounding)
     df["steel_capacity"] = df["year"].apply(lambda year: sum(capacity_results[year].values())).round(rounding) # Mt
@@ -57,7 +55,7 @@ def global_metaresults_calculator(
     df['market_balance'] = (df["steel_production"] - df["steel_demand"]).round(rounding) # Mt
     df["scrap_availability"] = df["year"].apply(
         lambda year: steel_demand_getter(
-            steel_market_df, year, steel_demand_scenario, "scrap", region="World"
+            steel_market_df, year, "scrap", region="World"
         )).round(rounding) # Mt
     df["scrap_consumption"] = df["year"].apply(
         lambda year: production_results_df_c.loc[year]["scrap_mt"].sum()).round(rounding) # Mt
@@ -85,7 +83,7 @@ def metaresults_flow(scenario_dict: dict, serialize: bool = False) -> pd.DataFra
     intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
     final_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'final')
     steel_demand_df = read_pickle_folder(
-        PKL_DATA_FORMATTED, "regional_steel_demand_formatted", "df"
+        intermediate_path, "regional_steel_demand_formatted", "df"
     )
     production_resource_usage = read_pickle_folder(
         final_path, "production_resource_usage", "df"
@@ -96,13 +94,11 @@ def metaresults_flow(scenario_dict: dict, serialize: bool = False) -> pd.DataFra
     utilization_results = read_pickle_folder(
         intermediate_path, "utilization_results", "dict"
     )
-    steel_demand_scenario = scenario_dict["steel_demand_scenario"]
     global_metaresults = global_metaresults_calculator(
         steel_demand_df,
         regional_capacity_results,
         utilization_results,
         production_resource_usage,
-        steel_demand_scenario
     )
     global_metaresults = add_results_metadata(
         global_metaresults, scenario_dict, include_regions=False, 

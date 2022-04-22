@@ -96,7 +96,6 @@ def add_currency_rates_to_scenarios(scenario_dict: dict, live: bool = False) -> 
 # Model phasing
 def data_import_stage() -> None:
     load_data(serialize=True)
-    get_steel_demand(serialize=True)
 
 
 def data_preprocessing_generic() -> None:
@@ -108,6 +107,7 @@ def data_preprocessing_generic() -> None:
 
 
 def data_preprocessing_scenarios(scenario_dict: dict) -> None:
+    get_steel_demand(scenario_dict=scenario_dict, serialize=True)
     generate_timeseries(scenario_dict=scenario_dict, serialize=True)
     format_pe_data(scenario_dict=scenario_dict, serialize=True, standarside_units=True)
     generate_preprocessed_emissions_data(serialize=True)
