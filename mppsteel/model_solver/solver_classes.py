@@ -43,6 +43,9 @@ class PlantChoices:
         if tech == 'Close plant':
             self.active_check[year][plant] = False
 
+    def return_nans(self, year: int):
+        return [plant for plant in self.choices[year] if pd.isna(self.choices[year][plant])]
+
     def remove_choice(self, year: int, plant: str):
         del self[year][plant]
 
@@ -126,6 +129,8 @@ class MaterialUsage:
         return pd.DataFrame(self.results)
 
     def constraint_transaction(self, year: int, model_type: str, amount: float, override_constraint: bool = False):
+        if amount == 0:
+            return True
         current_balance = self.balance[year][model_type]
         current_usage = self.usage[year][model_type]
         if (current_balance < amount) and not override_constraint:
@@ -279,7 +284,7 @@ class MarketContainerClass:
         self.market_results[year] = results_df
 
     def return_results(self, year: int):
-        print(self.market_results[year])
+        return self.market_results[year]
 
     def output_trade_calculations_to_df(self):
         return pd.concat(self.market_results.values(), axis=1)
