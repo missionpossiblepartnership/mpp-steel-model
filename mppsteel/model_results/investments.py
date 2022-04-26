@@ -205,6 +205,9 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
     plant_investment_cycles = read_pickle_folder(
         intermediate_path, "investment_cycle_ref_result", "df"
     )
+    active_plant_checker_dict = read_pickle_folder(
+        intermediate_path, "active_plant_checker_dict", "df"
+    )
     plant_result_df = read_pickle_folder(
         intermediate_path, "plant_result_df", "df"
     )
@@ -225,16 +228,17 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
     ):
         plant_names = plant_capacity_results[year].keys()
         for plant_name in plant_names:
-            data_container.append(
-                investment_row_calculator(
-                    plant_investment_cycles,
-                    capex_ref,
-                    tech_choice_dict,
-                    plant_capacity_results[year],
-                    year,
-                    plant_name
+            if active_plant_checker_dict[plant_name][year]:
+                data_container.append(
+                    investment_row_calculator(
+                        plant_investment_cycles,
+                        capex_ref,
+                        tech_choice_dict,
+                        plant_capacity_results[year],
+                        year,
+                        plant_name
+                    )
                 )
-            )
     investment_results = (
         pd.DataFrame(data_container).set_index(["year"]).sort_values("year")
     )

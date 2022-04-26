@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 from mppsteel.data_preprocessing.levelized_cost import calculate_cc
 from mppsteel.model_results.investments import get_investment_capital_costs
-
+from mppsteel.model_solver.solver import active_check_results
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder, serialize_file, get_scenario_pkl_path
@@ -225,7 +225,7 @@ def dict_to_df(df_values_dict: dict, region_group: str, cc: bool = False) -> pd.
 
 
 def create_cost_of_steelmaking_data(
-    steel_plant_df: pd.DataFrame,
+    plant_df: pd.DataFrame,
     production_df: pd.DataFrame,
     variable_costs_df: pd.DataFrame,
     investment_df: pd.DataFrame,
@@ -264,16 +264,18 @@ def create_cost_of_steelmaking_data(
         }
 
     investment_df.set_index(['year'], inplace=True)
-
+    inverse_active_plant_checker = active_check_results(plant_df, MODEL_YEAR_RANGE, inverse=True)
     investment_cost_ref = {}
     production_ref = production_df[['year', 'plant_name', 'production']].set_index(['year', 'plant_name']).to_dict()['production']
     for year in tqdm(MODEL_YEAR_RANGE, total=len(MODEL_YEAR_RANGE), desc='COS Investment Reference Loop'):
-        for plant_name in capacities_ref[year].keys():
+        active_plants = [plant_name for plant_name in inverse_active_plant_checker[year] if inverse_active_plant_checker[year][plant_name]]
+        for plant_name in active_plants:
             investment_cost_ref[(year, plant_name)] = get_investment_capital_costs(
                 investment_df, investment_dict_result_cycles_only, plant_name, year)
 
     relining_span_ref = {}
-    plant_names = steel_plant_df['plant_name'].unique()
+    plant_names = plant_df['plant_name'].unique()
+
     for plant_name in tqdm(plant_names, total=len(plant_names), desc='Relining Year Span Loop'):
         relining_span_ref[plant_name] = investment_cycle_lengths.get(plant_name, INVESTMENT_CYCLE_DURATION_YEARS)
 
@@ -352,7 +354,6 @@ def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize: bool = 
     plant_cycle_length_mapper_result = read_pickle_folder(
         intermediate_path, "plant_cycle_length_mapper_result", "df"
     )
-    
     cos_data = create_cost_of_steelmaking_data(
         plant_result_df,
         production_resource_usage,

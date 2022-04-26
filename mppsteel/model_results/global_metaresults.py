@@ -3,8 +3,7 @@
 import pandas as pd
 
 from mppsteel.config.model_config import (
-    MODEL_YEAR_RANGE,
-    PKL_DATA_FORMATTED
+    MODEL_YEAR_RANGE
 )
 from mppsteel.data_load_and_format.reg_steel_demand_formatter import steel_demand_getter
 from mppsteel.utility.function_timer_utility import timer_func
@@ -50,7 +49,7 @@ def global_metaresults_calculator(
     ).round(rounding)
     df["steel_capacity"] = df["year"].apply(lambda year: sum(capacity_results[year].values())).round(rounding) # Mt
     df["capacity_balance"] = (df["steel_capacity"] - df["steel_demand"]).round(rounding) # Mt
-    df['capacity_utilization_factor'] = df["year"].apply(lambda year:  utilization_results[year]['World'])
+    df['capacity_utilization_factor'] = df["year"].apply(lambda year: utilization_results[year]['World'])
     df['steel_production'] = (df["steel_capacity"] * df["capacity_utilization_factor"]).round(rounding) # Mt
     df['market_balance'] = (df["steel_production"] - df["steel_demand"]).round(rounding) # Mt
     df["scrap_availability"] = df["year"].apply(

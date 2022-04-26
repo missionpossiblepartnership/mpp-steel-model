@@ -196,7 +196,7 @@ def return_best_tech(
     return best_choice
 
 
-def active_check_results(steel_plant_df: pd.DataFrame, year_range: range):
+def active_check_results(steel_plant_df: pd.DataFrame, year_range: range, inverse: bool = False):
 
     def final_active_checker(row, year):
         if year < row.start_of_operation:
@@ -207,12 +207,18 @@ def active_check_results(steel_plant_df: pd.DataFrame, year_range: range):
         return True
 
     active_check = {}
-    for row in steel_plant_df.itertuples():
-        active_check[row.plant_name] = {}
+    if inverse:
         for year in year_range:
-            active_check[row.plant_name][year] = final_active_checker(row, year)
-    
-    return active_check
+            active_check[year] = {}
+            for row in steel_plant_df.itertuples():
+                active_check[year][row.plant_name] = final_active_checker(row, year)
+        return active_check
+    else:
+        for row in steel_plant_df.itertuples():        
+            active_check[row.plant_name] = {}
+            for year in year_range:
+                active_check[row.plant_name][year] = final_active_checker(row, year)
+        return active_check
 
 
 def choose_technology(

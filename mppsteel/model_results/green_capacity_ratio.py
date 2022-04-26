@@ -4,6 +4,8 @@ from copy import deepcopy
 
 import pandas as pd
 
+from mppsteel.model_solver.solver import active_check_results
+from mppsteel.config.model_config import MODEL_YEAR_RANGE
 from mppsteel.config.reference_lists import TECHNOLOGY_STATES
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import add_results_metadata
@@ -17,7 +19,12 @@ from mppsteel.utility.log_utility import get_logger
 logger = get_logger(__name__)
 
 def green_capacity_ratio_predata(
-    plant_df: pd.DataFrame, tech_choices: dict, capacity_dict: dict, country_mapper: dict, inc_trans: bool = False):
+    plant_df: pd.DataFrame, 
+    tech_choices: dict, 
+    capacity_dict: dict,
+    country_mapper: dict, 
+    inc_trans: bool = False
+):
 
     def tech_status_mapper(tech_choice: dict, inc_trans: bool):
         check_list = deepcopy(TECHNOLOGY_STATES['end_state'])
@@ -39,11 +46,11 @@ def green_capacity_ratio_predata(
     years = [int(key) for key in tech_choices.keys()]
     start_year_dict = dict(zip(plant_df['plant_name'], plant_df['start_of_operation']))
     country_code_dict = dict(zip(plant_df['plant_name'], plant_df['country_code']))
+    inverse_active_plant_checker = active_check_results(plant_df, MODEL_YEAR_RANGE, inverse=True)
     for year in years:
-        plant_capacity_dict = capacity_dict[year]
-        plants = list(plant_capacity_dict.keys())
-        capacities = [plant_capacity_dict[plant] for plant in plants]
-        df = pd.DataFrame({'year': year, 'plant_name': plants, 'capacity': capacities, 'technology': '', 'region': ''})
+        active_plants = [plant_name for plant_name in inverse_active_plant_checker[year] if inverse_active_plant_checker[year][plant_name]]
+        capacities = [capacity_dict[year][plant] for plant in active_plants]
+        df = pd.DataFrame({'year': year, 'plant_name': active_plants, 'capacity': capacities})
         df['technology'] = df['plant_name'].apply(lambda plant_name: tech_choices[year][plant_name])
         df_container.append(df)
     df_final = pd.concat(df_container).reset_index(drop=True)
@@ -51,7 +58,7 @@ def green_capacity_ratio_predata(
     df_final['green_tech'] = df_final['technology'].apply(lambda technology: tech_status_mapper(technology, inc_trans))
     df_final['region'] = df_final["plant_name"].apply(lambda plant_name: country_mapper[country_code_dict[plant_name]])
     return df_final
-    
+
 def create_gcr_df(green_capacity_ratio_df: pd.DataFrame, rounding: int = 1):
     gcr = green_capacity_ratio_df[['year', 'capacity', 'green_tech']].set_index(['green_tech']).sort_index(ascending=True).copy()
     gcr_green = gcr.loc[True].reset_index().groupby(['year']).sum()[['capacity']].copy()

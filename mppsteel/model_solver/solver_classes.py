@@ -214,8 +214,7 @@ class UtilizationContainerClass:
         return np.mean(self.utilization_container[year].values())
 
     def calculate_world_utilization(self, year: int, capacity_dict: dict, demand_value: float):
-        world_utilization = demand_value / sum(capacity_dict.values())
-        self.utilization_container[year]['World'] = world_utilization
+        self.utilization_container[year]['World'] = demand_value / sum(capacity_dict.values())
     
     def get_utilization_values(self, year: int = None, region: str = None):
         if region and not year:
