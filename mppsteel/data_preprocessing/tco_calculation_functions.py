@@ -153,7 +153,6 @@ def get_discounted_opex_values(
     Returns:
         pd.DataFrame: A DataFrame with discounted opex values.
     """
-
     year_range = range(year_start, year_start + year_interval + 1)
     loop_year_range = [year if (year <= MODEL_YEAR_END) else min(MODEL_YEAR_END, year) for year in year_range]
     df_list = [opex_cost_ref[(year, country_code)] for year in loop_year_range]

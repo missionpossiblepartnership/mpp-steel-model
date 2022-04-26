@@ -134,7 +134,7 @@ def return_best_tech(
 
     # Valid Switches
     combined_available_list = [
-        key for key in SWITCH_DICT if key in SWITCH_DICT[base_tech]
+        tech for tech in SWITCH_DICT if tech in SWITCH_DICT[base_tech]
     ]
 
     # Transitional switches
@@ -182,7 +182,6 @@ def return_best_tech(
         tco_ref_data,
         abatement_reference_data,
         country_code,
-        plant_name,
         year,
         base_tech,
         solver_logic,
@@ -324,7 +323,6 @@ def choose_technology(
     # Plant Choices
     PlantChoiceContainer = PlantChoices()
     PlantChoiceContainer.initiate_container(MODEL_YEAR_RANGE)
-
     # Investment Cycles
     for year in tqdm(MODEL_YEAR_RANGE, total=len(MODEL_YEAR_RANGE), desc="Years"):
         year_start_df['active_check'] = year_start_df.apply(create_active_check_col, year=year, axis=1)
@@ -344,11 +342,10 @@ def choose_technology(
                 PlantChoiceContainer.update_choice(year, row.plant_name, row.initial_technology)
             UtilizationContainer.assign_year_utilization(2020, wsa_dict)
 
-        # Exceptions for plants in plants database that are scheduled to open by 2023, to have their prior technology as their previous choice
-        if year in list(range(2020, 2023)):
-            for row in inactive_year_start_df.itertuples():
-                if row.start_of_operation == year + 1:
-                    PlantChoiceContainer.update_choice(year, row.plant_name, row.initial_technology)
+        # Exceptions for plants in plants database that are scheduled to open later, to have their prior technology as their previous choice
+        for row in inactive_year_start_df.itertuples():
+            if row.start_of_operation == year + 1:
+                PlantChoiceContainer.update_choice(year, row.plant_name, row.initial_technology)
 
         all_active_plant_names = active_plant_df["plant_name"].copy()
         plant_to_region_mapper = dict(zip(all_active_plant_names, active_plant_df[MAIN_REGIONAL_SCHEMA]))
@@ -401,7 +398,7 @@ def choose_technology(
                 year, resource, current_usage, override_constraint=True)
 
         # check resource allocation for EAF secondary capacity
-        secondary_eaf_switchers = switchers_df[switchers_df['primary'] == 'N'].copy()
+        secondary_eaf_switchers = switchers_df[switchers_df['primary_capacity'] == 'N'].copy()
         secondary_eaf_switchers_plants = secondary_eaf_switchers['plant_name'].unique()
 
         for plant_name in secondary_eaf_switchers_plants:
@@ -462,7 +459,7 @@ def choose_technology(
         switchers_df = switchers_df.sample(frac=1)
         logger.info(f"-- Running investment decisions for Non Switching Plants")
 
-        primary_switchers_df = switchers_df[switchers_df['primary'] == 'Y'].copy()
+        primary_switchers_df = switchers_df[switchers_df['primary_capacity'] == 'Y'].copy()
 
         for row in primary_switchers_df.itertuples():
             # set initial metadata

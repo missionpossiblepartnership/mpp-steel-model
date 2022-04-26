@@ -80,7 +80,7 @@ STEEL_PLANT_DATA_SCHEMA = DataFrameSchema(
         "Cheap natural gas?": Column(int, Check.isin([0, 1])),
         "Industrial cluster?": Column(int, Check.isin([0, 1])),
         "Plant Technology in 2020": Column(str),
-        "Primary": Column(str, Check.isin(["Y", "N"])),
+        "Primary Capacity": Column(str, Check.isin(["Y", "N"])),
         "Source": Column(str),
     }
 )

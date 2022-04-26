@@ -152,7 +152,7 @@ def new_plant_metadata(
         'country_code': assigned_country,
         'cheap_natural_gas': ng_mapper[assigned_country],
         'plant_capacity': capacity_value,
-        'primary': 'Y',
+        'primary_capacity': 'Y',
         MAIN_REGIONAL_SCHEMA: region
     }
 

@@ -85,13 +85,13 @@ def tech_availability_check(
     if tech_moratorium and (technology_phase in ["Initial", "Transition"]):
         year_available_until = TECH_MORATORIUM_DATE
     if int(year_available_from) <= int(year) < int(year_available_until):
-        # print(f'{technology} will be available in {year}')
+        # Will be available
         return True
     if int(year) <= int(year_available_from):
-        # print(f'{technology} will not be ready yet in {year}')
+        # Will not be ready yet
         return False
     if int(year) > int(year_available_until):
-        # print(f'{technology} will become unavailable in {year}')
+        # Will become unavailable
         return False
 
 

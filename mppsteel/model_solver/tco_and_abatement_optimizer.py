@@ -95,7 +95,6 @@ def min_ranker(
     year: int,
     country_code: str,
     start_tech: str,
-    plant_name: str = None,
     rank: bool = False,
 ) -> pd.DataFrame:
     """Sorts (and optionally ranks) each technology from a given list for the purpose of choosing a best technology.
@@ -107,7 +106,6 @@ def min_ranker(
         year (int): The year you want to rank the technologies for.
         country_code (str): The country code of the plant you want to rank technologies for.
         start_tech (str): The starting technology for the plant.
-        plant_name (str, optional): The name of the plant. Defaults to None.
         rank (bool, optional): Decide whether to assign custom ranking logic to the technologies. Defaults to False.
 
     Returns:
@@ -144,7 +142,6 @@ def get_best_choice(
     tco_df: pd.DataFrame,
     emissions_df: pd.DataFrame,
     country_code: str,
-    plant_name: str,
     year: int,
     start_tech: str,
     solver_logic: str,
@@ -157,7 +154,6 @@ def get_best_choice(
         tco_df (pd.DataFrame): The TCO reference DataFrame.
         emissions_df (pd.DataFrame): The emissions abatement reference DataFrame.
         country_code (str): The country code you want to select a DataFrame for.
-        plant_name (str): The name of the plant you want to optimise your selection for.
         year (int): The year you want to pick the best technology for.
         start_tech (str): The starting technology for the plant in the given year.
         solver_logic (str): Determines the algorithm used to pick the best technology.
@@ -177,7 +173,6 @@ def get_best_choice(
             year=year,
             country_code=country_code,
             start_tech=start_tech,
-            plant_name=plant_name,  # only for tco
             rank=False,
         )
         abatement_values = min_ranker(
@@ -238,7 +233,6 @@ def get_best_choice(
             year=year,
             country_code=country_code,
             start_tech=start_tech,
-            plant_name=plant_name,  # only for tco
             rank=True,
         )
         abatement_values = min_ranker(
@@ -277,7 +271,6 @@ def get_best_choice(
                 year=year,
                 country_code=country_code,
                 start_tech=start_tech,
-                plant_name=plant_name,  # only for tco
                 rank=False,
             )
             return tco_values_min[["tco"]].idxmin().values[0]

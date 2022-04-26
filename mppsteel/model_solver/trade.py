@@ -217,7 +217,7 @@ def trade_flow(
 
     global_trade_balance = round(market_container.trade_container_getter(year), 3)
     if global_trade_balance > 0:
-        logger.info(f'Trade Balance Surplus of {global_trade_balance} Mt in year {year}. No balancing to zero.')
+        logger.info(f'TRADE BALANCING ROUND 1: Trade Balance Surplus of {global_trade_balance} Mt in year {year}. No balancing to zero.')
     elif global_trade_balance < 0:
         logger.info(f'TRADE BALANCING ROUND 2: Trade Balance Deficit of {global_trade_balance} Mt in year {year}, balancing to zero via utilization optimization.')
         rpc_df = relative_production_cost_df[relative_production_cost_df['relative_cost_close_to_mean'] == True].sort_values(['cost_of_steelmaking'], ascending=True)

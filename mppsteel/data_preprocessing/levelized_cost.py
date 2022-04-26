@@ -2,7 +2,6 @@
 
 import itertools
 import pandas as pd
-import numpy as np
 import numpy_financial as npf
 
 from tqdm import tqdm
@@ -21,7 +20,7 @@ from mppsteel.config.model_config import (
     INVESTMENT_CYCLE_DURATION_YEARS,
     STEEL_PLANT_LIFETIME_YEARS,
 )
-from mppsteel.config.reference_lists import TECH_REFERENCE_LIST, SWITCH_DICT
+from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
 
 logger = get_logger(__name__)
 

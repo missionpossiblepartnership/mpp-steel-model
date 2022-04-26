@@ -114,6 +114,8 @@ def data_preprocessing_scenarios(scenario_dict: dict) -> None:
     generate_emissions_flow(scenario_dict=scenario_dict, serialize=True)
     generate_variable_plant_summary(scenario_dict, serialize=True)
     generate_levelized_cost_results(scenario_dict=scenario_dict, serialize=True)
+    tco_presolver_reference(scenario_dict, serialize=True)
+    abatement_presolver_reference(scenario_dict, serialize=True)
 
 
 def investment_cycles() -> None:

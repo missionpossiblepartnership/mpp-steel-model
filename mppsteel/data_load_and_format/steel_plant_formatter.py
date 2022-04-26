@@ -1,6 +1,6 @@
 """Function to create a steel plant class."""
+import random
 import pandas as pd
-import pandera as pa
 
 from tqdm.auto import tqdm as tqdma
 
@@ -17,22 +17,16 @@ from mppsteel.utility.file_handling_utility import (
     serialize_file,
 )
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.config.model_config import MODEL_YEAR_START, PKL_DATA_FORMATTED, PKL_DATA_IMPORTS
-from mppsteel.data_validation.data_import_tests import STEEL_PLANT_DATA_SCHEMA
+from mppsteel.config.model_config import (
+    MODEL_YEAR_START,
+    PKL_DATA_FORMATTED,
+    PKL_DATA_IMPORTS,
+    STEEL_PLANT_EARLIEST_START_DATE,
+    STEEL_PLANT_LATEST_START_DATE
+)
 
 # Create logger
 logger = get_logger(__name__)
-
-COLUMNS_TO_REMOVE = [
-    "Fill in data BF-BOF",
-    "Fill in data EAF",
-    "Fill in data DRI",
-    "Estimated BF-BOF capacity (kt steel/y)",
-    "Estimated EAF capacity (kt steel/y)",
-    "Estimated DRI capacity (kt sponge iron/y)",
-    "Estimated DRI-EAF capacity (kt steel/y)",
-    "Source",
-]
 
 NEW_COLUMN_NAMES = [
     "plant_id",
@@ -42,22 +36,22 @@ NEW_COLUMN_NAMES = [
     "status",
     "start_of_operation",
     "BFBOF_capacity",
-    "EAF_capacity",
-    "DRI_capacity",
     "DRIEAF_capacity",
-    "abundant_res",
-    "ccs_available",
-    "cheap_natural_gas",
-    "industrial_cluster",
+    "EAF_capacity",
     "initial_technology",
-    "primary",
+    "primary_capacity",
 ]
 
+NATURAL_GAS_COUNTRIES = [
+    'ARE', 'ARG', 'AUS', 'BLR', 
+    'CAN', 'DZA', 'GBR', 'GEO', 
+    'IRQ', 'IRN', 'KWT', 'LBY', 
+    'MEX', 'OMN', 'PER', 'PHL', 
+    'QAT', 'RUS', 'SAU', 'TUR', 
+    'UKR', 'USA'
+]
 
-@pa.check_input(STEEL_PLANT_DATA_SCHEMA)
-def steel_plant_formatter(
-    df: pd.DataFrame, remove_non_operating_plants: bool = False
-) -> pd.DataFrame:
+def steel_plant_formatter(df: pd.DataFrame) -> pd.DataFrame:
     """Formats the steel plants data input. By dropping columns.
     Renaming columns, extracting steel plant capacity.
     Adjusting plant capacity values. Removing non-operating plants.
@@ -70,17 +64,15 @@ def steel_plant_formatter(
     """
     logger.info("Formatting the Steel Plant Data")
     df_c = df.copy()
-
-    df_c.drop(COLUMNS_TO_REMOVE, axis=1, inplace=True)
+    df_c = df_c[(df_c['Status'] == 'operating') & (df_c['Plant Technology in 2020'] != '')].copy()
+    df_c.dropna(subset=["Plant Technology in 2020"], inplace=True)
+    cols_to_remove = [col for col in df_c.columns if any(
+        substring in col for substring in ['Nominal', 'Pure', 'present', 'Source']
+    )]
+    df_c.drop(cols_to_remove, axis=1, inplace=True)
     df_c = df_c.rename(mapper=dict(zip(df_c.columns, NEW_COLUMN_NAMES)), axis=1)
     df_c["country_code"] = ""
     df_c = extract_steel_plant_capacity(df_c)
-
-    if remove_non_operating_plants:
-        df_c = df_c[df_c["initial_technology"] != "Not operating"].reset_index(
-            drop=True
-        )
-
     return df_c
 
 
@@ -181,34 +173,31 @@ def apply_countries_to_steel_plants(
     logger.info("Applying Country Data to Steel Plants")
     df_c = steel_plant_formatted.copy()
     steel_plant_countries = df_c["country"].unique().tolist()
-    matching_dict, unmatched_dict = country_matcher(steel_plant_countries)
-    logger.info(
-        "- Applying the codes of the matched countries to the steel plant column"
-    )
+    matching_dict, _ = country_matcher(steel_plant_countries)
     df_c["country_code"] = df_c["country"].apply(lambda x: matching_dict[x])
-    country_fixer_dict = {"Korea, North": "PRK"}
-    steel_plants = country_mapping_fixer(
+    country_fixer_dict = {"North Korea": "PRK", "South Korea": "KOR"}
+    df_c = country_mapping_fixer(
         df_c, "country", "country_code", country_fixer_dict
     )
+    df_c["cheap_natural_gas"] = df_c["country_code"].apply(
+        lambda country_code: 1 if country_code in NATURAL_GAS_COUNTRIES else 0)
     wsa_mapper = create_country_mapper('wsa')
-    steel_plants["wsa_region"] = steel_plants["country_code"].apply(lambda x: wsa_mapper[x])
+    df_c["wsa_region"] = df_c["country_code"].apply(lambda x: wsa_mapper[x])
     rmi_mapper = create_country_mapper('rmi')
-    steel_plants["rmi_region"] = steel_plants["country_code"].apply(lambda x: rmi_mapper[x])
-    return steel_plants
+    df_c["rmi_region"] = df_c["country_code"].apply(lambda x: rmi_mapper[x])
+    return df_c
 
 def convert_start_year(year_value: str):
-    if pd.isna(year_value):
-        return MODEL_YEAR_START
-    elif "(anticipated)" in str(year_value):
-        return int(year_value[:4])
-    else: 
-        try:
-            return int(float(year_value))
-        except:
-            return int(year_value[:4])
+    if year_value == 'unknown':
+        return random.randrange(
+            STEEL_PLANT_EARLIEST_START_DATE, 
+            STEEL_PLANT_LATEST_START_DATE, 
+            1
+        )
+    return int(year_value)
 
 def create_active_check_col(row: pd.DataFrame, year: int):
-    if (row.status in ['operating', 'proposed', 'construction', 'new model plant']) and (row.start_of_operation <= year):
+    if (row.status in ['operating', 'new model plant']) and (row.start_of_operation <= year):
         return True
     return False
 
@@ -226,10 +215,10 @@ def steel_plant_processor(
     """
     logger.info("Preprocessing the Steel Plant Data")
     steel_plants = read_pickle_folder(PKL_DATA_IMPORTS, "steel_plants")
-    steel_plants = steel_plant_formatter(steel_plants, remove_non_operating_plants)
+    steel_plants = steel_plant_formatter(steel_plants)
     steel_plants = apply_countries_to_steel_plants(steel_plants)
     steel_plants['start_of_operation'] = steel_plants['start_of_operation'].apply(
-        lambda plant: convert_start_year(plant))
+        lambda year_value: convert_start_year(year_value))
     steel_plants['end_of_operation'] = ''
     steel_plants['active_check'] = steel_plants.apply(create_active_check_col, year=MODEL_YEAR_START, axis=1)
     if serialize:
