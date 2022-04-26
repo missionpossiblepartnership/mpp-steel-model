@@ -35,7 +35,7 @@ def tech_capacity_splits(
     steel_plants: pd.DataFrame,
     tech_choices: dict,
     capacity_dict: dict,
-    active_plant_checker_dict: dict,
+    active_check_results_dict: dict,
     plant_country_code_mapper: dict,
 ) -> pd.DataFrame:
     """Create a DataFrame containing the technologies and capacities for every plant in every year.
@@ -50,8 +50,8 @@ def tech_capacity_splits(
     for year in tqdm(MODEL_YEAR_RANGE, total=len(MODEL_YEAR_RANGE), desc="Tech Capacity Splits"):
         steel_plant_names = capacity_dict[year].keys()
         df = pd.DataFrame({"year": year, "plant_name": steel_plant_names})
-        df["technology"] = df["plant_name"].apply(lambda plant: get_tech_choice(tech_choices, active_plant_checker_dict, year, plant))
-        df['capacity'] = df['plant_name'].apply(lambda plant_name: get_capacity(capacity_dict, active_plant_checker_dict, year, plant_name))
+        df["technology"] = df["plant_name"].apply(lambda plant: get_tech_choice(tech_choices, active_check_results_dict, year, plant))
+        df['capacity'] = df['plant_name'].apply(lambda plant_name: get_capacity(capacity_dict, active_check_results_dict, year, plant_name))
         df = df[df['technology'] != '']
         df_list.append(df)
 
@@ -202,7 +202,7 @@ def get_tech_choice(tc_dict: dict, active_plant_checker_dict: dict, year: int, p
     Returns:
         str: The technology choice requested via the function arguments.
     """
-    return tc_dict[year][plant_name] if active_plant_checker_dict[plant_name] else ''
+    return tc_dict[year][plant_name] if active_plant_checker_dict[plant_name][year] else ''
 
 def get_capacity(capacity_dict: dict, active_plant_checker_dict: dict, year: int, plant_name: str) -> str:
     """Return a technology choice for a given plant in a given year.
@@ -215,7 +215,7 @@ def get_capacity(capacity_dict: dict, active_plant_checker_dict: dict, year: int
     Returns:
         str: The technology choice requested via the function arguments.
     """
-    return capacity_dict[year][plant_name] if active_plant_checker_dict[plant_name] else 0
+    return capacity_dict[year][plant_name] if active_plant_checker_dict[plant_name][year] else 0
 
 
 def load_materials_mapper(materials_list: list, reverse: bool = False) -> dict:
@@ -268,8 +268,8 @@ def production_results_flow(scenario_dict: dict, serialize: bool = False) -> dic
     carbon_tax_timeseries = read_pickle_folder(
         intermediate_path, "carbon_tax_timeseries", "df"
     )
-    active_plant_checker_dict = read_pickle_folder(
-        intermediate_path, "active_plant_checker_dict", "df"
+    active_check_results_dict = read_pickle_folder(
+        intermediate_path, "active_check_results_dict", "df"
     )
     carbon_tax_timeseries.set_index("year", inplace=True)
     materials_list = business_cases.index.get_level_values(1).unique()
@@ -277,7 +277,7 @@ def production_results_flow(scenario_dict: dict, serialize: bool = False) -> dic
         zip(plant_result_df["plant_name"].values, plant_result_df["country_code"].values)
     )
     tech_capacity_df = tech_capacity_splits(
-        plant_result_df, tech_choices_dict, plant_capacity_results, active_plant_checker_dict, plant_to_country_code_ref)
+        plant_result_df, tech_choices_dict, plant_capacity_results, active_check_results_dict, plant_to_country_code_ref)
     production_results = generate_production_stats(
         tech_capacity_df, utilization_results, rmi_mapper,
     )

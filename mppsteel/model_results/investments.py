@@ -44,12 +44,15 @@ def capex_getter_f(
     """
     if not start_tech or (new_tech == "Close plant") or (switch_type == "no switch"):
         return 0
+    elif (start_tech == new_tech) & (switch_type == 'trans switch'):
+        return 0
     return capex_ref[(year, start_tech, new_tech)]
 
 
 def investment_row_calculator(
     plant_investment_cycles: pd.DataFrame,
     capex_ref: pd.DataFrame,
+    active_plant_checker_dict: dict,
     tech_choices: dict,
     capacity_ref: dict,
     year: int,
@@ -71,11 +74,11 @@ def investment_row_calculator(
     """
     switch_type = plant_investment_cycles.loc[year, plant_name]['switch_type']
     if year == 2020:
-        start_tech = get_tech_choice(tech_choices, 2020, plant_name)
+        start_tech = get_tech_choice(tech_choices, active_plant_checker_dict, 2020, plant_name)
     else:
-        start_tech = get_tech_choice(tech_choices, year - 1, plant_name)
+        start_tech = get_tech_choice(tech_choices, active_plant_checker_dict, year - 1, plant_name)
 
-    new_tech = get_tech_choice(tech_choices, year, plant_name)
+    new_tech = get_tech_choice(tech_choices, active_plant_checker_dict, year, plant_name)
     actual_capex = 0
     if new_tech:
         capex_value = capex_getter_f(capex_ref, year, start_tech, new_tech, switch_type)
@@ -205,8 +208,8 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
     plant_investment_cycles = read_pickle_folder(
         intermediate_path, "investment_cycle_ref_result", "df"
     )
-    active_plant_checker_dict = read_pickle_folder(
-        intermediate_path, "active_plant_checker_dict", "df"
+    active_check_results_dict = read_pickle_folder(
+        intermediate_path, "active_check_results_dict", "df"
     )
     plant_result_df = read_pickle_folder(
         intermediate_path, "plant_result_df", "df"
@@ -228,11 +231,12 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
     ):
         plant_names = plant_capacity_results[year].keys()
         for plant_name in plant_names:
-            if active_plant_checker_dict[plant_name][year]:
+            if active_check_results_dict[plant_name][year]:
                 data_container.append(
                     investment_row_calculator(
                         plant_investment_cycles,
                         capex_ref,
+                        active_check_results_dict,
                         tech_choice_dict,
                         plant_capacity_results[year],
                         year,
