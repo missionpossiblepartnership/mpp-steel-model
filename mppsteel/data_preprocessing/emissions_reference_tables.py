@@ -111,7 +111,7 @@ def scope1_emissions_calculator(s1_emissions: pd.DataFrame, business_case_ref: d
     df_c = s1_emissions.copy()
     year_tech_product_list = itertools.product(df_c.index.get_level_values(0).unique().values, TECH_REFERENCE_LIST)
     for year, technology in year_tech_product_list:
-        emissions_difference = business_case_ref[technology]["Process emissions"] - business_case_ref[technology]["Used CO2"] - business_case_ref[technology]["Captured CO2"]
+        emissions_difference = business_case_ref[(technology, "Process emissions")] - business_case_ref[(technology, "Used CO2")] - business_case_ref[(technology, "Captured CO2")]
         df_c.loc[year, technology]["emissions"] = df_c.loc[year, technology]["emissions"] + emissions_difference
     return df_c
 
