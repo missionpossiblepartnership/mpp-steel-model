@@ -129,7 +129,6 @@ def tco_regions_ref_generator(scenario_dict: dict) -> pd.DataFrame:
 
     df_list = []
     for year, country_code, start_technology in tqdm(product_year_country_code_tech, total=len(product_year_country_code_tech), desc='Full Opex Reference'):
-
         new_df = technology_df_ref[start_technology]
         new_df["year"] = year
         new_df["country_code"] = country_code
@@ -210,7 +209,7 @@ def emissivity_abatement(combined_emissivity: pd.DataFrame, scope: str) -> pd.Da
 def tco_calculator(tco_ref_df: pd.DataFrame):
     rmi_mapper = create_country_mapper('rmi')
     df = tco_ref_df.copy()
-    df["tco"] = (df["discounted_opex"] / INVESTMENT_CYCLE_DURATION_YEARS) + df["capex_value"]
+    df["tco"] = (df["discounted_opex"] + df["capex_value"]) / INVESTMENT_CYCLE_DURATION_YEARS
     df['region'] = df['country_code'].apply(lambda x: rmi_mapper[x])
     return df
 
