@@ -141,8 +141,8 @@ def load_data(serialize: bool = False) -> dict:
     hydrogen_model = get_pe_model_data("hydrogen")
     bio_model = get_pe_model_data("bio")
     ccus_model = get_pe_model_data("ccus")
-    excel_business_cases = extract_data(
-        IMPORT_DATA_PATH, "Business Cases Excel Master", "csv"
+    technology_business_cases = extract_data(
+        IMPORT_DATA_PATH, "Technology Business Cases", "csv"
     )
 
     # Define a data dictionary
@@ -160,7 +160,7 @@ def load_data(serialize: bool = False) -> dict:
         "tech_availability": tech_availability,
         "s3_emissions_factors_1": s3_emissions_factors_1,
         "s3_emissions_factors_2": s3_emissions_factors_2,
-        "excel_business_cases": excel_business_cases,
+        "technology_business_cases": technology_business_cases,
         "ethanol_plastic_charcoal": ethanol_plastic_charcoal,
         "power_model": power_model,
         "hydrogen_model": hydrogen_model,

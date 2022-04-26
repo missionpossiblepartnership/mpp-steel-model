@@ -271,7 +271,7 @@ def bc_unit_adjustments(row):
 
 @timer_func
 def create_business_case_reference(serialize: bool = True):
-    business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "excel_business_cases")
+    business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "technology_business_cases")
     business_cases = format_business_cases(business_cases)
     business_cases.reset_index(inplace=True)
     business_cases['value'] = business_cases.apply(bc_unit_adjustments, axis=1)
