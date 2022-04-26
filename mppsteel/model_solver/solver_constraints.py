@@ -107,7 +107,7 @@ def create_biomass_constraint(model: pd.DataFrame): # GJ Energy
 def create_scrap_constraints(model: pd.DataFrame, world: bool = True): # Mt Scrap
     rsd = model[['region', 'value']] \
         .loc[:,:,'Scrap availability'].reset_index() \
-        .drop(['scenario', 'metric'], axis=1) \
+        .drop(['scenario'], axis=1) \
         .set_index(['year', 'region']) \
         .copy()
     if world:
