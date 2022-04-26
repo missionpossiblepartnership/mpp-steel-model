@@ -1,8 +1,10 @@
 """Creates graphs from model outputs"""
 import itertools
+from itertools import zip_longest
 import pandas as pd
 import plotly.express as px
 from mppsteel.config.model_config import PKL_DATA_FORMATTED
+from mppsteel.config.reference_lists import MPP_COLOR_LIST
 from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import read_pickle_folder, get_scenario_pkl_path
@@ -233,7 +235,6 @@ def steel_emissions_line_chart(df: pd.DataFrame, filepath: str = None, region: s
     Returns:
         px.area: A plotly express area graph.
     """
-    
     df_c = df.copy()
     df_c['s1_s2_emissions_mt'] = df_c['s1_emissions_mt'] + df_c['s2_emissions_mt']
     filename = "scope_1_2_emissions"
@@ -254,8 +255,8 @@ def steel_emissions_line_chart(df: pd.DataFrame, filepath: str = None, region: s
     return line_chart(
         data=df_c,
         x="year",
-        y="s1_s2_emissions_mt",
-        color=None,
+        y=["s1_s2_emissions_mt"],
+        color_discrete_map={"s1_s2_emissions_mt": "#59A270"},
         name=graph_title,
         x_axis="Year",
         y_axis="Scope 1 & 2 Emisions [Mt/year]",
@@ -281,14 +282,18 @@ def resource_line_charts(
     if not region:
         filename = f"{resource}_global_line_graph"
     resource_string = resource.replace("_", " ").capitalize()
+    subset_data = generate_subset(df, 'region', resource, region)
+    regions = subset_data['region'].unique()
+    color_mapper = dict(zip_longest(regions, MPP_COLOR_LIST))
     logger.info(f"Creating line graph output: {filename}")
     if filepath:
         filename = f"{filepath}/{filename}"
     return line_chart(
-        data=generate_subset(df, 'region', resource, region),
+        data=subset_data,
         x="year",
         y=resource,
         color='region',
+        color_discrete_map=color_mapper,
         name=f"{resource_string} consumption in {region}",
         x_axis="year",
         y_axis=resource_string,

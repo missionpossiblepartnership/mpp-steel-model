@@ -1,8 +1,9 @@
 """Script to create the TCO graph"""
+from itertools import zip_longest
 import pandas as pd
 import plotly.express as px
 
-from mppsteel.config.reference_lists import GRAPH_COL_ORDER
+from mppsteel.config.reference_lists import GRAPH_COL_ORDER, MPP_COLOR_LIST, TECH_REFERENCE_LIST
 
 from mppsteel.utility.log_utility import get_logger
 
@@ -36,11 +37,14 @@ def generate_tco_charts (
     df_c.sort_values(['switch_tech_rank'], ascending=True, inplace=True)
     df_c.drop(labels='switch_tech_rank', axis=1, inplace=True)
 
+    color_map = dict(zip_longest(TECH_REFERENCE_LIST, MPP_COLOR_LIST))
+
     fig_ = px.bar(
         df_c,
         x='end_technology',
         y='tco',
         color= 'end_technology',
+        color_discrete_map=color_map,
         text_auto='.2f',
         labels={'tco': '[$/t steel]'},
         title= text
