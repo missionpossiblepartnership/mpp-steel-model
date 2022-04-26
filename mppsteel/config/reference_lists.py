@@ -24,7 +24,7 @@ RESOURCE_CATEGORY_MAPPER = {
     'Used CO2': 'CCS',
     'Process emissions': 'Emissivity',
     'Emissivity wout CCS': 'Emissivity',
-    'Emissivity': 'Emissivity'
+    'Emissivity': 'Carbon Cost'
 }
 
 RESOURCE_CONTAINER_REF = {

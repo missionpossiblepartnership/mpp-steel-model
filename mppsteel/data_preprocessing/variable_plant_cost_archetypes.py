@@ -111,7 +111,7 @@ def plant_variable_costs(scenario_dict: dict) -> pd.DataFrame:
     df = pd.concat(df_list).reset_index(drop=True)
     df['cost_type'] = df['material_category'].apply(
         lambda material: RESOURCE_CATEGORY_MAPPER[material])
-    return df
+    return df[df['cost_type'] != 'Emissivity'].copy()
 
 def vc_mapper(
     row: str,
