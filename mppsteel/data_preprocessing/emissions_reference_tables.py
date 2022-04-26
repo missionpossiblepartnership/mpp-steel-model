@@ -62,12 +62,13 @@ def generate_s1_s3_emissions(
     logger.info(f"calculating emissions reference tables")
 
     def s1_s2_emissions_mapper(row):
-        if row.material_category in s1_emissivity_resources: # kgCO2 / GJ
+        if row.material_category in s1_emissivity_resources: # tCO2 / GJ
             # S1 emissions without process emissions or CCS/CCU
-            row["S1"] = row.value * s1_emissivity_factors.loc[row.material_category]["Value"]
+            s1_value = s1_emissivity_factors.loc[row.material_category]["Value"]
+            row["S1"] = row.value * (s1_value / TON_TO_KILOGRAM_FACTOR)
         else:
             row["S1"] = 0
-        if row.material_category in s3_emissions_resources:  # kgCO2 / GJ or ton
+        if row.material_category in s3_emissions_resources:  # t / GJ or t / t
             emission_unit_value = s3_emissivity_factors.loc[row.material_category, year]["value"]
             if row.material_category == 'BF slag':
                 emission_unit_value = emission_unit_value * -1
@@ -96,62 +97,23 @@ def generate_s1_s3_emissions(
     )
     return combined_df.reset_index(drop=True).copy()
 
-def create_emissions_ref_dict(df: pd.DataFrame, tech_list: list) -> dict:
-    """Creates a reference to technologies, resources and emissions for a predefined list of technologies and resources.
-
-    Args:
-        df (pd.DataFrame): The standardised business cases DataFrame.
-        tech_list (list): A list of technologies that you want to create the emissions reference for.
-
-    Returns:
-        dict: A dictionary of technology, resources and emissions.
-    """
-    value_ref_dict = {}
-    resource_list = ["Process emissions", "Captured CO2", "Used CO2"]
-    for technology in tech_list:
-        resource_dict = {}
-        for resource in resource_list:
-            try:
-                val = df[
-                    (df["technology"] == technology)
-                    & (df["material_category"] == resource)
-                ]["value"].values[0]
-            except:
-                val = 0
-            resource_dict[resource] = val
-        value_ref_dict[technology] = resource_dict
-    return value_ref_dict
-
-
-def scope1_emissions_calculator(
-    df: pd.DataFrame, emissions_exceptions_dict: dict, tech_list: list
-) -> pd.DataFrame:
+def scope1_emissions_calculator(s1_emissions: pd.DataFrame, business_case_ref: dict) -> pd.DataFrame:
     """Combines regular emissions with process emissions and ccs/ccu emissions to get a complete
     emissions reference for a list of technologies.
 
     Args:
         df (pd.DataFrame): The standardised business cases DataFrame.
-        emissions_exceptions_dict (dict): A dictionary of technology, resources and emissions.
         tech_list (list): The technologies you want to retrieve full emissions reference for.
 
     Returns:
         pd.DataFrame: A DataFrame of the emissivity per scope and a carbon tax DataFrame. 
     """
-
-    df_c = df.copy()
-    for year in df_c.index.get_level_values(0).unique().values:
-        for technology in tech_list:
-            val = df_c.loc[year, technology]["emissions"]
-            em_exc_dict = emissions_exceptions_dict[technology]
-            process_emission = em_exc_dict["Process emissions"]
-            combined_ccs_ccu_emissions = (
-                em_exc_dict["Used CO2"] + em_exc_dict["Captured CO2"]
-            )
-            df_c.loc[year, technology]["emissions"] = (
-                val + process_emission - combined_ccs_ccu_emissions
-            )
+    df_c = s1_emissions.copy()
+    year_tech_product_list = itertools.product(df_c.index.get_level_values(0).unique().values, TECH_REFERENCE_LIST)
+    for year, technology in year_tech_product_list:
+        emissions_difference = business_case_ref[technology]["Process emissions"] - business_case_ref[technology]["Used CO2"] - business_case_ref[technology]["Captured CO2"]
+        df_c.loc[year, technology]["emissions"] = df_c.loc[year, technology]["emissions"] + emissions_difference
     return df_c
-
 
 def generate_emissions_dataframe(business_cases: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Creates the base of an emissions DataFrame based on S1 and S3 emissions.
@@ -297,7 +259,7 @@ def final_combined_emissions_formatting(combined_emissions_df: pd.DataFrame, as_
     )
     if as_ton:
         for col in ["s1_emissivity", "s2_emissivity", "s3_emissivity", "combined_emissivity"]:
-            df_c[col] = df_c[col] / TON_TO_KILOGRAM_FACTOR
+            df_c[col] = df_c[col]
     return df_c[new_col_order].reset_index()
 
 
@@ -331,17 +293,14 @@ def generate_emissions_flow(
         PKL_DATA_FORMATTED, "steel_plants_processed", "df"
     )
     steel_plant_country_codes = list(steel_plants["country_code"].unique())
-    emissions_df = business_cases_summary.copy()
-    emissions = generate_emissions_dataframe(
-        business_cases_summary)
+    emissions = generate_emissions_dataframe(business_cases_summary)
     emissions_s1_summary = emissions[emissions["scope"] == "S1"]
     s1_emissivity = (
         emissions_s1_summary[["technology", "year", "emissions"]]
         .groupby(by=["year", "technology"])
         .sum()
     )
-    em_exc_ref_dict = create_emissions_ref_dict(emissions_df, TECH_REFERENCE_LIST)
-    s1_emissivity = scope1_emissions_calculator(s1_emissivity, em_exc_ref_dict, TECH_REFERENCE_LIST)
+    s1_emissivity = scope1_emissions_calculator(s1_emissivity, business_case_ref)
     s3_emissivity = (
         emissions[emissions["scope"] == "S3"][["technology", "year", "emissions"]]
         .groupby(by=["year", "technology"])
@@ -354,7 +313,6 @@ def generate_emissions_flow(
     combined_emissivity = add_hydrogen_emissions_to_s3_column(combined_emissivity, h2_emissions_ref, business_case_ref, steel_plant_country_codes)
     combined_emissivity = final_combined_emissions_formatting(combined_emissivity, as_ton=True)
     if serialize:
-        serialize_file(em_exc_ref_dict, intermediate_path, "em_exc_ref_dict")
         serialize_file(s1_emissivity, intermediate_path, "calculated_s1_emissivity")
         serialize_file(s3_emissivity, intermediate_path, "calculated_s3_emissivity")
         serialize_file(s2_emissivity, intermediate_path, "calculated_s2_emissivity")

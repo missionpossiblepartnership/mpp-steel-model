@@ -50,7 +50,7 @@ if __name__ == "__main__":
             logger.info(f'INVALID SCENARIO INPUT: {args.choose_scenario}, please choose from {scenario_options}')
 
     if args.main_scenarios:
-        
+
         logger.info(f'Running {MAIN_SCENARIO_RUNS} scenario options')
         data_import_and_preprocessing_refresh()
         multiprocessing_scenarios(scenario_options=MAIN_SCENARIO_RUNS, func=scenario_batch_run)

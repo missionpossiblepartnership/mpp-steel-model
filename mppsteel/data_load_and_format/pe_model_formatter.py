@@ -8,6 +8,7 @@ from mppsteel.config.model_config import (
     GIGAJOULE_TO_MEGAJOULE_FACTOR,
     GIGATON_TO_MEGATON_FACTOR,
     MEGATON_TO_TON,
+    TON_TO_KILOGRAM_FACTOR,
     MEGAWATT_HOURS_TO_GIGAJOULES,
     MODEL_YEAR_RANGE,
     PKL_DATA_IMPORTS,
@@ -234,7 +235,7 @@ def subset_hydrogen(
     if price_per_gj:
         h2df_c['value'] = (h2df_c['value'] / HYDROGEN_ENERGY_DENSITY_MJ_PER_KG) * GIGAJOULE_TO_MEGAJOULE_FACTOR
     if emissions_per_gj:
-        h2df_c['value'] = (h2df_c['value'] / HYDROGEN_ENERGY_DENSITY_MJ_PER_KG) * GIGAJOULE_TO_MEGAJOULE_FACTOR
+        h2df_c['value'] = (h2df_c['value'] / HYDROGEN_ENERGY_DENSITY_MJ_PER_KG) * (GIGAJOULE_TO_MEGAJOULE_FACTOR / TON_TO_KILOGRAM_FACTOR)
     return h2df_c[['year', 'region', 'unit', 'value']].set_index(['year', 'region'])
 
 
@@ -394,14 +395,14 @@ def format_pe_data(scenario_dict: dict, serialize: bool = False, standarside_uni
     country_ref = read_pickle_folder(PKL_DATA_IMPORTS, 'country_ref', 'df')
 
     h2_prices_f = subset_hydrogen(h2_prices, scenario_dict, prices=True, price_per_gj=standarside_units) # from usd / kg to usd / gj
-    h2_emissions_f = subset_hydrogen(h2_emissions, scenario_dict, prices=False, emissions_per_gj=standarside_units) # from t / kg to t / t
+    h2_emissions_f = subset_hydrogen(h2_emissions, scenario_dict, prices=False, emissions_per_gj=standarside_units) # from kg / kg to t / gj
     power_grid_prices_f = subset_power(power_grid_prices, scenario_dict, per_gj=standarside_units) # from usd / mwh to usd / gj
     power_grid_emissions_f = subset_power(power_grid_emissions, scenario_dict, per_gj=standarside_units) # from tco2 / mwh to tco2 / gj
     bio_model_prices_f = subset_bio_prices(bio_model_prices, scenario_dict) # no conversion required
     bio_model_constraints_f = subset_bio_constraints(bio_model_constraints, as_gj=standarside_units) # ej to gj
-    ccus_model_transport_f = subset_ccus_transport(ccus_model_transport, scenario_dict, price_per_ton=standarside_units) # from USD/MtCo2 to USD/tCo2
+    ccus_model_transport_f = subset_ccus_transport(ccus_model_transport, scenario_dict, price_per_ton=standarside_units) # from USD/Mt to USD/t
     ccus_model_storage_f = subset_ccus_storage(ccus_model_storage, scenario_dict) # no conversion required
-    ccus_model_constraints_f = subset_ccus_constraint(ccus_model_constraints, scenario_dict, as_mt=True) # Gt to 
+    ccus_model_constraints_f = subset_ccus_constraint(ccus_model_constraints, scenario_dict, as_mt=True) # from Gt to Mt
 
     h2_prices_ref = model_reference_generator(h2_prices_f, country_ref, POWER_HYDROGEN_REGION_MAPPER_LIST, MODEL_YEAR_RANGE)
     h2_emissions_ref = model_reference_generator(h2_emissions_f, country_ref, HYDROGEN_EMISSIONS_MAPPER_LIST, MODEL_YEAR_RANGE)
@@ -411,7 +412,6 @@ def format_pe_data(scenario_dict: dict, serialize: bool = False, standarside_uni
     ccus_model_storage_ref = ccus_model_reference_generator(ccus_model_storage_f, country_ref)
     ccus_model_transport_ref = ccus_model_reference_generator(ccus_model_transport_f, country_ref)
     ccus_model_constraints_ref = model_reference_generator(ccus_model_constraints_f, country_ref, CCUS_CAPACITY_REGION_MAPPER, MODEL_YEAR_RANGE)
-
 
     data_dict = {
         "hydrogen_prices": h2_prices_f,

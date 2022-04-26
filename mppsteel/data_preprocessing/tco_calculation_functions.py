@@ -100,8 +100,8 @@ def get_opex_costs(
     opex_costs = opex_df.loc[year]
     carbon_tax_value = carbon_tax_timeseries.loc[year]["value"]
     s1_emissions_value = s1_emissions_ref.loc[year]
-    variable_costs = variable_costs_df.loc[country_code, year]
     s2_emissions_value = s2_emissions_ref.loc[year, country_code]
+    variable_costs = variable_costs_df.loc[country_code, year]
 
     carbon_tax_result = carbon_tax_estimate(
         s1_emissions_value, s2_emissions_value, carbon_tax_value

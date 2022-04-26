@@ -98,9 +98,8 @@ def modify_scope3_ef_1(
     scope3_df.reset_index(inplace=True)
     scope3_df = scope3_df.melt(id_vars=["Category", "Fuel", "Unit"], var_name="Year")
     def standardise_units(row):
-        return row.value * (MEGATON_TO_TON * TON_TO_KILOGRAM_FACTOR / PETAJOULE_TO_GIGAJOULE) if row.Fuel in {'Natural gas', 'Met coal', 'Thermal coal'} else row.value * TON_TO_KILOGRAM_FACTOR
-    scope3_df['value'] = scope3_df.apply(standardise_units, axis=1)
-    # standardise to kg per PJ or ton
+        return row.value * (MEGATON_TO_TON / PETAJOULE_TO_GIGAJOULE) if row.Fuel in {'Natural gas', 'Met coal', 'Thermal coal'} else row.value
+    scope3_df['value'] = scope3_df.apply(standardise_units, axis=1)  # to ton/GJ
     return scope3_df
 
 
