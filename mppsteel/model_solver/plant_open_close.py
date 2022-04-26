@@ -169,7 +169,7 @@ def return_plants_from_region(plant_df: pd.DataFrame, region: str):
 
 
 def add_new_plant_choices(tech_choices_container, year: int, plant: str, tech: str):
-    tech_choices_container.update_choices(year, plant, tech)
+    tech_choices_container.update_choice(year, plant, tech)
 
 
 def return_modified_plants(ocp_df: pd.DataFrame, year: int, change_type: str = 'open'):

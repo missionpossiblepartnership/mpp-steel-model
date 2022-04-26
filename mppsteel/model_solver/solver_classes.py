@@ -29,17 +29,23 @@ class PlantChoices:
     def __init__(self):
         self.choices = {}
         self.records = []
+        self.active_check = {}
 
     def initiate_container(self, year_range: range):
         for year in year_range:
             self.choices[year] = {}
-            
-    def update_choices(self, year: int, plant: str, tech: str):
+            self.active_check[year] = {}
+
+    def update_choice(self, year: int, plant: str, tech: str):
         self.choices[year][plant] = tech
+        if tech != 'Close plant':
+            self.active_check[year][plant] = True
+        if tech == 'Close plant':
+            self.active_check[year][plant] = False
 
     def remove_choice(self, year: int, plant: str):
         del self[year][plant]
-            
+
     def update_records(self, df_entry: pd.DataFrame):
         self.records.append(df_entry)
 
@@ -102,7 +108,7 @@ class MaterialUsage:
                 pct_used = 100
                 pct_remaining = 0
             logger.info(f"""{model_type.upper()} USAGE SUMMARY {year}  -> Constraint: {constraint :0.4f} | Usage: {usage :0.4f} ({pct_used :0.1f}%) | Balance: {balance :0.4f} ({pct_remaining :0.1f}%)""")
-    
+
     def output_constraints_summary(self, year_range: range):
         results = []
         for year, model_type in itertools.product(year_range, self.resources):
@@ -143,7 +149,6 @@ class CapacityContainerClass():
         plant_capacity_dict, regional_capacity_dict = create_annual_capacity_dict(plant_df, as_mt=True)
         self.plant_capacities[year] = plant_capacity_dict
         self.regional_capacities_agg[year] = regional_capacity_dict
-        
 
     def set_average_plant_capacity(self, original_plant_df: pd.DataFrame):
         self.average_plant_capacity = create_average_plant_capacity(original_plant_df, as_mt=True)

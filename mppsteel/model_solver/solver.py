@@ -196,6 +196,25 @@ def return_best_tech(
     return best_choice
 
 
+def active_check_results(steel_plant_df: pd.DataFrame, year_range: range):
+
+    def final_active_checker(row, year):
+        if year < row.start_of_operation:
+            return False
+        if row.end_of_operation:
+            if year >= row.end_of_operation:
+                return False
+        return True
+
+    active_check = {}
+    for row in steel_plant_df.itertuples():
+        active_check[row.plant_name] = {}
+        for year in year_range:
+            active_check[row.plant_name][year] = final_active_checker(row, year)
+    
+    return active_check
+
+
 def choose_technology(
     scenario_dict: dict
 ) -> dict:
@@ -316,14 +335,14 @@ def choose_technology(
         if year == 2020:
             logger.info(f'Loading initial technology choices for {year}')
             for row in active_plant_df.itertuples():
-                PlantChoiceContainer.update_choices(year, row.plant_name, row.initial_technology)
+                PlantChoiceContainer.update_choice(year, row.plant_name, row.initial_technology)
             UtilizationContainer.assign_year_utilization(2020, wsa_dict)
 
         # Exceptions for plants in plants database that are scheduled to open by 2023, to have their prior technology as their previous choice
         if year in list(range(2020, 2023)):
             for row in inactive_year_start_df.itertuples():
                 if row.start_of_operation == year + 1:
-                    PlantChoiceContainer.update_choices(year, row.plant_name, row.initial_technology)
+                    PlantChoiceContainer.update_choice(year, row.plant_name, row.initial_technology)
 
         all_active_plant_names = active_plant_df["plant_name"].copy()
         plant_to_region_mapper = dict(zip(all_active_plant_names, active_plant_df[MAIN_REGIONAL_SCHEMA]))
@@ -350,7 +369,7 @@ def choose_technology(
                 current_tech = row.initial_technology
             else:
                 current_tech = PlantChoiceContainer.get_choice(year - 1, plant_name)
-            PlantChoiceContainer.update_choices(year, plant_name, current_tech)
+            PlantChoiceContainer.update_choice(year, plant_name, current_tech)
             
             entry = {
                 'year': year,
@@ -388,7 +407,7 @@ def choose_technology(
                 'switch_type': 'Secondary capacity is always EAF'
             }
             PlantChoiceContainer.update_records(entry)
-            PlantChoiceContainer.update_choices(year, plant_name, 'EAF')
+            PlantChoiceContainer.update_choice(year, plant_name, 'EAF')
 
         for resource in RESOURCE_CONTAINER_REF:
             current_usage = return_current_usage(
@@ -454,14 +473,14 @@ def choose_technology(
             # CASE 1: CLOSE PLANT
             if current_tech == "Close plant":
                 
-                PlantChoiceContainer.update_choices(year, plant_name, "Close plant") 
+                PlantChoiceContainer.update_choice(year, plant_name, "Close plant") 
                 entry['switch_tech'] = "Close plant"
                 entry['switch_type'] = 'Plant was already closed'
 
             # CASE 2: SWITCH TECH
             else:
                 switch_type = PlantInvestmentCycleContainer.return_plant_switch_type(plant_name, year)
-                
+
                 # CASE 2-A: MAIN CYCLE
                 if switch_type == "main cycle":
                     best_choice_tech = return_best_tech(
@@ -485,8 +504,8 @@ def choose_technology(
                         entry['switch_type'] = 'No change in main investment cycle year'
                     else:
                         entry['switch_type'] = 'Regular change in investment cycle year'
-                    PlantChoiceContainer.update_choices(year, plant_name, best_choice_tech)
-                
+                    PlantChoiceContainer.update_choice(year, plant_name, best_choice_tech)
+
                 # CASE 2-B: TRANSITIONARY SWITCH
                 if switch_type == "trans switch":
                     best_choice_tech = return_best_tech(
@@ -511,7 +530,7 @@ def choose_technology(
                         PlantInvestmentCycleContainer.adjust_cycle_for_transitional_switch(plant_name, year)
                     else:
                         entry['switch_type'] = 'No change during off-cycle investment year'
-                    PlantChoiceContainer.update_choices(year, plant_name, best_choice_tech)
+                    PlantChoiceContainer.update_choice(year, plant_name, best_choice_tech)
 
                 entry['switch_tech'] = best_choice_tech
 
@@ -520,6 +539,7 @@ def choose_technology(
         MaterialUsageContainer.print_year_summary(year)
 
     final_steel_plant_df = year_start_df.copy()
+    active_check_results_dict = active_check_results(final_steel_plant_df, MODEL_YEAR_RANGE)
     trade_summary_results = market_container.output_trade_summary_to_df()
     full_trade_calculations = market_container.output_trade_calculations_to_df()
     material_usage_results = MaterialUsageContainer.output_results_to_df()
@@ -537,6 +557,7 @@ def choose_technology(
         'tech_choice_dict': tech_choice_dict,
         'tech_choice_records': tech_choice_records,
         'plant_result_df': final_steel_plant_df,
+        'active_check_results_dict': active_check_results_dict,
         'investment_cycle_ref_result': investment_df,
         'investment_dict_result': investment_dict,
         'plant_cycle_length_mapper_result': plant_cycle_length_mapper,
@@ -571,6 +592,7 @@ def solver_flow(scenario_dict: dict, serialize: bool = False) -> dict:
         serialize_file(results_dict['tech_choice_dict'], intermediate_path, "tech_choice_dict")
         serialize_file(results_dict['tech_choice_records'], intermediate_path, "tech_choice_records")
         serialize_file(results_dict['plant_result_df'], intermediate_path, "plant_result_df")
+        serialize_file(results_dict['active_check_results_dict'], intermediate_path, "active_check_results_dict")
         serialize_file(results_dict['investment_cycle_ref_result'], intermediate_path, "investment_cycle_ref_result")
         serialize_file(results_dict['investment_dict_result'], intermediate_path, "investment_dict_result")
         serialize_file(results_dict['plant_cycle_length_mapper_result'], intermediate_path, "plant_cycle_length_mapper_result")
