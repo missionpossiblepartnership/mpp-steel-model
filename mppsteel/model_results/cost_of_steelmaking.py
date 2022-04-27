@@ -4,7 +4,6 @@ import numpy_financial as npf
 
 from tqdm import tqdm
 
-from mppsteel.data_preprocessing.levelized_cost import calculate_cc
 from mppsteel.model_results.investments import get_investment_capital_costs
 from mppsteel.model_solver.solver import active_check_results
 from mppsteel.utility.function_timer_utility import timer_func
@@ -14,6 +13,7 @@ from mppsteel.utility.file_handling_utility import (
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.config.model_config import (
     MODEL_YEAR_RANGE,
+    MODEL_YEAR_END,
     PKL_DATA_FORMATTED,
     DISCOUNT_RATE,
     INVESTMENT_CYCLE_DURATION_YEARS,
@@ -58,6 +58,32 @@ def extract_dict_values(
             ]
         )
     return sum([main_dict[key] for key in main_dict])
+
+
+def calculate_cc(
+    capex_ref: dict,
+    year: int,
+    year_span: range,
+    technology: str,
+    discount_rate: float,
+) -> float:
+    """Calculates the capital charges from a capex DataFrame reference and inputted function arguments.
+
+    Args:
+        capex_dict (dict): A dictionary containing the Capex values for Greenfield, Brownfield and Other Opex values.
+        year (int): The year you want to calculate the capital charge for.
+        year_span (range): The year span for the capital charge values (used in the PV calculation).
+        technology (str): The technology you want to calculate the capital charge for.
+        discount_rate (float): The discount rate to apply to the capital charge amounts.
+        cost_type (str): The cost you want to calculate `brownfield` or `greenfield`.
+
+    Returns:
+        float: The capital charge value.
+    """
+    year_range = range(year, year + year_span)
+    year_range = [year if (year <= MODEL_YEAR_END) else min(MODEL_YEAR_END, year) for year in year_range]
+    value_arr = [capex_ref[(year, technology)] for year in year_range]
+    return npf.npv(discount_rate, value_arr)
 
 
 def apply_cos(

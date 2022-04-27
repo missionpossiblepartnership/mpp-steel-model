@@ -408,7 +408,7 @@ def create_cot_graph(production_resource_usage: pd.DataFrame, resource_type: str
 
 
 def create_lcost_graph(lcost_df: pd.DataFrame, chosen_year: int, filepath: str = None) -> px.bar:
-    """Creates a bar graph for the Levelised Cost.
+    """Creates a bar graph for the Levelized Cost.
 
     Args:
         chosen_year (int): The year you want to set the Lcost values in the graph.
@@ -417,8 +417,8 @@ def create_lcost_graph(lcost_df: pd.DataFrame, chosen_year: int, filepath: str =
     Returns:
         px.bar: A plotly express bar graph.
     """
-    filename = "levelised_cost"
-    logger.info(f"Levelised Cost Output: {filename}")
+    filename = "levelized_cost"
+    logger.info(f"Levelized Cost Output: {filename}")
     if filepath:
         filename = f"{filepath}/{filename}"
     return lcost_graph(lcost_df, chosen_year=chosen_year, save_filepath=filename)

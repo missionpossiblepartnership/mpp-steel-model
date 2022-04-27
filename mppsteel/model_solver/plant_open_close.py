@@ -86,11 +86,11 @@ def get_min_cost_tech_for_region(
         )
         lcost_df_c = lcost_df_c[lcost_df_c.index.isin(potential_technologies)]
 
-    return lcost_df_c['levelised_cost'].idxmin()
+    return lcost_df_c['levelized_cost'].idxmin()
 
 def get_min_cost_region(lcost_df: pd.DataFrame, year: int):
     lcost_df_c = lcost_df.loc[year].groupby('region').mean().copy()
-    return lcost_df_c['levelised_cost'].idxmin()
+    return lcost_df_c['levelized_cost'].idxmin()
 
 
 def current_plant_year(investment_dict: pd.DataFrame, plant: str, current_year: int, cycle_length: int = 20):
@@ -353,8 +353,8 @@ def open_close_plants(
 
     regions = list(production_demand_gap_analysis.keys())
     random.shuffle(regions)
-    levelised_cost_for_regions = lev_cost_df.set_index(['year', 'region']).sort_index(ascending=True).copy()
-    levelised_cost_for_tech = lev_cost_df.set_index(['year', 'region', 'technology']).sort_index(ascending=True).copy()
+    levelized_cost_for_regions = lev_cost_df.set_index(['year', 'region']).sort_index(ascending=True).copy()
+    levelized_cost_for_tech = lev_cost_df.set_index(['year', 'region', 'technology']).sort_index(ascending=True).copy()
 
     # REGION LOOP
     for region in regions:
@@ -368,7 +368,7 @@ def open_close_plants(
                 new_plant_meta = new_plant_metadata(
                     plant_id_container,
                     production_demand_gap_analysis,
-                    levelised_cost_for_regions,
+                    levelized_cost_for_regions,
                     prior_active_plants,
                     ng_mapper,
                     year=year,
@@ -378,7 +378,7 @@ def open_close_plants(
                 new_plant_name = new_plant_meta['plant_name']
                 dict_entry = create_new_plant(new_plant_meta, steel_plant_cols)
                 xcost_tech = get_min_cost_tech_for_region(
-                    levelised_cost_for_tech,
+                    levelized_cost_for_tech,
                     business_case_ref,
                     capacity_container.return_plant_capacity(year=year),
                     tech_availability,

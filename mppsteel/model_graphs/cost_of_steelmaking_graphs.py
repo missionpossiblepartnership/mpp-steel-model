@@ -1,4 +1,4 @@
-"""Graph for Levelised Cost"""
+"""Graph for Levelized Cost"""
 from typing import Union
 
 import pandas as pd
@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 def get_lcost_lowest_vals(
     df: pd.DataFrame, chosen_year: int, value_col: str
 ) -> Union[pd.DataFrame, dict]:
-    """Gets the lowest regional Levelised Cost values for a specified year.
+    """Gets the lowest regional Levelized Cost values for a specified year.
 
     Args:
         df (pd.DataFrame): The DataFrame containing the LCOS.
@@ -27,7 +27,7 @@ def get_lcost_lowest_vals(
     tech_delta_dict = {}
     tech_list = []
     df_c = df.copy()
-    df_c.rename(mapper={"levelised_cost": value_col}, axis=1, inplace=True)
+    df_c.rename(mapper={"levelized_cost": value_col}, axis=1, inplace=True)
     df_s = df_c.set_index(["year", "technology", "country_code"]).loc[chosen_year]
     for technology in TECH_REFERENCE_LIST:
         df_t = df_s.loc[technology]
@@ -69,7 +69,7 @@ def lcost_graph(
     lcost_data: pd.DataFrame, chosen_year: int = 2030, 
     save_filepath: str = None, ext: str = "png"
 ) -> px.bar:
-    """Creates a bar graph for the Levelised Cost.
+    """Creates a bar graph for the Levelized Cost.
 
     Args:
         chosen_year (int, optional): The year you want to calculate the Lcost for. Defaults to 2030.
@@ -92,8 +92,8 @@ def lcost_graph(
         color="cost_type",
         color_discrete_map=bar_chart_order,
         xaxis_title="Technology",
-        yaxis_title="Levelised Cost [$/tCS]",
-        title_text=f"Levelised cost by end-state compatible technology in {chosen_year}",
+        yaxis_title="Levelized Cost [$/tCS]",
+        title_text=f"Levelized cost by end-state compatible technology in {chosen_year}",
     )
 
     if save_filepath:

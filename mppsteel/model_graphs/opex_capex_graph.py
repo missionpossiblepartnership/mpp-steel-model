@@ -104,7 +104,7 @@ def add_capex_values(vdf: pd.DataFrame, co_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def get_country_deltas(df: pd.DataFrame) -> Union[pd.DataFrame, dict]:
-    """Gets the lowest regional Levelised Cost of Steelmaking values.
+    """Gets the lowest regional Levelized Cost of Steelmaking values.
 
     Args:
         df (pd.DataFrame): The DataFrame containing the costs.
