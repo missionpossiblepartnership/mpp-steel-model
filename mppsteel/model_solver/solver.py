@@ -42,7 +42,7 @@ from mppsteel.model_solver.solver_constraints import (
 )
 from mppsteel.data_load_and_format.steel_plant_formatter import create_active_check_col
 from mppsteel.model_solver.tco_and_abatement_optimizer import (
-    get_best_choice, subset_presolver_df, add_gf_capex_values_to_tco
+    get_best_choice, subset_presolver_df
 )
 from mppsteel.model_solver.solver_classes import (
     CapacityContainerClass, UtilizationContainerClass,
@@ -166,7 +166,7 @@ def return_best_tech(
     if transitional_switch_only:
         cycle_length = investment_container.return_cycle_lengths(plant_name)
         # Adjust tco values based on transistional switch years
-        tco_ref_data['tco'] = tco_ref_data['tco'] * cycle_length / (
+        tco_ref_data['tco_gf_capex'] = tco_ref_data['tco_gf_capex'] * cycle_length / (
             cycle_length - (INVESTMENT_OFFCYCLE_BUFFER_TOP + INVESTMENT_OFFCYCLE_BUFFER_TAIL))
 
     if enforce_constraints:
@@ -297,12 +297,7 @@ def choose_technology(
     tco_summary_data = read_pickle_folder(
         intermediate_path, "tco_summary_data", "df"
     )
-    greenfield_switching_df = read_pickle_folder(
-        PKL_DATA_FORMATTED, "greenfield_switching_df", "df"
-    )
     tco_slim = subset_presolver_df(tco_summary_data, subset_type='tco_summary')
-    tco_slim = add_gf_capex_values_to_tco(tco_slim, greenfield_switching_df)
-
     levelized_cost = read_pickle_folder(intermediate_path, "levelized_cost", "df")
     levelized_cost["region"] = levelized_cost["country_code"].apply(lambda x: rmi_mapper[x])
     steel_plant_abatement_switches = read_pickle_folder(

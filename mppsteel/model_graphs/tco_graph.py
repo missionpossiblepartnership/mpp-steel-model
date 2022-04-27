@@ -13,11 +13,11 @@ def generate_tco_charts (
     df: pd.DataFrame, year: int = None, region: str = None, 
     tech: str=None, save_filepath: str = None, ext: str = "png"
     ):
-
+    cost_value_metric = "tco_regular_capex"
     df_c = df.copy()
     df_c = df_c.groupby(
         ['region','year','start_technology','end_technology'], 
-        as_index=False).agg({"tco": 'mean'}).round(2)
+        as_index=False).agg({cost_value_metric: 'mean'}).round(2)
     df_c.reset_index(drop=True, inplace=True)
     sorterIndex = dict(zip(GRAPH_COL_ORDER, range(len(GRAPH_COL_ORDER))))
     df_c = df_c.loc[(df_c['year'] == year) & (df_c['start_technology'] == tech)]
@@ -30,7 +30,7 @@ def generate_tco_charts (
     else:
         df_c = df_c.groupby(
         ['year','start_technology','end_technology'], 
-        as_index=False).agg({"tco": 'mean'}).round(2)
+        as_index=False).agg({cost_value_metric: 'mean'}).round(2)
         text = f'Global; TCO in {year}, switching from {tech} to...'
 
     df_c['switch_tech_rank'] = df_c['end_technology'].map(sorterIndex)
@@ -42,11 +42,11 @@ def generate_tco_charts (
     fig_ = px.bar(
         df_c,
         x='end_technology',
-        y='tco',
+        y=cost_value_metric,
         color= 'end_technology',
         color_discrete_map=color_map,
         text_auto='.2f',
-        labels={'tco': '[$/t steel]'},
+        labels={cost_value_metric: '[$/t steel]'},
         title= text
     )
 

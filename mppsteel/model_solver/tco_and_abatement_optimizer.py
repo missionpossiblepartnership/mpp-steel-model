@@ -4,7 +4,6 @@ import random
 
 import pandas as pd
 import numpy as np
-from tqdm.auto import tqdm as tqdma
 
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.utils import create_bin_rank_dict, return_bin_rank
@@ -194,7 +193,7 @@ def get_best_choice(
     Returns:
         str: The best technology choice for a given year.
     """
-    cost_value_col = 'gf_capex_switch_value' if transitional_switch_only else 'tco'
+    cost_value_col = 'tco_gf_capex' if transitional_switch_only else 'tco_regular_capex'
     # Scaling algorithm
     if solver_logic in {"scaled", "scaled_bins"}:
         # Calculate minimum scaled values
@@ -215,7 +214,7 @@ def get_best_choice(
         tco_values_scaled = tco_values.copy()
 
         if solver_logic == 'scaled':
-            tco_values_scaled["tco_scaled"] = scale_data(tco_values_scaled["tco"])
+            tco_values_scaled["tco_scaled"] = scale_data(tco_values_scaled[cost_value_col])
             tco_values_scaled.drop(columns=tco_values_scaled.columns.difference(["tco_scaled"]), axis=1, inplace=True)
             abatement_values_scaled = abatement_values.copy()
             abatement_values_scaled["abatement_scaled"] = scale_data(
@@ -226,8 +225,8 @@ def get_best_choice(
             )
 
         elif solver_logic == 'scaled_bins':
-            binned_rank_dict = create_bin_rank_dict(tco_values_scaled['tco'], len(technology_list))
-            tco_values_scaled["tco_scaled"] = tco_values_scaled['tco'].apply(
+            binned_rank_dict = create_bin_rank_dict(tco_values_scaled[cost_value_col], len(technology_list))
+            tco_values_scaled["tco_scaled"] = tco_values_scaled[cost_value_col].apply(
                 lambda x: return_bin_rank(x, bin_dict=binned_rank_dict))
             tco_values_scaled.drop(columns=tco_values_scaled.columns.difference(["tco_scaled"]), axis=1, inplace=True)
             abatement_values_scaled = abatement_values.copy()
@@ -315,7 +314,8 @@ def subset_presolver_df(df: pd.DataFrame, subset_type: str = False):
         "base_tech",
         "switch_tech",
         "country_code",
-        "tco",
+        "tco_regular_capex",
+        "tco_gf_capex",
         "capex_value",
     ]
     emissions_cols = [
@@ -327,7 +327,7 @@ def subset_presolver_df(df: pd.DataFrame, subset_type: str = False):
     ]
     index_cols = ["year", "country_code", "base_tech"]
     if subset_type == 'tco_summary':
-        df_c = change_cols_to_numeric(df_c, ['tco', 'capex_value'])
+        df_c = change_cols_to_numeric(df_c, ['tco_regular_capex', 'tco_gf_capex', 'capex_value'])
         df_c.rename({'start_technology': 'base_tech', 'end_technology': 'switch_tech'}, axis=1, inplace=True)
         df_c = df_c[tco_cols].set_index(index_cols)
         return df_c.sort_index(ascending=True)
@@ -335,14 +335,3 @@ def subset_presolver_df(df: pd.DataFrame, subset_type: str = False):
         df_c = change_cols_to_numeric(df_c, ['abated_combined_emissivity'])
         df_c = df_c[emissions_cols].set_index(index_cols)
         return df_c.sort_index(ascending=True)
-
-def add_gf_capex_values_to_tco(tco_df: pd.DataFrame, gf_df: pd.DataFrame):
-
-    def gf_value_mapper(row, gf_dict: dict):
-        return gf_dict[(row.year, row.base_tech, row.switch_tech)]
-    gf_dict = gf_df.to_dict()['switch_value']
-    df_c = tco_df.reset_index().copy()
-    tqdma.pandas(desc="Applying Greenfield Capex Values to TCO")
-    df_c['gf_capex_switch_value'] = df_c.progress_apply(
-        gf_value_mapper, gf_dict=gf_dict, axis=1)
-    return df_c.set_index(["year", "country_code", "base_tech"])

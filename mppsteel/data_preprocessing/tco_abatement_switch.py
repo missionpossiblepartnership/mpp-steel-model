@@ -2,7 +2,7 @@
 
 import itertools
 from functools import lru_cache
-
+from tqdm.auto import tqdm as tqdma
 import pandas as pd
 
 from tqdm import tqdm
@@ -205,11 +205,24 @@ def emissivity_abatement(combined_emissivity: pd.DataFrame, scope: str) -> pd.Da
             df_list.append(entry)
     return pd.DataFrame(df_list)
 
+def add_gf_capex_values_to_tco_ref(tco_ref_df: pd.DataFrame, gf_df: pd.DataFrame):
+
+    def gf_value_mapper(row, gf_dict: dict):
+        return gf_dict[(row.year, row.start_technology, row.end_technology)]
+
+    gf_dict = gf_df.to_dict()['switch_value']
+    df_c = tco_ref_df.copy()
+    tqdma.pandas(desc="Applying Greenfield Capex Values to TCO")
+    df_c['gf_capex_switch_value'] = df_c.progress_apply(
+        gf_value_mapper, gf_dict=gf_dict, axis=1)
+    return df_c
+
 
 def tco_calculator(tco_ref_df: pd.DataFrame):
     rmi_mapper = create_country_mapper('rmi')
     df = tco_ref_df.copy()
-    df["tco"] = (df["discounted_opex"] + df["capex_value"]) / INVESTMENT_CYCLE_DURATION_YEARS
+    df["tco_regular_capex"] = (df["discounted_opex"] + df["capex_value"]) / INVESTMENT_CYCLE_DURATION_YEARS
+    df["tco_gf_capex"] = (df["discounted_opex"] + df["gf_capex_switch_value"]) / INVESTMENT_CYCLE_DURATION_YEARS
     df['region'] = df['country_code'].apply(lambda x: rmi_mapper[x])
     return df
 
@@ -229,7 +242,9 @@ def tco_presolver_reference(scenario_dict: dict, serialize: bool = False) -> pd.
     """
     logger.info("Running TCO Reference Sheet")
     intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
+    greenfield_switching_df = read_pickle_folder(PKL_DATA_FORMATTED, "greenfield_switching_df", "df")
     opex_capex_reference_data = tco_regions_ref_generator(scenario_dict)
+    opex_capex_reference_data = add_gf_capex_values_to_tco_ref(opex_capex_reference_data, greenfield_switching_df)
     tco_summary = tco_calculator(opex_capex_reference_data)
     if serialize:
         logger.info("-- Serializing dataframe")
