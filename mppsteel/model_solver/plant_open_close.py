@@ -60,6 +60,7 @@ def create_new_plant(plant_row_dict: dict, plant_columns: list):
 def get_min_cost_tech_for_region(
     lcost_df: pd.DataFrame,
     business_case_ref: dict,
+    plant_capacities_dict: dict,
     tech_availability: pd.DataFrame,
     material_container: MaterialUsage,
     tech_moratorium: bool,
@@ -73,13 +74,14 @@ def get_min_cost_tech_for_region(
 
     if enforce_constraints:
         potential_technologies = apply_constraints_for_min_cost_tech(
-            business_case_ref, 
-            tech_availability, 
-            material_container, 
-            TECH_REFERENCE_LIST, 
+            business_case_ref,
+            plant_capacities_dict,
+            tech_availability,
+            material_container,
+            TECH_REFERENCE_LIST,
             plant_capacity,
-            tech_moratorium, 
-            year, 
+            tech_moratorium,
+            year,
             plant_name
         )
         lcost_df_c = lcost_df_c[lcost_df_c.index.isin(potential_technologies)]
@@ -378,6 +380,7 @@ def open_close_plants(
                 xcost_tech = get_min_cost_tech_for_region(
                     levelised_cost_for_tech,
                     business_case_ref,
+                    capacity_container.return_plant_capacity(year=year),
                     tech_availability,
                     material_container,
                     tech_moratorium,

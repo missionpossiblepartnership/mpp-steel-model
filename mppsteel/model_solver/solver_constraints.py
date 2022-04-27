@@ -1,5 +1,6 @@
 """Script with functions for implementing solver constraints."""
 
+import itertools
 import pandas as pd
 
 from mppsteel.config.model_config import (
@@ -117,22 +118,25 @@ def create_scrap_constraints(model: pd.DataFrame, world: bool = True): # Mt Scra
 
 def return_projected_usage(
     plant_name: str, technology: str, capacities_dict: dict,
-    business_case_ref: dict, materials: list
+    business_case_ref: dict, materials: list, capacity_value: float = None,
 ):
+    # Mt or Gj
+    capacity_value_final = capacity_value if capacity_value else capacities_dict[plant_name]
     return sum([
-        business_case_ref[(technology, material)] * (capacities_dict[plant_name] * CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION) for material in materials 
+        business_case_ref[(technology, material)] * (capacity_value_final * CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION) for material in materials 
     ])
 
 
 def return_current_usage(
     plant_list: list, technology_choices: dict, capacities_dict: dict,
     utilization_dict: dict, plant_region_dict: dict,
-    business_case_ref: dict, materials: list,
+    business_case_ref: dict, materials: list, 
 ):
-
     usage_sum = []
-    for material in materials:
-        agg = sum([
-            business_case_ref[(technology_choices[plant_name], material)] * (capacities_dict[plant_name] * utilization_dict[plant_region_dict[plant_name]] )  for plant_name in plant_list ])
-        usage_sum.append(agg)
+    for material, plant_name in list(itertools.product(materials, plant_list)):
+        capacity = capacities_dict[plant_name]
+        consumption_rate = business_case_ref[(technology_choices[plant_name], material)]
+        # utilization = utilization_dict[plant_region_dict[plant_name]]
+        utilization = CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION
+        usage_sum.append(consumption_rate * (capacity * utilization))
     return sum(usage_sum)

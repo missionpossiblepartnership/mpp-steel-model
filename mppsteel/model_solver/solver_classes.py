@@ -128,17 +128,24 @@ class MaterialUsage:
     def output_results_to_df(self):
         return pd.DataFrame(self.results)
 
-    def constraint_transaction(self, year: int, model_type: str, amount: float, override_constraint: bool = False):
+    def constraint_transaction(
+        self, 
+        year: int, 
+        model_type: str, 
+        amount: float, 
+        override_constraint: bool = False,
+        apply_transaction: bool = True,
+    ):
         if amount == 0:
             return True
         current_balance = self.balance[year][model_type]
         current_usage = self.usage[year][model_type]
         if (current_balance < amount) and not override_constraint:
             return False
-        self.balance[year][model_type] = current_balance - amount
-        self.usage[year][model_type] = current_usage + amount
+        if apply_transaction:
+            self.balance[year][model_type] = current_balance - amount
+            self.usage[year][model_type] = current_usage + amount
         return True
-
 class CapacityContainerClass():
     def __init__(self):
         self.plant_capacities = {}
@@ -289,6 +296,36 @@ class MarketContainerClass:
     def output_trade_calculations_to_df(self):
         return pd.concat(self.market_results.values(), axis=1)
 
+def create_material_usage_dict(
+    material_usage_dict_container: dict,
+    plant_capacities: dict,
+    business_case_ref: dict,
+    plant_name: str,
+    year: int,
+    switch_technology: str,
+    capacity_value: float = None,
+    override_constraint: bool = False,
+    apply_transaction: bool = False
+):
+    material_check_container = {}
+    for resource in RESOURCE_CONTAINER_REF:
+        projected_usage = return_projected_usage(
+            plant_name,
+            switch_technology,
+            plant_capacities,
+            business_case_ref,
+            RESOURCE_CONTAINER_REF[resource],
+            capacity_value=capacity_value
+        )
+
+        material_check_container[resource] = material_usage_dict_container.constraint_transaction(
+            year,
+            resource,
+            projected_usage,
+            override_constraint=override_constraint,
+            apply_transaction=apply_transaction,
+        )
+    return material_check_container
 
 def apply_constraints(
     business_case_ref: dict,
@@ -297,27 +334,23 @@ def apply_constraints(
     combined_available_list: list,
     year: int,
     plant_name: str,
-    base_tech: str
+    base_tech: str,
+    override_constraint: bool,
+    apply_transaction: bool,
 ):
     # Constraints checks
     new_availability_list = []
     for switch_technology in combined_available_list:
-        material_check_container = {}
-        for resource in RESOURCE_CONTAINER_REF:
-            projected_usage = return_projected_usage(
-                plant_name,
-                switch_technology,
-                plant_capacities,
-                business_case_ref,
-                RESOURCE_CONTAINER_REF[resource]
-            )
-
-            material_check_container[resource] = material_usage_dict_container.constraint_transaction(
-                year,
-                resource,
-                projected_usage,
-                override_constraint=False
-            )
+        material_check_container = create_material_usage_dict(
+            material_usage_dict_container,
+            plant_capacities,
+            business_case_ref,
+            plant_name,
+            year,
+            switch_technology,
+            override_constraint=override_constraint,
+            apply_transaction=apply_transaction
+        )
         if all(material_check_container.values()):
             new_availability_list.append(switch_technology)
         failure_resources = [resource for resource in material_check_container if not material_check_container[resource]]
@@ -339,6 +372,7 @@ def apply_constraints(
 
 def apply_constraints_for_min_cost_tech(
     business_case_ref: dict,
+    plant_capacities_dict: dict,
     tech_availability: pd.DataFrame,
     material_usage_dict_container: MaterialUsage,
     combined_available_list: list,
@@ -355,16 +389,18 @@ def apply_constraints_for_min_cost_tech(
         )
     ]
     for technology in combined_available_list:
-        material_check_container = {}
-        for resource in RESOURCE_CONTAINER_REF:
-            projected_usage = sum([
-                business_case_ref[(technology, material)] * plant_capacity for material in RESOURCE_CONTAINER_REF[resource]] )
-            material_check_container[resource] = material_usage_dict_container.constraint_transaction(
-                year,
-                resource,
-                projected_usage,
-                override_constraint=False
-            )
+        material_check_container = create_material_usage_dict(
+            material_usage_dict_container,
+            plant_capacities_dict,
+            business_case_ref,
+            plant_name,
+            year,
+            technology,
+            plant_capacity,
+            override_constraint=False,
+            apply_transaction=False,
+        )
+
         if all(material_check_container.values()):
             new_availability_list.append(technology)
 

@@ -44,7 +44,7 @@ from mppsteel.data_load_and_format.steel_plant_formatter import create_active_ch
 from mppsteel.model_solver.tco_and_abatement_optimizer import get_best_choice, subset_presolver_df
 from mppsteel.model_solver.solver_classes import (
     CapacityContainerClass, UtilizationContainerClass,
-    PlantChoices, MarketContainerClass, MaterialUsage,
+    PlantChoices, MarketContainerClass, MaterialUsage, create_material_usage_dict,
     create_wsa_2020_utilization_dict, apply_constraints
 )
 from mppsteel.model_solver.plant_open_close import (
@@ -175,7 +175,9 @@ def return_best_tech(
             combined_available_list,
             year,
             plant_name,
-            base_tech,   
+            base_tech,
+            override_constraint=False,
+            apply_transaction=False
         )
 
     best_choice = get_best_choice(
@@ -191,6 +193,18 @@ def return_best_tech(
 
     if not isinstance(best_choice, str):
         raise ValueError(f'Issue with get_best_choice function returning a nan: {plant_name} | {year} | {base_tech} | {combined_available_list}')
+
+    if enforce_constraints:
+        material_usage_dict = create_material_usage_dict(
+            material_usage_dict_container,
+            plant_capacities,
+            business_case_ref,
+            plant_name,
+            year,
+            best_choice,
+            override_constraint=False,
+            apply_transaction=True
+        )
 
     return best_choice
 
@@ -382,20 +396,22 @@ def choose_technology(
                 'switch_type': 'not a switch year'
             }
             PlantChoiceContainer.update_records(entry)
-        current_utilization = UtilizationContainer.get_utilization_values(year)
+        prior_year_utilization = UtilizationContainer.get_utilization_values(year) if year == 2020 else UtilizationContainer.get_utilization_values(year-1)
 
         for resource in RESOURCE_CONTAINER_REF:
             current_usage = return_current_usage(
-                non_switchers_df["plant_name"].unique(),
+                non_switchers,
                 PlantChoiceContainer.return_choices(year),
                 plant_capacities_dict,
-                current_utilization,
+                prior_year_utilization,
                 plant_to_region_mapper,
                 business_case_ref,
                 RESOURCE_CONTAINER_REF[resource],
             )
+            if resource == 'scrap':
+                logger.info(f'Scrap usage | Non-Switchers: {current_usage: 0.2f} | Count: {len(non_switchers)}')
             MaterialUsageContainer.constraint_transaction(
-                year, resource, current_usage, override_constraint=True)
+                year, resource, current_usage, override_constraint=True, apply_transaction=True)
 
         # check resource allocation for EAF secondary capacity
         secondary_eaf_switchers = switchers_df[switchers_df['primary_capacity'] == 'N'].copy()
@@ -417,13 +433,17 @@ def choose_technology(
                 secondary_eaf_switchers_plants,
                 PlantChoiceContainer.return_choices(year),
                 plant_capacities_dict,
-                current_utilization,
+                prior_year_utilization,
                 plant_to_region_mapper,
                 business_case_ref,
                 RESOURCE_CONTAINER_REF[resource],
             )
+            if resource == 'scrap':
+                logger.info(f'Scrap usage | Switchers - Secondary EAF: {current_usage: 0.2f} | Count: {len(secondary_eaf_switchers_plants)}')
             MaterialUsageContainer.constraint_transaction(
-                year, resource, current_usage, override_constraint=True)
+                year, resource, current_usage, override_constraint=True, apply_transaction=True)
+        
+        logger.info(f"Scrap usage | Amount remaining for switchers/new plants: {MaterialUsageContainer.get_current_balance(year, 'scrap'): 0.2f}")
 
         # Run open/close capacity
         capacity_adjusted_df = open_close_flow(
