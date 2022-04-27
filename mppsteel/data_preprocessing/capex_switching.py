@@ -13,6 +13,7 @@ from mppsteel.utility.file_handling_utility import (
 from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.config.model_config import (
+    MODEL_YEAR_RANGE,
     PKL_DATA_FORMATTED,
     SWITCH_CAPEX_DATA_POINTS,
     MODEL_YEAR_START,
@@ -314,6 +315,27 @@ def get_capex_values(
         .sort_index(ascending=True)
     )
 
+def greenfield_preprocessing(greenfield_df: pd.DataFrame):
+    df_c = greenfield_df.copy()
+    df_c.reset_index(inplace=True)
+    df_c.columns = [col.lower().replace(' ', '_') for col in df_c.columns]
+    df_c.rename({'technology': 'base_tech'}, axis=1, inplace=True)
+    df_c = df_c[~df_c['base_tech'].isin(['Charcoal mini furnace', 'Close plant'])].copy()
+    return df_c.set_index('year')
+
+def create_greenfield_switching_df(gf_df: pd.DataFrame, year_range: range):
+    def switch_mapper(row, ref_dict: dict):
+        return ref_dict[row.switch_tech] - ref_dict[row.base_tech]
+    df_container = []
+    for year in tqdm(year_range, total=len(year_range), desc='Greenfield Switch Dict'):
+        df = gf_df.loc[year].copy()
+        ref_dict = dict(zip(df['base_tech'], df['value']))
+        technology_df_ref = {tech: pd.DataFrame({'year': year, 'base_tech': tech, 'switch_tech': SWITCH_DICT[tech]}) for tech in TECH_REFERENCE_LIST}
+        technology_df_ref = pd.concat(technology_df_ref.values())
+        technology_df_ref['switch_value'] = technology_df_ref.apply(switch_mapper, ref_dict=ref_dict, axis=1)
+        technology_df_ref.set_index(['year', 'base_tech', 'switch_tech'], inplace=True)
+        df_container.append(technology_df_ref)
+    return pd.concat(df_container)
 
 @timer_func
 def create_capex_timeseries(serialize: bool = False) -> pd.DataFrame:
@@ -334,8 +356,16 @@ def create_capex_timeseries(serialize: bool = False) -> pd.DataFrame:
         capex_dict_ref=capex_dict,
         year_end=max_model_year,
     )
+    greenfield_df_f = greenfield_preprocessing(capex_dict['greenfield'])
+    greenfield_switch_df = create_greenfield_switching_df(greenfield_df_f, MODEL_YEAR_RANGE)
     if serialize:
         serialize_file(
             switching_df_with_capex, PKL_DATA_FORMATTED, "capex_switching_df"
         )
-    return switching_df_with_capex
+        serialize_file(
+            greenfield_switch_df, PKL_DATA_FORMATTED, "greenfield_switching_df"
+        )
+    return {
+        'capex_switching_df': switching_df_with_capex,
+        'greenfield_switching_df': greenfield_switch_df
+    }

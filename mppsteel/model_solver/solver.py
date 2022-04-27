@@ -41,7 +41,9 @@ from mppsteel.model_solver.solver_constraints import (
     return_current_usage
 )
 from mppsteel.data_load_and_format.steel_plant_formatter import create_active_check_col
-from mppsteel.model_solver.tco_and_abatement_optimizer import get_best_choice, subset_presolver_df
+from mppsteel.model_solver.tco_and_abatement_optimizer import (
+    get_best_choice, subset_presolver_df, add_gf_capex_values_to_tco
+)
 from mppsteel.model_solver.solver_classes import (
     CapacityContainerClass, UtilizationContainerClass,
     PlantChoices, MarketContainerClass, MaterialUsage, create_material_usage_dict,
@@ -189,6 +191,7 @@ def return_best_tech(
         solver_logic,
         proportions_dict,
         combined_available_list,
+        transitional_switch_only
     )
 
     if not isinstance(best_choice, str):
@@ -294,7 +297,12 @@ def choose_technology(
     tco_summary_data = read_pickle_folder(
         intermediate_path, "tco_summary_data", "df"
     )
+    greenfield_switching_df = read_pickle_folder(
+        PKL_DATA_FORMATTED, "greenfield_switching_df", "df"
+    )
     tco_slim = subset_presolver_df(tco_summary_data, subset_type='tco_summary')
+    tco_slim = add_gf_capex_values_to_tco(tco_slim, greenfield_switching_df)
+
     levelized_cost = read_pickle_folder(intermediate_path, "levelized_cost", "df")
     levelized_cost["region"] = levelized_cost["country_code"].apply(lambda x: rmi_mapper[x])
     steel_plant_abatement_switches = read_pickle_folder(
