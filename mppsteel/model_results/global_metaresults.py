@@ -3,7 +3,7 @@
 import pandas as pd
 
 from mppsteel.config.model_config import (
-    MODEL_YEAR_RANGE
+    MODEL_YEAR_RANGE, SCRAP_CONSTRAINT_TOLERANCE_FACTOR
 )
 from mppsteel.data_load_and_format.reg_steel_demand_formatter import steel_demand_getter
 from mppsteel.utility.function_timer_utility import timer_func
@@ -56,9 +56,10 @@ def global_metaresults_calculator(
         lambda year: steel_demand_getter(
             steel_market_df, year, "scrap", region="World"
         )).round(rounding) # Mt
+    df["scrap_availability_with_tolerance"] = df["scrap_availability"] * (1 + SCRAP_CONSTRAINT_TOLERANCE_FACTOR)
     df["scrap_consumption"] = df["year"].apply(
         lambda year: production_results_df_c.loc[year]["scrap_mt"].sum()).round(rounding) # Mt
-    df["scrap_avail_above_cons"] = (df["scrap_availability"] - df["scrap_consumption"]).round(rounding)
+    df["scrap_avail_above_cons"] = (df["scrap_availability_with_tolerance"] - df["scrap_consumption"]).round(rounding)
     return df[[
         'year', 'steel_capacity', 'capacity_utilization_factor', 
         'steel_production', 'steel_demand', 'capacity_balance', 
