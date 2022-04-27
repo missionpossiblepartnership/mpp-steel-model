@@ -9,13 +9,14 @@ from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import read_pickle_folder, get_scenario_pkl_path
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.model_graphs.plotly_graphs import line_chart, area_chart
+from mppsteel.model_graphs.plotly_graphs import TECHNOLOGY_ARCHETYPE_COLORS, line_chart, area_chart
 from mppsteel.model_graphs.opex_capex_graph import opex_capex_graph, opex_capex_graph_regional
 from mppsteel.model_graphs.consumption_over_time import consumption_over_time_graph
 from mppsteel.model_graphs.cost_of_steelmaking_graphs import lcost_graph
 from mppsteel.model_graphs.investment_graph import investment_line_chart, investment_per_tech
 from mppsteel.model_graphs.emissions_per_tech import generate_emissivity_charts
 from mppsteel.model_graphs.tco_graph import generate_tco_charts
+from mppsteel.model_graphs.new_plant_capacity import new_plant_capacity_graph
 from mppsteel.model_graphs.combined_scenario_graphs import (
     create_combined_investment_chart,
     create_combined_emissions_chart,
@@ -179,6 +180,7 @@ def steel_production_area_chart(df: pd.DataFrame, filepath: str = None, region: 
         x="year",
         y="value",
         color="technology",
+        color_discrete_map=TECHNOLOGY_ARCHETYPE_COLORS,
         name=graph_title,
         x_axis="year",
         y_axis="Steel Production (gt)",
@@ -217,6 +219,7 @@ def emissions_area_chart(
         x="year",
         y="value",
         color="technology",
+        color_discrete_map=TECHNOLOGY_ARCHETYPE_COLORS,
         name="Steel production emissions per tech for run scenario",
         x_axis="year",
         y_axis="CO2 Emissions [CO2/year]",
@@ -369,6 +372,22 @@ def create_investment_per_tech_graph(investment_results: pd.DataFrame, filepath:
     return investment_per_tech(investment_results, save_filepath=filename)
 
 
+def create_new_plant_capacity_graph(plant_df: pd.DataFrame, graph_type: str, filepath: str = None) -> px.line:
+    """Creates a line graph showing the level of investment across all technologies and saves it.
+
+    Args:
+        filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
+
+    Returns:
+        px.line: A plotly express line graph.
+    """
+    filename = f"new_capacity_graph_{graph_type}"
+    logger.info(f"New Capacity Graph Output: {filename}")
+    if filepath:
+        filename = f"{filepath}/{filename}"
+    return new_plant_capacity_graph(plant_df, graph_type, save_filepath=filename)
+
+
 def create_cot_graph(production_resource_usage: pd.DataFrame, resource_type: str, region: str = None, filepath: str = None) -> px.bar:
     """Generates a Graph showing the consumption over time of a material resource.
 
@@ -475,6 +494,7 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
     variable_cost_df = read_pickle_folder(
         intermediate_path, "variable_costs_regional_material_breakdown", "df"
     )
+    plant_result_df = read_pickle_folder(intermediate_path, "plant_result_df", "df")
     rmi_mapper = create_country_mapper()
 
     steel_production_area_chart(
@@ -517,6 +537,9 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
     create_investment_line_graph(investment_results, group="global", operation="cumsum", filepath=filepath)
 
     create_investment_per_tech_graph(investment_results, filepath=filepath)
+
+    create_new_plant_capacity_graph(plant_result_df, 'line', filepath=filepath)
+    create_new_plant_capacity_graph(plant_result_df, 'bar', filepath=filepath)
 
     for resource_type, region in list(itertools.product({'energy', 'material'}, {'China', 'India', 'Europe', 'NAFTA'})):
         create_cot_graph(production_resource_usage, resource_type=resource_type, region=region, filepath=filepath)

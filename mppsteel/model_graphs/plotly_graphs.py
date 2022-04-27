@@ -6,7 +6,7 @@ from mppsteel.utility.log_utility import get_logger
 
 logger = get_logger(__name__)
 
-ARCHETYPE_COLORS = {
+TECHNOLOGY_ARCHETYPE_COLORS = {
     "Avg BF-BOF": "#59A14F",
     "BAT BF-BOF": "#A0CBE8",
     "BAT BF-BOF+BECCS": "#F1CE63",
@@ -130,6 +130,7 @@ def area_chart(
     x_axis: str,
     y_axis: str,
     hoverdata,
+    color_discrete_map: dict = None,
     save_filepath: str = None,
     ext: str = "png",
 ) -> px.area:
@@ -155,7 +156,7 @@ def area_chart(
         x=x,
         y=y,
         color=color,
-        color_discrete_map=ARCHETYPE_COLORS,
+        color_discrete_map=color_discrete_map,
         hover_data=hoverdata,
     )
     fig_.update_layout(
