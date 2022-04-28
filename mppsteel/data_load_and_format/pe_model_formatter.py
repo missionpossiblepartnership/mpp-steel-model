@@ -215,8 +215,8 @@ def subset_hydrogen(
     scenario_dict: dict = None,
     prices: bool = False,
     variable: str = 'H2 price',
-    cost_scenario: str = 'Baseline',
-    prod_scenario: str = 'On-site, dedicated VREs',
+    cost_scenario: str = 'Min',
+    prod_scenario: str = 'Utility plant, dedicated VREs',
     currency_conversion_factor: float = None,
     price_per_gj: bool = False,
     emissions_per_gj: bool = False
