@@ -92,10 +92,10 @@ def timeseries_generator(
     logger.info(f"Running {timeseries_type} timeseries generator")
     if timeseries_type == "carbon_tax":
         df = levy_logic(df)
-        df["units"] = "EUR / t CO2 eq"
+        df["units"] = "USD / t CO2 eq"
     if timeseries_type == "green_premium":
         df = levy_logic(df)
-        df["units"] = "EUR / t steel"
+        df["units"] = "USD / t steel"
     # change the column types
     for key in df_schema.keys():
         df[key].astype(df_schema[key])
