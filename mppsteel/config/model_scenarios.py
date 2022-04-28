@@ -69,7 +69,7 @@ DEFAULT_SCENARIO = {
     "green_premium_scenario": "off",  # off / low / average / high
     "electricity_cost_scenario": "average",  # low / average / high
     "grid_scenario": "low",  # low / high
-    "hydrogen_cost_scenario": "average",  # low / average / high
+    "hydrogen_cost_scenario": "low",  # low / average / high
     "biomass_cost_scenario": "average",  # average
     "ccus_cost_scenario": "low",  # low / average
     "ccus_capacity_scenario": "average", # low / average / high
@@ -87,7 +87,7 @@ TECH_MORATORIUM = {
     'green_premium_scenario': 'off',
     'electricity_cost_scenario': 'low',
     'grid_scenario': 'low',
-    'hydrogen_cost_scenario': 'average',
+    'hydrogen_cost_scenario': 'low',
     'biomass_cost_scenario': 'average',
     'ccus_cost_scenario': 'low',
     "ccus_capacity_scenario": "average",
@@ -105,7 +105,7 @@ CARBON_COST = {
     'green_premium_scenario': 'off',
     'electricity_cost_scenario': 'average',
     'grid_scenario': 'low',
-    'hydrogen_cost_scenario': 'average',
+    'hydrogen_cost_scenario': 'low',
     'biomass_cost_scenario': 'average',
     'ccus_cost_scenario': 'low',
     "ccus_capacity_scenario": "average",
@@ -123,7 +123,7 @@ BAU_SCENARIO = {
     'green_premium_scenario': 'off',
     'electricity_cost_scenario': 'average',
     'grid_scenario': 'low',
-    'hydrogen_cost_scenario': 'average',
+    'hydrogen_cost_scenario': 'low',
     'biomass_cost_scenario': 'average',
     'ccus_cost_scenario': 'low',
     "ccus_capacity_scenario": "average",
@@ -141,7 +141,7 @@ BAU_HIGH_CIRC_SCENARIO = {
     'green_premium_scenario': 'off',
     'electricity_cost_scenario': 'average',
     'grid_scenario': 'low',
-    'hydrogen_cost_scenario': 'average',
+    'hydrogen_cost_scenario': 'low',
     'biomass_cost_scenario': 'average',
     'ccus_cost_scenario': 'low',
     "ccus_capacity_scenario": "average",
@@ -159,7 +159,7 @@ ABATEMENT_SCENARIO = {
     'green_premium_scenario': 'off',
     'electricity_cost_scenario': 'average',
     'grid_scenario': 'low',
-    'hydrogen_cost_scenario': 'average',
+    'hydrogen_cost_scenario': 'low',
     'biomass_cost_scenario': 'average',
     'ccus_cost_scenario': 'low',
     "ccus_capacity_scenario": "average",
@@ -177,7 +177,7 @@ ABATEMENT_HIGH_CIRC_SCENARIO = {
     'green_premium_scenario': 'off',
     'electricity_cost_scenario': 'average',
     'grid_scenario': 'low',
-    'hydrogen_cost_scenario': 'average',
+    'hydrogen_cost_scenario': 'low',
     'biomass_cost_scenario': 'average',
     'ccus_cost_scenario': 'low',
     "ccus_capacity_scenario": "average",
