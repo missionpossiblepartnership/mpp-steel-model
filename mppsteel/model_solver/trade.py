@@ -216,10 +216,18 @@ def trade_flow(
         production_demand_dict_c = modify_production_demand_dict(production_demand_dict_c, data_entry_dict_values, region)
 
     global_trade_balance = round(market_container.trade_container_getter(year), 3)
+    global_trade_balance_regions = market_container.trade_container_getter(year, agg=True)
+    importing_regions = [region for region in global_trade_balance_regions if global_trade_balance_regions[region] < 0]
+    exporting_regions = [region for region in global_trade_balance_regions if global_trade_balance_regions[region] > 0]
+    balanced_regions = [region for region in global_trade_balance_regions if global_trade_balance_regions[region] == 0]
+
+    logger.info(f'TRADE BALANCING ROUND 1: Importing Regions: {importing_regions} | Exporting Regions: {exporting_regions} | Balanced Regions: {balanced_regions}')
+
     if global_trade_balance > 0:
         logger.info(f'TRADE BALANCING ROUND 1: Trade Balance Surplus of {global_trade_balance} Mt in year {year}. No balancing to zero.')
     elif global_trade_balance < 0:
         logger.info(f'TRADE BALANCING ROUND 2: Trade Balance Deficit of {global_trade_balance} Mt in year {year}, balancing to zero via utilization optimization.')
+
         rpc_df = relative_production_cost_df[relative_production_cost_df['relative_cost_close_to_mean'] == True].sort_values(['cost_of_steelmaking'], ascending=True)
         for region in rpc_df.index:
             if global_trade_balance >= 0:
