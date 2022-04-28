@@ -6,7 +6,6 @@ from tqdm import tqdm
 
 # For logger
 from mppsteel.utility.function_timer_utility import timer_func
-from mppsteel.utility.dataframe_utility import create_line_through_points
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder, serialize_file
 )
@@ -70,8 +69,6 @@ def get_capex_values(
     """
     logger.info("Generating the capex values for each technology")
     df_dict_c = df_switching_dict.copy()
-    # Hard coded values
-    hard_coded_capex_values = create_line_through_points(SWITCH_CAPEX_DATA_POINTS)
 
     # Create a year range
     year_range = range(MODEL_YEAR_START, tuple({year_end + 1 or 2021})[0])

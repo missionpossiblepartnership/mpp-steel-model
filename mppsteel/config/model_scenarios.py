@@ -101,7 +101,7 @@ CARBON_COST = {
     'tech_moratorium': False,
     'enforce_constraints': True,
     'transitional_switch': True,
-    'carbon_tax_scenario': 'average',
+    'carbon_tax_scenario': 'high',
     'green_premium_scenario': 'off',
     'electricity_cost_scenario': 'average',
     'grid_scenario': 'low',
