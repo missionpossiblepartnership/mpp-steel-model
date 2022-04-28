@@ -74,7 +74,7 @@ def return_best_tech(
     plant_name: str,
     country_code: str,
     base_tech: str = None,
-    
+    transitional_switch_mode: bool = False,
     material_usage_dict_container: MaterialUsage = None,
 ) -> Union[str, dict]:
     """Function generates the best technology choice from a number of key data and scenario inputs.
@@ -106,7 +106,6 @@ def return_best_tech(
     """
     proportions_dict = TECH_SWITCH_SCENARIOS[scenario_dict["tech_switch_scenario"]]
     solver_logic = SOLVER_LOGICS[scenario_dict['solver_logic']]
-    transitional_switch_only = scenario_dict["transitional_switch"]
     tech_moratorium = scenario_dict["tech_moratorium"]
     enforce_constraints = scenario_dict["enforce_constraints"]
     green_premium_scenario = scenario_dict['green_premium_scenario']
@@ -140,7 +139,7 @@ def return_best_tech(
     ]
 
     # Transitional switches
-    if transitional_switch_only and (base_tech not in TECHNOLOGY_STATES["end_state"]):
+    if transitional_switch_mode and (base_tech not in TECHNOLOGY_STATES["end_state"]):
         # Cannot downgrade tech
         # Must be current or transitional tech
         # Must be within the furnace group
@@ -163,7 +162,7 @@ def return_best_tech(
     ):
         combined_available_list.append(base_tech)
 
-    if transitional_switch_only:
+    if transitional_switch_mode:
         cycle_length = investment_container.return_cycle_lengths(plant_name)
         # Adjust tco values based on transistional switch years
         tco_ref_data['tco_gf_capex'] = tco_ref_data['tco_gf_capex'] * cycle_length / (
@@ -191,14 +190,14 @@ def return_best_tech(
         solver_logic,
         proportions_dict,
         combined_available_list,
-        transitional_switch_only
+        transitional_switch_mode
     )
 
     if not isinstance(best_choice, str):
         raise ValueError(f'Issue with get_best_choice function returning a nan: {plant_name} | {year} | {base_tech} | {combined_available_list}')
 
     if enforce_constraints:
-        material_usage_dict = create_material_usage_dict(
+        create_material_usage_dict(
             material_usage_dict_container,
             plant_capacities,
             business_case_ref,
@@ -217,9 +216,8 @@ def active_check_results(steel_plant_df: pd.DataFrame, year_range: range, invers
     def final_active_checker(row, year):
         if year < row.start_of_operation:
             return False
-        if row.end_of_operation:
-            if year >= row.end_of_operation:
-                return False
+        if row.end_of_operation and year >= row.end_of_operation:
+            return False
         return True
 
     active_check = {}
@@ -524,6 +522,7 @@ def choose_technology(
                         plant_name=plant_name,
                         country_code=country_code,
                         base_tech=current_tech,
+                        transitional_switch_mode=False,
                         material_usage_dict_container=MaterialUsageContainer,
                     )
                     if best_choice_tech == current_tech:
@@ -533,30 +532,33 @@ def choose_technology(
                     PlantChoiceContainer.update_choice(year, plant_name, best_choice_tech)
 
                 # CASE 2-B: TRANSITIONARY SWITCH
-                if switch_type == "trans switch":
-                    best_choice_tech = return_best_tech(
-                        tco_reference_data=tco_slim,
-                        abatement_reference_data=abatement_slim,
-                        business_case_ref=business_case_ref,
-                        variable_costs_df=variable_costs_regional,
-                        green_premium_timeseries=green_premium_timeseries,
-                        tech_availability=tech_availability,
-                        tech_avail_from_dict=ta_dict,
-                        plant_capacities=plant_capacities_dict,
-                        scenario_dict=scenario_dict,
-                        investment_container=PlantInvestmentCycleContainer,
-                        year=year,
-                        plant_name=plant_name,
-                        country_code=country_code,
-                        base_tech=current_tech,
-                        material_usage_dict_container=MaterialUsageContainer,
-                    )
-                    if best_choice_tech != current_tech:
-                        entry['switch_type'] = 'Transitional switch in off-cycle investment year'
-                        PlantInvestmentCycleContainer.adjust_cycle_for_transitional_switch(plant_name, year)
-                    else:
-                        entry['switch_type'] = 'No change during off-cycle investment year'
-                    PlantChoiceContainer.update_choice(year, plant_name, best_choice_tech)
+                if scenario_dict["transitional_switch"]:
+
+                    if switch_type == "trans switch":
+                        best_choice_tech = return_best_tech(
+                            tco_reference_data=tco_slim,
+                            abatement_reference_data=abatement_slim,
+                            business_case_ref=business_case_ref,
+                            variable_costs_df=variable_costs_regional,
+                            green_premium_timeseries=green_premium_timeseries,
+                            tech_availability=tech_availability,
+                            tech_avail_from_dict=ta_dict,
+                            plant_capacities=plant_capacities_dict,
+                            scenario_dict=scenario_dict,
+                            investment_container=PlantInvestmentCycleContainer,
+                            year=year,
+                            plant_name=plant_name,
+                            country_code=country_code,
+                            base_tech=current_tech,
+                            transitional_switch_mode=True,
+                            material_usage_dict_container=MaterialUsageContainer,
+                        )
+                        if best_choice_tech != current_tech:
+                            entry['switch_type'] = 'Transitional switch in off-cycle investment year'
+                            PlantInvestmentCycleContainer.adjust_cycle_for_transitional_switch(plant_name, year)
+                        else:
+                            entry['switch_type'] = 'No change during off-cycle investment year'
+                        PlantChoiceContainer.update_choice(year, plant_name, best_choice_tech)
 
                 entry['switch_tech'] = best_choice_tech
 

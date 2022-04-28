@@ -176,7 +176,7 @@ def get_best_choice(
     solver_logic: str,
     weighting_dict: dict,
     technology_list: list,
-    transitional_switch_only: bool
+    transitional_switch_mode: bool
 ) -> str:
     """Returns the best technology choice from a list of potential logic according to the paramter settings provided in the function.
 
@@ -193,7 +193,7 @@ def get_best_choice(
     Returns:
         str: The best technology choice for a given year.
     """
-    cost_value_col = 'tco_gf_capex' if transitional_switch_only else 'tco_regular_capex'
+    cost_value_col = 'tco_gf_capex' if transitional_switch_mode else 'tco_regular_capex'
     # Scaling algorithm
     if solver_logic in {"scaled", "scaled_bins"}:
         # Calculate minimum scaled values
