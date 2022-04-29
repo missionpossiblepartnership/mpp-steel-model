@@ -1,17 +1,19 @@
 """Function that extends a timeseries beyond its boundaries flexible assumptions."""
 
+from typing import Tuple
+
 import pandas as pd
 import numpy as np
 
 from mppsteel.utility.log_utility import get_logger
 
 # Create logger
-logger = get_logger("Timeseries Extender")
+logger = get_logger(__name__)
 
 
 def create_timeseries_extension_components(
     df: pd.DataFrame, year_colname: str, value_colname: str, new_last_year: int
-):
+) -> Tuple[pd.DataFrame, pd.DatetimeIndex, pd.DatetimeIndex, list, float]:
     """
     Generates the materials
 
@@ -122,7 +124,7 @@ def create_timeseries_extension_array(
 
     if (
         series_type == "logarithmic"
-    ):  # slowest growth / transforms into actual logs - FIX!
+    ):  # slowest growth / transforms into actual logs
         generated_series = np.logspace(
             start=start_value, stop=terminal_value, num=series_length, endpoint=True
         )
@@ -151,9 +153,9 @@ def create_dict_mapper(
     new_dict_column_mapper = {}
     current_dict_mapping = dict(original_df.iloc[0])  # gets first row for mapping
     for value in static_column_list:
-        if value in current_dict_mapping.keys():
+        if value in current_dict_mapping:
             new_dict_column_mapper[value] = current_dict_mapping[value]
-        if value in values_to_override.keys():
+        if value in values_to_override:
             new_dict_column_mapper[value] = values_to_override[value]
     return new_dict_column_mapper
 
@@ -176,17 +178,19 @@ def combine_timeseries(
     Returns:
         pd.DataFrame: A new combined timeseries
     """
-    logger.info(f"Combining the original and extended timeseries")
+    logger.info('Combining the original and extended timeseries')
     df_c = df.copy()
     new_df = pd.DataFrame(index=range(len(added_date_range)), columns=df_c.columns)
-    new_df[year_value_col_dict['year']] = added_date_range
-    new_df[year_value_col_dict['value']] = values
+    new_df[year_value_col_dict["year"]] = added_date_range
+    new_df[year_value_col_dict["value"]] = values
     for col_val in static_col_mapper.items():
         new_df[col_val[0]] = col_val[1]
     return pd.concat([df_c, new_df])
 
 
-def generate_timeseries_plots(df_list: list, year_colname: str, value_colname: str):
+def generate_timeseries_plots(
+    df_list: list, year_colname: str, value_colname: str
+) -> None:
     """Produces a plot of each timeseries.
 
     Args:
@@ -194,7 +198,7 @@ def generate_timeseries_plots(df_list: list, year_colname: str, value_colname: s
         year_colname (str): The name of the column containing the years.
         value_colname (str): The name of the column containing the values.
     """
-    logger.info(f"Generating plots for the original and extended timeseries")
+    logger.info('Generating plots for the original and extended timeseries')
     for df in df_list:
         df.plot(x=year_colname, y=value_colname)
 
@@ -208,7 +212,7 @@ def full_model_flow(
     growth_type: str,
     value_change: float = 0,
     plot_dfs: bool = False,
-    year_only: bool = True, # change this!!!!
+    year_only: bool = True,  # change this!!!!
 ) -> pd.DataFrame:
     """A full run through the complete cycle to produce an extended timeseries.
 
@@ -224,7 +228,7 @@ def full_model_flow(
     Returns:
         pd.DataFrame: A dataframe containing the new extended timeseries.
     """
-    logger.info(f"Running through the complete timeseries generation flow.")
+    logger.info('Running through the complete timeseries generation flow.')
     (
         df_f,
         full_date_range,
@@ -254,7 +258,9 @@ def full_model_flow(
             year_value_col_dict["year"],
             year_value_col_dict["value"],
         )
-    if year_only: # Change this!!!
-        combined_df[year_value_col_dict["year"]] = pd.DatetimeIndex(combined_df[year_value_col_dict["year"]]).year
+    if year_only:  # Change this!!!
+        combined_df[year_value_col_dict["year"]] = pd.DatetimeIndex(
+            combined_df[year_value_col_dict["year"]]
+        ).year
 
     return combined_df

@@ -1,15 +1,16 @@
 """Utility library for managing location"""
 
-from collections import namedtuple
+import itertools
 
 import pandas as pd
 import pycountry
+from mppsteel.config.model_config import PKL_DATA_IMPORTS, MAIN_REGIONAL_SCHEMA
 
 from mppsteel.utility.log_utility import get_logger
+from mppsteel.utility.file_handling_utility import read_pickle_folder
 
-from mppsteel.utility.reference_lists import NEW_COUNTRY_COL_LIST, FILES_TO_REFRESH
+logger = get_logger(__name__)
 
-logger = get_logger("Location Utility")
 
 def country_mapping_fixer(
     df: pd.DataFrame,
@@ -26,7 +27,7 @@ def country_mapping_fixer(
         country_to_code_dict (dict): The name of the dictionary containing the country and the code.
 
     Returns:
-        pd.DataFrame: An amended dataframe with the code mappings fixed
+        pd.DataFrame: An amended dataframe with the code mappings fixed.
     """
     df_c = df.copy()
 
@@ -35,39 +36,41 @@ def country_mapping_fixer(
         df_c.loc[df_c[country_colname] == item[0], country_code_colname] = item[1]
     return df_c
 
-def match_country(country: str):
-    # try to match the country to using pycountry.
-    # If not match, return an empty string
+
+def match_country(country: str) -> str:
+    """Matches a country string to a recognised ISO Alpha-3 country code using the pycountry library.
+
+    Args:
+        country (str): The string containing the country name you want to match.
+
+    Returns:
+        str: A string containing the matched country. Return an empty string if no match is found.
+    """
     try:
         match = pycountry.countries.search_fuzzy(country)
-        match = match[0].alpha_3
-        return match
+        return match[0].alpha_3
     except:  # Currently no exception specification.
         return ""
 
+
 def country_matcher(country_list: list, output_type: str = "all") -> dict:
-    """Fuzzy matches a list of countries and creates a mapping of the country to alpha-3 name.
+    """Fuzzy matches a list of countries and creates a mapping of the country to ISO Alpha-3 name.
     The function produces a dictionary of mappings and also a dictionary of all unmapped countries.
 
     Args:
         country_list (list): The list of countries you would like to map.
-        output_type (str, optional): The output you want - mapped dictionary, unmapped dictionary or both.
-        Defaults to 'all'.
+        output_type (str, optional): The output you want - mapped dictionary, unmapped dictionary or both. Defaults to 'all'.
 
     Returns:
-        dict: A dictionary(ies) based on the output_type parameters
+        dict: Dictionary(ies) based on the output_type parameters.
     """
 
     # Generate matched entries
-    countries_dict = {}
-    for country in country_list:
-        countries_dict[country] = match_country(country)
-
+    countries_dict = {country: match_country(country) for country in country_list}
     # Get reference of unmatched entries
-    unmatched_dict = {}
-    for item in countries_dict.items():
-        if not item[1]:
-            unmatched_dict[item[0]] = item[1]
+    unmatched_dict = {
+        item[0]: item[1] for item in countries_dict.items() if not item[1]
+    }
 
     if output_type == "all":
         return countries_dict, unmatched_dict
@@ -76,24 +79,59 @@ def country_matcher(country_list: list, output_type: str = "all") -> dict:
     if output_type == "nonmatches":
         return unmatched_dict
 
+def get_unique_countries(country_arrays) -> list:
+    """Gets a unique list of countries from a list of arrays of countries.
 
-def official_country_name_getter(country_code: str):
-    match = pycountry.countries.get(alpha_3=country_code)
-    match_attributes = dir(match)
-    if "official_name" in match_attributes:
-        return match.official_name
-    return ""
+    Args:
+        country_arrays ([type]): An array of countries.
+
+    Returns:
+        list: A list containing the unique countries from a list of lists.
+    """
+    b_set = {tuple(x) for x in country_arrays}
+    b_list = [list(x) for x in b_set if x]
+    return list(itertools.chain(*b_list))
 
 
-CountryMetadata = namedtuple("CountryMetadata", NEW_COUNTRY_COL_LIST)
+def get_countries_from_group(
+    country_ref: pd.DataFrame, grouping: str, group: str, exc_list: list = None
+) -> list:
+    """Returns the countries of a schema group.
 
+    Args:
+        country_ref (pd.DataFrame): A DataFrame containing the countries and region groupings.
+        grouping (str): The regional schema you want to map
+        group (str): The specific region you want to get the countries from.
+        exc_list (list, optional): A flag to select the countries not in the group selected in `group`. Defaults to None.
 
-def get_region_from_country_code(country_code: str, schema: str, country_ref_dict: dict):
-    if country_code == 'TWN':
-        country_code = 'CHN'
-    country_metadata_obj = country_ref_dict[country_code]
-    options = ["m49_code", "region", "continent", "wsa_region", "rmi_region"]
-    if schema in dir(country_metadata_obj):
-        return getattr(country_metadata_obj, schema)
-    else:
-        raise AttributeError(f'Schema: {schema} is not an attribute of {country_code} CountryMetadata object. Choose from the following options: {options}')
+    Returns:
+        list: A list of countries either in `group` or not in `group` depending on the `exc_list` flag.
+    """
+    df_c = country_ref[["ISO-alpha3 code", grouping]].copy()
+    code_list = (
+        df_c.set_index([grouping, "ISO-alpha3 code"])
+        .sort_index()
+        .loc[group]
+        .index.unique()
+        .to_list()
+    )
+    if exc_list:
+        exc_codes = [match_country(country) for country in exc_list]
+        return list(set(code_list).difference(exc_codes))
+    return code_list
+
+def create_country_mapper(schema: str = 'rmi'):
+    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
+    mapper = {
+        'Country': 'country_name', 
+        'ISO-alpha3 code': 'country_code', 
+        'M49 Code': 'm49', 
+        'Region 1': 'region', 
+        'Continent': 'continent', 
+        'WSA Group Region': 'wsa', 
+        'RMI Model Region': 'rmi'
+    }
+    country_ref_c = country_ref.rename(mapper, axis=1)
+    mapper = dict(zip(country_ref_c['country_code'], country_ref_c[schema]))
+    mapper['TWN'] = 'Japan, South Korea, and Taiwan'
+    return mapper

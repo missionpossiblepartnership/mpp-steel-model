@@ -136,14 +136,18 @@ dmypy.json
 *.log
 
 # tests
-/tests
+mppsteel/tests/business_case_tests
+pandera_testing.py
 
 # pickle files
-mppsteel/data/pkl_data
-*.pickle
+# mppsteel/data/pkl_data
+# *.pickle
 
 # output folder
 mppsteel/data/output_data
 
 # random file
 experimental.py
+
+# devcontainer
+.devcontainer
