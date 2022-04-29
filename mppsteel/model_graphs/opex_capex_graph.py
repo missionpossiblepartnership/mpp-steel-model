@@ -155,9 +155,20 @@ def assign_country_deltas(df: pd.DataFrame, delta_dict: dict) -> pd.DataFrame:
         df_c.loc[(technology, "Region Cost Delta", country), "cost"] = delta_dict[technology]
     return df_c
 
+def add_carbon_cost_to_vc(vc_df: pd.DataFrame, emissivity_dict: dict, carbon_tax_dict: dict, year: int):
+    vc_df_c = vc_df.copy()
+    technologies = vc_df_c.index.get_level_values(0).unique()
+    country_codes = vc_df_c.index.get_level_values(2).unique()
+    for technology, country_code in list(itertools.product(technologies, country_codes)):
+        s1_emissivity = emissivity_dict['s1_emissivity'][(year, country_code, technology)]
+        s2_emissivity = emissivity_dict['s2_emissivity'][(year, country_code, technology)]
+        vc_df_c.loc[technology,'Carbon Cost', country_code]['cost'] = (s1_emissivity + s2_emissivity) * carbon_tax_dict[year]
+    return vc_df_c
+
 def create_capex_opex_split_data(
-    variable_cost_df: pd.DataFrame,
+    vcsmb: pd.DataFrame,
     carbon_tax_timeseries: pd.DataFrame,
+    emissivity_df: pd.DataFrame,
     capex_dict: dict,
     country_mapper: dict,
     year: int
@@ -168,7 +179,8 @@ def create_capex_opex_split_data(
         pd.DataFrame: A DataFrame containing the split of costs and the associated metadata.
     """
     carbon_tax_dict = carbon_tax_timeseries.set_index(['year']).to_dict()['value']
-    vcsmb_c = variable_cost_df.copy()
+    emissivity_dict = emissivity_df.set_index(['year', 'country_code', 'technology']).to_dict()
+    vcsmb_c = vcsmb[~vcsmb['technology'].isin(["Charcoal mini furnace", "Close plant"])].copy()
     vcsmb_c = (
         vcsmb_c.set_index("year")
         .sort_index(ascending=True)
@@ -177,7 +189,7 @@ def create_capex_opex_split_data(
         .set_index(["technology", "cost_type", "country_code"])
         .sort_index(ascending=True)
     ).copy()
-    vcsmb_c.loc[:,'Carbon Cost',:]['cost'] = vcsmb_c.loc[:,'Carbon Cost',:]['cost'] * carbon_tax_dict[year]
+    vcsmb_c = add_carbon_cost_to_vc(vcsmb_c, emissivity_dict, carbon_tax_dict, year)
     capex_opex_df = return_capex_values(
         capex_dict=capex_dict, year=year, investment_cycle=20, discount_rate=DISCOUNT_RATE
     )
@@ -198,7 +210,14 @@ def create_capex_opex_split_data(
     ).copy()
 
 
-def opex_capex_graph(variable_cost_df: pd.DataFrame, carbon_tax_timeseries: pd.DataFrame, capex_dict: dict, country_mapper: dict, year: int, save_filepath: str = None, ext: str = "png") -> px.bar:
+def opex_capex_graph(
+    variable_cost_df: pd.DataFrame, 
+    carbon_tax_timeseries: pd.DataFrame,
+    emissivity_df: pd.DataFrame,
+    capex_dict: dict, 
+    country_mapper: dict, 
+    year: int, 
+    save_filepath: str = None, ext: str = "png") -> px.bar:
     """Creates a bar graph for the Opex Capex split graph.
 
     Args:
@@ -208,7 +227,7 @@ def opex_capex_graph(variable_cost_df: pd.DataFrame, carbon_tax_timeseries: pd.D
     Returns:
         px.bar: A plotly express bar chart.
     """
-    final_opex_capex_dataset = create_capex_opex_split_data(variable_cost_df, carbon_tax_timeseries, capex_dict, country_mapper, year)
+    final_opex_capex_dataset = create_capex_opex_split_data(variable_cost_df, carbon_tax_timeseries, emissivity_df, capex_dict, country_mapper, year)
     final_opex_capex_dataset_c = column_sorter(
         final_opex_capex_dataset, "cost_type", BAR_CHART_ORDER.keys()
     )
@@ -242,10 +261,8 @@ def add_capex_values_regional(vdf: pd.DataFrame, co_df: pd.DataFrame) -> pd.Data
     country_values = vdf_c.index.get_level_values(2).unique()
     for technology in TECH_REFERENCE_LIST:
         bf_value = co_df["brownfield_capex"][technology]
-        #gf_value = co_df["greenfield_capex"][technology]
         for country in country_values:
             vdf_c.loc[(technology, "BF Capex", country), "cost"] = bf_value
-            #vdf_c.loc[(technology, "GF Capex", country), "cost"] = gf_value
     return vdf_c
 
 def add_opex_values_regional(vdf: pd.DataFrame, co_df: pd.DataFrame) -> pd.DataFrame:
@@ -291,13 +308,14 @@ def return_capex_values_regional(
     combined_values = combined_values.join(other_opex_values)
     return combined_values
 
-def regional_split_of_preprocessed_data(vcsmb: pd.DataFrame, carbon_tax_timeseries: pd.DataFrame, capex_dict: dict, country_mapper: dict, year: int = 2050, region: str = None):
+def regional_split_of_preprocessed_data(vcsmb: pd.DataFrame, carbon_tax_timeseries: pd.DataFrame, emissivity_df: pd.DataFrame, capex_dict: dict, country_mapper: dict, year: int = 2050, region: str = None):
     """Creates a DataFrame split by cost type for the purpose of creating a graph.
     Returns:
         pd.DataFrame: A DataFrame containing the split of costs and the associated metadata.
     """
     carbon_tax_dict = carbon_tax_timeseries.set_index(['year']).to_dict()['value']
-    vcsmb_c = vcsmb.copy()
+    emissivity_dict = emissivity_df.set_index(['year', 'country_code', 'technology']).to_dict()
+    vcsmb_c = vcsmb[~vcsmb['technology'].isin(["Charcoal mini furnace", "Close plant"])].copy()
     vcsmb_c = (
         vcsmb_c.set_index("year")
         .sort_index(ascending=True)
@@ -306,7 +324,7 @@ def regional_split_of_preprocessed_data(vcsmb: pd.DataFrame, carbon_tax_timeseri
         .set_index(["technology", "cost_type", "country_code"])
         .sort_index(ascending=True)
     )
-    vcsmb_c.loc[:,'Carbon Cost',:]['cost'] = vcsmb_c.loc[:,'Carbon Cost',:]['cost'] * carbon_tax_dict[year]
+    vcsmb_c = add_carbon_cost_to_vc(vcsmb_c, emissivity_dict, carbon_tax_dict, year)
     capex_opex_df = return_capex_values_regional(
         capex_dict=capex_dict, year=year, investment_cycle=20, discount_rate=0.07
     )
@@ -325,7 +343,7 @@ def regional_split_of_preprocessed_data(vcsmb: pd.DataFrame, carbon_tax_timeseri
 
 
 def opex_capex_graph_regional(
-    vcsmb: pd.DataFrame, carbon_tax_timeseries: pd.DataFrame, capex_dict: dict, country_mapper: dict, save_filepath: str = None, ext: str = "png", year: int = 2050, region: str = None) -> px.bar:
+    vcsmb: pd.DataFrame, carbon_tax_timeseries: pd.DataFrame, emissivity_df: pd.DataFrame, capex_dict: dict, country_mapper: dict, save_filepath: str = None, ext: str = "png", year: int = 2050, region: str = None) -> px.bar:
     """Creates a bar graph for the Opex Capex split graph.
     Args:
         save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
@@ -333,7 +351,7 @@ def opex_capex_graph_regional(
     Returns:
         px.bar: A plotly express bar chart.
     """
-    final_opex_capex_dataset = regional_split_of_preprocessed_data(vcsmb, carbon_tax_timeseries, capex_dict, country_mapper, year=year, region=region)
+    final_opex_capex_dataset = regional_split_of_preprocessed_data(vcsmb, carbon_tax_timeseries, emissivity_df, capex_dict, country_mapper, year=year, region=region)
     final_opex_capex_dataset = column_sorter(
         final_opex_capex_dataset, "cost_type", BAR_CHART_ORDER.keys()
     )

@@ -305,7 +305,7 @@ def resource_line_charts(
 
 
 def create_opex_capex_graph(
-    variable_cost_df: pd.DataFrame, carbon_tax_timeseries: pd.DataFrame, capex_dict: dict, country_mapper: dict, year: int, filepath: str = None) -> px.bar:
+    variable_cost_df: pd.DataFrame, carbon_tax_timeseries: pd.DataFrame, emissivity_df: pd.DataFrame, capex_dict: dict, country_mapper: dict, year: int, filepath: str = None) -> px.bar:
     """Creates a Opex Capex split graph.
 
     Args:
@@ -318,9 +318,9 @@ def create_opex_capex_graph(
     logger.info(f"Creating Opex Capex Graph Output: {filename}")
     if filepath:
         filename = f"{filepath}/{filename}"
-    return opex_capex_graph(variable_cost_df, carbon_tax_timeseries, capex_dict, country_mapper, year, save_filepath=filename)
+    return opex_capex_graph(variable_cost_df, carbon_tax_timeseries, emissivity_df, capex_dict, country_mapper, year, save_filepath=filename)
 
-def create_opex_capex_graph_regional(vcsmb: pd.DataFrame, carbon_tax_timeseries: pd.DataFrame, capex_dict: dict, country_mapper: dict, filepath: str = None, year: int = 2050, region: str = 'NAFTA') -> px.bar:
+def create_opex_capex_graph_regional(vcsmb: pd.DataFrame, carbon_tax_timeseries: pd.DataFrame, emissivity_df: pd.DataFrame, capex_dict: dict, country_mapper: dict, filepath: str = None, year: int = 2050, region: str = 'NAFTA') -> px.bar:
     """Creates a Opex Capex split graph.
     Args:
         filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
@@ -331,7 +331,7 @@ def create_opex_capex_graph_regional(vcsmb: pd.DataFrame, carbon_tax_timeseries:
     logger.info(f"Creating Opex Capex Graph Output: {filename}")
     if filepath:
         filename = f"{filepath}/{filename}"
-    return opex_capex_graph_regional(vcsmb, carbon_tax_timeseries, capex_dict, country_mapper, save_filepath=filename, year=year, region=region)
+    return opex_capex_graph_regional(vcsmb, carbon_tax_timeseries, emissivity_df, capex_dict, country_mapper, save_filepath=filename, year=year, region=region)
 
 
 def create_investment_line_graph(
@@ -547,10 +547,10 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
             df=production_resource_usage, resource=resource, region=region, filepath=filepath
         )
 
-    create_opex_capex_graph(variable_cost_df, carbon_tax_timeseries, capex_dict, rmi_mapper, year=2050, filepath=filepath)
+    create_opex_capex_graph(variable_cost_df, carbon_tax_timeseries, calculated_emissivity_combined_df, capex_dict, rmi_mapper, year=2050, filepath=filepath)
 
     for year, region in list(itertools.product({2030, 2050}, {'China', 'India', 'Europe', 'NAFTA'})):
-        create_opex_capex_graph_regional(variable_cost_df, carbon_tax_timeseries, capex_dict, rmi_mapper, year=year, region=region, filepath=filepath)
+        create_opex_capex_graph_regional(variable_cost_df, carbon_tax_timeseries, calculated_emissivity_combined_df, capex_dict, rmi_mapper, year=year, region=region, filepath=filepath)
 
     create_investment_line_graph(investment_results, group="global", operation="cumsum", filepath=filepath)
 
