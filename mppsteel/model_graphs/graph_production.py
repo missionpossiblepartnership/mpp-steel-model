@@ -553,7 +553,7 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
     for year, region, scope in list(itertools.product(
         {2020, 2030, 2050},
         {'China', 'India', 'Europe', 'NAFTA'},
-        {'s1_emissivity', 's2_emissivity', 's3_emissivity', 'combined'}
+        {'s1_emissivity', 's2_emissivity', 's3_emissivity', 's1+s2', 'combined'}
     )):
         create_emissions_graph(calculated_emissivity_combined_df, year, region, scope, filepath=filepath)
 
