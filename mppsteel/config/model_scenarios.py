@@ -85,7 +85,7 @@ TECH_MORATORIUM = {
     'transitional_switch': True,
     'carbon_tax_scenario': 'off',
     'green_premium_scenario': 'off',
-    'electricity_cost_scenario': 'low',
+    'electricity_cost_scenario': 'average',
     'grid_scenario': 'low',
     'hydrogen_cost_scenario': 'low',
     'biomass_cost_scenario': 'average',
