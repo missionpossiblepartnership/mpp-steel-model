@@ -16,7 +16,7 @@ from mppsteel.model_graphs.cost_of_steelmaking_graphs import lcost_graph
 from mppsteel.model_graphs.investment_graph import investment_line_chart, investment_per_tech
 from mppsteel.model_graphs.emissions_per_tech import generate_emissivity_charts
 from mppsteel.model_graphs.tco_graph import generate_tco_charts
-from mppsteel.model_graphs.new_plant_capacity import new_plant_capacity_graph
+from mppsteel.model_graphs.new_plant_capacity import new_plant_capacity_graph, trade_balance_graph
 from mppsteel.model_graphs.combined_scenario_graphs import (
     create_combined_investment_chart,
     create_combined_emissions_chart,
@@ -373,7 +373,7 @@ def create_investment_per_tech_graph(investment_results: pd.DataFrame, filepath:
 
 
 def create_new_plant_capacity_graph(plant_df: pd.DataFrame, graph_type: str, filepath: str = None) -> px.line:
-    """Creates a line graph showing the level of investment across all technologies and saves it.
+    """Creates a line graph showing the New Plant Capacity and saves it.
 
     Args:
         filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
@@ -386,6 +386,21 @@ def create_new_plant_capacity_graph(plant_df: pd.DataFrame, graph_type: str, fil
     if filepath:
         filename = f"{filepath}/{filename}"
     return new_plant_capacity_graph(plant_df, graph_type, save_filepath=filename)
+
+def create_trade_balance_graph(trade_df: pd.DataFrame, filepath: str = None) -> px.line:
+    """Creates a line graph showing the level of investment across all technologies and saves it.
+
+    Args:
+        filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
+
+    Returns:
+        px.line: A plotly express line graph.
+    """
+    filename = f"trade_balance_graph"
+    logger.info(f"Trade Balance Graph Output: {filename}")
+    if filepath:
+        filename = f"{filepath}/{filename}"
+    return trade_balance_graph(trade_df, save_filepath=filename)
 
 
 def create_cot_graph(production_resource_usage: pd.DataFrame, resource_type: str, region: str = None, filepath: str = None) -> px.bar:
@@ -495,6 +510,8 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
         intermediate_path, "variable_costs_regional_material_breakdown", "df"
     )
     plant_result_df = read_pickle_folder(intermediate_path, "plant_result_df", "df")
+    trade_summary_results = read_pickle_folder(intermediate_path, "trade_summary_results", "df")
+
     carbon_tax_timeseries = read_pickle_folder(intermediate_path, 'carbon_tax_timeseries')
     rmi_mapper = create_country_mapper()
 
@@ -539,8 +556,10 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
 
     create_investment_per_tech_graph(investment_results, filepath=filepath)
 
-    create_new_plant_capacity_graph(plant_result_df, 'line', filepath=filepath)
+    create_new_plant_capacity_graph(plant_result_df, 'area', filepath=filepath)
     create_new_plant_capacity_graph(plant_result_df, 'bar', filepath=filepath)
+
+    create_trade_balance_graph(trade_summary_results, filepath=filepath)
 
     for resource_type, region in list(itertools.product({'energy', 'material'}, {'China', 'India', 'Europe', 'NAFTA'})):
         create_cot_graph(production_resource_usage, resource_type=resource_type, region=region, filepath=filepath)
