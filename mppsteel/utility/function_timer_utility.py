@@ -51,7 +51,7 @@ class TimeContainerClass:
         total_time_seconds = sum(self.raw_times.values())
         print(f'The total runtime for the scripts was {total_time_seconds :0.2f} seconds | {total_time_seconds / 60 :0.2f} minutes')
         if return_object:
-            return time_container
+            return self.time_container
 
 
 TIME_CONTAINER = TimeContainerClass()
