@@ -160,9 +160,8 @@ def add_carbon_cost_to_vc(vc_df: pd.DataFrame, emissivity_dict: dict, carbon_tax
     technologies = vc_df_c.index.get_level_values(0).unique()
     country_codes = vc_df_c.index.get_level_values(2).unique()
     for technology, country_code in list(itertools.product(technologies, country_codes)):
-        s1_emissivity = emissivity_dict['s1_emissivity'][(year, country_code, technology)]
-        s2_emissivity = emissivity_dict['s2_emissivity'][(year, country_code, technology)]
-        vc_df_c.loc[technology,'Carbon Cost', country_code]['cost'] = (s1_emissivity + s2_emissivity) * carbon_tax_dict[year]
+        s1_s2_emissivity = emissivity_dict['s1_emissivity'][(year, country_code, technology)] + emissivity_dict['s2_emissivity'][(year, country_code, technology)]
+        vc_df_c.loc[technology,'Carbon Cost', country_code]['cost'] = min(s1_s2_emissivity, 0) * carbon_tax_dict[year]
     return vc_df_c
 
 def create_capex_opex_split_data(
