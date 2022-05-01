@@ -105,16 +105,15 @@ def create_ccs_constraint(model: pd.DataFrame): # Mt CO2
 def create_biomass_constraint(model: pd.DataFrame): # GJ Energy
     return model[['value']].to_dict()['value']
 
-def create_scrap_constraints(model: pd.DataFrame, world: bool = True): # Mt Scrap
-    scrap_tolerance = 1 + SCRAP_CONSTRAINT_TOLERANCE_FACTOR
-    rsd = model[['region', 'value']] \
+def create_scrap_constraints(model: pd.DataFrame): # Mt Scrap
+    rsd = model[model['region'] != 'World'].copy()
+    rsd = rsd[['region', 'value']] \
         .loc[:,:,'Scrap availability'].reset_index() \
         .drop(['scenario'], axis=1) \
         .set_index(['year', 'region']) \
         .copy()
-    if world:
-        return {int(year): rsd.loc[str(year)].to_dict()['value']['World'] * scrap_tolerance for year in rsd.index.get_level_values(0)}
-    return {int(year): rsd.loc[str(year)].to_dict()['value'] * scrap_tolerance for year in rsd.index.get_level_values(0)}
+    rsd['value'] = rsd['value'] * (1 + SCRAP_CONSTRAINT_TOLERANCE_FACTOR)
+    return {int(year): rsd.loc[str(year)].to_dict()['value'] for year in rsd.index.get_level_values(0)}
 
 
 def return_projected_usage(
@@ -130,14 +129,12 @@ def return_projected_usage(
 
 def return_current_usage(
     plant_list: list, technology_choices: dict, capacities_dict: dict,
-    utilization_dict: dict, plant_region_dict: dict,
     business_case_ref: dict, materials: list, 
 ):
     usage_sum = []
     for material, plant_name in list(itertools.product(materials, plant_list)):
         capacity = capacities_dict[plant_name]
         consumption_rate = business_case_ref[(technology_choices[plant_name], material)]
-        # utilization = utilization_dict[plant_region_dict[plant_name]]
         utilization = CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION
         usage_sum.append(consumption_rate * (capacity * utilization))
     return sum(usage_sum)

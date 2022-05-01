@@ -64,6 +64,7 @@ def get_min_cost_tech_for_region(
     tech_availability: pd.DataFrame,
     material_container: MaterialUsage,
     tech_moratorium: bool,
+    regional_scrap: bool,
     year: int,
     region: str,
     plant_capacity: float,
@@ -81,8 +82,10 @@ def get_min_cost_tech_for_region(
             TECH_REFERENCE_LIST,
             plant_capacity,
             tech_moratorium,
+            regional_scrap,
             year,
-            plant_name
+            plant_name,
+            region
         )
         lcost_df_c = lcost_df_c[lcost_df_c.index.isin(potential_technologies)]
 
@@ -310,6 +313,7 @@ def open_close_plants(
     year: int,
     trade_scenario: bool = False,
     tech_moratorium: bool = False,
+    regional_scrap: bool = False,
     enforce_constraints: bool = False,
     open_plant_util_cutoff: float = CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
     close_plant_util_cutoff: float = CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
@@ -384,6 +388,7 @@ def open_close_plants(
                     tech_availability,
                     material_container,
                     tech_moratorium,
+                    regional_scrap,
                     year,
                     region,
                     new_plant_capacity,
@@ -456,6 +461,7 @@ def open_close_flow(
     year: int,
     trade_scenario: bool,
     tech_moratorium: bool,
+    regional_scrap: bool,
     enforce_constraints: bool,
 ) -> str:
 
@@ -481,5 +487,6 @@ def open_close_flow(
         year=year,
         trade_scenario=trade_scenario,
         tech_moratorium=tech_moratorium,
+        regional_scrap=regional_scrap,
         enforce_constraints=enforce_constraints
     )

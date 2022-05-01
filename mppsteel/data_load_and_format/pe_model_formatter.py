@@ -163,7 +163,6 @@ def final_mapper(model: pd.DataFrame, reference_mapper: dict, year_range: range 
     if year_range:
         for year in tqdm(year_range, total=len(year_range), desc='Generating PE Model Reference Dictionary'):
             for model_region in model.index.get_level_values(1).unique():
-                print(model_region)
                 for country_code in reference_mapper[model_region]:
                     final_mapper[(year, country_code)] = model.loc[(year, model_region), 'value']
     else:

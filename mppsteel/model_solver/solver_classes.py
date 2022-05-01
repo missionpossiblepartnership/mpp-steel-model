@@ -70,10 +70,12 @@ class MaterialUsage:
         self.results = []
         self.resources = ['biomass', 'scrap', 'ccs', 'co2']
 
-    def initiate_years(self, year_range: range, resource_list: list):
+    def initiate_years_and_regions(self, year_range: range, resource_list: list, region_list: list):
         for year in year_range:
             self.usage[year] = {resource: 0 for resource in resource_list}
             self.balance[year] = {resource: 0 for resource in resource_list}
+            self.usage[year]['scrap'] = {region: 0 for region in region_list}
+            self.balance[year]['scrap'] = {region: 0 for region in region_list}
 
     def load_constraint(self, model: pd.DataFrame, model_type: str):
         if model_type == 'biomass':
@@ -85,23 +87,36 @@ class MaterialUsage:
         elif model_type == 'co2':
             self.constraint[model_type] = create_co2_use_constraint(model)
 
-    def set_year_balance(self, year: int, model_type: str):
-        self.balance[year][model_type] = self.constraint[model_type][year]
+    def set_year_balance(self, year: int, model_type: str, region_list: list):
+        if model_type == 'scrap':
+            for region in region_list:
+                self.balance[year][model_type][region] = self.constraint[model_type][year][region]
+        else:
+            self.balance[year][model_type] = self.constraint[model_type][year]
 
     def get_current_balance(self, year: int, model_type: str):
+        if model_type == 'scrap':
+            return sum(self.balance[year][model_type].values())
         return self.balance[year][model_type]
 
     def get_current_usage(self, year: int, model_type: str):
+        if model_type == 'scrap':
+            return sum(self.usage[year][model_type].values())
         return self.usage[year][model_type]
 
     def record_results(self, dict_entry: dict):
         self.results.append(dict_entry)
 
-    def print_year_summary(self, year: int):
+    def print_year_summary(self, year: int, regional_scrap: bool):
         for model_type in self.resources:
-            constraint = self.constraint[model_type][year]
-            usage = self.usage[year][model_type]
-            balance = self.balance[year][model_type]
+            if model_type == 'scrap':
+                constraint = sum(self.constraint[model_type][year].values())
+                usage = sum(self.usage[year][model_type].values())
+                balance = sum(self.balance[year][model_type].values())
+            else:
+                constraint = self.constraint[model_type][year]
+                usage = self.usage[year][model_type]
+                balance = self.balance[year][model_type]
             pct_used = 100
             pct_remaining = 0
             try:
@@ -111,16 +126,30 @@ class MaterialUsage:
                 pct_used = 100
                 pct_remaining = 0
             logger.info(f"""{model_type.upper()} USAGE SUMMARY {year}  -> Constraint: {constraint :0.4f} | Usage: {usage :0.4f} ({pct_used :0.1f}%) | Balance: {balance :0.4f} ({pct_remaining :0.1f}%)""")
+            if (model_type == 'scrap') and regional_scrap:
+                limit_bursting_regions = {region: round(self.balance[year][model_type][region], 2) for region in self.balance[year][model_type] if self.balance[year][model_type][region] < 0}
+                limit_keeping_regions = {region: round(self.balance[year][model_type][region], 2) for region in self.balance[year][model_type] if self.balance[year][model_type][region] >= 0}
+                logger.info(f'SCRAP USAGE SUMMARY {year} - Scrap Limit Bursting Regions -> {limit_bursting_regions}')
+                logger.info(f'SCRAP USAGE SUMMARY {year} - Scrap Limit Keeping Regions -> {limit_keeping_regions}')
+
 
     def output_constraints_summary(self, year_range: range):
         results = []
         for year, model_type in itertools.product(year_range, self.resources):
+            if model_type == 'scrap':
+                constraint = sum(self.constraint[model_type][year].values())
+                usage = sum(self.usage[year][model_type].values())
+                balance = sum(self.balance[year][model_type].values())
+            else:
+                constraint = self.constraint[model_type][year]
+                usage = self.usage[year][model_type]
+                balance = self.balance[year][model_type]
             entry = {
                 'resource': model_type,
                 'year': year,
-                'constraint': self.constraint[model_type][year],
-                'usage': self.usage[year][model_type],
-                'balance': self.balance[year][model_type],
+                'constraint': constraint,
+                'usage': usage,
+                'balance': balance,
             }
             results.append(entry)
         return pd.DataFrame(results).set_index(['resource', 'year']).sort_index(ascending=True)
@@ -129,22 +158,35 @@ class MaterialUsage:
         return pd.DataFrame(self.results)
 
     def constraint_transaction(
-        self, 
-        year: int, 
-        model_type: str, 
-        amount: float, 
+        self,
+        year: int,
+        model_type: str,
+        amount: float,
+        region: str = None,
+        regional_scrap: bool = False,
         override_constraint: bool = False,
         apply_transaction: bool = True,
     ):
         if amount == 0:
             return True
-        current_balance = self.balance[year][model_type]
-        current_usage = self.usage[year][model_type]
+        if (model_type == 'scrap') and regional_scrap:
+            current_balance = self.balance[year][model_type][region]
+            current_usage = self.usage[year][model_type][region]
+        elif (model_type == 'scrap') and not regional_scrap:
+            current_balance = sum(self.balance[year][model_type].values())
+            current_usage = sum(self.usage[year][model_type].values())
+        else:
+            current_balance = self.balance[year][model_type]
+            current_usage = self.usage[year][model_type]
         if (current_balance < amount) and not override_constraint:
             return False
         if apply_transaction:
-            self.balance[year][model_type] = current_balance - amount
-            self.usage[year][model_type] = current_usage + amount
+            if model_type == 'scrap':
+                self.balance[year][model_type][region] = current_balance - amount
+                self.usage[year][model_type][region] = current_usage + amount
+            else:
+                self.balance[year][model_type] = current_balance - amount
+                self.usage[year][model_type] = current_usage + amount
         return True
 class CapacityContainerClass():
     def __init__(self):
@@ -167,7 +209,6 @@ class CapacityContainerClass():
 
     def return_regional_capacity(self, year: int = None, region: str = None):
         capacity_dict = self.regional_capacities_agg
-        
         if region and not year:
             # return a year value time series for a region
             return {year_val: capacity_dict[year_val][region] for year_val in capacity_dict}
@@ -301,11 +342,13 @@ def create_material_usage_dict(
     plant_capacities: dict,
     business_case_ref: dict,
     plant_name: str,
+    region: str,
     year: int,
     switch_technology: str,
     capacity_value: float = None,
     override_constraint: bool = False,
-    apply_transaction: bool = False
+    apply_transaction: bool = False,
+    regional_scrap: bool = False,
 ):
     material_check_container = {}
     for resource in RESOURCE_CONTAINER_REF:
@@ -319,11 +362,13 @@ def create_material_usage_dict(
         )
 
         material_check_container[resource] = material_usage_dict_container.constraint_transaction(
-            year,
-            resource,
-            projected_usage,
+            year=year,
+            model_type=resource,
+            amount=projected_usage,
+            region=region,
             override_constraint=override_constraint,
             apply_transaction=apply_transaction,
+            regional_scrap=regional_scrap
         )
     return material_check_container
 
@@ -334,9 +379,11 @@ def apply_constraints(
     combined_available_list: list,
     year: int,
     plant_name: str,
+    region: str,
     base_tech: str,
     override_constraint: bool,
     apply_transaction: bool,
+    regional_scrap: bool
 ):
     # Constraints checks
     new_availability_list = []
@@ -346,10 +393,12 @@ def apply_constraints(
             plant_capacities,
             business_case_ref,
             plant_name,
+            region,
             year,
             switch_technology,
             override_constraint=override_constraint,
-            apply_transaction=apply_transaction
+            apply_transaction=apply_transaction,
+            regional_scrap=regional_scrap,
         )
         if all(material_check_container.values()):
             new_availability_list.append(switch_technology)
@@ -359,6 +408,7 @@ def apply_constraints(
 
         entry = {
             'plant': plant_name,
+            'region': region,
             'start_technology': base_tech,
             'switch_technology': switch_technology,
             'year': year,
@@ -378,8 +428,10 @@ def apply_constraints_for_min_cost_tech(
     combined_available_list: list,
     plant_capacity: float,
     tech_moratorium: bool,
+    regional_scrap: bool,
     year: int,
     plant_name: str,
+    region: str,
 ):
     new_availability_list = []
     # Constraints checks
@@ -394,11 +446,13 @@ def apply_constraints_for_min_cost_tech(
             plant_capacities_dict,
             business_case_ref,
             plant_name,
+            region,
             year,
             technology,
             plant_capacity,
             override_constraint=False,
             apply_transaction=False,
+            regional_scrap=regional_scrap
         )
 
         if all(material_check_container.values()):
@@ -410,7 +464,8 @@ def apply_constraints_for_min_cost_tech(
 
         entry = {
             'plant': plant_name,
-            'start_technology': 'nones',
+            'region': region,
+            'start_technology': 'none',
             'switch_technology': technology,
             'year': year,
             'assign_case': 'new plant',
