@@ -21,14 +21,14 @@ PE_MODEL_FILENAME_DICT = {
     "power": "Power Model.xlsx",
     "hydrogen": "H2 Model.xlsx",
     "bio": "Bio Model.xlsx",
-    "ccus": "CCUS Model.xlsx",
+    "ccs": "CCS Model.xlsx",
 }
 
 PE_MODEL_SHEETNAME_DICT = {
     "power": ["GridPrice", "GridEmissions", "RESPrice"],
     "hydrogen": ["Prices", "Emissions"],
     "bio": ["Feedstock_Prices", "Biomass_constraint"],
-    "ccus": ["Transport", "Storage", "Constraint"],
+    "ccs": ["Transport", "Storage", "Constraint"],
 }
 
 
@@ -140,7 +140,7 @@ def load_data(serialize: bool = False) -> dict:
     power_model = get_pe_model_data("power")
     hydrogen_model = get_pe_model_data("hydrogen")
     bio_model = get_pe_model_data("bio")
-    ccus_model = get_pe_model_data("ccus")
+    ccs_model = get_pe_model_data("ccs")
     technology_business_cases = extract_data(
         IMPORT_DATA_PATH, "Technology Business Cases", "csv"
     )
@@ -165,7 +165,7 @@ def load_data(serialize: bool = False) -> dict:
         "power_model": power_model,
         "hydrogen_model": hydrogen_model,
         "bio_model": bio_model,
-        "ccus_model": ccus_model,
+        "ccs_model": ccs_model,
         "wsa_production": wsa_production,
     }
 

@@ -538,9 +538,9 @@ def format_pe_data(scenario_dict: dict, serialize: bool = False, standarside_uni
         "power_grid_emissions": power_grid_emissions_f,
         "bio_price": bio_model_prices_f,
         "bio_constraint": bio_model_constraints_f,
-        "ccus_transport": ccs_model_storage_f,
-        "ccus_storage": ccs_model_transport_f,
-        "ccus_constraints": ccs_model_constraints_f,
+        "ccs_transport": ccs_model_storage_f,
+        "ccs_storage": ccs_model_transport_f,
+        "ccs_constraints": ccs_model_constraints_f,
     }
 
     if serialize:

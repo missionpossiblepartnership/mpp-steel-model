@@ -77,7 +77,7 @@ BIO_CONSTRAINT_MODEL_SCHEMA = DataFrameSchema(
     }
 )
 
-CCUS_TRANSPORT_SCHEMA = DataFrameSchema(
+CCS_TRANSPORT_SCHEMA = DataFrameSchema(
     {
         "Tab": Column(str),
         "Reference": Column(str),
@@ -97,7 +97,7 @@ CCUS_TRANSPORT_SCHEMA = DataFrameSchema(
     }
 )
 
-CCUS_STORAGE_FACTOR = DataFrameSchema(
+CCS_STORAGE_FACTOR = DataFrameSchema(
     {
         "Tab": Column(str),
         "Reference": Column(str),
@@ -122,7 +122,7 @@ def shared_inputs_tests():
     power_model = read_pickle_folder(PKL_DATA_IMPORTS, "power_model", "dict")
     hydrogen_model = read_pickle_folder(PKL_DATA_IMPORTS, "hydrogen_model", "dict")
     bio_model = read_pickle_folder(PKL_DATA_IMPORTS, "bio_model", "dict")
-    ccus_model = read_pickle_folder(PKL_DATA_IMPORTS, "ccus_model", "dict")
+    ccs_model = read_pickle_folder(PKL_DATA_IMPORTS, "ccs_model", "dict")
 
     for tab in PE_MODEL_SHEETNAME_DICT["power"]:
         POWER_MODEL_SCHEMA.validate(power_model[tab])
@@ -133,5 +133,5 @@ def shared_inputs_tests():
     BIO_PRICE_MODEL_SCHEMA.validate(bio_model["Feedstock_Prices"])
     BIO_CONSTRAINT_MODEL_SCHEMA.validate(bio_model["Biomass_constraint"])
 
-    CCUS_TRANSPORT_SCHEMA.validate(ccus_model["Transport"])
-    CCUS_STORAGE_FACTOR.validate(ccus_model["Storage"])
+    CCS_TRANSPORT_SCHEMA.validate(ccs_model["Transport"])
+    CCS_STORAGE_FACTOR.validate(ccs_model["Storage"])
