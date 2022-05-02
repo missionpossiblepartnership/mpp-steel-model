@@ -279,7 +279,7 @@ def choose_technology(scenario_dict: dict) -> dict:
     )
     co2_constraint = read_pickle_folder(PKL_DATA_IMPORTS, "ccs_co2", "df")
     ccs_constraint = read_pickle_folder(
-        intermediate_path, "ccus_constraints_model_formatted", "df"
+        intermediate_path, "ccs_constraints_model_formatted", "df"
     )
     steel_demand_df = read_pickle_folder(
         intermediate_path, "regional_steel_demand_formatted", "df"

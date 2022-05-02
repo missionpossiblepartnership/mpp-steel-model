@@ -136,7 +136,7 @@ def capex_generator(
 @pa.check_input(CAPEX_OPEX_PER_TECH_SCHEMA)
 def capex_dictionary_generator(
     greenfield_df: pd.DataFrame, brownfield_df: pd.DataFrame, 
-    other_df: pd.DataFrame, eur_to_usd: float = 1 / USD_TO_EUR_CONVERSION_DEFAULT
+    other_df: pd.DataFrame, eur_to_usd: float,
 ) -> dict:
     """A dictionary of greenfield, brownfield and other_opex.
 
@@ -144,6 +144,7 @@ def capex_dictionary_generator(
         greenfield_df (pd.DataFrame): A dataframe of greenfield capex.
         brownfield_df (pd.DataFrame): A dataframe of brownfield capex.
         other_df (pd.DataFrame): A dataframe of other opex.
+        eur_to_usd (float): The rate used ot convert EUR values to USD.
 
     Returns:
         dict: A dictionary of the formatted capex and opex dataframes.
@@ -169,7 +170,7 @@ def capex_dictionary_generator(
 
 
 @pa.check_input(ETHANOL_PLASTIC_CHARCOAL_SCHEMA)
-def format_commodities_data(df: pd.DataFrame, material_mapper: dict, as_t: bool = False) -> pd.DataFrame:
+def format_commodities_data(df: pd.DataFrame, material_mapper: dict) -> pd.DataFrame:
     """Formats the Commodities dataset.
 
     Args:
@@ -201,7 +202,15 @@ def format_commodities_data(df: pd.DataFrame, material_mapper: dict, as_t: bool 
     return df_c
 
 @timer_func
-def format_business_cases(bc_df: pd.DataFrame):
+def format_business_cases(bc_df: pd.DataFrame) -> pd.DataFrame:
+    """Formats the initial business cases input sheet
+
+    Args:
+        bc_df (pd.DataFrame): The initial business cases sheet.
+
+    Returns:
+        pd.DataFrame: The formatted business cases sheet.
+    """
     bc_df_c = bc_df.copy()
     bc_df_c =  bc_df_c.melt(id_vars=['Material', 'Type of metric', 'Unit'], var_name='technology', value_name='value').copy()
     bc_df_c.rename({'Material': 'material_category', 'Type of metric': 'metric_type', 'Unit': 'unit'}, axis=1, inplace=True)
@@ -266,11 +275,28 @@ def generate_preprocessed_emissions_data(
     return commodities_df, final_scope3_ef_df
 
 
-def bc_unit_adjustments(row):
+def bc_unit_adjustments(row: pd.Series) -> pd.Series:
+    """Adjusts the units of the business cases input depending on the type of resource (Energy or Mass resource)
+
+    Args:
+        row (pd.Series): The input series passed as an apply function.
+
+    Returns:
+        pd.Series: The reformatted units.
+    """
+
     return row.value / TON_TO_KILOGRAM_FACTOR if row.material_category in KG_RESOURCES else row.value
 
 @timer_func
-def create_business_case_reference(serialize: bool = True):
+def create_business_case_reference(serialize: bool = True) -> dict:
+    """Turns the business cases into a reference dictionary for fast access. But saves a dataframe version and dict as pickle file depending on the `serialize` boolean flag.
+
+    Args:
+        serialize (bool, optional): Boolean flag to determine whether the final output is serialized. Defaults to True.
+
+    Returns:
+        dict: The dictionary reference of the standardised business cases.
+    """
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "technology_business_cases")
     business_cases = format_business_cases(business_cases)
     business_cases.reset_index(inplace=True)

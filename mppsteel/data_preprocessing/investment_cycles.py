@@ -39,9 +39,9 @@ def calculate_investment_years(
 
     Args:
         op_start_year (int): The operating start year of the plant.
+        cycle_length (int, optional): The standard interval of the investment decision cycle for plants.
         cutoff_start_year (int, optional): The initial year of the model. Defaults to MODEL_YEAR_START.
         cutoff_end_year (int, optional): The last year of the model. Defaults to MODEL_YEAR_END.
-        inv_intervals (int, optional): The standard interval of the investment decision cycle for plants. Defaults to INVESTMENT_CYCLE_DURATION_YEARS.
 
     Returns:
         list: A list of investment decision years.
@@ -54,12 +54,30 @@ def calculate_investment_years(
         x += cycle_length
     return decision_years
 
-def return_cycle_length(inv_intervals: int = INVESTMENT_CYCLE_DURATION_YEARS):
+def return_cycle_length(inv_intervals) -> int:
+    """Returns a new cycle length based on a fixed value and a random value within a predefined inveral.
+
+    Args:
+        inv_intervals (int): A fixed interval value aroud which the final interval will fluctuate.
+
+    Returns:
+        int: A final interval value.
+    """
     return inv_intervals + random.randrange(
         -INVESTMENT_CYCLE_VARIANCE_YEARS, INVESTMENT_CYCLE_VARIANCE_YEARS, 1
     )
 
-def return_switch_type(investment_cycle: list, year: int):
+def return_switch_type(investment_cycle: list, year: int) -> str:
+    """Returns a string based on the relation of a specified `year` to the `investment_cycle`.
+    There are three possible values `main cycle`, `trans switch` or `no switch`.
+
+    Args:
+        investment_cycle (list): The investment cycle for a given plant.
+        year (int): The year to base the switch type evaluation on.
+
+    Returns:
+        str: A string of the switch type.
+    """
     off_cycle_years = [inv_range for inv_range in investment_cycle if isinstance(inv_range, range)]
     main_cycle_years = [inv_year for inv_year in investment_cycle if isinstance(inv_year, int)]
     if year in main_cycle_years:
@@ -128,7 +146,7 @@ def create_investment_cycle_reference(plant_investment_year_dict: dict) -> pd.Da
         plant_investment_year_dict (dict): A list of investment years - main cycle years as integers, transitional switch year ranges as range objects.
 
     Returns:
-        pd.DataFrame: _description_
+        pd.DataFrame: Creates a Dataframe based on a plant investment dictionary.
     """
     df_list = []
     for plant_name, investment_cycle in plant_investment_year_dict.items():
@@ -147,16 +165,20 @@ def create_investment_cycle_reference(plant_investment_year_dict: dict) -> pd.Da
     return pd.DataFrame(df_list).set_index(["year", "plant_name"])
 
 def extract_tech_plant_switchers(
-    plant_investment_year_dict: pd.DataFrame, active_plants: list, year: int) -> Union[list, Tuple[list, list]]:
+    plant_investment_year_dict: pd.DataFrame, active_plants: list, year: int) -> Union[list, Tuple[list, list, list, list]]:
     """Extracts the list of plants that are due for a main cycle switch or a transitional switch in a given year according to an investment cycle DataFrame.
 
     Args:
-        inv_cycle_ref (pd.DataFrame): DataFrame containing the investment cycle reference for each plant.
+        plant_investment_year_dict (pd.DataFrame): DataFrame containing the investment cycle reference for each plant.
+        active_plants (list): The list of active plants to create references for.
         year (int): The year to extract the plant switchers for.
-        combined_output (bool, optional): Boolean switch that determines whether to return a combined list of switching plants or a tuple of two lists. Defaults to True.
 
     Returns:
-        Union[list, Tuple[list, list]]: Returns a single list of main cycle switchers and transitional switchers if `combined_output` if set to True, else a tuple of the two lists.
+        Union[list, Tuple[list, list, list, list]]: Returns multiple lists based on the outputs of 
+        main_cycle_switchers: all plants with main cycle switches in the specified year
+        trans_cycle_switchers: all plants with transitional switches in the specified year
+        non_switchers: all plants that aren't switching at all in the specified year
+        combined_switchers: all the plants in main_cycle_switchers + trans_cycle_switchers
     """
     main_cycle_switchers = []
     trans_cycle_switchers = []
@@ -176,7 +198,17 @@ def extract_tech_plant_switchers(
             non_switchers.append(plant_name)
     return main_cycle_switchers, trans_cycle_switchers, non_switchers, combined_switchers
 
-def adjust_investment_cycle_dict(cycle_years: list, rebase_year: int):
+def adjust_investment_cycle_dict(cycle_years: list, rebase_year: int) -> list:
+    """Adjusts the investment cycle when a plan decides to undertake a transitional switch away from its base technology.
+    The adjustment removes the possibility of an additional transitional switch before its next main investment cycle.
+
+    Args:
+        cycle_years (list): The initial investment cycle years
+        rebase_year (int): The year to rebase the investment cycle to.
+
+    Returns:
+        list: The rebased investment cycle.
+    """
     inv_ranges_list = [year_obj for year_obj in cycle_years if isinstance(year_obj, range)]
     if not inv_ranges_list:
         return cycle_years
@@ -190,6 +222,8 @@ def adjust_investment_cycle_dict(cycle_years: list, rebase_year: int):
     return new_list
 
 class PlantInvestmentCycle():
+    """Class for managing the the investment cycles for plants.
+    """
     def __init__(self):
         self.plant_names = []
         self.plant_start_years = {}
@@ -202,7 +236,7 @@ class PlantInvestmentCycle():
         start_year_dict = dict(zip(plant_names, plant_start_years))
         for plant_name in self.plant_names:
             self.plant_start_years[plant_name] = start_year_dict[plant_name]
-            self.plant_investment_cycle_length[plant_name] = return_cycle_length()
+            self.plant_investment_cycle_length[plant_name] = return_cycle_length(INVESTMENT_CYCLE_DURATION_YEARS)
             self.plant_cycles[plant_name] = calculate_investment_years(self.plant_start_years[plant_name], self.plant_investment_cycle_length[plant_name])
             self.plant_cycles_with_off_cycle[plant_name] = add_off_cycle_investment_years(self.plant_cycles[plant_name])
     
@@ -211,7 +245,7 @@ class PlantInvestmentCycle():
         for plant_name in plant_names:
             self.plant_names.append(plant_name)
             self.plant_start_years[plant_name] = new_dict[plant_name]
-            self.plant_investment_cycle_length[plant_name] = return_cycle_length()
+            self.plant_investment_cycle_length[plant_name] = return_cycle_length(INVESTMENT_CYCLE_DURATION_YEARS)
             self.plant_cycles[plant_name] = calculate_investment_years(self.plant_start_years[plant_name], self.plant_investment_cycle_length[plant_name])
             self.plant_cycles_with_off_cycle[plant_name] = add_off_cycle_investment_years(self.plant_cycles[plant_name])
             

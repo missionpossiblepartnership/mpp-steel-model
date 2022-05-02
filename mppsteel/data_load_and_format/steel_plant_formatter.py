@@ -77,8 +77,7 @@ def steel_plant_formatter(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def extract_steel_plant_capacity(df: pd.DataFrame) -> pd.DataFrame:
-    """Creates new columns `plant_capacity` based on
-    technology capacity columns. 
+    """Creates new columns `plant_capacity` based on technology capacity columns. 
 
     Args:
         df (pd.DataFrame): Formatted Steel Plant data.
@@ -142,7 +141,8 @@ def map_plant_id_to_df(
     """Creates a column references with either the plant ID of the steel plant or the plant name based on the ID.
 
     Args:
-        df (pd.DataFrame): The DataFrame containing the mapping of steel plants to id.
+        df (pd.DataFrame): The main DataFrame to map.
+        steel_plants (pd.DataFrame): The steel plant reference DataFrame.
         plant_identifier (str): The plant identifier column in the DataFrame.
         reverse (bool, optional): Flag to create ID to name mapping rather than name to ID mapping. Defaults to False.
 
@@ -160,8 +160,7 @@ def map_plant_id_to_df(
     return df_c
 
 
-def apply_countries_to_steel_plants(
-    steel_plant_formatted: pd.DataFrame) -> pd.DataFrame:
+def apply_countries_to_steel_plants(steel_plant_formatted: pd.DataFrame) -> pd.DataFrame:
     """Maps a country codes and region column to the Steel Plants.
 
     Args:
@@ -187,7 +186,16 @@ def apply_countries_to_steel_plants(
     df_c["rmi_region"] = df_c["country_code"].apply(lambda x: rmi_mapper[x])
     return df_c
 
-def convert_start_year(year_value: str):
+def convert_start_year(year_value: str) -> int:
+    """Converts a string or int year value to an int year value.
+    If the initial year value is the value `unknown`, return a integer within a range set by configurable parameters.
+
+    Args:
+        year_value (str): A variable containing the initial year value.
+
+    Returns:
+        int: An integer containing the year value.
+    """
     if year_value == 'unknown':
         return random.randrange(
             STEEL_PLANT_EARLIEST_START_DATE, 
@@ -196,20 +204,24 @@ def convert_start_year(year_value: str):
         )
     return int(year_value)
 
-def create_active_check_col(row: pd.DataFrame, year: int):
-    if (row.status in ['operating', 'new model plant']) and (row.start_of_operation <= year):
-        return True
-    return False
+def create_active_check_col(row: pd.Series, year: int) -> bool:
+    """Checks whether a plant should be considered active or not based on its status attribute or whether the current year if before its start of operation.
+
+    Args:
+        row (pd.Series): The row containing the metadata for the plant.
+        year (int): The current year to check against the start_of_operation attribute in `row`.
+
+    Returns:
+        bool: A boolean value depedning on the logic check.
+    """
+    return row.status in ['operating', 'new model plant'] and row.start_of_operation <= year
 
 @timer_func
-def steel_plant_processor(
-    serialize: bool = False, remove_non_operating_plants: bool = False
-) -> pd.DataFrame:
+def steel_plant_processor(serialize: bool = False) -> pd.DataFrame:
     """Generates a fully preprocessed Steel Plant DataFrame.
 
     Args:
         serialize (bool, optional): Flag to only serialize the DataFrame to a pickle file and not return a DataFrame. Defaults to False.
-        remove_non_operating_plants (bool, optional): Option to remove non_operating plants from the reference.  Defaults to False.
     Returns:
         pd.DataFrame: A DataFrame containing the preprocessed steel plants.
     """

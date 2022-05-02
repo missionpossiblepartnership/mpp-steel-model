@@ -40,21 +40,20 @@ def calculate_green_premium(
     plant_name: str,
     year: int,
     usd_eur_rate: float
-) -> float:
+) -> dict:
     """Calculates a green premium amout based on the product of the green premium capacity and the green premium timeseries value.
 
     Args:
-        variable_costs (pd.DataFrame): DataFrame containing the variable costs data split by technology and region.
+        variable_cost_ref (pd.DataFrame): DataFrame containing the variable costs data split by technology and region.
         steel_plant_df (pd.DataFrame): DataFrame containing the list of steel plants.
         green_premium_timeseries (pd.DataFrame): The green premium timeseries with the subsidy amounts on a yearly basis.
         country_code (str): The country code that the plant is based in.
         plant_name (str): The name of the plant you want to calculate the green premium value for.
-        technology (str): The technology that the green premium is being calculated for.
         year (int): The year to get the green premium timeseries value for.
         eur_to_usd_rate (float): A conversion rate from euros to usd.
 
     Returns:
-        float: A green premium value product.
+        dict: A dictionary of technology key values and green premium values as an array.
     """
 
     def green_premium_calc(loop_year: int):
@@ -134,24 +133,18 @@ def get_discounted_opex_values(
     opex_cost_ref: dict,
     year_interval: int,
     int_rate: float,
-) -> pd.DataFrame:
+) -> dict:
     """Calculates discounted opex reference DataFrame from given inputs.
 
     Args:
         country_code (tuple): The country code of the steel plant you want to get discounted opex values for.
         year_start (int): The year in which the model starts.
-        carbon_tax_df (pd.DataFrame): The carbon tax timeseries with the carbon tax amounts on a yearly basis.
-        variable_costs_df (pd.DataFrame): DataFrame containing the variable costs data split by technology and region.
-        power_df (pd.DataFrame, optional): The shared MPP Power assumptions model. Defaults to None.
-        hydrogen_df (pd.DataFrame, optional): The shared MPP Hydrogen assumptions model. Defaults to None.
-        other_opex_df (pd.DataFrame): A fixed opex DataFrame to be used to calculate total opex costs.
-        s1_emissions_df (pd.DataFrame): An S1 emissions DataFrame to be used to calculate opex costs. 
+        opex_cost_ref (dict): A dict of opex values to be used to calculate total opex costs.
         year_interval (int): The year interval for the discounting window.
         int_rate (float): The interest rate that you want to discount values according to.
-        base_tech (str): The technology you are starting from.
 
     Returns:
-        pd.DataFrame: A DataFrame with discounted opex values.
+        dict: A dictionary of technology key values and opex values as an array.
     """
     year_range = range(year_start, year_start + year_interval + 1)
     loop_year_range = [year if (year <= MODEL_YEAR_END) else min(MODEL_YEAR_END, year) for year in year_range]

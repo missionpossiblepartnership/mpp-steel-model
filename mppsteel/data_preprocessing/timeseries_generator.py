@@ -108,6 +108,7 @@ def generate_timeseries(scenario_dict: dict = None, serialize: bool = False) -> 
     """Generates timeseries for biomass, carbon taxes and electricity.
 
     Args:
+        scenario_dict (dict): The scenario_dict containing the full scenario setting for the current model run.
         serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
 
     Returns:

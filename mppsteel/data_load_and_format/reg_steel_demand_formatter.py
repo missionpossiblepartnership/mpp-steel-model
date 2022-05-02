@@ -64,7 +64,15 @@ def steel_demand_creator(df: pd.DataFrame, rmi_matcher: dict) -> pd.DataFrame:
         var_name=["year"], 
         index=["year", "scenario", "metric"])
 
-def add_average_values(df: pd.DataFrame):
+def add_average_values(df: pd.DataFrame) -> pd.DataFrame:
+    """Adds a new set of values for the data which is the average of the `BAU` and `High Circ` scenarios.
+
+    Args:
+        df (pd.DataFrame): The Steel Demand DataFrame.
+
+    Returns:
+        pd.DataFrame: The modified DataFrame with the 'Average' data at the same level as the other scenarios.
+    """
     df_c = df.copy()
     average_values = (df_c.loc[:,'BAU',:]['value'].values + df_c.loc[:,'High Circ',:]['value'].values) / 2
     average_base = df_c.loc[:,'BAU',:].rename({'BAU': 'Average'}).copy()
@@ -76,6 +84,7 @@ def get_steel_demand(scenario_dict: dict, serialize: bool = False) -> pd.DataFra
     """Complete preprocessing flow for the regional steel demand data.
 
     Args:
+        scenario_dict (dict): The scenario_dict containing the full scenario setting for the current model run.
         serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
 
     Returns:

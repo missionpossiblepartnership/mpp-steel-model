@@ -25,13 +25,32 @@ from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
 logger = get_logger(__name__)
 
 
-def create_contracted_year_range(year_start: int, year_span: int):
+def create_contracted_year_range(year_start: int, year_span: int) -> list:
+    """Limits a year range based on a max model year.
+
+    Args:
+        year_start (int): The start of the model 
+        year_span (int): The span of the range.
+
+    Returns:
+        list: _description_
+    """
     year_range = range(year_start, year_start + year_span)
     return [year if (year <= MODEL_YEAR_END) else min(MODEL_YEAR_END, year) for year in year_range]
 
 
 @lru_cache(maxsize=1000)
-def calculate_cycle_discount_factor(start_year: int, cycle_year: int, discount_rate: int):
+def calculate_cycle_discount_factor(start_year: int, cycle_year: int, discount_rate: int) -> float:
+    """Calculates the discount factor to apply for a specific year.
+
+    Args:
+        start_year (int): The start year of the discount factor
+        cycle_year (int): The specific year that the cycle is in, starting from the start year.
+        discount_rate (int): The discount rate that represents the cost of capital.
+
+    Returns:
+        float: A float value of the overall discount factor to apply.
+    """
     return (1 + discount_rate) ** (cycle_year - start_year)
 
 
@@ -44,18 +63,19 @@ def calculate_lcox_cost(
     year_span: range,
     discount_rate: float,
 ) -> float:
-    """Calculates the capital charges from a capex DataFrame reference and inputted function arguments.
+    """Calculates the levelised cost component from a capex ref and variable costs ref and inputted function arguments.
 
     Args:
-        capex_dict (dict): A dictionary containing the Capex values for Greenfield, Brownfield and Other Opex values.
+        capex_ref (dict): A dictionary containing the Capex values for Greenfield, Brownfield and Other Opex values.
+        variable_cost_ref (dict): The dictionary of the variable costs.
         year (int): The year you want to calculate the capital charge for.
-        year_span (range): The year span for the capital charge values (used in the PV calculation).
-        technology (str): The technology you want to calculate the capital charge for.
+        country_code (str): The country_code to calculate the variable costs for.
+        technology (str): The technology you want to capex and variable costs for.
+        year_span (range): The year span for the levelised cost.
         discount_rate (float): The discount rate to apply to the capital charge amounts.
-        cost_type (str): The cost you want to calculate `brownfield` or `greenfield`.
 
     Returns:
-        float: The capital charge value.
+        float: The levelised cost capital charge.
     """
     year_start = year
     year_range = create_contracted_year_range(year_start, year_span)
@@ -73,18 +93,17 @@ def calculate_lcox_cost(
 
 
 def get_lcost_costs(
-    row, variable_cost_ref: pd.DataFrame, combined_capex_ref: dict
-):
+    row: pd.Series, variable_cost_ref: pd.DataFrame, combined_capex_ref: dict
+) -> pd.Series:
     """Applies the Levelized Cost function to a given row in a DataFrame.
 
     Args:
-        row (_type_): A vectorized DataFrame row from .apply function.
-        v_costs (pd.DataFrame): A DataFrame containing the variable costs for each technology across each year and region.
-        capex_costs (dict): A dictionary containing the Capex values for Greenfield, Brownfield and Other Opex values.
-        include_greenfield (bool, optional): A boolean flag to toggle the greenfield specific calculations. Defaults to True.
+        row (pd.Series): A vectorized DataFrame row from .apply function.
+        variable_cost_ref (pd.DataFrame): A DataFrame containing the variable costs for each technology across each year and region.
+        combined_capex_ref (dict): A dictionary containing the Capex values for Greenfield, Brownfield and Other Opex values.
 
     Returns:
-        _type_: An amended vectorized DataFrame row from .apply function.
+        pd.Series: The levelized costs vectorized from a DataFrame row from the apply function.
     """
     lcox_cost = calculate_lcox_cost(
         combined_capex_ref,
@@ -99,7 +118,15 @@ def get_lcost_costs(
     return row
 
 
-def get_lcost_capacity(plant_df: pd.DataFrame):
+def get_lcost_capacity(plant_df: pd.DataFrame) -> dict:
+    """Calculates the capacity for each plant and year for the purpose of calculating the Levelized Cost.
+
+    Args:
+        plant_df (pd.DataFrame): The DataFrame containing the Steel plant metadata.
+
+    Returns:
+        dict: A dictoinary reference for each plant containing [plant_id][year] keys.
+    """
     ref_container = {}
     for row in tqdm(plant_df.itertuples(), total=len(plant_df), desc='LCOX Capacity Ref'):
         ref_container[row.plant_id] = {}
@@ -109,8 +136,7 @@ def get_lcost_capacity(plant_df: pd.DataFrame):
             for cycle_year in year_range:
                 capacity = row.plant_capacity / KILOTON_TO_TON_FACTOR
                 cycle_discount_factor = calculate_cycle_discount_factor(year_start, cycle_year, DISCOUNT_RATE)
-                value = capacity / cycle_discount_factor
-                sum_container.append(value)
+                sum_container.append(capacity / cycle_discount_factor)
             ref_container[row.plant_id][year_start] = sum(sum_container)
     return ref_container
 
@@ -138,13 +164,31 @@ def create_df_reference(plant_df: pd.DataFrame, cols_to_create: list) -> pd.Data
     return combined_df
 
 
-def summarise_levelized_cost(plant_lev_cost_df: pd.DataFrame):
+def summarise_levelized_cost(plant_lev_cost_df: pd.DataFrame) -> pd.DataFrame:
+    """Final formatting for the full reference levelized cost DataFrame.
+
+    Args:
+        plant_lev_cost_df (pd.DataFrame): The initial Plant Levelized Cost DataFrame.
+
+    Returns:
+        pd.DataFrame: The formatted levelized cost DataFrame.
+    """
     df_c = plant_lev_cost_df[['year', 'country_code', 'technology', 'levelized_cost']].copy()
     df_c = df_c.groupby(['year', 'country_code', 'technology']).agg('mean')
     return df_c.reset_index()
 
 
-def combined_levelized_cost(lev_cost_df: pd.DataFrame, capacity_ref: dict, plant_df: pd.DataFrame):
+def combined_levelized_cost(lev_cost_df: pd.DataFrame, capacity_ref: dict, plant_df: pd.DataFrame) -> pd.DataFrame:
+    """Combined the costs and capacity compoenents of levelized costs to form a new levelized_cost column.
+
+    Args:
+        lev_cost_df (pd.DataFrame): The levelized cost DataFrame containing the `cost` component of levelized cost.
+        capacity_ref (dict): The capacity reference dict for the levelized costs.
+        plant_df (pd.DataFrame): The Steel plant DataFrame.
+
+    Returns:
+        pd.DataFrame: The combined dataframe for the levelised cost.
+    """
     plant_df_c = plant_df.set_index(['plant_id']).copy()
     lev_cost_df_c = lev_cost_df.set_index(['year', 'country_code', 'technology']).copy()
     product_ref = list(itertools.product(capacity_ref.keys(), MODEL_YEAR_RANGE))
@@ -163,14 +207,12 @@ def combined_levelized_cost(lev_cost_df: pd.DataFrame, capacity_ref: dict, plant
 
 
 def create_levelized_cost(
-    plant_df: pd.DataFrame, variable_costs: pd.DataFrame, capex_ref: dict, include_greenfield=True
-) -> pd.DataFrame:
+    plant_df: pd.DataFrame, variable_costs: pd.DataFrame, capex_ref: dict) -> pd.DataFrame:
     """Generate a DataFrame with Levelized Cost values.
     Args:
         plant_df: Plant DataFrame containing Plant Metadata.
         variable_costs (pd.DataFrame): A DataFrame containing the variable costs for each technology across each year and region.
         capex_ref (dict): A dictionary containing the Capex values for Greenfield, Brownfield and Other Opex values.
-        include_greenfield (bool, optional): A boolean flag to toggle the greenfield specific calculations. Defaults to True.
 
     Returns:
         pd.DataFrame: A DataFrame with Levelized Cost of Steelmaking values.
@@ -223,7 +265,7 @@ def generate_levelized_cost_results(scenario_dict: dict, serialize: bool = False
             PKL_DATA_FORMATTED, "steel_plants_processed", "df"
         )
     lcos_data = create_levelized_cost(
-        steel_plant_df, variable_costs_regional, capex_dict, include_greenfield=True
+        steel_plant_df, variable_costs_regional, capex_dict
     )
 
     if serialize:

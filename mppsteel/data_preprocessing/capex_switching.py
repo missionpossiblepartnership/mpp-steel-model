@@ -55,14 +55,14 @@ def create_switching_dfs(technology_list: list) -> dict:
 def get_capex_values(
     df_switching_dict: dict,
     capex_dict_ref: dict,
-    single_year: int = None,
-    year_end: int = 2021,
+    year_end: int,
 ) -> pd.DataFrame:
     """Assign values to the a DataFrame based on start and potential switching technology.
 
     Args:
         df_switching_dict (dict): A dictionary with each technology as the key.
         capex_dict_ref (dict): A dictionary with greenfield, brownfield and other_opex values for each technology.
+        year_end (int): A integer year value containing the last year of the model.
 
     Returns:
         pd.DataFrame: A dictionary with capex values for each technology.
@@ -71,9 +71,7 @@ def get_capex_values(
     df_dict_c = df_switching_dict.copy()
 
     # Create a year range
-    year_range = range(MODEL_YEAR_START, tuple({year_end + 1 or 2021})[0])
-    if single_year:
-        year_range = [single_year]
+    year_range = range(MODEL_YEAR_START, year_end)
 
     year_list = []
     for year in tqdm(year_range, total=len(year_range), desc="Get Capex Values"):
@@ -312,7 +310,15 @@ def get_capex_values(
         .sort_index(ascending=True)
     )
 
-def greenfield_preprocessing(greenfield_df: pd.DataFrame):
+def greenfield_preprocessing(greenfield_df: pd.DataFrame) -> pd.DataFrame:
+    """Preprocessing operations for the greenfield DataFrame in preparation for a greenfield-specific DataFrame.
+
+    Args:
+        greenfield_df (pd.DataFrame): A DataFrame containing the Greenfield data.
+
+    Returns:
+        pd.DataFrame: _description_
+    """
     df_c = greenfield_df.copy()
     df_c.reset_index(inplace=True)
     df_c.columns = [col.lower().replace(' ', '_') for col in df_c.columns]
@@ -320,7 +326,16 @@ def greenfield_preprocessing(greenfield_df: pd.DataFrame):
     df_c = df_c[~df_c['base_tech'].isin(['Charcoal mini furnace', 'Close plant'])].copy()
     return df_c.set_index('year')
 
-def create_greenfield_switching_df(gf_df: pd.DataFrame, year_range: range):
+def create_greenfield_switching_df(gf_df: pd.DataFrame, year_range: range) -> pd.DataFrame:
+    """Creates a switching DataFrame for the greenfield DataFrame.
+
+    Args:
+        gf_df (pd.DataFrame): Preprocessed Greenfield DataFrame from the `greenfield_preprocessing` function.
+        year_range (range): The year range of the Dataset.
+
+    Returns:
+        pd.DataFrame: A switch capex dataframe for the greenfield dataset.
+    """
     def switch_mapper(row, ref_dict: dict):
         return ref_dict[row.switch_tech] - ref_dict[row.base_tech]
     df_container = []
@@ -335,14 +350,14 @@ def create_greenfield_switching_df(gf_df: pd.DataFrame, year_range: range):
     return pd.concat(df_container)
 
 @timer_func
-def create_capex_timeseries(serialize: bool = False) -> pd.DataFrame:
-    """Complete flow to create a capex dictionary.
+def create_capex_timeseries(serialize: bool = False) -> dict:
+    """Complete flow to create a full capex dictionary and a greenfield capex dictionary.
 
     Args:
-        serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
+        serialize (bool, optional): Flag to only serialize the dicts to a pickle file and not return a dicts. Defaults to False.
 
     Returns:
-        pd.DataFrame: A DataFrame with all of the potential technology capex switches.
+        dict: A dictionary of two DataFrames -> One for general capex switching, and one only for the greenfield capex switch values.
     """
     logger.info("Creating the base switching dict")
     switching_dict = create_switching_dfs(TECH_REFERENCE_LIST)

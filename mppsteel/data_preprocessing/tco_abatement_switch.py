@@ -35,9 +35,7 @@ def tco_regions_ref_generator(scenario_dict: dict) -> pd.DataFrame:
     """Creates a summary of TCO values for each technology and region.
 
     Args:
-        electricity_cost_scenario (str): The scenario that determines the electricity cost from the shared model.
-        grid_scenario (str): The scenario that determines the grid decarbonisation cost from the shared model.
-        hydrogen_cost_scenario (str): The scenario that determines the hydrogen cost from the shared model.
+        scenario_dict (dict): The scenario_dict containing the full scenario setting for the current model run.
 
     Returns:
         pd.DataFrame: A DataFrame containing the components necessary to calculate TCO (not including green premium).
@@ -147,6 +145,19 @@ def get_abatement_difference(
     switch_tech: str,
     date_span: int,
 ) -> float:
+    """Generates the emissions abatement difference between a `base_tech` and a `switch_tech` for a given `year`, `country_code`
+
+    Args:
+        emissions_ref (dict): The combined emissions reference dict.
+        year (int): The year to base abatement difference on.
+        country_code (str): The country code to base country comparions on.
+        base_tech (str): The base technology
+        switch_tech (str): The switch technology
+        date_span (int): The date span to calculate the combined differences.
+
+    Returns:
+        float: The value of the potential emissions abatement [t CO2 / t Steel].
+    """
     
     @lru_cache(maxsize=200000)
     def return_abatement_value(base_tech_sum, switch_tech_sum):
@@ -205,7 +216,16 @@ def emissivity_abatement(combined_emissivity: pd.DataFrame, scope: str) -> pd.Da
             df_list.append(entry)
     return pd.DataFrame(df_list)
 
-def add_gf_capex_values_to_tco_ref(tco_ref_df: pd.DataFrame, gf_df: pd.DataFrame):
+def add_gf_capex_values_to_tco_ref(tco_ref_df: pd.DataFrame, gf_df: pd.DataFrame) -> pd.DataFrame:
+    """Adds Greenfield capex values to the TCO reference to create an alternative TCO calculation.
+
+    Args:
+        tco_ref_df (pd.DataFrame): The initial TCO reference DataFrame.
+        gf_df (pd.DataFrame): The Greenfield Switch Capex DataFrame.
+
+    Returns:
+        pd.DataFrame: The TCO DataFrame with the new column for Greenfield Switch Capex Values.
+    """
 
     def gf_value_mapper(row, gf_dict: dict):
         return gf_dict[(row.year, row.start_technology, row.end_technology)]
@@ -218,7 +238,18 @@ def add_gf_capex_values_to_tco_ref(tco_ref_df: pd.DataFrame, gf_df: pd.DataFrame
     return df_c
 
 
-def tco_calculator(tco_ref_df: pd.DataFrame):
+def tco_calculator(tco_ref_df: pd.DataFrame) -> pd.DataFrame:
+    """Generates the final TCO columns to be used as a reference.
+    Two TCO columns are created:
+        `tco_regular_capex`: based on full capex switching data
+        `tco_gf_capex`: based only greenfield capex switching data
+
+    Args:
+        tco_ref_df (pd.DataFrame): The intial TCO reference DataFrame.
+
+    Returns:
+        pd.DataFrame: The final TCO reference DataFrame.
+    """
     rmi_mapper = create_country_mapper('rmi')
     df = tco_ref_df.copy()
     df["tco_regular_capex"] = (df["discounted_opex"] + df["capex_value"]) / INVESTMENT_CYCLE_DURATION_YEARS

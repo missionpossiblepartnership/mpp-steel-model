@@ -75,7 +75,6 @@ def calculate_cc(
         year_span (range): The year span for the capital charge values (used in the PV calculation).
         technology (str): The technology you want to calculate the capital charge for.
         discount_rate (float): The discount rate to apply to the capital charge amounts.
-        cost_type (str): The cost you want to calculate `brownfield` or `greenfield`.
 
     Returns:
         float: The capital charge value.

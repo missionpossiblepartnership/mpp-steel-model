@@ -102,11 +102,11 @@ def scope1_emissions_calculator(s1_emissions: pd.DataFrame, business_case_ref: d
     emissions reference for a list of technologies.
 
     Args:
-        df (pd.DataFrame): The standardised business cases DataFrame.
-        tech_list (list): The technologies you want to retrieve full emissions reference for.
+        s1_emissions (pd.DataFrame): The standardised business cases DataFrame.
+        business_case_ref (list): The busienss cases reference dictionary.
 
     Returns:
-        pd.DataFrame: A DataFrame of the emissivity per scope and a carbon tax DataFrame. 
+        pd.DataFrame: A DataFrame of the emissivity for scope 1. 
     """
     df_c = s1_emissions.copy()
     year_tech_product_list = itertools.product(df_c.index.get_level_values(0).unique().values, TECH_REFERENCE_LIST)
@@ -149,13 +149,11 @@ def get_s2_emissions(
     country_code: str,
     technology: str
 ) -> float:
-    """_summary_
+    """Calculates the Scope 2 Emissions based on the power_grid_emissions_ref and the business_case_ref, for a given technology, year and country code.
 
     Args:
-        power_model (dict): The power model outputs dictionary.
-        hydrogen_model (dict): The hydrogen model outputs dictionary.
-        business_cases (pd.DataFrame): The standardised business cases DataFrame.
-        country_mapper (dict): A reference to the countries for mapping purposes.
+        power_grid_emissions_ref (dict): The power model values dictionary ref.
+        business_cases (dict): The standardised business cases reference dict.
         year (int): The year to retrieve S2 emissions for.
         country_code (str): The country code to retrieve S2 values for.
         technology (str): The technology to retrieve S2 emissions for.
@@ -171,7 +169,18 @@ def add_hydrogen_emissions_to_s3_column(
     h2_emissions_ref: dict,
     business_case_ref: dict,
     country_codes: list,
-):
+) -> pd.DataFrame:
+    """Adds the Hydrogen emissions to scope 3 emissions.
+
+    Args:
+        combined_emissions_df (pd.DataFrame): The combined emissions DataFrame containing s1, s2 & s3 emissions.
+        h2_emissions_ref (dict): The hydrogen emissions reference dictionary.
+        business_case_ref (dict): The standardised business cases reference dict.
+        country_codes (list): A list of all country codes of steel plants in the model.
+
+    Returns:
+        pd.DataFrame: The DataFrame with the modified Scope 3 emissivity values. 
+    """
     df = combined_emissions_df.copy()
     years = df.index.get_level_values(0).unique()
     technologies = df.index.get_level_values(1).unique()
@@ -187,37 +196,36 @@ def add_hydrogen_emissions_to_s3_column(
 
 def regional_s2_emissivity(
     power_grid_emissions_ref: dict, 
-    plant_country_code_mapper: dict, 
+    plant_country_codes: list, 
     business_case_ref: dict
 ) -> pd.DataFrame:
     """Creates a DataFrame for S2 emissivity reference for each region.
 
     Args:
+        power_grid_emissions_ref (dict): The power model values dictionary ref. 
+        plant_country_codes (list): List of all country codes in the steel plant DataFrame. 
+        business_case_ref (dict): The standardised business cases reference dict.
 
     Returns:
-        pd.DataFrame: A DataFrame with the S2 emissivity values for each country within a reference of steel plants.
+        pd.DataFrame: A DataFrame with the S2 emissivity values for each country code, tech and year iteration.
     """
     df_list = []
-    for year in tqdm(
-        MODEL_YEAR_RANGE,
-        total=len(MODEL_YEAR_RANGE),
-        desc="All Country Code S2 Emission: Year Loop",
-    ):
-        for country_code, technology in itertools.product(plant_country_code_mapper, TECH_REFERENCE_LIST):
-            value = get_s2_emissions(
-                power_grid_emissions_ref,
-                business_case_ref,
-                year,
-                country_code,
-                technology
-            )
-            entry = {
-                "year": year,
-                "country_code": country_code,
-                "technology": technology,
-                "s2_emissivity": value,
-            }
-            df_list.append(entry)
+    year_country_code_tech_product = list(itertools.product(MODEL_YEAR_RANGE, plant_country_codes, TECH_REFERENCE_LIST))
+    for year, country_code, technology in tqdm(year_country_code_tech_product, total=len(year_country_code_tech_product), desc="All Country Code S2 Emission: Year Loop"):
+        value = get_s2_emissions(
+            power_grid_emissions_ref,
+            business_case_ref,
+            year,
+            country_code,
+            technology
+        )
+        entry = {
+            "year": year,
+            "country_code": country_code,
+            "technology": technology,
+            "s2_emissivity": value,
+        }
+        df_list.append(entry)
     return pd.DataFrame(df_list)
 
 
@@ -249,7 +257,15 @@ def combine_emissivity(
     total_emissivity['region'] = total_emissivity['country_code'].apply(lambda x: rmi_mapper[x])
     return total_emissivity
 
-def final_combined_emissions_formatting(combined_emissions_df: pd.DataFrame, as_ton: bool = False):
+def final_combined_emissions_formatting(combined_emissions_df: pd.DataFrame) -> pd.DataFrame:
+    """Formats the Combined Emissions DataFrame.
+
+    Args:
+        combined_emissions_df (pd.DataFrame): The combined DataFrame.
+
+    Returns:
+        pd.DataFrame: _description_
+    """
     df_c = combined_emissions_df.copy()
     df_c = df_c.reset_index().set_index(["year", "country_code", "technology"])
     # change_column_order
@@ -257,16 +273,11 @@ def final_combined_emissions_formatting(combined_emissions_df: pd.DataFrame, as_
         df_c,
         ["region", "s1_emissivity", "s2_emissivity", "s3_emissivity", "combined_emissivity"],
     )
-    if as_ton:
-        for col in ["s1_emissivity", "s2_emissivity", "s3_emissivity", "combined_emissivity"]:
-            df_c[col] = df_c[col]
     return df_c[new_col_order].reset_index()
 
 
 @timer_func
-def generate_emissions_flow(
-    scenario_dict: dict, serialize: bool = False
-) -> pd.DataFrame:
+def generate_emissions_flow(scenario_dict: dict, serialize: bool = False) -> pd.DataFrame:
     """Complete flow for createing the emissivity reference for Scopes 1, 2 & 3.
 
     Args:
@@ -311,7 +322,7 @@ def generate_emissions_flow(
         s1_emissivity, s2_emissivity, s3_emissivity
     )
     combined_emissivity = add_hydrogen_emissions_to_s3_column(combined_emissivity, h2_emissions_ref, business_case_ref, steel_plant_country_codes)
-    combined_emissivity = final_combined_emissions_formatting(combined_emissivity, as_ton=True)
+    combined_emissivity = final_combined_emissions_formatting(combined_emissivity)
     if serialize:
         serialize_file(s1_emissivity, intermediate_path, "calculated_s1_emissivity")
         serialize_file(s3_emissivity, intermediate_path, "calculated_s3_emissivity")

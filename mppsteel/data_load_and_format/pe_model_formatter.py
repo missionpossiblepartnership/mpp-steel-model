@@ -15,11 +15,11 @@ from mppsteel.config.model_config import (
     HYDROGEN_ENERGY_DENSITY_MJ_PER_KG,
 )
 from mppsteel.config.model_scenarios import (
-    CCUS_CAPACITY_SCENARIOS,
+    CCS_CAPACITY_SCENARIOS,
     COST_SCENARIO_MAPPER,
     GRID_DECARBONISATION_SCENARIOS,
     BIOMASS_SCENARIOS,
-    CCUS_SCENARIOS,
+    CCS_SCENARIOS,
 )
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import (
@@ -64,7 +64,7 @@ HYDROGEN_EMISSIONS_MAPPER_LIST = {
     'China': ['China', 'Japan, South Korea, and Taiwan', 'Southeast Asia'],
 }
 
-CCUS_CAPACITY_REGION_MAPPER = {
+CCS_CAPACITY_REGION_MAPPER = {
     'China': ['China'],
     'Europe': ['Europe'],
     'Latin America': ['South and Central America'],
@@ -87,7 +87,17 @@ BIO_PRICE_REGION_MAPPER = {
     'Africa': ['Africa']
 }
 
-def bio_model_reference_generator(model: pd.DataFrame, country_ref: pd.DataFrame, year_range: range):
+def bio_model_reference_generator(model: pd.DataFrame, country_ref: pd.DataFrame, year_range: range) -> dict:
+    """Creates a dictionary reference for the Biomass model by mapping each model region to a distinct country code.
+
+    Args:
+        model (pd.DataFrame): The biomass model.
+        country_ref (pd.DataFrame): The country ref used to map country codes to regions.
+        year_range (range): The year range of the biomass model.
+
+    Returns:
+        dict: A dictionary containing a mapping key of [year, country_code] to biomodel value.
+    """
     mapper_dict = {
         'East Europe': [
             'GEO', 'ALB', 'BLR', 'BIH', 'BGR', 'HRV', 'CZE', 
@@ -135,8 +145,17 @@ def bio_model_reference_generator(model: pd.DataFrame, country_ref: pd.DataFrame
 
     return final_mapper(model, mapper_dict, year_range)
 
-def ccus_model_reference_generator(model: pd.DataFrame, country_ref: pd.DataFrame):
-    CCUS_REGION_MAPPER = {
+def ccs_model_reference_generator(model: pd.DataFrame, country_ref: pd.DataFrame) -> dict:
+    """Creates a dictionary reference for the CCS model by mapping each model region to a distinct country code.
+
+    Args:
+        model (pd.DataFrame): The CCS model.
+        country_ref (pd.DataFrame): The country ref used to map country codes to regions.
+
+    Returns:
+        dict: A dictionary containing a mapping key of [country_code] to CCS value.
+    """
+    CCS_REGION_MAPPER = {
         'Global': get_countries_from_group(country_ref, 'RMI Model Region', 'RoW'), 
         'US': ['USA'], 
         'Europe': get_countries_from_group(country_ref, 'RMI Model Region', 'Europe'), 
@@ -156,9 +175,19 @@ def ccus_model_reference_generator(model: pd.DataFrame, country_ref: pd.DataFram
         'Japan': ['JPN'],
         'Korea': ['KOR']
     }
-    return final_mapper(model, CCUS_REGION_MAPPER)
+    return final_mapper(model, CCS_REGION_MAPPER)
 
-def final_mapper(model: pd.DataFrame, reference_mapper: dict, year_range: range = None):
+def final_mapper(model: pd.DataFrame, reference_mapper: dict, year_range: range = None) -> dict:
+    """Helper function that creates a dictionary mapping of of country codes to regions and optionally a year range to a model's values.
+
+    Args:
+        model (pd.DataFrame): The model used to create a dict reference.
+        reference_mapper (dict): The reference mapper of region to country codes.
+        year_range (range, optional): The year range of the model incase the model varies by year. Defaults to None.
+
+    Returns:
+        dict: The dictionary mapping of the model with a key of [country_code] to value or [year, country_code] to value if `year_range` is active.
+    """
     final_mapper = {}
     if year_range:
         for year in tqdm(year_range, total=len(year_range), desc='Generating PE Model Reference Dictionary'):
@@ -171,7 +200,18 @@ def final_mapper(model: pd.DataFrame, reference_mapper: dict, year_range: range 
                 final_mapper[country_code] = model.loc[model_region, 'value']
     return final_mapper
 
-def model_reference_generator(model: pd.DataFrame, country_ref: pd.DataFrame, region_mapper: dict, year_range: range):
+def model_reference_generator(model: pd.DataFrame, country_ref: pd.DataFrame, region_mapper: dict, year_range: range) -> dict:
+    """Helper function that creates a dictionary mapping of of country codes to regions and optionally a year range to a model's values.
+
+    Args:
+        model (pd.DataFrame): The model used to create a dict reference.
+        country_ref (pd.DataFrame): The country ref used to map country codes to regions.
+        reference_mapper (dict): The reference mapper of region to country codes.
+        year_range (range, optional): The year range of the model incase the model varies by year. Defaults to None.
+
+    Returns:
+        dict: The dictionary mapping of the model with a key of [country_code] to value or [year, country_code] to value if `year_range` is active.
+    """
     final_mapper = {}
     for year in tqdm(year_range, total=len(year_range), desc='Generating PE Model Reference Dictionary'):
         for model_region in model.index.get_level_values(1).unique():
@@ -193,7 +233,21 @@ def subset_power(
     cost_scenario: str = 'Baseline',
     currency_conversion_factor: float = None,
     per_gj: bool = False
-):
+) -> pd.DataFrame:
+    """Subsets the power model according to scenario parameters passed from the scenario dict.
+
+    Args:
+        pdf (_type_): The full reference power dataframe.
+        scenario_dict (dict, optional): The scenario_dict containing the full scenario setting for the current model run. Defaults to None.
+        customer (str, optional): The parameter setting for the customer column. Defaults to 'Industry'.
+        grid_scenario (str, optional): The parameter setting for the grid_scenario. Defaults to 'Central'.
+        cost_scenario (str, optional): The parameter setting for the cost_scenario. Defaults to 'Baseline'.
+        currency_conversion_factor (float, optional): The currency conversion factor that converts one currency to another. Defaults to None.
+        per_gj (bool, optional): A boolean flag that converts a metric from per megawatt hour to per gigajoule. Defaults to False.
+
+    Returns:
+        pd.DataFrame: A DataFrame of the subsetted model.
+    """
     if scenario_dict:
         cost_scenario = COST_SCENARIO_MAPPER[scenario_dict['electricity_cost_scenario']]
         grid_scenario = GRID_DECARBONISATION_SCENARIOS[scenario_dict['grid_scenario']]
@@ -219,7 +273,23 @@ def subset_hydrogen(
     currency_conversion_factor: float = None,
     price_per_gj: bool = False,
     emissions_per_gj: bool = False
-):
+) -> pd.DataFrame:
+    """Subsets the hydrogen model according to scenario parameters passed from the scenario dict.
+
+    Args:
+        h2df (_type_): The full reference hydrogen dataframe.
+        scenario_dict (dict, optional): The scenario_dict containing the full scenario setting for the current model run. Defaults to None.
+        prices (bool, optional): A boolean flag to determine if the variable parameter will be used to subset the model's variable column.
+        variable (str, optional): The parameter setting for the variable column. Defaults to 'H2 price'.
+        cost_scenario (str, optional): The parameter setting for the cost_scenario column. Defaults to 'Min'.
+        prod_scenario (str, optional): The parameter setting for the prod_scenario column. Defaults to 'Utility plant, dedicated VREs'.
+        currency_conversion_factor (float, optional): The currency conversion factor that converts one currency to another. Defaults to None.
+        price_per_gj (bool, optional): A boolean flag that converts the price metric from per kg to per gigajoule. Defaults to False.
+        emissions_per_gj (bool, optional): A boolean flag that converts the emissions metric from kg to gigajoule. Defaults to False.
+
+    Returns:
+        pd.DataFrame: A DataFrame of the subsetted model.
+    """
     if scenario_dict:
         cost_scenario = COST_SCENARIO_MAPPER[scenario_dict['hydrogen_cost_scenario']]
     h2df_c = h2df.copy()
@@ -245,6 +315,18 @@ def subset_bio_prices(
     feedstock_type: str = 'Weighted average',
     currency_conversion_factor: float = None,
 ) -> pd.DataFrame:
+    """Subsets the Biomass prices model according to scenario parameters passed from the scenario dict.
+
+    Args:
+        bdf (pd.DataFrame): The biomass prices model
+        scenario_dict (dict, optional): The scenario_dict containing the full scenario setting for the current model run. Defaults to None.
+        cost_scenario (str, optional): The parameter setting for the cost_scenario column. Defaults to 'Medium'.
+        feedstock_type (str, optional): The parameter setting for the column feedstock type. Defaults to 'Weighted average'.
+        currency_conversion_factor (float, optional): The currency conversion factor that converts one currency to another. Defaults to None.
+
+    Returns:
+        pd.DataFrame: A DataFrame of the subsetted model. 
+    """
     if scenario_dict:
         cost_scenario = BIOMASS_SCENARIOS[scenario_dict['biomass_cost_scenario']]
     bdf_c = bdf[(bdf["Price scenario"] == cost_scenario) & (bdf["Feedstock type"] == feedstock_type)].copy()
@@ -261,17 +343,17 @@ def subset_bio_constraints(
     sector: str = "Steel",
     const_scenario: str = "Prudent",
     as_gj: bool = False
-) -> float:
-    """A getter function for the formatted Bio Constraints model.
+) -> pd.DataFrame:
+    """Subsets the Biomass constraints model according to scenario parameters passed from the scenario dict.
 
     Args:
-        df (pd.DataFrame): A DataFrame of the Bio Constraint model.
-        year (int): The year you want to retrieve a value.
-        sector (str, optional): The sector you would like to get constraint values for. Defaults to "Steel".
+        bdf (pd.DataFrame): A DataFrame of the Bio Constraint model.
+        sector (str, optional): The sector to get constraint values for. Defaults to "Steel".
         const_scenario (str, optional): The constraint scenario: 'Prudent, MaxPotential'. Defaults to "Prudent".
+        as_gj (bool, optional): A boolean flag that converts a metric from exajoules to gigajoules. Defaults to False.
 
     Returns:
-        float: A value based on the parameter settings inputted.
+        pd.DataFrame: A DataFrame of the subsetted model. 
     """
     bdf_c = bdf[(bdf["Sector"] == sector) & (bdf["Scenario"] == const_scenario)].copy()
     year_pairs = [(2020, 2030), (2030, 2040), (2040, 2050)]
@@ -282,16 +364,27 @@ def subset_bio_constraints(
     return bdf_c[['year', 'unit', 'value']].set_index(['year'])
 
 
-
-def subset_ccus_transport(
+def subset_ccs_transport(
     cdf: pd.DataFrame,
     scenario_dict: dict,
     cost_scenario: str = "low",
     currency_conversion_factor: float = None,
     price_per_ton: bool = False
-):
+) -> pd.DataFrame:
+    """Subsets the CCS transport model according to scenario parameters passed from the scenario dict.
+
+    Args:
+        cdf (pd.DataFrame): A DataFrame of the CCS Transport model. 
+        scenario_dict (dict): The scenario_dict containing the full scenario setting for the current model run. Defaults to None.
+        cost_scenario (str, optional): The parameter setting for the cost_scenario column. Defaults to 'low'.
+        currency_conversion_factor (float, optional): The currency conversion factor that converts one currency to another. Defaults to None.
+        price_per_ton (bool, optional): Converts the transport price from per ton to megaton. Defaults to False.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the subset of the model.
+    """
     if scenario_dict:
-        cost_scenario = CCUS_SCENARIOS[scenario_dict['ccus_cost_scenario']]
+        cost_scenario = CCS_SCENARIOS[scenario_dict['ccs_cost_scenario']]
     cdf_c = cdf.copy()
     if cost_scenario == "low":
         cost_scenario_input = "BaseCase"
@@ -320,14 +413,26 @@ def subset_ccus_transport(
     return cdf_c[['region', 'unit', 'value']].set_index(['region'])
 
 
-def subset_ccus_storage(
+def subset_ccs_storage(
     cdf: pd.DataFrame,
     scenario_dict: dict,
     cost_scenario: str = "low",
     currency_conversion_factor: float = None,
-):
+) -> pd.DataFrame:
+    """Subsets the CCS storage model according to scenario parameters passed from the scenario dict.
+
+    Args:
+        cdf (pd.DataFrame): A DataFrame of the CCS Storage model. 
+        scenario_dict (dict): The scenario_dict containing the full scenario setting for the current model run. Defaults to None.
+        cost_scenario (str, optional): The parameter setting for the cost_scenario column. Defaults to 'low'.
+        currency_conversion_factor (float, optional): The currency conversion factor that converts one currency to another. Defaults to None.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the subset of the model.
+    """
+
     if scenario_dict:
-        cost_scenario = CCUS_SCENARIOS[scenario_dict['ccus_cost_scenario']]
+        cost_scenario = CCS_SCENARIOS[scenario_dict['ccs_cost_scenario']]
     cdf_c = cdf.copy()
     if cost_scenario == "low":
         storage_location_input = "Onshore"
@@ -352,13 +457,24 @@ def subset_ccus_storage(
         cdf_c = convert_currency_col(cdf_c, 'value', currency_conversion_factor)
     return cdf_c[['region', 'unit', 'value']].set_index(['region'])
 
-def subset_ccus_constraint(
+def subset_ccs_constraint(
     cdf: pd.DataFrame,
     scenario_dict: dict,
     as_mt: bool = False
-):
-    ccus_capacity_scenario = CCUS_CAPACITY_SCENARIOS[scenario_dict['ccus_capacity_scenario']]
-    df = cdf[cdf['Scenario'] == ccus_capacity_scenario].reset_index(drop=True).copy()
+) -> pd.DataFrame:
+    """Subsets the CCS transport model according to scenario parameters passed from the scenario dict.
+
+    Args:
+        cdf (pd.DataFrame): A DataFrame of the CCS Constraint model. 
+        scenario_dict (dict): The scenario_dict containing the full scenario setting for the current model run. Defaults to None.
+        as_mt (bool, optional): Converts the constraint price from per gigaton to megaton. Defaults to False.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the subset of the model.
+    """
+
+    ccs_capacity_scenario = CCS_CAPACITY_SCENARIOS[scenario_dict['ccs_capacity_scenario']]
+    df = cdf[cdf['Scenario'] == ccs_capacity_scenario].reset_index(drop=True).copy()
     df = df.melt(
         id_vars=['Scenario', 'Year', 'Variable', 'Unit'], 
         var_name='Region', 
@@ -374,9 +490,12 @@ def subset_ccus_constraint(
 @timer_func
 def format_pe_data(scenario_dict: dict, serialize: bool = False, standarside_units: bool = True) -> dict:
     """Full process flow for the Power & Energy data.
+    Inputs the the import data, subsets the data, then creates a model reference dictionary for the model.
 
     Args:
+        scenario_dict (dict): The scenario_dict containing the full scenario setting for the current model run.
         serialize (bool, optional): Serializes the Power & Energy data. Defaults to False.
+        standarside_units (bool, optional): Optional flag to determine whether to automatically standardise all units to their desired units for further use downstream. Defaults to True.
 
     Returns:
         dict: Dictionary of the Power & Energy data.
@@ -388,9 +507,9 @@ def format_pe_data(scenario_dict: dict, serialize: bool = False, standarside_uni
     power_grid_emissions = read_pickle_folder(PKL_DATA_IMPORTS, 'power_model', 'df')['GridEmissions']
     bio_model_prices = read_pickle_folder(PKL_DATA_IMPORTS, 'bio_model', 'df')['Feedstock_Prices']
     bio_model_constraints = read_pickle_folder(PKL_DATA_IMPORTS, 'bio_model', 'df')['Biomass_constraint']
-    ccus_model_transport = read_pickle_folder(PKL_DATA_IMPORTS, 'ccus_model', 'df')['Transport']
-    ccus_model_storage = read_pickle_folder(PKL_DATA_IMPORTS, 'ccus_model', 'df')['Storage']
-    ccus_model_constraints = read_pickle_folder(PKL_DATA_IMPORTS, 'ccus_model', 'df')['Constraint']
+    ccs_model_transport = read_pickle_folder(PKL_DATA_IMPORTS, 'ccs_model', 'df')['Transport']
+    ccs_model_storage = read_pickle_folder(PKL_DATA_IMPORTS, 'ccs_model', 'df')['Storage']
+    ccs_model_constraints = read_pickle_folder(PKL_DATA_IMPORTS, 'ccs_model', 'df')['Constraint']
     country_ref = read_pickle_folder(PKL_DATA_IMPORTS, 'country_ref', 'df')
 
     h2_prices_f = subset_hydrogen(h2_prices, scenario_dict, prices=True, price_per_gj=standarside_units) # from usd / kg to usd / gj
@@ -399,18 +518,18 @@ def format_pe_data(scenario_dict: dict, serialize: bool = False, standarside_uni
     power_grid_emissions_f = subset_power(power_grid_emissions, scenario_dict, per_gj=standarside_units) # from tco2 / mwh to tco2 / gj
     bio_model_prices_f = subset_bio_prices(bio_model_prices, scenario_dict) # no conversion required
     bio_model_constraints_f = subset_bio_constraints(bio_model_constraints, as_gj=standarside_units) # ej to gj
-    ccus_model_transport_f = subset_ccus_transport(ccus_model_transport, scenario_dict, price_per_ton=standarside_units) # from USD/Mt to USD/t
-    ccus_model_storage_f = subset_ccus_storage(ccus_model_storage, scenario_dict) # no conversion required
-    ccus_model_constraints_f = subset_ccus_constraint(ccus_model_constraints, scenario_dict, as_mt=True) # from Gt to Mt
+    ccs_model_transport_f = subset_ccs_transport(ccs_model_transport, scenario_dict, price_per_ton=standarside_units) # from USD/Mt to USD/t
+    ccs_model_storage_f = subset_ccs_storage(ccs_model_storage, scenario_dict) # no conversion required
+    ccs_model_constraints_f = subset_ccs_constraint(ccs_model_constraints, scenario_dict, as_mt=True) # from Gt to Mt
 
     h2_prices_ref = model_reference_generator(h2_prices_f, country_ref, POWER_HYDROGEN_REGION_MAPPER_LIST, MODEL_YEAR_RANGE)
     h2_emissions_ref = model_reference_generator(h2_emissions_f, country_ref, HYDROGEN_EMISSIONS_MAPPER_LIST, MODEL_YEAR_RANGE)
     power_grid_prices_ref = model_reference_generator(power_grid_prices_f, country_ref, POWER_HYDROGEN_REGION_MAPPER_LIST, MODEL_YEAR_RANGE)
     power_grid_emissions_ref = model_reference_generator(power_grid_emissions_f, country_ref, POWER_HYDROGEN_REGION_MAPPER_LIST, MODEL_YEAR_RANGE)
     bio_model_prices_ref = model_reference_generator(bio_model_prices_f, country_ref, BIO_PRICE_REGION_MAPPER, MODEL_YEAR_RANGE)
-    ccus_model_storage_ref = ccus_model_reference_generator(ccus_model_storage_f, country_ref)
-    ccus_model_transport_ref = ccus_model_reference_generator(ccus_model_transport_f, country_ref)
-    ccus_model_constraints_ref = model_reference_generator(ccus_model_constraints_f, country_ref, CCUS_CAPACITY_REGION_MAPPER, MODEL_YEAR_RANGE)
+    ccs_model_storage_ref = ccs_model_reference_generator(ccs_model_storage_f, country_ref)
+    ccs_model_transport_ref = ccs_model_reference_generator(ccs_model_transport_f, country_ref)
+    ccs_model_constraints_ref = model_reference_generator(ccs_model_constraints_f, country_ref, CCS_CAPACITY_REGION_MAPPER, MODEL_YEAR_RANGE)
 
     data_dict = {
         "hydrogen_prices": h2_prices_f,
@@ -419,9 +538,9 @@ def format_pe_data(scenario_dict: dict, serialize: bool = False, standarside_uni
         "power_grid_emissions": power_grid_emissions_f,
         "bio_price": bio_model_prices_f,
         "bio_constraint": bio_model_constraints_f,
-        "ccus_transport": ccus_model_storage_f,
-        "ccus_storage": ccus_model_transport_f,
-        "ccus_constraints": ccus_model_constraints_f,
+        "ccus_transport": ccs_model_storage_f,
+        "ccus_storage": ccs_model_transport_f,
+        "ccus_constraints": ccs_model_constraints_f,
     }
 
     if serialize:
@@ -433,16 +552,16 @@ def format_pe_data(scenario_dict: dict, serialize: bool = False, standarside_uni
         serialize_file(power_grid_emissions_f, intermediate_path, "power_grid_emissions_formatted")
         serialize_file(bio_model_prices_f, intermediate_path, "bio_price_model_formatted")
         serialize_file(bio_model_constraints_f, intermediate_path, "bio_constraint_model_formatted")
-        serialize_file(ccus_model_storage_f, intermediate_path, "ccus_transport_model_formatted")
-        serialize_file(ccus_model_transport_f, intermediate_path, "ccus_storage_model_formatted")
-        serialize_file(ccus_model_constraints_f, intermediate_path, "ccus_constraints_model_formatted")
+        serialize_file(ccs_model_storage_f, intermediate_path, "ccs_transport_model_formatted")
+        serialize_file(ccs_model_transport_f, intermediate_path, "ccs_storage_model_formatted")
+        serialize_file(ccs_model_constraints_f, intermediate_path, "ccs_constraints_model_formatted")
         # Dictionaries
         serialize_file(h2_prices_ref, intermediate_path, "h2_prices_ref")
         serialize_file(h2_emissions_ref, intermediate_path, "h2_emissions_ref")
         serialize_file(power_grid_prices_ref, intermediate_path, "power_grid_prices_ref")
         serialize_file(power_grid_emissions_ref, intermediate_path, "power_grid_emissions_ref")
         serialize_file(bio_model_prices_ref, intermediate_path, "bio_model_prices_ref")
-        serialize_file(ccus_model_storage_ref, intermediate_path, "ccus_model_storage_ref")
-        serialize_file(ccus_model_transport_ref, intermediate_path, "ccus_model_transport_ref")
-        serialize_file(ccus_model_constraints_ref, intermediate_path, "ccus_model_constraints_ref")
+        serialize_file(ccs_model_storage_ref, intermediate_path, "ccs_model_storage_ref")
+        serialize_file(ccs_model_transport_ref, intermediate_path, "ccs_model_transport_ref")
+        serialize_file(ccs_model_constraints_ref, intermediate_path, "ccs_model_constraints_ref")
     return data_dict

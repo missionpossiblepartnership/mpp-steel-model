@@ -7,7 +7,6 @@ from tqdm import tqdm
 from mppsteel.config.model_config import (
     PKL_DATA_FORMATTED,
     TON_TO_KILOGRAM_FACTOR,
-    USD_TO_EUR_CONVERSION_DEFAULT,
     MODEL_YEAR_RANGE,
     PKL_DATA_IMPORTS,
 )
@@ -24,9 +23,12 @@ from mppsteel.utility.dataframe_utility import convert_currency_col
 # Create logger
 logger = get_logger(__name__)
 
-def generate_feedstock_dict(eur_to_usd_rate: float = 1 / USD_TO_EUR_CONVERSION_DEFAULT) -> dict:
+def generate_feedstock_dict(eur_to_usd_rate: float) -> dict:
     """Creates a feedstock dictionary that combines all non-energy model commodities into one dictionary.
     The dictionary has a pairing of the commodity name and the price.
+
+    Args:
+        eur_to_usd (float): The rate used ot convert EUR values to USD.
 
     Returns:
         dict: A dictionary containing the pairing of feedstock name and price.
@@ -75,11 +77,11 @@ def plant_variable_costs(scenario_dict: dict) -> pd.DataFrame:
     bio_model_prices_ref = read_pickle_folder(
         intermediate_path, "bio_model_prices_ref", "df"
     )
-    ccus_model_transport_ref = read_pickle_folder(
-        intermediate_path, "ccus_model_transport_ref", "df"
+    ccs_model_transport_ref = read_pickle_folder(
+        intermediate_path, "ccs_model_transport_ref", "df"
     )
-    ccus_model_storage_ref = read_pickle_folder(
-        intermediate_path, "ccus_model_storage_ref", "df"
+    ccs_model_storage_ref = read_pickle_folder(
+        intermediate_path, "ccs_model_storage_ref", "df"
     )
     business_cases = read_pickle_folder(
         PKL_DATA_FORMATTED, "standardised_business_cases", "df"
@@ -103,8 +105,8 @@ def plant_variable_costs(scenario_dict: dict) -> pd.DataFrame:
             electricity_ref=power_grid_prices_ref,
             hydrogen_ref=h2_prices_ref,
             bio_ref=bio_model_prices_ref,
-            ccus_ccus_storage_ref=ccus_model_storage_ref,
-            ccus_transport_ref=ccus_model_transport_ref
+            ccs_storage_ref=ccs_model_storage_ref,
+            ccs_transport_ref=ccs_model_transport_ref
         )
         df_list.append(df)
 
@@ -114,19 +116,38 @@ def plant_variable_costs(scenario_dict: dict) -> pd.DataFrame:
     return df[df['cost_type'] != 'Emissivity'].copy()
 
 def vc_mapper(
-    row: str,
+    row: pd.Series,
     country_code: str,
     year: int,
     static_year: int,
     electricity_ref: dict,
     hydrogen_ref: dict,
     bio_ref: dict,
-    ccus_transport_ref: dict,
-    ccus_ccus_storage_ref: dict,
+    ccs_transport_ref: dict,
+    ccs_storage_ref: dict,
     feedstock_dict: dict, 
     static_energy_df: pd.DataFrame,
     ng_flag: int, 
-):
+) -> float:
+    """_summary_
+
+    Args:
+        row (pd.Series): A Series containing the consumption rates for each technology and resource.
+        country_code (str): The country code to create a reference for.
+        year (int): The year to create a reference for. 
+        static_year (int): The static year to be used for datasets that end after a certain year.
+        electricity_ref (dict): The electricity grid price reference dict.
+        hydrogen_ref (dict): The hydrogen price reference dict.
+        bio_ref (dict): The bio price reference dict.
+        ccs_transport_ref (dict): The ccs transport price reference dict.
+        ccs_storage_ref (dict): The ccs storage price reference dict.
+        feedstock_dict (dict): The feedstock price reference dict.
+        static_energy_df (pd.DataFrame): The static energy reference dict.
+        ng_flag (int): The natural gas flag price.
+
+    Returns:
+        float: A float value containing the variable cost value to assign.
+    """
     if row.material_category == "Electricity":
         return row.value * electricity_ref[(year, country_code)]
 
@@ -137,7 +158,7 @@ def vc_mapper(
         return row.value * bio_ref[(year, country_code)]
 
     elif RESOURCE_CATEGORY_MAPPER[row.material_category] == 'CCS':
-        return row.value * (ccus_transport_ref[country_code] + ccus_ccus_storage_ref[country_code])
+        return row.value * (ccs_transport_ref[country_code] + ccs_storage_ref[country_code])
 
     elif (row.material_category == "Natural gas") and (ng_flag == 1):
         return row.value * static_energy_df.loc["Natural gas - low", static_year]["Value"]
@@ -172,22 +193,23 @@ def generate_variable_costs(
     electricity_ref: pd.DataFrame = None,
     hydrogen_ref: pd.DataFrame = None,
     bio_ref: pd.DataFrame = None,
-    ccus_ccus_storage_ref: pd.DataFrame = None,
-    ccus_transport_ref: pd.DataFrame = None,
+    ccs_storage_ref: pd.DataFrame = None,
+    ccs_transport_ref: pd.DataFrame = None,
 ) -> pd.DataFrame:
     """Generates a DataFrame based on variable cost parameters for a particular region passed to it.
 
     Args:
-        business_cases_df (pd.DataFrame): A DataFrame of standardised variable costs.
+        year (int): The year you want to create variable costs for.
         country_code (str): The country code that you want to get energy assumption prices for.
-        ng_flag (int): A flag for whether a particular country contains natural gas
+        business_cases_df (pd.DataFrame): A DataFrame of standardised variable costs.
+        ng_dict (dict): A dictionary of country_codes as keys and ng_flags as values for whether a particular country contains natural gas
         feedstock_dict (dict, optional): A dictionary containing feedstock resources and prices. Defaults to None.
         static_energy_df (pd.DataFrame, optional): A DataFrame containing static energy prices. Defaults to None.
-        power_df (pd.DataFrame, optional): The shared MPP Power assumptions model. Defaults to None.
-        hydrogen_df (pd.DataFrame, optional): The shared MPP Hydrogen assumptions model. Defaults to None.
-        bio_df (pd.DataFrame, optional): The shared MPP Bio assumptions model. Defaults to None.
-        ccus_storage (pd.DataFrame, optional): The shared MPP CCUS assumptions model. Defaults to None.
-        ccus_transport (pd.DataFrame, optional): The shared MPP CCUS assumptions model. Defaults to None.
+        electricity_ref (pd.DataFrame, optional): The shared MPP Power assumptions model. Defaults to None.
+        hydrogen_ref (pd.DataFrame, optional): The shared MPP Hydrogen assumptions model. Defaults to None.
+        bio_ref (pd.DataFrame, optional): The shared MPP Bio assumptions model. Defaults to None.
+        ccs_storage_ref (pd.DataFrame, optional): The shared MPP CCS assumptions model. Defaults to None.
+        ccs_transport_ref (pd.DataFrame, optional): The shared MPP CCS assumptions model. Defaults to None.
     Returns:
         pd.DataFrame: A DataFrame containing variable costs for a particular region.
     """
@@ -204,8 +226,8 @@ def generate_variable_costs(
         electricity_ref=electricity_ref,
         hydrogen_ref=hydrogen_ref,
         bio_ref=bio_ref,
-        ccus_transport_ref=ccus_transport_ref,
-        ccus_ccus_storage_ref=ccus_ccus_storage_ref,
+        ccs_transport_ref=ccs_transport_ref,
+        ccs_storage_ref=ccs_storage_ref,
         feedstock_dict=feedstock_dict,
         static_energy_df=static_energy_df,
         ng_flag=ng_flag,
