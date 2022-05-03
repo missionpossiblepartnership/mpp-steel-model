@@ -99,7 +99,7 @@ def data_import_stage() -> None:
 
 
 def data_preprocessing_generic() -> None:
-    steel_plant_processor(serialize=True, remove_non_operating_plants=True)
+    steel_plant_processor(serialize=True)
     create_capex_opex_dict(serialize=True)
     create_capex_timeseries(serialize=True)
     create_business_case_reference(serialize=True)

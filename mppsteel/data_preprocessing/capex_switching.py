@@ -71,7 +71,7 @@ def get_capex_values(
     df_dict_c = df_switching_dict.copy()
 
     # Create a year range
-    year_range = range(MODEL_YEAR_START, year_end)
+    year_range = range(MODEL_YEAR_START, year_end + 1)
 
     year_list = []
     for year in tqdm(year_range, total=len(year_range), desc="Get Capex Values"):

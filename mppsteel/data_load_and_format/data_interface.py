@@ -254,7 +254,7 @@ def generate_preprocessed_emissions_data(
         PKL_DATA_IMPORTS, "ethanol_plastic_charcoal"
     )
     commodities_df = format_commodities_data(
-        ethanol_plastic_charcoal, COMMODITY_MATERIAL_MAPPER, as_t=True
+        ethanol_plastic_charcoal, COMMODITY_MATERIAL_MAPPER
     )
     s3_emissions_factors_2 = read_pickle_folder(
         PKL_DATA_IMPORTS, "s3_emissions_factors_2"
