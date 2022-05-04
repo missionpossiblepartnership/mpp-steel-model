@@ -1,6 +1,7 @@
 """Utility library for managing location"""
 
 import itertools
+import random
 
 import pandas as pd
 import pycountry
@@ -135,3 +136,12 @@ def create_country_mapper(schema: str = 'rmi'):
     mapper = dict(zip(country_ref_c['country_code'], country_ref_c[schema]))
     mapper['TWN'] = 'Japan, South Korea, and Taiwan'
     return mapper
+
+def pick_random_country_from_region(country_df: pd.DataFrame, region: str, region_schema):
+    country_list = get_countries_from_group(country_df, region_schema, region)
+    return random.choice(country_list)
+
+
+def pick_random_country_from_region_subset(plant_df: pd.DataFrame, region: str):
+    country_list = plant_df[plant_df[MAIN_REGIONAL_SCHEMA] == region]['country_code'].unique()
+    return random.choice(country_list)

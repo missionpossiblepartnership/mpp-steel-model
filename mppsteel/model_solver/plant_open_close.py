@@ -5,11 +5,11 @@ import math
 import pandas as pd
 
 import random
-from copy import deepcopy
 from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
 from mppsteel.data_preprocessing.investment_cycles import PlantInvestmentCycle
 
-from mppsteel.utility.location_utility import get_countries_from_group
+from mppsteel.utility.location_utility import pick_random_country_from_region_subset
+from mppsteel.utility.utils import replace_dict_items, get_dict_keys_by_value
 from mppsteel.utility.plant_container_class import PlantIdContainer
 from mppsteel.data_load_and_format.reg_steel_demand_formatter import steel_demand_getter
 
@@ -31,28 +31,17 @@ from mppsteel.utility.log_utility import get_logger
 # Create logger
 logger = get_logger(__name__)
 
-def replace_dict_items(base_dict: dict, repl_dict: dict): # GENERAL FUNCTION
-    base_dict_c = deepcopy(base_dict)
-    for col_entry in repl_dict:
-        if col_entry in base_dict_c:
-            base_dict_c[col_entry] = repl_dict[col_entry]
-    return base_dict_c
 
-def get_dict_keys_by_value(base_dict: dict, value): # GENERAL FUNCTION
-    item_list = base_dict.items()
-    return [item[0] for item in item_list if item[1] == value]
+def create_new_plant(plant_row_dict: dict, plant_columns: list) -> dict:
+    """Creates metadata for a new plant based on defined key_value pairs in `plant_row_dict` and fills the remaining keys from `plant_columns` with a blank string.
 
+    Args:
+        plant_row_dict (dict): Key value pairs with the new plant metadata
+        plant_columns (list): A list of all the plant columns necessary to add a new plant as a row to the steel plant database.
 
-def pick_random_country_from_region(country_df: pd.DataFrame, region: str): # GENERAL FUNCTION
-    country_list = get_countries_from_group(country_df, 'RMI Model Region', region)
-    return random.choice(country_list)
-
-def pick_random_country_from_region_subset(plant_df: pd.DataFrame, region: str): # GENERAL FUNCTION
-    country_list = plant_df[plant_df[MAIN_REGIONAL_SCHEMA] == region]['country_code'].unique()
-    return random.choice(country_list)
-
-
-def create_new_plant(plant_row_dict: dict, plant_columns: list):
+    Returns:
+        dict: A dictionary with keys from `plant_columns` and values from `plant_columns`
+    """
     base_dict = {col: '' for col in plant_columns}
     return replace_dict_items(base_dict, plant_row_dict)
 
@@ -70,7 +59,26 @@ def get_min_cost_tech_for_region(
     plant_capacity: float,
     plant_name: str,
     enforce_constraints: bool = False
-):  
+) -> str:
+    """Gets the minimum cost technology for plants in a specified `year` and `region` based on a Levelised Cost Reference.
+
+    Args:
+        lcost_df (pd.DataFrame): Levelized Cost Reference DataFrame.
+        business_case_ref (dict): Business Case Reference dictionary
+        plant_capacities_dict (dict): A Dictionary with plants as keys and capacity values as values.
+        tech_availability (pd.DataFrame): DataFrame of technology availability metadata
+        material_container (MaterialUsage): A material usage class containing information on constraints and current usage.
+        tech_moratorium (bool): Scenario boolean flag for whether there is a technology moratorium in effect.
+        regional_scrap (bool): Scenario boolean flag for whether there is a regional scrap or global scrap constraint.
+        year (int): The current model year.
+        region (str): The region for consideration.
+        plant_capacity (float): The average capacity for plants in the specified `region` and/or `plant_name`.
+        plant_name (str): The name of the plant.
+        enforce_constraints (bool, optional): Scenario boolean flag for whether resource constraints are enforced. Defaults to False.
+
+    Returns:
+        str: The name of the lowest cost technology archetype.
+    """
     lcost_df_c = lcost_df.loc[year, region].groupby('technology').mean().copy()
 
     if enforce_constraints:
@@ -91,19 +99,39 @@ def get_min_cost_tech_for_region(
 
     return lcost_df_c['levelized_cost'].idxmin()
 
-def get_min_cost_region(lcost_df: pd.DataFrame, year: int):
+def get_min_cost_region(lcost_df: pd.DataFrame, year: int) -> str:
+    """Gets the minimum cost region based on a Levelized cost reference.
+
+    Args:
+        lcost_df (pd.DataFrame): The levelized cost DataFrame.
+        year (int): The current model year.
+
+    Returns:
+        str: The name of the lowest cost region for a particular year.
+    """
     lcost_df_c = lcost_df.loc[year].groupby('region').mean().copy()
     return lcost_df_c['levelized_cost'].idxmin()
 
 
-def current_plant_year(investment_dict: pd.DataFrame, plant: str, current_year: int, cycle_length: int = 20):
-    main_cycle_years = [yr for yr in investment_dict[plant] if isinstance(yr, int)]
+def current_plant_year(investment_dict: pd.DataFrame, plant_name: str, current_year: int, cycle_length: int = 20) -> int:
+    """Returns the age of a plant since its last main investment cycle year.
+
+    Args:
+        investment_dict (pd.DataFrame): Dictionary with plant names as keys and main investment cycles as values.
+        plant_name (str): The name of the plant. 
+        current_year (int): The current model cycle year.
+        cycle_length (int, optional): The length of the plants investment cycle. Defaults to 20.
+
+    Returns:
+        int: The age (in years) of the plant.
+    """
+    main_cycle_years = [yr for yr in investment_dict[plant_name] if isinstance(yr, int)]
     first_inv_year = main_cycle_years[0]
     if len(main_cycle_years) == 2:
         second_inv_year = main_cycle_years[1]
         cycle_length = second_inv_year - first_inv_year
 
-    trans_years = [yr for yr in investment_dict[plant] if isinstance(yr, range)]
+    trans_years = [yr for yr in investment_dict[plant_name] if isinstance(yr, range)]
     if trans_years:
         first_trans_years = list(trans_years[0])
         if first_trans_years:
@@ -135,7 +163,25 @@ def current_plant_year(investment_dict: pd.DataFrame, plant: str, current_year: 
 def new_plant_metadata(
     plant_container: PlantIdContainer, production_demand_dict: dict,
     levelized_cost_df: pd.DataFrame, plant_df: pd.DataFrame, ng_mapper: dict,
-    year: int, region: str = None, low_cost_region: bool = False):
+    year: int, region: str = None, low_cost_region: bool = False) -> dict:
+    """Creates the essential metadata fields for a new plant.
+
+    Args:
+        plant_container (PlantIdContainer): _description_
+        production_demand_dict (dict): _description_
+        levelized_cost_df (pd.DataFrame): _description_
+        plant_df (pd.DataFrame): _description_
+        ng_mapper (dict): _description_
+        year (int): _description_
+        region (str, optional): _description_. Defaults to None.
+        low_cost_region (bool, optional): _description_. Defaults to False.
+
+    Raises:
+        AttributeError: When values are entered for both region and
+
+    Returns:
+        dict: A dictionary with key value fields for new plants.
+    """
 
     if region and low_cost_region:
         raise AttributeError('You entered a value for `region` and set `low_cost_region` to true. Select ONE or the other, NOT both.')

@@ -7,6 +7,7 @@ import multiprocessing as mp
 import numpy as np
 
 from collections.abc import Iterable
+from copy import deepcopy
 from datetime import datetime
 from typing import Union, Iterable as it
 
@@ -160,6 +161,17 @@ def return_bin_rank(x: float, bin_dict: dict) -> float:
         for val in bin_dict_vals:
             if x <= val:
                 return bin_dict[val]
+
+def replace_dict_items(base_dict: dict, repl_dict: dict):
+    base_dict_c = deepcopy(base_dict)
+    for col_entry in repl_dict:
+        if col_entry in base_dict_c:
+            base_dict_c[col_entry] = repl_dict[col_entry]
+    return base_dict_c
+
+def get_dict_keys_by_value(base_dict: dict, value):
+    item_list = base_dict.items()
+    return [item[0] for item in item_list if item[1] == value]
 
 def multiprocessing_scenarios(scenario_options: list, func):
     # Multiprocessing
