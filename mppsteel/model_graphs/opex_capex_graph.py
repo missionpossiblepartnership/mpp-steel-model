@@ -155,7 +155,18 @@ def assign_country_deltas(df: pd.DataFrame, delta_dict: dict) -> pd.DataFrame:
         df_c.loc[(technology, "Region Cost Delta", country), "cost"] = delta_dict[technology]
     return df_c
 
-def add_carbon_cost_to_vc(vc_df: pd.DataFrame, emissivity_dict: dict, carbon_tax_dict: dict, year: int):
+def add_carbon_cost_to_vc(vc_df: pd.DataFrame, emissivity_dict: dict, carbon_tax_dict: dict, year: int) -> pd.DataFrame:
+    """Adds carbon costs to a Variable Costs DataFrame.
+
+    Args:
+        vc_df (pd.DataFrame): The variable costs DataFrame.
+        emissivity_dict (dict): The emissivity values dict reference.
+        carbon_tax_dict (dict): The carbon tax reference dictionary.
+        year (int): The year to add Carbon cost for.
+
+    Returns:
+        pd.DataFrame: The modified DataFrame with Carbon Cost included.
+    """
     vc_df_c = vc_df.copy()
     technologies = vc_df_c.index.get_level_values(0).unique()
     country_codes = vc_df_c.index.get_level_values(2).unique()
@@ -173,6 +184,14 @@ def create_capex_opex_split_data(
     year: int
 ) -> pd.DataFrame:
     """Creates a DataFrame split by cost type for the purpose of creating a graph.
+
+    Args:
+        vcsmb (pd.DataFrame): The variable costs DataFrame.
+        carbon_tax_timeseries (pd.DataFrame): The carbon tax timeseries DataFrame.
+        emissivity_df (pd.DataFrame): The combined emissions DataFrame.
+        capex_dict (dict): The capex dict
+        country_mapper (dict): The country mapper DataFrame.
+        year (int): The year to subset the data used to create the graph.
 
     Returns:
         pd.DataFrame: A DataFrame containing the split of costs and the associated metadata.
@@ -220,6 +239,12 @@ def opex_capex_graph(
     """Creates a bar graph for the Opex Capex split graph.
 
     Args:
+        variable_cost_df (pd.DataFrame): The variable costs DataFrame.
+        carbon_tax_timeseries (pd.DataFrame): The carbon tax timeseries DataFrame.
+        emissivity_df (pd.DataFrame): The emissivity DataFrame.
+        capex_dict (dict): The capex dictionary reference.
+        country_mapper (dict): Mapper for coutry_codes to regions
+        year (int): The year to subset the DataFrame.
         save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
         ext (str, optional): The extension of the image you are creating. Defaults to "png".
 
@@ -285,6 +310,7 @@ def return_capex_values_regional(
 ) -> pd.DataFrame:
     """This function takes in a dictionary of capex values, a year, an investment cycle, and a discount
     rate. It returns a dataframe of the capex values for the year, discounted to the investment cycle.
+
     Args:
         capex_dict (dict): A dictionary containing the capex values for each technology.
         year (str): The year for which we want to calculate the capex values.
@@ -307,8 +333,18 @@ def return_capex_values_regional(
     combined_values = combined_values.join(other_opex_values)
     return combined_values
 
-def regional_split_of_preprocessed_data(vcsmb: pd.DataFrame, carbon_tax_timeseries: pd.DataFrame, emissivity_df: pd.DataFrame, capex_dict: dict, country_mapper: dict, year: int = 2050, region: str = None):
+def regional_split_of_preprocessed_data(vcsmb: pd.DataFrame, carbon_tax_timeseries: pd.DataFrame, emissivity_df: pd.DataFrame, capex_dict: dict, country_mapper: dict, year: int = 2050, region: str = None) -> pd.DataFrame:
     """Creates a DataFrame split by cost type for the purpose of creating a graph.
+
+    Args:
+        vcsmb (pd.DataFrame): The variable costs DataFrame.
+        carbon_tax_timeseries (pd.DataFrame): The carbon tax timeseries DataFrame.
+        emissivity_df (pd.DataFrame): The emissivity DataFrame.
+        capex_dict (dict): The capex dictionary reference.
+        country_mapper (dict): Mapper for coutry_codes to regions
+        year (int): The year to subset the DataFrame. Defaults to 2050.
+        region (str, optional): The region to subset the data. Defaults to None.
+
     Returns:
         pd.DataFrame: A DataFrame containing the split of costs and the associated metadata.
     """
@@ -342,11 +378,20 @@ def regional_split_of_preprocessed_data(vcsmb: pd.DataFrame, carbon_tax_timeseri
 
 
 def opex_capex_graph_regional(
-    vcsmb: pd.DataFrame, carbon_tax_timeseries: pd.DataFrame, emissivity_df: pd.DataFrame, capex_dict: dict, country_mapper: dict, save_filepath: str = None, ext: str = "png", year: int = 2050, region: str = None) -> px.bar:
+    vcsmb: pd.DataFrame, carbon_tax_timeseries: pd.DataFrame, emissivity_df: pd.DataFrame, capex_dict: dict, country_mapper: dict, year: int = 2050, region: str = None, save_filepath: str = None, ext: str = "png") -> px.bar:
     """Creates a bar graph for the Opex Capex split graph.
+
     Args:
+        vcsmb (pd.DataFrame): The variable costs DataFrame.
+        carbon_tax_timeseries (pd.DataFrame): The carbon tax timeseries DataFrame.
+        emissivity_df (pd.DataFrame): The emissivity DataFrame.
+        capex_dict (dict): The capex dictionary reference.
+        country_mapper (dict): Mapper for coutry_codes to regions
+        year (int): The year to subset the DataFrame. Defaults to 2050.
+        region (str, optional): The region to subset the data. Defaults to None.
         save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
         ext (str, optional): The extension of the image you are creating. Defaults to "png".
+
     Returns:
         px.bar: A plotly express bar chart.
     """
