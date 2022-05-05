@@ -24,6 +24,7 @@ def investment_line_chart(
     """Creates a line graph showing the level of investment across all technologies.
 
     Args:
+        investment_df (pd.DataFrame): The investment DataFrame.
         group (str, optional): The group you want: 'global' OR 'regional'. Defaults to "global".
         operation (str, optional): The operation you want to perform on the DataFrame 'sum' or 'cumsum'. Defaults to "cumsum".
         save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
@@ -54,6 +55,7 @@ def investment_per_tech(investment_df: pd.DataFrame, save_filepath: str = None, 
     """Creates a bar graph showing the level of investment per technology.
 
     Args:
+        investment_df: The investment DataFrame.
         save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
         ext (str, optional): The extension of the image you are creating. Defaults to "png".
 

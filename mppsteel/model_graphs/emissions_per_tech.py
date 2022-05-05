@@ -4,7 +4,7 @@ import plotly.express as px
 import numpy as np
 
 from mppsteel.config.reference_lists import GRAPH_COL_ORDER, MPP_COLOR_LIST, TECH_REFERENCE_LIST
-
+from mppsteel.model_graphs.plotly_graphs import line_chart
 from mppsteel.utility.log_utility import get_logger
 
 logger = get_logger(__name__)
@@ -19,14 +19,16 @@ def generate_emissivity_charts(
     df: pd.DataFrame, year: int = None, region: str = None, 
     scope: str= None, save_filepath: str = None, ext: str = "png"
 ):
-    """generates bar chart with emissivity [t CO2/ t steel] per technology. Displays scope1, scope2, scope2 or combination of scopes
+    """Generates bar chart with emissivity [t CO2/ t steel] per technology. Displays scope1, scope2, scope2 or combination of scopes.
+    Scope can be either 's1_emissivity', 's2_emissivity', 's3_emissivity', 's1+s2', or 'combined'.
 
     Args:
-        df (pd.DataFrame): calculated_emissivity_combined_
-        year (int, optional): _description_. Defaults to None.
-        region (str, optional): _description_. Defaults to None.
-        scope (str, optional): _description_. Defaults to None.
-        filepath (str, optional): _description_. Defaults to None.
+        df (pd.DataFrame): calculated_emissivity_combined DataFrame.
+        year (int, optional): The year to subset the DataFrame. Defaults to None.
+        region (str, optional): The region to subset the DataFrame. Defaults to None.
+        scope (str, optional): The scope(s) to subset the DataFrame. Defaults to None.
+        save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
+        ext (str, optional): The extension of the image you are creating. Defaults to "png".
 
     Returns:
         _type_: _description_
@@ -89,3 +91,43 @@ def generate_emissivity_charts(
         fig_.write_image(f"{save_filepath}.{ext}")
 
     return fig_
+
+
+def steel_emissions_line_chart(df: pd.DataFrame, filepath: str = None, region: str = None, scenario_name: str = None) -> px.line:
+    """Creates an Area graph of Steel Production.
+
+    Args:
+        df (pd.DataFrame): A DataFrame of Production Stats.
+        filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
+        scenario_name (str): The name of the scenario at runtime.
+
+    Returns:
+        px.line: A plotly express area graph.
+    """
+    df_c = df.copy()
+    df_c['s1_s2_emissions_mt'] = df_c['s1_emissions_mt'] + df_c['s2_emissions_mt']
+    filename = "scope_1_2_emissions"
+    graph_title = "Scope 1 & 2 Emissions"
+    if region:
+        df_c = df_c[df_c['region'] == region]
+        filename = f'{filename}_for_{region}'
+        graph_title = f'{graph_title} - {region}'
+    if scenario_name:
+        graph_title = f"{graph_title} - {scenario_name} scenario"
+    
+    logger.info(f"Creating line graph output: {filename}")
+    if filepath:
+        filename = f"{filepath}/{filename}"
+
+    df_c = df_c.groupby('year').agg({'s1_s2_emissions_mt': 'sum'}).reset_index()
+
+    return line_chart(
+        data=df_c,
+        x="year",
+        y=["s1_s2_emissions_mt"],
+        color_discrete_map={"s1_s2_emissions_mt": "#59A270"},
+        name=graph_title,
+        x_axis="Year",
+        y_axis="Scope 1 & 2 Emisions [Mt/year]",
+        save_filepath=filename,
+    )

@@ -1,20 +1,18 @@
 """Creates graphs from model outputs"""
 import itertools
-from itertools import zip_longest
 import pandas as pd
 import plotly.express as px
 from mppsteel.config.model_config import PKL_DATA_FORMATTED
-from mppsteel.config.reference_lists import MPP_COLOR_LIST
 from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import read_pickle_folder, get_scenario_pkl_path
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.model_graphs.plotly_graphs import TECHNOLOGY_ARCHETYPE_COLORS, line_chart, area_chart
+from mppsteel.model_graphs.plotly_graphs import TECHNOLOGY_ARCHETYPE_COLORS, area_chart
 from mppsteel.model_graphs.opex_capex_graph import opex_capex_graph, opex_capex_graph_regional
-from mppsteel.model_graphs.consumption_over_time import consumption_over_time_graph
+from mppsteel.model_graphs.consumption_over_time import consumption_over_time_graph, resource_line_charts
 from mppsteel.model_graphs.cost_of_steelmaking_graphs import lcost_graph
 from mppsteel.model_graphs.investment_graph import investment_line_chart, investment_per_tech
-from mppsteel.model_graphs.emissions_per_tech import generate_emissivity_charts
+from mppsteel.model_graphs.emissions_per_tech import generate_emissivity_charts, steel_emissions_line_chart
 from mppsteel.model_graphs.tco_graph import generate_tco_charts
 from mppsteel.model_graphs.new_plant_capacity import new_plant_capacity_graph, trade_balance_graph
 from mppsteel.model_graphs.combined_scenario_graphs import (
@@ -108,7 +106,7 @@ def generate_production_emissions(
 def generate_production_stats(
     df: pd.DataFrame, grouping_col: str, value_cols: list
 ) -> pd.DataFrame:
-    """[summary]
+    """Preprocesses a production resource usage DataFrame for the purpose of creating a graph. 
 
     Args:
         df (pd.DataFrame): A DataFrame of production statistics.
@@ -127,35 +125,14 @@ def generate_production_stats(
     return df.reset_index(drop=True)
 
 
-def generate_subset(
-    df: pd.DataFrame, grouping_col: str, value_col: str, region: list = None
-) -> pd.DataFrame:
-    """Subsets a Production DataFrame based on parameters.
-
-    Args:
-        df (pd.DataFrame):
-        grouping_col (str): A region column for grouping the value columns.
-        value_col (str): The columns you want to use as values (resources).
-        region_select (list, optional): The list of regions you want to match. Defaults to None.
-
-    Returns:
-        pd.DataFrame: An aggregated DataFrame by the `grouping col`.
-    """
-    df_c = df.copy()
-    if region:
-        df_c = df_c[df_c[grouping_col] == region]
-    df_c = df_c[['year', grouping_col, value_col]].copy()
-    df_c = df_c.groupby(['year', grouping_col]).agg('sum').round(2)
-    return df_c.reset_index()
-
-
 def steel_production_area_chart(df: pd.DataFrame, filepath: str = None, region: str = None, scenario_name: str = None) -> px.area:
-    """Creates an Area graph of Steel Production.
+    """Handler function for the Area graph of Steel Production.
 
     Args:
         df (pd.DataFrame): A DataFrame of Production Stats.
         filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
         region (str, optional): The region you want to model. Defaults to None.
+        scenario_name (str): The name of the scenario at runtime.
 
     Returns:
         px.area: A plotly express area graph.
@@ -192,7 +169,7 @@ def steel_production_area_chart(df: pd.DataFrame, filepath: str = None, region: 
 def emissions_area_chart(
     df: pd.DataFrame, filepath: str = None, scope: str = "combined"
 ) -> px.area:
-    """Creates an Emissions Area chart.
+    """Handler function for the Emissions Area chart.
 
     Args:
         df (pd.DataFrame): The Production Emissions area graph.
@@ -228,87 +205,17 @@ def emissions_area_chart(
     )
 
 
-def steel_emissions_line_chart(df: pd.DataFrame, filepath: str = None, region: str = None, scenario_name: str = None) -> px.line:
-    """Creates an Area graph of Steel Production.
-
-    Args:
-        df (pd.DataFrame): A DataFrame of Production Stats.
-        filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
-
-    Returns:
-        px.area: A plotly express area graph.
-    """
-    df_c = df.copy()
-    df_c['s1_s2_emissions_mt'] = df_c['s1_emissions_mt'] + df_c['s2_emissions_mt']
-    filename = "scope_1_2_emissions"
-    graph_title = "Scope 1 & 2 Emissions"
-    if region:
-        df_c = df_c[df_c['region'] == region]
-        filename = f'{filename}_for_{region}'
-        graph_title = f'{graph_title} - {region}'
-    if scenario_name:
-        graph_title = f"{graph_title} - {scenario_name} scenario"
-    
-    logger.info(f"Creating line graph output: {filename}")
-    if filepath:
-        filename = f"{filepath}/{filename}"
-
-    df_c = df_c.groupby('year').agg({'s1_s2_emissions_mt': 'sum'}).reset_index()
-
-    return line_chart(
-        data=df_c,
-        x="year",
-        y=["s1_s2_emissions_mt"],
-        color_discrete_map={"s1_s2_emissions_mt": "#59A270"},
-        name=graph_title,
-        x_axis="Year",
-        y_axis="Scope 1 & 2 Emisions [Mt/year]",
-        save_filepath=filename,
-    )
-
-
-def resource_line_charts(
-    df: pd.DataFrame, resource: str, region: str = None, filepath: str = None
-) -> px.line:
-    """[summary]
-
-    Args:
-        df (pd.DataFrame): The Production Stats DataFrame.
-        resource (str): The name of the resource you want to graph.
-        regions (list, optional): The region(s) you want to graph. Defaults to None.
-        filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
-
-    Returns:
-        px.line: A plotly express line graph.
-    """
-    filename = f"{resource}_multiregional_line_graph"
-    if not region:
-        filename = f"{resource}_global_line_graph"
-    resource_string = resource.replace("_", " ").capitalize()
-    subset_data = generate_subset(df, 'region', resource, region)
-    regions = subset_data['region'].unique()
-    color_mapper = dict(zip_longest(regions, MPP_COLOR_LIST))
-    logger.info(f"Creating line graph output: {filename}")
-    if filepath:
-        filename = f"{filepath}/{filename}"
-    return line_chart(
-        data=subset_data,
-        x="year",
-        y=resource,
-        color='region',
-        color_discrete_map=color_mapper,
-        name=f"{resource_string} consumption in {region}",
-        x_axis="year",
-        y_axis=resource_string,
-        save_filepath=filename,
-    )
-
-
 def create_opex_capex_graph(
     variable_cost_df: pd.DataFrame, carbon_tax_timeseries: pd.DataFrame, emissivity_df: pd.DataFrame, capex_dict: dict, country_mapper: dict, year: int, filepath: str = None) -> px.bar:
-    """Creates a Opex Capex split graph.
+    """Handler function for the Opex Capex split graph.
 
     Args:
+        variable_cost_df (pd.DataFrame): The variable costs DataFrame.
+        carbon_tax_timeseries (pd.DataFrame): The carbon tax timeseries DataFrame.
+        emissivity_df (pd.DataFrame): The emissivity DataFrame.
+        capex_dict (dict): The capex dictionary reference.
+        country_mapper (dict): Mapper for coutry_codes to regions.
+        year (int): The year to subset the DataFrame.
         filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
 
     Returns:
@@ -321,9 +228,17 @@ def create_opex_capex_graph(
     return opex_capex_graph(variable_cost_df, carbon_tax_timeseries, emissivity_df, capex_dict, country_mapper, year, save_filepath=filename)
 
 def create_opex_capex_graph_regional(vcsmb: pd.DataFrame, carbon_tax_timeseries: pd.DataFrame, emissivity_df: pd.DataFrame, capex_dict: dict, country_mapper: dict, filepath: str = None, year: int = 2050, region: str = 'NAFTA') -> px.bar:
-    """Creates a Opex Capex split graph.
+    """Handler function for the Opex Capex split graph.
+
     Args:
-        filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
+        vcsmb (pd.DataFrame): The variable costs DataFrame.
+        carbon_tax_timeseries (pd.DataFrame): The carbon tax timeseries DataFrame.
+        emissivity_df (pd.DataFrame): The emissivity DataFrame.
+        capex_dict (dict): The capex dictionary reference.
+        country_mapper (dict): Mapper for coutry_codes to regions.
+        year (int): The year to subset the DataFrame. Defaults to 2050.
+        filepath (str, optional): The folder path you want to save the chart to. Defaults to None. Defaults to 'NAFTA'.
+
     Returns:
         px.bar: A plotly express bar graph.
     """
@@ -337,9 +252,10 @@ def create_opex_capex_graph_regional(vcsmb: pd.DataFrame, carbon_tax_timeseries:
 def create_investment_line_graph(
     investment_results: pd.DataFrame, group: str, operation: str, filepath: str = None
 ) -> px.line:
-    """Creates a line graph showing the level of investment across all technologies and saves it.
+    """Handler function for the investment graph which shows the level of investment across all technologies.
 
     Args:
+        investment_results (pd.DataFrame): The investment DataFrame.
         group (str, optional): The group you want: 'global' OR 'regional'. Defaults to "global".
         operation (str, optional): The operation you want to perform on the DataFrame 'sum' or 'cumsum'. Defaults to "cumsum".
         filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
@@ -373,9 +289,11 @@ def create_investment_per_tech_graph(investment_results: pd.DataFrame, filepath:
 
 
 def create_new_plant_capacity_graph(plant_df: pd.DataFrame, graph_type: str, filepath: str = None) -> px.line:
-    """Creates a line graph showing the New Plant Capacity and saves it.
+    """Handler function for the New Plant Capacity graph.
 
     Args:
+        plant_df (pd.DataFrame): The steel plant DataFrame.
+        graph_type (str): Specify the type of graph to return, either 'area' or 'bar'.
         filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
 
     Returns:
@@ -388,9 +306,10 @@ def create_new_plant_capacity_graph(plant_df: pd.DataFrame, graph_type: str, fil
     return new_plant_capacity_graph(plant_df, graph_type, save_filepath=filename)
 
 def create_trade_balance_graph(trade_df: pd.DataFrame, filepath: str = None) -> px.line:
-    """Creates a line graph showing the level of investment across all technologies and saves it.
+    """Handler function for the Trade Balance graph.
 
     Args:
+        trade_df (pd.DataFrame): The Trade results DataFrame.
         filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
 
     Returns:
@@ -407,7 +326,9 @@ def create_cot_graph(production_resource_usage: pd.DataFrame, resource_type: str
     """Generates a Graph showing the consumption over time of a material resource.
 
     Args:
-        regions (list, optional): The regions you want to graph. Defaults to None.
+        production_resource_usage (pd.DataFrame): The production Resource Usage DataFrame.
+        resource (str): The name of the resource you want to graph.
+        region (list, optional): The region to subset the DataFrame for. Defaults to None.
         filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
 
     Returns:
@@ -423,10 +344,11 @@ def create_cot_graph(production_resource_usage: pd.DataFrame, resource_type: str
 
 
 def create_lcost_graph(lcost_df: pd.DataFrame, chosen_year: int, filepath: str = None) -> px.bar:
-    """Creates a bar graph for the Levelized Cost.
+    """Handler function for the Levelized Cost graph.
 
     Args:
-        chosen_year (int): The year you want to set the Lcost values in the graph.
+        lcost_df (pd.DataFrame): The levelized cost DataFrame.
+        chosen_year (int): The year you want to set the Levelized cost values in the graph.
         filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
 
     Returns:
@@ -441,13 +363,17 @@ def create_lcost_graph(lcost_df: pd.DataFrame, chosen_year: int, filepath: str =
 def create_tco_graph(
     df: pd.DataFrame, year: int = None, region: str = None, 
     tech: str = None, filepath: str = None) -> px.bar:
-    """_summary_
+    """Handler function for the TCO graph.
 
     Args:
-        filepath (str, optional): _description_. Defaults to None.
+        df (pd.DataFrame): The TCO DataFrame.
+        year (int, optional): The year to model. If not specified, all years will be graphed. Defaults to None.
+        region (str, optional): The region to graph. If not specified, all regions will be graphed. Defaults to None.
+        tech (str, optional): The technology to graph. If not specified, all technologies will be graphed. Defaults to None.
+        filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
 
     Returns:
-        px.bar: _description_
+        px.bar: A plotly express bar graph.
     """
     filename = f'TCO_{year}_from_{tech}'
     logger.info(f"TCO Output: {filename}")
@@ -460,17 +386,17 @@ def create_tco_graph(
 
 
 def create_emissions_graph(df: pd.DataFrame, year: int = None, region: str = None, scope: str= None, filepath: str =None) -> px.bar:
-    """_summary_
+    """Creates an emissions graph.
 
     Args:
         df (pd.DataFrame): _description_
-        year (int, optional): _description_. Defaults to None.
-        region (str, optional): _description_. Defaults to None.
-        scope (str, optional): _description_. Defaults to None.
-        filepath (str, optional): _description_. Defaults to None.
+        year (int, optional): The year to model. If not specified, all years will be graphed. Defaults to None.
+        region (str, optional): The region to graph. If not specified, all regions will be graphed. Defaults to None.
+        scope (str, optional): The emissions scope to graph. If not specified, all scopes will be graphed. Defaults to None.
+        filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
 
     Returns:
-        px.bar: _description_
+        px.bar: A plotly express bar graph.
     """
     filename = f'emissivity_chart {scope}'
     if region:
@@ -482,10 +408,11 @@ def create_emissions_graph(df: pd.DataFrame, year: int = None, region: str = Non
 
 @timer_func
 def create_graphs(filepath: str, scenario_dict: dict) -> None:
-    """Graph creation flow.
+    """The complete creation flow for all graphs.
 
     Args:
         filepath (str): The folder path you want to save the chart to. Defaults to None.
+        scenario_dict (dict): A dictionary with scenarios key value mappings from the current model execution.
     """
     intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
     final_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'final')

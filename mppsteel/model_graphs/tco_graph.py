@@ -9,10 +9,24 @@ from mppsteel.utility.log_utility import get_logger
 
 logger = get_logger(__name__)
 
-def generate_tco_charts (
+def generate_tco_charts(
     df: pd.DataFrame, year: int = None, region: str = None, 
     tech: str=None, save_filepath: str = None, ext: str = "png"
-    ):
+    ) -> px.bar:
+    """Creates a graph showing the TCO for a specific year. Optionally can make the graph more specific according to a specified region and technology. 
+
+    Args:
+        df (pd.DataFrame): _description_
+        year (int, optional): The year to subset the DataFrame. Defaults to None.
+        region (str, optional): The region to subset the Data. Defaults to None.
+        tech (str, optional): The technology to subset the data. Defaults to None.
+        save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
+        ext (str, optional): The extension of the image you are creating. Defaults to "png".
+
+    Returns:
+        px.bar: A plotly express bar graph.
+    """
+
     cost_value_metric = "tco_regular_capex"
     df_c = df.copy()
     df_c = df_c.groupby(

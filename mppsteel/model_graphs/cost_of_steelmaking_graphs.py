@@ -72,6 +72,7 @@ def lcost_graph(
     """Creates a bar graph for the Levelized Cost.
 
     Args:
+        lcost_data (pd.DataFrame): The levelized cost DataFrame.
         chosen_year (int, optional): The year you want to calculate the Lcost for. Defaults to 2030.
         save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
         ext (str, optional): The extension of the image you are creating. Defaults to "png".

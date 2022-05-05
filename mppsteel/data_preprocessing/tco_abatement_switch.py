@@ -16,7 +16,7 @@ from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder, serialize_file, get_scenario_pkl_path
 )
-from mppsteel.model_tests.df_tests import test_negative_df_values, test_negative_list_values
+from mppsteel.model_tests.df_tests import test_negative_df_values
 from mppsteel.config.reference_lists import SWITCH_DICT, TECH_REFERENCE_LIST
 from mppsteel.config.model_config import (
     MODEL_YEAR_END,

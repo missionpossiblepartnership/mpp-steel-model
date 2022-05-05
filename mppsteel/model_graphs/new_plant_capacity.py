@@ -1,5 +1,6 @@
 """New Plant Capacity Graph"""
 
+from typing import Union
 from itertools import zip_longest
 
 import pandas as pd
@@ -13,9 +14,19 @@ from mppsteel.model_graphs.plotly_graphs import area_chart, bar_chart, line_char
 
 logger = get_logger(__name__)
 
-def create_new_capacity_subset(plant_df: pd.DataFrame, data_agg_type: str = 'sum'):
-    def assign_cumsum_value(sum_df: pd.DataFrame, year: int):
+def create_new_capacity_subset(plant_df: pd.DataFrame, data_agg_type: str = 'sum') -> pd.DataFrame:
+    """Creates a DataFrame that captures all of the new capacity of the DataFrame.
+
+    Args:
+        plant_df (pd.DataFrame): The steel plant DataFrame.
+        data_agg_type (str, optional): The method of aggregating the data. Either `sum` or `cumsum`. Defaults to 'sum'.
+
+    Returns:
+        pd.DataFrame: A DataFrame with the new capacity added in each region.
+    """
+    def assign_cumsum_value(sum_df: pd.DataFrame, year: int) -> float:
         return sum_df.loc[year, 'plant_capacity'] if year in sum_df.index else 0
+
     df_c = plant_df.copy()
     new_plants = [plant_id for plant_id in df_c['plant_id'] if plant_id[:3] == 'MPP']
     new_plants_df = df_c[df_c['plant_id'].isin(new_plants)].copy()
@@ -48,7 +59,18 @@ def new_plant_capacity_graph(
     graph_type: str,
     save_filepath: str = None,
     ext: str = "png",
-):
+) -> Union[px.area, px.bar]:
+    """Creates a graph showing the new capacity across each region.
+
+    Args:
+        plant_df (pd.DataFrame): The full steel plant DataFrame.
+        graph_type (str): Specify the type of graph to return, either 'area' or 'bar'.
+        save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
+        ext (str, optional): The extension of the image you are creating. Defaults to "png".
+
+    Returns:
+        Union[px.area, px.bar]: Returns either a bar chart or an area chart.
+    """
     regions = plant_df['rmi_region'].unique()
     color_mapper = dict(zip_longest(regions, MPP_COLOR_LIST))
     fig_ = None
@@ -86,7 +108,17 @@ def trade_balance_graph(
     trade_df: pd.DataFrame,
     save_filepath: str = None,
     ext: str = "png",
-):
+) -> px.line:
+    """Creates a graph showing the trade balance for each region around a zero-balance axis.
+
+    Args:
+        trade_df (pd.DataFrame): The Trade results DataFrame.
+        save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
+        ext (str, optional): The extension of the image you are creating. Defaults to "png".
+
+    Returns:
+        px.line: A plotly express line graph.
+    """
     regions = trade_df['region'].unique()
     color_mapper = dict(zip_longest(regions, MPP_COLOR_LIST))
 
