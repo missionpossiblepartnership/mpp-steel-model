@@ -51,7 +51,7 @@ from mppsteel.model_solver.solver_classes import (
     create_wsa_2020_utilization_dict, apply_constraints
 )
 from mppsteel.model_solver.plant_open_close import (
-    open_close_flow
+    open_close_plants
 )
 from mppsteel.data_preprocessing.levelized_cost import generate_levelized_cost_results
 from mppsteel.utility.log_utility import get_logger
@@ -78,33 +78,33 @@ def return_best_tech(
     base_tech: str = None,
     transitional_switch_mode: bool = False,
     material_usage_dict_container: MaterialUsage = None,
-) -> Union[str, dict]:
+) -> str:
     """Function generates the best technology choice from a number of key data and scenario inputs.
 
     Args:
         tco_reference_data (pd.DataFrame): DataFrame containing all TCO components by plant, technology and year.
         abatement_reference_data (pd.DataFrame): DataFrame containing all Emissions Abatement components by plant, technology and year.
-        solver_logic (str): Scenario setting that decides the logic used to choose the best technology `scale`, `ranke` or `bins`.
-        proportions_dict (dict): Scenario seeting that decides the weighting given to TCO or Emissions Abatement in the technology selector part of the solver logic.
         business_case_ref (dict): Standardised Business Cases.
+        variable_costs_df (pd.DataFrame): Variable Costs DataFrame.
+        green_premium_timeseries (pd.DataFrame): The timeseries containing the green premium values.
         tech_availability (pd.DataFrame): Technology Availability DataFrame
-        tech_avail_from_dict (dict): _description_
+        tech_avail_from_dict (dict): A condensed version of the technology availability DataFrame as a dictionary of technology as key, availability year as value.
         plant_capacities (dict): A dictionary containing plant: capacity/inital tech key:value pairs.
+        scenario_dict (dict): Scenario dictionary containing the model run's scenario settings.
+        investment_container (PlantInvestmentCycle): The PlantInvestmentCycle Instance containing each plant's investment cycle. 
         year (int): The current model year to get the best technology for.
         plant_name (str): The plant name.
+        region (str): The plant's region.
         country_code (str): The country code related to the plant.
         base_tech (str, optional): The current base technology. Defaults to None.
-        tech_moratorium (bool, optional): Scenario setting that determines if the tech moratorium should be active. Defaults to False.
-        transitional_switch_only (bool, optional): Scenario setting that determines if transitional switches are allowed. Defaults to False.
-        enforce_constraints (bool, optional): Scenario setting that determines if constraints are enforced within the model. Defaults to False.
+        transitional_switch_mode (bool, optional): Boolean flag that determines if transitional switch logic is active. Defaults to False.
         material_usage_dict_container (dict, optional): Dictionary container object that is used to track the material usage within the application. Defaults to None.
-        return_material_container (bool, optional): Boolean switch that enables the `material_usage_dict_container` to be reused. Defaults to True.
 
     Raises:
         ValueError: If there is no base technology selected, a ValueError is raised because this provides the foundation for choosing a switch technology.
 
     Returns:
-        Union[str, dict]: Returns the best technology as a string, and optionally the `material_usage_dict_container` if the `return_material_container` switch is activated.
+        str: Returns the best technology as a string.
     """
     proportions_dict = TECH_SWITCH_SCENARIOS[scenario_dict["tech_switch_scenario"]]
     solver_logic = SOLVER_LOGICS[scenario_dict['solver_logic']]
@@ -218,7 +218,17 @@ def return_best_tech(
     return best_choice
 
 
-def active_check_results(steel_plant_df: pd.DataFrame, year_range: range, inverse: bool = False):
+def active_check_results(steel_plant_df: pd.DataFrame, year_range: range, inverse: bool = False) -> dict:
+    """Checks whether each plant in `steel_plant_df` is active for each year in `year_range`.
+
+    Args:
+        steel_plant_df (pd.DataFrame): The Steel Plant DataFrame.
+        year_range (range): The year range used run each plant check for.
+        inverse (bool, optional): Boolean that determines whether the reverse the order of the dictionary. Defaults to False.
+
+    Returns:
+        dict: A dictionary with the plant names as keys and the boolean active check values as values. Or inversed if `inverse` is set to True.
+    """
 
     def final_active_checker(row, year):
         if year < row.start_of_operation:
@@ -244,15 +254,17 @@ def active_check_results(steel_plant_df: pd.DataFrame, year_range: range, invers
 
 def choose_technology(scenario_dict: dict) -> dict:
     """Function containing the entire solver decision logic flow.
-    1) In each year, the solver splits the plants into technology switchers, and non-switchers.
-    2) The solver extracts the prior year technology of the non-switchers and assumes this is the current technology of the siwtchers.
-    3) All switching plants are then sent through the `return_best_tech` function that decides the best technology depending on the switch type (main cycle or transitional switch).
-    4) All results are saved to a dictionary which is outputted at the end of the year loop.
+    1) In each year, the solver splits the plants non-switchers and switchers (secondary EAF plants and primary plants).
+    2) The solver extracts the prior year technology of the non-switchers and assumes this is the current technology of the switchers.
+    3) The material usage of the non-switching and secondary EAF plants is subtracted from the constraints and the remainder is then left over for the remaining switching plants.
+    4) Plants are opened or closed according to the Demand for that year, the open and closing logic (potentially including trade). Which changes the capacity constraints.
+    5) All switching plants are then sent through the `return_best_tech` function that decides the best technology depending on the switch type (main cycle or transitional switch).
+    6) All results are saved to a dictionary which is outputted at the end of the year loop.
 
     Args:
         scenario_dict (int): Model Scenario settings.
     Returns:
-        dict: A dictionary containing the best technology resuls. Organised as year: plant: best tech.
+        dict: A dictionary containing the best technology resuls. Organised as [year][plant][best tech].
     """
 
     logger.info("Creating Steel plant df")
@@ -478,22 +490,22 @@ def choose_technology(scenario_dict: dict) -> dict:
         logger.info(f"Scrap usage | Amount remaining for switchers/new plants: {MaterialUsageContainer.get_current_balance(year, 'scrap'): 0.2f}")
 
         # Run open/close capacity
-        capacity_adjusted_df = open_close_flow(
-            plant_container=PlantIDC,
-            market_container=market_container,
-            plant_df=active_plant_df,
-            levelized_cost=levelized_cost,
+        capacity_adjusted_df = open_close_plants(
             steel_demand_df=steel_demand_df,
+            steel_plant_df=active_plant_df,
             country_df=country_ref_f,
+            lev_cost_df=levelized_cost,
             business_case_ref=business_case_ref,
             tech_availability=tech_availability,
             variable_costs_df=variable_costs_regional,
             capex_dict=capex_dict,
-            tech_choices_container=PlantChoiceContainer,
-            investment_container=PlantInvestmentCycleContainer,
             capacity_container=CapacityContainer,
             utilization_container=UtilizationContainer,
             material_container=MaterialUsageContainer,
+            tech_choices_container=PlantChoiceContainer,
+            plant_id_container=PlantIDC,
+            market_container=market_container,
+            investment_container=PlantInvestmentCycleContainer,
             year=year,
             trade_scenario=trade_scenario,
             tech_moratorium=tech_moratorium,

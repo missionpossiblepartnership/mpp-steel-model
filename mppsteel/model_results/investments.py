@@ -33,7 +33,7 @@ def capex_getter_f(
     """Returns a capex value from a reference DataFrame taking into consideration edge cases.
 
     Args:
-        capex_df (pd.DataFrame): The capex reference DataFrame.
+        capex_ref (dict): The capex reference DataFrame.
         year (int): The year you want to retrieve values for.
         start_tech (str): The initial technology used.
         new_tech (str): The desired switch technology.
@@ -51,23 +51,23 @@ def capex_getter_f(
 
 def investment_row_calculator(
     plant_investment_cycles: pd.DataFrame,
-    capex_ref: pd.DataFrame,
+    capex_ref: dict,
     active_plant_checker_dict: dict,
     tech_choices: dict,
     capacity_ref: dict,
     year: int,
     plant_name: str
 ) -> dict:
-    """_summary_
+    """Calculates a row for the investment DataFrame by establishing the switch type for the plant in a particular year, and where necessary, applying a capex value.
 
     Args:
         plant_investment_cycles (pd.DataFrame): The Investment cycle reference DataFrame.
-        capex_df (pd.DataFrame): A switch capex reference. 
+        capex_ref (dict): A switch capex reference. 
+        active_plant_checker_dict (dict): Dictionary with values of whether a plant in a particular year was active or not.
         tech_choices (dict): Dictionary containing all technology choices for every plant across every year.
-        plant_name (str): The name of the reference plant.
-        country_code (str): Country code of the plant.
+        capacity_ref (dict): A dictionary of capacity references.
         year (int): The year that you want to reference.
-        capacity_value (float): The value of the plant capacity.
+        plant_name (str): The name of the reference plant.
 
     Returns:
         dict: A dictionary containing the column-value pairs to be inserted in a DataFrame.
@@ -151,7 +151,19 @@ def create_inv_stats(
         return region_dict
 
 
-def get_plant_cycle(plant_cycles: dict, plant_name: str, current_year: int, model_start_year: int, model_end_year: int):
+def get_plant_cycle(plant_cycles: dict, plant_name: str, current_year: int, model_start_year: int, model_end_year: int) -> range:
+    """Get a plant's cycle based on the current year.
+
+    Args:
+        plant_cycles (dict): A dictionary of each plant's investment cycle.
+        plant_name (str): The name of the plant.
+        current_year (int): The current year of the model cycle.
+        model_start_year (int): The start year of the model range.
+        model_end_year (int): The end year of model range.
+
+    Returns:
+        range: A range object conatining the a plant's updates cycle from a given start year.
+    """
     if (current_year < model_start_year) or (current_year > model_end_year):
         return None
     cycles = plant_cycles[plant_name]
@@ -179,7 +191,18 @@ def get_plant_cycle(plant_cycles: dict, plant_name: str, current_year: int, mode
     return range(current_year, model_end_year + 1)
 
 
-def get_investment_capital_costs(investment_df: pd.DataFrame, investment_cycles: dict, plant_name: str, current_year: int):
+def get_investment_capital_costs(investment_df: pd.DataFrame, investment_cycles: dict, plant_name: str, current_year: int) -> float:
+    """Calculates the investment costs within a specified range of years.
+
+    Args:
+        investment_df (pd.DataFrame): The investment costs DataFrame.
+        investment_cycles (dict): A dictionary of each plant's investment cycle.
+        plant_name (str): The name of the plant.
+        current_year (int): The current model cycle year.
+
+    Returns:
+        float: Get capex costs within a specified range of years.
+    """
     range_obj = get_plant_cycle(investment_cycles, plant_name, current_year, MODEL_YEAR_START, MODEL_YEAR_END)
     
     if range_obj:

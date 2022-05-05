@@ -19,14 +19,35 @@ from mppsteel.utility.log_utility import get_logger
 logger = get_logger(__name__)
 
 
-def check_relative_production_cost(cost_df: pd.DataFrame, value_col: str, pct_boundary: float):
-    df_c = cost_df.copy()
+DATA_ENTRY_DICT_KEYS = [
+    'new_capacity_required',
+    'plants_required',
+    'plants_to_close',
+    'new_total_capacity',
+    'new_utilized_capacity',
+    'new_balance',
+    'new_utilization',
+]
+
+
+def check_relative_production_cost(cos_df: pd.DataFrame, value_col: str, pct_boundary: float) -> pd.DataFrame:
+    """Adds new columns to a dataframe that groups regional cost of steelmaking dataframe around whether the region's COS are above or below the average.
+
+    Args:
+        cos_df (pd.DataFrame): Cost of Steelmaking (COS) DataFrame
+        value_col (str): The value column in the cost of steelmaking function
+        pct_boundary (float): The percentage boundary to use based around the mean value to determine the overall column boundary
+
+    Returns:
+        pd.DataFrame: The COS DataFrame with new columns `relative_cost_below_avg` and `relative_cost_close_to_mean`
+    """
+    df_c = cos_df.copy()
     mean_val = df_c[value_col].mean()
     value_range = df_c[value_col].max() - df_c[value_col].min()
     value_range_boundary = value_range * pct_boundary
     upper_boundary = mean_val + value_range_boundary
-    df_c['relative_cost_below_avg'] = df_c[value_col].apply(lambda x: True if x <= mean_val else False)
-    df_c[f'relative_cost_close_to_mean'] = df_c[value_col].apply(lambda x: True if x < upper_boundary else False)
+    df_c['relative_cost_below_avg'] = df_c[value_col].apply(lambda x: x <= mean_val)
+    df_c['relative_cost_close_to_mean'] = df_c[value_col].apply(lambda x: x < upper_boundary)
     return df_c
 
 
@@ -51,9 +72,25 @@ def single_year_cos(
     """
     return 0 if utilization_rate == 0 else (plant_capacity * utilization_rate * variable_cost) + other_opex_cost
 
-def create_cos_table(
-    row, year: int, production_demand_dict: dict, v_costs: pd.DataFrame, 
-    capacity_dict: dict, tech_choices: dict, capex_costs: dict):
+def cos_value_generator(
+    row: pd.Series, year: int, production_demand_dict: dict, v_costs: pd.DataFrame, 
+    capacity_dict: dict, tech_choices: dict, capex_costs: dict
+) -> float:
+    """Generates COS values per steel plant row.
+
+    Args:
+        row (pd.Series): A series containing metadata on a steel plant.
+        year (int): The current model cycle year.
+        production_demand_dict (dict): The open close metadata dictionary.
+        v_costs (pd.DataFrame): Variable costs DataFrame.
+        capacity_dict (dict): Dictionary of Capacity Values.
+        tech_choices (dict): Technology choices dictionary.
+        capex_costs (dict): Capex costs dictionary.
+
+    Returns:
+        float: The COS value for the plant
+    """
+
     technology = tech_choices[year][row.plant_name] if year == 2020 else tech_choices[year - 1][row.plant_name]
     plant_capacity = capacity_dict[row.plant_name]
     utilization_rate = production_demand_dict[row.rmi_region]['initial_utilization']
@@ -64,11 +101,25 @@ def create_cos_table(
 def calculate_cos(
     plant_df: pd.DataFrame, year: int, production_demand_dict: dict, 
     v_costs: pd.DataFrame, tech_choices: dict, capex_costs: dict,
-    capacity_dict: dict):
+    capacity_dict: dict) -> pd.DataFrame:
+    """Calculates the COS as a column in a steel plant DataFrame.
+
+    Args:
+        plant_df (pd.DataFrame): The steel plant DataFrame.
+        year (int): The current model cycle year.
+        production_demand_dict (dict): The open close metadata dictionary.
+        v_costs (pd.DataFrame): Variable costs DataFrame.
+        tech_choices (dict): Technology choices dictionary.
+        capex_costs (dict): Capex costs dictionary.
+        capacity_dict (dict): Dictionary of Capacity Values.
+
+    Returns:
+        pd.DataFrame: A Dataframe grouped by region and sorted by the new cost_of_steelmaking function.
+    """
 
     plant_df_c = plant_df.copy()
     plant_df_c['cost_of_steelmaking'] = plant_df_c.apply(
-        create_cos_table, 
+        cos_value_generator, 
         year=year, 
         production_demand_dict=production_demand_dict, 
         v_costs=v_costs, 
@@ -79,18 +130,17 @@ def calculate_cos(
     )
     return plant_df_c[[MAIN_REGIONAL_SCHEMA, 'cost_of_steelmaking']].groupby([MAIN_REGIONAL_SCHEMA]).mean().sort_values(by='cost_of_steelmaking', ascending=True).copy()
 
+def modify_production_demand_dict(production_demand_dict: dict, data_entry_values: list, region: str) -> dict:
+    """Modifies the open close dictionary by taking an ordered list of `data_entry_values`, mapping them to their corresponding dictionary keys and amending the original demand dictionary values.
 
-DATA_ENTRY_DICT_KEYS = [
-    'new_capacity_required',
-    'plants_required',
-    'plants_to_close',
-    'new_total_capacity',
-    'new_utilized_capacity',
-    'new_balance',
-    'new_utilization',
-]
+    Args:
+        production_demand_dict (dict): The original open close dictionary reference.
+        data_entry_values (list): The list of values to update the production_demand_dict with.
+        region (str): The selected region to update the `production_demand_dict` with the `data_entry_values`.
 
-def modify_production_demand_dict(production_demand_dict: dict, data_entry_values: list, region: str):
+    Returns:
+        dict: The modified open close dictionary.
+    """
     production_demand_dict_c = deepcopy(production_demand_dict)
     data_entry_dict = dict(zip(DATA_ENTRY_DICT_KEYS, data_entry_values))
     
@@ -118,7 +168,29 @@ def trade_flow(
     util_min: float = CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION, 
     util_max: float = CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
     relative_boundary_from_mean: float = RELATIVE_REGIONAL_COST_BOUNDARY_FROM_MEAN_PCT
-):
+) -> dict:
+    """Modifies an open close dictionary of metadata for each region. The following optimization steps are taken by the algorithm.
+    1) Determine whether a plant can meet its current regional demand with its current utilization levels.
+    2) Optimize the utilization levels accordingly if possible
+    3) Engage in interregional trade until there is no imbalance remaining.
+
+    Args:
+        material_container (MaterialUsage): The MaterialUsage Instance containing the material usage state.
+        production_demand_dict (dict): The original open close metadata dictionary.
+        utilization_container (UtilizationContainerClass): The UtilizationContainerClass Instance containing the utilization state.
+        capacity_container (CapacityContainerClass): The CapacityContainerClass Instance containing the capacity state.
+        variable_costs_df (pd.DataFrame): The variable costs reference DataFrame.
+        plant_df (pd.DataFrame): The steel plant DataFrame.
+        capex_dict (dict): The capex reference dictionary.
+        tech_choices_container (PlantChoices): The PlantChoices Instance containing the Technology Choices state.
+        year (int): The current model year.
+        util_min (float, optional): The minimum capacity utilization that plants are allowed to reach before having to close existing plants. Defaults to CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION.
+        util_max (float, optional): The maximum capacity utilization that plants are allowed to reach before having to open new plants. Defaults to CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION.
+        relative_boundary_from_mean (float, optional): _description_. Defaults to RELATIVE_REGIONAL_COST_BOUNDARY_FROM_MEAN_PCT.
+
+    Returns:
+        dict: A dictionary of open close metadata for each region.
+    """
     capacity_dict = capacity_container.return_plant_capacity(year)
     production_demand_dict_c = deepcopy(production_demand_dict)
     cos_df = calculate_cos(plant_df, year, production_demand_dict_c, variable_cost_df, tech_choices_ref, capex_dict, capacity_dict)

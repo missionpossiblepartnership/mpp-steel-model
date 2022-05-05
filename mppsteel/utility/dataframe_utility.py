@@ -242,3 +242,9 @@ def convert_currency_col(df: pd.DataFrame, curr_col: str, conversion_rate: float
     df_c = df.copy()
     df_c[curr_col] = df_c[curr_col] * conversion_rate
     return df_c
+
+def change_cols_to_numeric(df: pd.DataFrame, numeric_cols: list) -> pd.DataFrame:
+    df_c = df.copy()
+    for col in numeric_cols:
+        df_c[col] = pd.to_numeric(df[col])
+    return df_c

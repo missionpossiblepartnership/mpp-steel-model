@@ -1,6 +1,7 @@
 """Classes to manage Capacity & Utilization"""
 
 import itertools
+from typing import Tuple
 import pandas as pd
 import numpy as np
 
@@ -26,6 +27,14 @@ from mppsteel.utility.log_utility import get_logger
 logger = get_logger(__name__)
 
 class PlantChoices:
+    """Description
+    Class to manage the state of each plant's technology choices.
+
+    Main Class attributes
+        choices: Keeps track of each plants choice in every year. A dictionary in the form [year][plant_name] -> technology
+        records: A list of DataFrames that record why certain technologies were chosen or not chosen. The list can be outputted to a combined DataFrame.
+        active_check: A dictionary that keeps track of whether a plant is active or not. A dictionary in the form [year][plant_name] -> boolean check
+    """
     def __init__(self):
         self.choices = {}
         self.records = []
@@ -63,6 +72,20 @@ class PlantChoices:
 
 
 class MaterialUsage:
+    """Description
+    Class to manage how resource constraints are handled.
+
+    Important Points
+    1) Only resources that have constraints are tracked in this class
+    2) There are several attributes that interact to manage the resource consumptions
+    3) There are states that usage might exceed the constraint - Not by error. The class has functionality to manage these cases.
+
+    Main Class Attributes
+        Constraint: The amount of the reosurce available. In the form [model_type][year] -> constraint value
+        Usage: The amount of the reosurce that has been used. Should be lower than the constraint. In the form [model_type][year] -> usage value
+        Balance: The amount of the reosurce still available for the year. Should be lower or equal to the constraint. In the form [model_type][year] -> constraint value
+        Resources: The list of resources to track.
+    """
     def __init__(self):
         self.constraint = {}
         self.usage = {}
@@ -189,6 +212,15 @@ class MaterialUsage:
                 self.usage[year][model_type] = current_usage + amount
         return True
 class CapacityContainerClass():
+    """Description
+    Class for maintaining the state of each plant's capacity.
+    
+    Main Class Attributes
+        At the plant level: `plant_capacities` in the form [year][plant_name] -> total capacity value
+        At the region level: 
+            `regional_capacities_agg` in the form [year][region] -> total regional capacity value
+            `regional_capacities_avg` in the form [year][region] -> average regional capacity value
+    """
     def __init__(self):
         self.plant_capacities = {}
         self.regional_capacities_agg = {}
@@ -212,15 +244,15 @@ class CapacityContainerClass():
         if region and not year:
             # return a year value time series for a region
             return {year_val: capacity_dict[year_val][region] for year_val in capacity_dict}
-        
+
         if year and not region:
             # return all regions for single year
             return capacity_dict[year]
-        
+
         if year and region:
             # return single value
             return capacity_dict[year][region]
-        
+
         # return all years and regions
         return capacity_dict
 
@@ -250,6 +282,13 @@ class CapacityContainerClass():
         return self.plant_capacities
 
 class UtilizationContainerClass:
+    """Description
+    Class for managing each region's utilization rates.
+
+    Main Class Attirbutes
+        It maintains a dictionary structured as [year][region] -> value in the attribute called `utilization_container`
+        World Utilization rates are treated as a weighted average of all the region's utilizatoin rates
+    """
     def __init__(self):
         self.utilization_container = {}
         
@@ -287,6 +326,17 @@ class UtilizationContainerClass:
 
 
 class MarketContainerClass:
+    """Description
+    Class for managing all aspects of the trade functionality.
+
+    Important Notes
+    1) All excess production above the regions demand is registered as positive number.
+    2) All production deficits below the regional demand is registered as a negative number.
+
+    Main Class Attributes
+        It maintains a trade container as an attirbute called `trade_container`
+        It also maintains more detail on the years transactions as a dictionary of DataFrames called `market_results`
+    """
     def __init__(self):
         self.trade_container = {}
         self.market_results = {}
@@ -338,7 +388,7 @@ class MarketContainerClass:
         return pd.concat(self.market_results.values(), axis=1)
 
 def create_material_usage_dict(
-    material_usage_dict_container: dict,
+    material_usage_dict_container: MaterialUsage,
     plant_capacities: dict,
     business_case_ref: dict,
     plant_name: str,
@@ -349,7 +399,27 @@ def create_material_usage_dict(
     override_constraint: bool = False,
     apply_transaction: bool = False,
     regional_scrap: bool = False,
-):
+) -> dict:
+    """Creates a material checking dictionary that contains checks on every resource that has a constraint.
+    The function will assign True if the resource passes the constraint check and False if the resource doesn't pass this constraint.
+
+
+    Args:
+        material_usage_dict_container (MaterialUsage): The MaterialUsage Instance containing the material consumption state.
+        plant_capacities (dict): A dictionary of plant names and capacity values.
+        business_case_ref (dict): The Business Cases of resourse usage.
+        plant_name (str): The name of the plant.
+        region (str): The region of the plant.
+        year (int): The current model cycle year.
+        switch_technology (str): The potential switch technology.
+        capacity_value (float, optional): The capacity of the plant (if the value is availabile, otherwise to be found in `plant_capacities`). Defaults to None.
+        override_constraint (bool, optional): Boolean flag to determine whether the current constraint should be overwritten. Defaults to False.
+        apply_transaction (bool, optional): Boolean flag to determine whether the transaction against the constraint should be fulfilled. If false, the constraint will be left unmodified. Defaults to False.
+        regional_scrap (bool, optional): Boolean flag to determine if scrap constraints should be treated as regional or global. Defaults to False.
+
+    Returns:
+        dict: A dictionary that has the resource as a key and a boolean check as the value.
+    """
     material_check_container = {}
     for resource in RESOURCE_CONTAINER_REF:
         projected_usage = return_projected_usage(
@@ -432,7 +502,25 @@ def apply_constraints_for_min_cost_tech(
     year: int,
     plant_name: str,
     region: str,
-):
+) -> list:
+    """Subsets a list of technologies according to whether they pass certain availability checks for TRL>8 and resource availability.
+
+    Args:
+        business_case_ref (dict): The Business Cases of resourse usage.
+        plant_capacities_dict (dict): A dictionary of plant names and capacity values.
+        tech_availability (pd.DataFrame): A DataFrame of technology availability.
+        material_usage_dict_container (MaterialUsage): The MaterialUsage Instance containing the material consumption state.
+        combined_available_list (list): The initial technology availabilty list.
+        plant_capacity (float): A capacity of the plant
+        tech_moratorium (bool): Scenario boolean flag that determines if there is a tehcnology moratorium.
+        regional_scrap (bool): Scenario boolean flag that determines if scrap is treated regionally or globally.
+        year (int): The current model cycle year
+        plant_name (str): The name of the plant.
+        region (str): The region of the plant.
+
+    Returns:
+        list: The subsetted list.
+    """
     new_availability_list = []
     # Constraints checks
     combined_available_list = [
@@ -477,7 +565,18 @@ def apply_constraints_for_min_cost_tech(
         material_usage_dict_container.record_results(entry)
     return new_availability_list
 
-def create_regional_capacity_dict(plant_df: pd.DataFrame, rounding: int = 3, as_avg: bool = False, as_mt: bool = False):
+def create_regional_capacity_dict(plant_df: pd.DataFrame, rounding: int = 3, as_avg: bool = False, as_mt: bool = False) -> dict:
+    """Creates a regional capacity dictionary.
+
+    Args:
+        plant_df (pd.DataFrame): The steel plant DataFrame.
+        rounding (int, optional): The rounding factor for the capacity values. Defaults to 3.
+        as_avg (bool, optional): Optionally returns the average capacity value instead of the aggregate value. Defaults to False.
+        as_mt (bool, optional): Boolean flag that optionall converts the capacity value from Kilotons to Megatons. Defaults to False.
+
+    Returns:
+        dict: A dictionary containing regions as keys and capacity values as values.
+    """
     logger.info('Deriving average plant capacity statistics')
     plant_df_c = plant_df.set_index(['active_check']).loc[True].copy()
     df = plant_df_c[[MAIN_REGIONAL_SCHEMA, 'plant_capacity']].groupby([MAIN_REGIONAL_SCHEMA])
@@ -490,7 +589,17 @@ def create_regional_capacity_dict(plant_df: pd.DataFrame, rounding: int = 3, as_
         return {region: value / MEGATON_TO_KILOTON_FACTOR for region, value in dict_obj.items()}
     return dict_obj
 
-def create_average_plant_capacity(plant_df: pd.DataFrame, rounding: int = 3, as_mt: bool = False):
+def create_average_plant_capacity(plant_df: pd.DataFrame, rounding: int = 3, as_mt: bool = False) -> float:
+    """Generates an average plant capacity value across all plants and regions to use as a reference.
+
+    Args:
+        plant_df (pd.DataFrame): The steel plant DataFrame.
+        rounding (int, optional): Rounding factor to use for the final values. Defaults to 3.
+        as_mt (bool, optional): Boolean flag to determine whether to convert to units from Kilotons to Megatons. Defaults to False.
+
+    Returns:
+        float: The average plant capacity
+    """
     plant_df_c = plant_df.set_index(['active_check']).loc[True].copy()
     capacity_sum = plant_df_c['plant_capacity'].sum()
     if as_mt:
@@ -498,7 +607,16 @@ def create_average_plant_capacity(plant_df: pd.DataFrame, rounding: int = 3, as_
     return round(capacity_sum / len(plant_df_c), rounding)
 
 
-def create_annual_capacity_dict(plant_df: pd.DataFrame, as_mt: bool = False):
+def create_annual_capacity_dict(plant_df: pd.DataFrame, as_mt: bool = False) -> Tuple[dict, dict]:
+    """Creates two dictionaries. One with the plants as keys and capacities as values. The second with regions as keys and capacities as values.
+
+    Args:
+        plant_df (pd.DataFrame): The steel plant DataFrame.
+        as_mt (bool, optional): Boolean flag to determine whether to convert to units from Kilotons to Megatons. Defaults to False.
+
+    Returns:
+        Tuple[dict, dict]: A tuple of the two capacity dictionary references. 
+    """
     regions = plant_df[MAIN_REGIONAL_SCHEMA].unique()
     plant_capacity_dict = dict(zip(plant_df['plant_name'], plant_df['plant_capacity']))
     regional_capacity_dict_list = {region: [plant_capacity_dict[plant_name] for plant_name in set(plant_capacity_dict.keys()).intersection(set(plant_df[plant_df[MAIN_REGIONAL_SCHEMA] == region]['plant_name'].unique()))] for region in regions}
@@ -510,7 +628,16 @@ def create_annual_capacity_dict(plant_df: pd.DataFrame, as_mt: bool = False):
 
 
 
-def format_wsa_production_data(df, as_dict: bool = False):
+def format_wsa_production_data(df: pd.DataFrame, as_dict: bool = False) -> pd.DataFrame:
+    """Formats the inital WSA DataFrame in preparation to extract utilization figures.
+
+    Args:
+        df (pd.DataFrame): The initial WSA Data.
+        as_dict (bool, optional): Boolean flag that determines whether the DataFrame should be returned as a dictionary. Defaults to False.
+
+    Returns:
+        pd.DataFrame: Formatted WSA Data.
+    """
     logger.info('Formatting WSA production data for 2020')
     df_c = df.copy()
     df_c = df_c.melt(id_vars=['WSA_Region','RMI_Region','Country','Metric','Unit'], var_name='year')
@@ -522,7 +649,18 @@ def format_wsa_production_data(df, as_dict: bool = False):
     return df_c
 
 
-def return_utilization(prod_dict: dict, cap_dict: dict, value_cap: float = None):
+def return_utilization(prod_dict: dict, cap_dict: dict, value_cap: float = None) -> dict:
+    """Creates a utilization dictionary based on production reference dictionary and capacity reference dictionary.
+    Takes the minimum of the calculated capacity and the utilization `value cap`.
+
+    Args:
+        prod_dict (dict): The dictionary containing the actual production figures.
+        cap_dict (dict): The dictionary containing the capacity values.
+        value_cap (float, optional): The maximum utilization value that a plant is allowed to take. Defaults to None.
+
+    Returns:
+        dict: A dictionary with regions as keys and utilization numbers as values.
+    """
     util_dict = {}
     for region in prod_dict:
         val = round(prod_dict[region] / cap_dict[region], 2)
@@ -532,7 +670,12 @@ def return_utilization(prod_dict: dict, cap_dict: dict, value_cap: float = None)
     return util_dict
 
 
-def create_wsa_2020_utilization_dict():
+def create_wsa_2020_utilization_dict() -> dict:
+    """Creates the initial utilization dictionary for 2020 based on data from the World Steel Association (WSA).
+
+    Returns:
+        dict: A dictionary with regions as keys and utilization numbers as values.
+    """
     logger.info('Creating the utilization dictionary for 2020.')
     wsa_production = read_pickle_folder(PKL_DATA_IMPORTS, "wsa_production", "df")
     steel_plants_processed = read_pickle_folder(PKL_DATA_FORMATTED, "steel_plants_processed", "df")

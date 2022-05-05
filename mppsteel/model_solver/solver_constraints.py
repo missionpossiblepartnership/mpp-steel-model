@@ -66,14 +66,14 @@ def tech_availability_check(
     tech_moratorium: bool = False,
     default_year_unavailable: int = 2200,
 ) -> bool:
-    """[summary]
+    """Checks whether a technology is available in a given year.
 
     Args:
-        tech_df (pd.DataFrame): A formatted tech availability DataFrame.
+        tech_df (pd.DataFrame): The technology availability DataFrame.
         technology (str): The technology to check availability for.
         year (int): The year to check whether a specified `technology` is available or not.
         tech_moratorium (bool, optional): Boolean flag that determines whether a specified technology is available or not. Defaults to False.
-        default_year_unavailable (int): Determines the default year a given technology will not be available from - will be altered according to function logic.
+        default_year_unavailable (int): Determines the default year a given technology will not be available from - will be altered according to function logic. Defaults to 2200.
 
     Returns:
         bool: A boolean that determines whether a specified `technology` is available in the specified `year`.
@@ -96,16 +96,48 @@ def tech_availability_check(
         return False
 
 
-def create_co2_use_constraint(model: pd.DataFrame): # Mt CO2
+def create_co2_use_constraint(model: pd.DataFrame) -> dict:
+    """Creates a dictionary of years as keys and constraint amounts as values (in Mt CO2) for CO2 Use.
+
+    Args:
+        model (pd.DataFrame): The CO2 Use model.
+
+    Returns:
+        dict: A dictionary of the CO2 use constraints.
+    """
     return model[model['Metric'] == 'Steel CO2 use market'][['Value', 'Year']].set_index(['Year']).to_dict()['Value']
 
-def create_ccs_constraint(model: pd.DataFrame): # Mt CO2
+def create_ccs_constraint(model: pd.DataFrame) -> dict:
+    """Creates a dictionary of years as keys and constraint amounts as values (in Mt CO2) for CCS.
+
+    Args:
+        model (pd.DataFrame): The CCS model.
+
+    Returns:
+        dict: A dictionary of the CCS constraints.
+    """
     return model.swaplevel().loc['Global'][['value']].to_dict()['value']
 
-def create_biomass_constraint(model: pd.DataFrame): # GJ Energy
+def create_biomass_constraint(model: pd.DataFrame) -> dict: 
+    """Creates a dictionary of years as keys and constraint amounts as values (in GJ Energy) for Biomass.
+
+    Args:
+        model (pd.DataFrame): The Biomass model.
+
+    Returns:
+        dict: A dictionary of the Biomass constraints.
+    """
     return model[['value']].to_dict()['value']
 
-def create_scrap_constraints(model: pd.DataFrame): # Mt Scrap
+def create_scrap_constraints(model: pd.DataFrame) -> dict:
+    """Creates a multilevel dictionary of years as keys and region[values] amounts as values (in Mt Scrap) for Scrap.
+
+    Args:
+        model (pd.DataFrame): The Scrap model.
+
+    Returns:
+        dict: A multilevel dictionary of the Scrap constraints.
+    """
     rsd = model[model['region'] != 'World'].copy()
     rsd = rsd[['region', 'value']] \
         .loc[:,:,'Scrap availability'].reset_index() \
@@ -119,7 +151,20 @@ def create_scrap_constraints(model: pd.DataFrame): # Mt Scrap
 def return_projected_usage(
     plant_name: str, technology: str, capacities_dict: dict,
     business_case_ref: dict, materials: list, capacity_value: float = None,
-):
+) -> float:
+    """Returns the project usage for a specific plant given its capacity and `technology` for resources specified in `materials`.
+
+    Args:
+        plant_name (str): The name of the plant.
+        technology (str): Tech plant's (potential or actual) technology
+        capacities_dict (dict): Dictionary containing the capacities of each plant.
+        business_case_ref (dict): The business case reference dictionary.
+        materials (list): The materials to summ usage for.
+        capacity_value (float, optional): A specific capacity value of the plant, if not already contained in capacities_dict. Defaults to None.
+
+    Returns:
+        float: The sum of the usage across the materials specified in `materials`
+    """
     # Mt or Gj
     capacity_value_final = capacity_value if capacity_value else capacities_dict[plant_name]
     return sum([
@@ -130,7 +175,19 @@ def return_projected_usage(
 def return_current_usage(
     plant_list: list, technology_choices: dict, capacities_dict: dict,
     business_case_ref: dict, materials: list, 
-):
+) -> float:
+    """Returns the project usage for a a list of plants in `plant_list` given their `technology_choices` and capacities for resources specified in `materials`.
+
+    Args:
+        plant_list (list): The names of the plants.
+        technology_choices (dict): The plants' technology choices.
+        capacities_dict (dict): The plants' capacities.
+        business_case_ref (dict): The business case reference dictionary.
+        materials (list): The materials to summ usage for.
+
+    Returns:
+        float: The sum of the usage across the plants and materials specified in `materials`
+    """
     usage_sum = []
     for material, plant_name in list(itertools.product(materials, plant_list)):
         capacity = capacities_dict[plant_name]

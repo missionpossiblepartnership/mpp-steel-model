@@ -24,12 +24,14 @@ def global_metaresults_calculator(
     production_results_df: pd.DataFrame,
     rounding: int = 1
 ) -> pd.DataFrame:
-    """_summary_
+    """Calculates the metaresults columns and appends them to a year timeseries.
 
     Args:
         steel_market_df (pd.DataFrame): The DataFrame of Steel Demand values.
-        tech_capacity_df (pd.DataFrame): The DataFrame of Technology Capacity values.
+        capacity_results (dict): A dictionary of all plant capacities.
+        utilization_results (dict): A dictionary of all regional utilization rates.
         production_results_df (pd.DataFrame): The Production Stats Results DataFrame.
+        rounding (int): A rounding factor for the metaresults. Defaults to 1.
 
     Returns:
         pd.DataFrame: A DataFrame containing all of the Metaresults for the model run.

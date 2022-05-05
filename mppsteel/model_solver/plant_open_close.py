@@ -167,17 +167,17 @@ def new_plant_metadata(
     """Creates the essential metadata fields for a new plant.
 
     Args:
-        plant_container (PlantIdContainer): _description_
-        production_demand_dict (dict): _description_
-        levelized_cost_df (pd.DataFrame): _description_
-        plant_df (pd.DataFrame): _description_
-        ng_mapper (dict): _description_
-        year (int): _description_
-        region (str, optional): _description_. Defaults to None.
-        low_cost_region (bool, optional): _description_. Defaults to False.
+        plant_container (PlantIdContainer): Plant Container class containing a track of plants and their unique IDs.
+        production_demand_dict (dict): Dictionary with the results of the utilization and open/close and trade optimization process.
+        levelized_cost_df (pd.DataFrame): Levelized Cost Reference DataFrame.
+        plant_df (pd.DataFrame): The steel plant DataFrame.
+        ng_mapper (dict): Mapper that includes country codes as keys and natural gas boolean flag as values.
+        year (int): The current model year.
+        region (str, optional): The region for the new plant. Defaults to None.
+        low_cost_region (bool, optional): The low cost region for the. Defaults to False.
 
     Raises:
-        AttributeError: When values are entered for both region and
+        AttributeError: When values are entered for both `region` and `low_cost_region`.
 
     Returns:
         dict: A dictionary with key value fields for new plants.
@@ -207,7 +207,18 @@ def new_plant_metadata(
         MAIN_REGIONAL_SCHEMA: region
     }
 
-def return_oldest_plant(investment_dict: dict, current_year: int, plant_list: list = None):
+def return_oldest_plant(investment_dict: dict, current_year: int, plant_list: list = None) -> str:
+    """Gets the oldest plant from `plant_list` based on their respective investment cycles in `investment dict` and the `current_year`.
+    If multiple plants have the same oldest age, then a plant is chosen at random.
+
+    Args:
+        investment_dict (pd.DataFrame): Dictionary with plant names as keys and main investment cycles as values.
+        current_year (int): The current model year.
+        plant_list (list, optional): A list of plant names. Defaults to None.
+
+    Returns:
+        str: The name of the oldest plant.
+    """
     if not plant_list:
         plant_list = investment_dict.keys()
     plant_age_dict = {plant: current_plant_year(investment_dict, plant, current_year) for plant in plant_list}
@@ -215,15 +226,30 @@ def return_oldest_plant(investment_dict: dict, current_year: int, plant_list: li
     return random.choice(get_dict_keys_by_value(plant_age_dict, max_value))
 
 
-def return_plants_from_region(plant_df: pd.DataFrame, region: str):
+def return_plants_from_region(plant_df: pd.DataFrame, region: str) -> list:
+    """Gets plants from the same region.
+
+    Args:
+        plant_df (pd.DataFrame): The plant metadata dataframe.
+        region (str): The requested region.
+
+    Returns:
+        list: A list of plants from the region selected.
+    """
     return list(plant_df[plant_df[MAIN_REGIONAL_SCHEMA] == region]['plant_name'].values)
 
 
-def add_new_plant_choices(tech_choices_container, year: int, plant: str, tech: str):
-    tech_choices_container.update_choice(year, plant, tech)
+def return_modified_plants(ocp_df: pd.DataFrame, year: int, change_type: str = 'open') -> pd.DataFrame:
+    """Subsets the plant dataframe based on plants that have been newly opened in the current model year.
 
+    Args:
+        ocp_df (pd.DataFrame): The open close dataframe.
+        year (int): The current model year.
+        change_type (str, optional): The type of change to return values for. Can be either `open` or `close`. Defaults to 'open'.
 
-def return_modified_plants(ocp_df: pd.DataFrame, year: int, change_type: str = 'open'):
+    Returns:
+        pd.DataFrame: A dataframe containing the subsetted data.
+    """
     if change_type == 'open':
         return ocp_df[(ocp_df['status'] == 'new model plant') & (ocp_df['start_of_operation'] == year)]
     elif change_type == 'close':
@@ -231,7 +257,16 @@ def return_modified_plants(ocp_df: pd.DataFrame, year: int, change_type: str = '
 
 
 
-def ng_flag_mapper(plant_df: pd.DataFrame, country_ref: pd.DataFrame):
+def ng_flag_mapper(plant_df: pd.DataFrame, country_ref: pd.DataFrame) -> dict:
+    """Generates a mapper of country codes as keys and natural gas encodings as values.
+
+    Args:
+        plant_df (pd.DataFrame): The steel plant dataframe/
+        country_ref (pd.DataFrame): The country reference dataframe.
+
+    Returns:
+        dict: A dictionary of country codes as keys and natural gas encodings as values.
+    """
     df = plant_df[['country_code', 'cheap_natural_gas']].drop_duplicates().reset_index(drop=True).copy()
     initial_mapper = dict(zip(df['country_code'], df['cheap_natural_gas']))
     final_values = country_ref['country_code'].apply(
@@ -249,8 +284,23 @@ def production_demand_gap(
     year: int,
     capacity_util_max: float = 0.95,
     capacity_util_min: float = 0.6
-):
+) -> dict:
+    """Generates an open close dictionary of metadata for each region. The following optimization steps are taken by the algorithm.
+    1) Determine whether a plant can meet its current regional demand with its current utilization levels.
+    2) Optimize the utilization levels accordingly if possible
+    3) If not possible, open OR close plants as required to meet the regional demand.
 
+    Args:
+        steel_demand_df (pd.DataFrame): The Steel Demand DataFrame.
+        capacity_container (CapacityContainerClass): The CapacityContainerClass Instance containing the capacity state.
+        utilization_container (UtilizationContainerClass): The UtilizationContainerClass Instance containing the utilization state.
+        year (int): The current model cycle year.
+        capacity_util_max (float, optional): The maximum capacity utilization that plants are allowed to reach before having to open new plants. Defaults to 0.95.
+        capacity_util_min (float, optional): The minimum capacity utilization that plants are allowed to reach before having to close existing plants. Defaults to 0.6.
+
+    Returns:
+        dict: A dictionary of open close metadata for each region.
+    """
     logger.info(f'Defining the production demand gap for {year}')
     # SUBSETTING & VALIDATION
     avg_plant_global_capacity = capacity_container.return_avg_capacity_value()
@@ -329,7 +379,18 @@ def production_demand_gap(
     return results_container
 
 
-def market_balance_test(production_supply_df: pd.DataFrame, year: int, rounding: int = 0):
+def market_balance_test(production_supply_df: pd.DataFrame, year: int, rounding: int = 0) -> bool:
+    """A test function that checks whether the following inequality holds within the Open Close DataFrame.
+    Capacity > Production >= Demand
+
+    Args:
+        production_supply_df (pd.DataFrame): _description_
+        year (int): _description_
+        rounding (int, optional): _description_. Defaults to 0.
+
+    Returns:
+        bool: Returns True is all inequalities hold.
+    """
     demand_sum = round( production_supply_df['demand'].sum(), rounding)
     capacity_sum = round( production_supply_df['new_total_capacity'].sum(), rounding)
     production_sum = round( production_supply_df['new_utilized_capacity'].sum(), rounding)
@@ -343,6 +404,7 @@ def market_balance_test(production_supply_df: pd.DataFrame, year: int, rounding:
 def open_close_plants(
     steel_demand_df: pd.DataFrame,
     steel_plant_df: pd.DataFrame,
+    country_df: pd.DataFrame,
     lev_cost_df: pd.DataFrame,
     business_case_ref: pd.DataFrame,
     tech_availability: pd.DataFrame,
@@ -355,7 +417,6 @@ def open_close_plants(
     plant_id_container: PlantIdContainer,
     market_container: MarketContainerClass,
     investment_container: PlantInvestmentCycle,
-    ng_mapper: dict,
     year: int,
     trade_scenario: bool = False,
     tech_moratorium: bool = False,
@@ -363,9 +424,42 @@ def open_close_plants(
     enforce_constraints: bool = False,
     open_plant_util_cutoff: float = CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
     close_plant_util_cutoff: float = CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
-):
+) -> pd.DataFrame:
+    """Adjusts a Plant Dataframe by determining how each region should achieve its demand for the year.
+    The function works by either
+    1) Ensuring that each region can only fulfill its own demand (if `trade_scenario` is set to `False`)
+    2) Using Trade rules to allow demand to be partially filled by other region's production capacity (if `trade_scenario` is set to `True`)
+    3) Opens and/or closes plants based on steps 1 & 2.
 
-    logger.info(f'Iterating through the open close loops for {year}')
+    Args:
+        steel_demand_df (pd.DataFrame): The steel demand DataFrame.
+        steel_plant_df (pd.DataFrame): The steel plant DataFrame.
+        lev_cost_df (pd.DataFrame): A levelized cost reference DataFrame.
+        business_case_ref (dict): The business cases reference dictionary.
+        tech_availability (pd.DataFrame): The technology availability reference.
+        variable_costs_df (pd.DataFrame): The variable costs reference DataFrame.
+        capex_dict (dict): The capex reference dictionary.
+        capacity_container (CapacityContainerClass): The CapacityContainerClass Instance containing the capacity state.
+        utilization_container (UtilizationContainerClass): The UtilizationContainerClass Instance containing the utilization state.
+        material_container (MaterialUsage): The MaterialUsage Instance containing the material usage state.
+        tech_choices_container (PlantChoices): The PlantChoices Instance containing the Technology Choices state.
+        plant_id_container (PlantIdContainer): plant_container (PlantIdContainer): Plant Container class containing a track of plants and their unique IDs.
+        market_container (MarketContainerClass): The MarketContainerClass Instance containing the Trade state.
+        investment_container (PlantInvestmentCycle): The PlantInvestmentCycle Instance containing the investment cycle state.
+        year (int): The current model year.
+        trade_scenario (bool, optional): The scenario boolean value that determines whether there is a trade scenario. Defaults to False.
+        tech_moratorium (bool, optional): The scenario boolean value that determines whether there is a technology moratorium. Defaults to False.
+        regional_scrap (bool, optional): The scenario boolean value that determines whether there is a regional or global scrap constraints. Defaults to False.
+        enforce_constraints (bool, optional): The scenario boolean value that determines if all constraints are enforced. Defaults to False.
+        open_plant_util_cutoff (float, optional): The maximum capacity utilization that plants are allowed to reach before having to open new plants. Defaults to CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION.
+        close_plant_util_cutoff (float, optional): The minimum capacity utilization that plants are allowed to reach before having to close existing plants. Defaults to CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION.
+
+    Returns:
+        pd.DataFrame: The initial DataFrame passed to the function with the plants that have been opened and close updated.
+    """
+
+    logger.info(f'Running open and close decisions for {year}')
+    ng_mapper = ng_flag_mapper(steel_plant_df, country_df)
     investment_dict = investment_container.return_investment_dict()
     production_demand_gap_analysis = production_demand_gap(
         steel_demand_df=steel_demand_df,
@@ -444,7 +538,7 @@ def open_close_plants(
                 dict_entry['plant_capacity'] = new_plant_capacity * MEGATON_TO_KILOTON_FACTOR
                 dict_entry['initial_technology'] = xcost_tech
                 metadata_container.append(dict_entry)
-                add_new_plant_choices(tech_choices_container, year, new_plant_name, xcost_tech)
+                tech_choices_container.update_choice(year, new_plant_name, xcost_tech)
             prior_active_plants = pd.concat([prior_active_plants, pd.DataFrame(metadata_container)]).reset_index(drop=True)
 
         # CLOSE PLANT
@@ -459,7 +553,7 @@ def open_close_plants(
                 prior_active_plants.loc[idx_close, 'status'] = 'decomissioned'
                 prior_active_plants.loc[idx_close, 'end_of_operation'] = year
                 prior_active_plants.loc[idx_close, 'active_check'] = False
-                add_new_plant_choices(tech_choices_container, year, plant_to_close, 'Close plant')
+                tech_choices_container.update_choice(year, plant_to_close, 'Close plant')
     
     # dataframe_modification_test(prior_active_plants, production_demand_gap_analysis_df, year)
     new_active_plants = prior_active_plants[prior_active_plants['active_check'] == True]
@@ -473,7 +567,18 @@ def open_close_plants(
     return prior_active_plants
 
 
-def dataframe_modification_test(plant_df: pd.DataFrame, pdga_df: pd.DataFrame, year: int, rounding: int = 1):
+def dataframe_modification_test(plant_df: pd.DataFrame, pdga_df: pd.DataFrame, year: int, rounding: int = 1) -> bool:
+    """Test function that checks if the pre_optimized plant DataFrame has the same capacity as the newly optimized plant DataFrame.
+
+    Args:
+        plant_df (pd.DataFrame): The original steel plant DataFrame.
+        pdga_df (pd.DataFrame): The newly optimized steel plant DataFrame
+        year (int): The current model cycle year.
+        rounding (int, optional): Rounds the DataFrame to 1. Defaults to 1.
+
+    Returns:
+        bool: Returns True if the inequality holds.
+    """
     plant_df_capacity_sum = round( plant_df.set_index(['active_check']).loc[True]['plant_capacity'].sum() / MEGATON_TO_KILOTON_FACTOR, rounding)
     new_pdga_df_capacity_sum = round( pdga_df['new_total_capacity'].sum(), rounding)
     old_pdga_df_capacity_sum = round( pdga_df['capacity'].sum(), rounding)
@@ -486,53 +591,3 @@ def dataframe_modification_test(plant_df: pd.DataFrame, pdga_df: pd.DataFrame, y
         pass
     else:
         assert plant_df_capacity_sum == new_pdga_df_capacity_sum
-
-
-def open_close_flow(
-    plant_container: PlantIdContainer,
-    market_container: MarketContainerClass,
-    plant_df: pd.DataFrame,
-    levelized_cost: pd.DataFrame,
-    steel_demand_df: pd.DataFrame,
-    country_df: pd.DataFrame,
-    business_case_ref: dict,
-    tech_availability: pd.DataFrame,
-    variable_costs_df: pd.DataFrame,
-    capex_dict: dict,
-    tech_choices_container: PlantChoices,
-    investment_container: PlantInvestmentCycle,
-    capacity_container: CapacityContainerClass,
-    utilization_container: UtilizationContainerClass,
-    material_container: MaterialUsage,
-    year: int,
-    trade_scenario: bool,
-    tech_moratorium: bool,
-    regional_scrap: bool,
-    enforce_constraints: bool,
-) -> str:
-
-    logger.info(f'Running open close decisions for {year}')
-    ng_mapper = ng_flag_mapper(plant_df, country_df)
-
-    return open_close_plants(
-        steel_demand_df=steel_demand_df,
-        steel_plant_df=plant_df,
-        lev_cost_df=levelized_cost,
-        business_case_ref=business_case_ref,
-        tech_availability=tech_availability,
-        variable_costs_df=variable_costs_df,
-        capex_dict=capex_dict,
-        capacity_container=capacity_container,
-        utilization_container=utilization_container,
-        material_container=material_container,
-        investment_container=investment_container,
-        tech_choices_container=tech_choices_container,
-        ng_mapper=ng_mapper,
-        plant_id_container=plant_container,
-        market_container=market_container,
-        year=year,
-        trade_scenario=trade_scenario,
-        tech_moratorium=tech_moratorium,
-        regional_scrap=regional_scrap,
-        enforce_constraints=enforce_constraints
-    )

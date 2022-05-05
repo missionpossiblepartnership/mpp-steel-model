@@ -168,11 +168,14 @@ def cost_of_steelmaking(
     """Applies the cost of steelmaking function to the Production Stats DataFrame.
 
     Args:
-        production_stats (pd.DataFrame): A DataFrame containing the Production Stats.
-        variable_costs (pd.DataFrame): A DataFrame containing the variable costs for each technology across each year and region.
-        capex_df (pd.DataFrame): A dictionary containing the Capex values for Greenfield, Brownfield and Other Opex values.
+        production_df (pd.DataFrame): A DataFrame containing the Production Stats.
+        production_ref (dict): A reference dictionary for the Production stats -> easier reference.
+        variable_costs_ref (dict): A Dictionary containing the variable costs for each technology across each year and region.
+        capex_ref (dict): A dictionary containing the Capex values for Greenfield, Brownfield and Other Opex values.
         capacities_dict (dict): A dictionary containing the initial capacities of each plant.
-        investment_df
+        investment_cost_ref (dict): A dictionary of the investment costs for each plant.
+        relining_span_ref (dict): A dictionary of the investment cycle lengths for each plant.
+        cols_to_keep (list): A list of the columns to keep from the production stats.
         region_group (str, optional): Determines which regional schema to use if the `regional` flag is set to `True`. Defaults to "region_rmi".
         regional (bool, optional): Boolean flag to determine whether to calculate the Cost of Steelmaking at the regional level or the global level. Defaults to False.
         capital_charges (bool): A boolean flag to toggle the capital charges function. Defaults to False.
@@ -262,15 +265,18 @@ def create_cost_of_steelmaking_data(
 ) -> pd.DataFrame:
     """Generates a DataFrame containing two value columns: one with standard cost of steelmaking, and cost of steelmaking with capital charges.
     Args:
+        plant_df (pd.DataFrame): A steel plant DataFrame.
         production_df (pd.DataFrame): A DataFrame containing the Production Stats.
         variable_costs_df (pd.DataFrame): A DataFrame containing the variable costs for each technology across each year and region.
+        investment_df (pd.DataFrame): A DataFrame containing all of the investment values over the duration of the model.
         capex_ref (dict): A dictionary containing the Capex values for Greenfield, Brownfield and Other Opex values.
         capacities_ref (dict): A dictionary containing the initial capacities of each plant.
-        demand_scenario (str): A string containing the scenario to be used in the steel. Defaults to "bau".
-        region_group (str, optional): Determines which regional schema to use if the `regional` flag is set to `True`. Defaults to "region_rmi".
+        investment_cycle_lengths (dict): The investment cycle lenghts of each plant.
+        full_investment_cycles (dict): The full investment cycles of each plant.
+        region_group (str): Determines which regional schema to use if the `regional` flag is set to `True`.
 
     Returns:
-        pd.DataFrame: A DataFrame containing the new columns.
+        pd.DataFrame: A DataFrame containing the new Cost of Steelmaking columns.
     """
 
     variable_cost_ref = variable_costs_df.reset_index().set_index(['year', 'country_code', 'technology']).to_dict()['cost']

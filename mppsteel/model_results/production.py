@@ -40,8 +40,15 @@ def tech_capacity_splits(
 ) -> pd.DataFrame:
     """Create a DataFrame containing the technologies and capacities for every plant in every year.
 
+    Args:
+        steel_plants (pd.DataFrame): The steel plant DataFrame.
+        tech_choices (dict): A dictionary containing the technology choices for each plant.
+        capacity_dict (dict): A dictionary containing the capacity values for each plant
+        active_check_results_dict (dict): A dictionary containing a reference to whether a plant in a specified year was active or not.
+        plant_country_code_mapper (dict): A mapper of country_code to region.
+
     Returns:
-        pd.DataFrame: The combined DataFrame
+        pd.DataFrame: A DataFrame containing the technologies and capacities for every plant in every year.
     """
     logger.info("- Generating Capacity split DataFrame")
 
@@ -72,6 +79,8 @@ def generate_production_stats(
 
     Args:
         tech_capacity_df (pd.DataFrame): A DataFrame containing the capacities of each steel plant
+        utilization_results (dict): A dictionary of region to utilization values.
+        country_mapper (dict): A dictionary of country_codes to regions.
 
     Returns:
         pd.DataFrame: A DataFrame containing the new columns: produciton, capacity_utilization, and low_carbon_tech
@@ -94,12 +103,32 @@ def generate_production_stats(
     return tech_capacity_df
 
 
-def production_material_usage(row, business_case_ref: dict, material_category: str):
+def production_material_usage(row: pd.Series, business_case_ref: dict, material_category: str) -> float:
+    """Returns the value of the material usage based on the type of resource in material_category the consumption rate, and the amount produced.
+
+    Args:
+        row (pd.Series): Tge row containing the production value and the technology.
+        business_case_ref (dict): Reference dictionary containing the usage rate of the material_category and technology.
+        material_category (str): The resource to get the material_usage for.
+
+    Returns:
+        float: The material usage value
+    """
     # Production is in Mt, material usage is t/t, energy usage is GJ/t
     # Transform to t usage for materials and GJ usage for energy
     return (row.production * MEGATON_TO_TON) * business_case_ref[(row.technology, material_category)]
 
-def generate_unit_cols(df: pd.DataFrame, replace_dict: dict, conversion: float):
+def generate_unit_cols(df: pd.DataFrame, replace_dict: dict, conversion: float) -> pd.DataFrame:
+    """Creates a new column with the units specified in the `replace_dict` values using the `conversion` rate specifued. 
+
+    Args:
+        df (pd.DataFrame): The DataFrame to modify by creating the new column.
+        replace_dict (dict): A dictionary containing the old unit as a key and the new unit as a value.
+        conversion (float): The conversion rate to apply to the new unit column.
+
+    Returns:
+        pd.DataFrame: A DataFrame with 
+    """
     df_c = df.copy()
     for item in replace_dict.items():
         old_cols = [col for col in df_c if item[0] in col[-4:]]
@@ -114,11 +143,12 @@ def production_stats_generator(
 
     Args:
         production_df (pd.DataFrame): A DataFrame containing the production stats for each plant in each year.
+        materials_list (list): A list of materials that will have columns in the production stats DataFrame.
 
     Returns:
         pd.DataFrame: A DataFrame with each resource usage stat included as a column.
     """
-    logger.info(f"- Generating Production Stats")
+    logger.info("- Generating Production Stats")
     df_c = production_df.copy()
     inverse_material_dict_mapper = load_materials_mapper(materials_list, reverse=True)
     new_materials = inverse_material_dict_mapper.keys()
@@ -143,13 +173,14 @@ def production_stats_generator(
 
 def generate_production_emission_stats(
     production_df: pd.DataFrame, emissions_df: pd.DataFrame, carbon_tax_timeseries: pd.DataFrame) -> pd.DataFrame:
-    """Generates a DataFrame with the emissions generated for S1, S2 & S3.
+    """Generates a DataFrame with the emissions generated for S1, S2 & S3, and a carbon cost column.
 
     Args:
         production_df (pd.DataFrame): A DataFrame containing the production stats for each plant in each year.
-
+        emissions_df (pd.DataFrame): A DataFrame containing the emissions for each plant in each year.
+        carbon_tax_timeseries (pd.DataFrame): A DataFrame containing the carbon tax timeseries for each plant in each year.
     Returns:
-        pd.DataFrame: A DataFrame with each emission scope included as a column.
+        pd.DataFrame: A DataFrame with each emission scope included as a column, including the carbon cost.
     """
     logger.info("- Generating Production Emission Stats")
 
@@ -196,8 +227,9 @@ def get_tech_choice(tc_dict: dict, active_plant_checker_dict: dict, year: int, p
 
     Args:
         tc_dict (dict): Dictionary containing all technology choices for every plant across every year.
+        active_plant_checker_dict (dict): A dictionary containing boolean values that reveal whether a plant in a given year was active or not.
         year (int): The year you want the technology choice for.
-        plant_name (str): The name of the plant
+        plant_name (str): The name of the plant.
 
     Returns:
         str: The technology choice requested via the function arguments.
@@ -208,7 +240,8 @@ def get_capacity(capacity_dict: dict, active_plant_checker_dict: dict, year: int
     """Return a technology choice for a given plant in a given year.
 
     Args:
-        tc_dict (dict): Dictionary containing all technology choices for every plant across every year.
+        capacity_dict (dict): Dictionary containing all capacity values for every plant across every year.
+        active_plant_checker_dict (dict): A dictionary containing boolean values that reveal whether a plant in a given year was active or not.
         year (int): The year you want the technology choice for.
         plant_name (str): The name of the plant
 

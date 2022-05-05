@@ -24,9 +24,21 @@ def green_capacity_ratio_predata(
     capacity_dict: dict,
     country_mapper: dict, 
     inc_trans: bool = False
-):
+) -> pd.DataFrame:
+    """Preprocessing for the Green Capacity Ratio calculations.
 
-    def tech_status_mapper(tech_choice: dict, inc_trans: bool):
+    Args:
+        plant_df (pd.DataFrame): The final steel plant DataFrame.
+        tech_choices (dict): A dictionary of all technology choices made throughout the model.
+        capacity_dict (dict): A dictionary of plant capacities in each year of the model.
+        country_mapper (dict): A mapper of country_code to region.
+        inc_trans (bool, optional): A boolean switch to include transitional switches in the preprocessing for green capacity ratio. Defaults to False.
+
+    Returns:
+        pd.DataFrame: A DataFrame with all of the required columns to calculate the green capacity ratio.
+    """
+
+    def tech_status_mapper(tech_choice: dict, inc_trans: bool) -> bool:
         check_list = deepcopy(TECHNOLOGY_STATES['end_state'])
         if inc_trans:
             check_list = deepcopy(TECHNOLOGY_STATES['end_state'] + TECHNOLOGY_STATES['transitional'])
@@ -35,7 +47,7 @@ def green_capacity_ratio_predata(
         elif tech_choice in TECHNOLOGY_STATES['current']:
             return False
     
-    def fix_start_year(start_year):
+    def fix_start_year(start_year) -> int:
         if pd.isna(start_year):
             return 2020
         elif "(anticipated)" in str(start_year):
@@ -59,7 +71,16 @@ def green_capacity_ratio_predata(
     df_final['region'] = df_final["plant_name"].apply(lambda plant_name: country_mapper[country_code_dict[plant_name]])
     return df_final
 
-def create_gcr_df(green_capacity_ratio_df: pd.DataFrame, rounding: int = 1):
+def create_gcr_df(green_capacity_ratio_df: pd.DataFrame, rounding: int = 1) -> pd.DataFrame:
+    """Creates the final Green Capacity Ratio DataFrame.
+
+    Args:
+        green_capacity_ratio_df (pd.DataFrame): The preprocessed DataFrame with necessary columns to create the Green Capacity Ratio DataFrame.
+        rounding (int): A rounding factor for the metaresults. Defaults to 1.
+
+    Returns:
+        pd.DataFrame: The Green Capacity DataFrame with full calculations.
+    """
     gcr = green_capacity_ratio_df[['year', 'capacity', 'green_tech']].set_index(['green_tech']).sort_index(ascending=True).copy()
     gcr_green = gcr.loc[True].reset_index().groupby(['year']).sum()[['capacity']].copy()
     gcr_green.rename({'capacity': 'green_capacity'}, axis=1, inplace=True)
@@ -72,6 +93,15 @@ def create_gcr_df(green_capacity_ratio_df: pd.DataFrame, rounding: int = 1):
 
 @timer_func
 def generate_gcr_df(scenario_dict: dict, serialize: bool = False) -> pd.DataFrame:
+    """Complete flow to create the Green Capacity Ratio DataFrame.
+
+    Args:
+        scenario_dict (dict): A dictionary with scenarios key value mappings from the current model execution.
+        serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
+
+    Returns:
+        pd.DataFrame: The Green Capacity Ratio DataFrame with scenario metadata.
+    """
     logger.info("- Starting Green Capacity Ratio")
     intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
     final_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'final')

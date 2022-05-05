@@ -1,12 +1,14 @@
 """Script for the tco and abatament optimisation functions."""
 from functools import lru_cache
 import random
+from typing import Tuple
 
 import pandas as pd
 import numpy as np
 
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.utils import create_bin_rank_dict, return_bin_rank
+from mppsteel.utility.dataframe_utility import change_cols_to_numeric
 
 from mppsteel.config.model_config import (
     TCO_RANK_1_SCALER,
@@ -143,7 +145,22 @@ def get_tco_and_abatement_values(
     tco_df: pd.DataFrame, emissions_df: pd.DataFrame, 
     cost_value_col: str, year: int, country_code: str, 
     start_tech: str, technology_list: list, rank: bool
-):
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Sends both the TCO DataFrame and the Emissions Abatement DataFrame through a minimum ranking function and filters the list based on the `technology_list`.
+
+    Args:
+        tco_df (pd.DataFrame): The TCO DataFrame
+        emissions_df (pd.DataFrame): The emissions DataFrame
+        cost_value_col (str): The cost metric you want to use for TCO DataFrame. `tco_gf_capex` or `tco_regular_capex`
+        year (int): The current model cycle year.
+        country_code (str): The country_code that you want to run the calculation for.
+        start_tech (str): The starting technology that you want to run the calculation for.
+        technology_list (list): The technology list that you want to filter the values for.
+        rank (bool): A scenario boolean for the ranking logic switch.
+
+    Returns:
+        Tuple[pd.DataFrame, pd.DataFrame]: Two DataFrames in a tuple, TCO Values and Abatement Values
+    """
     tco_values = min_ranker(
         df=tco_df,
         data_type="tco",
@@ -189,6 +206,7 @@ def get_best_choice(
         solver_logic (str): Determines the algorithm used to pick the best technology.
         weighting_dict (dict): A dictionary containing the weighting scenario of lowest cost vs. emission abatement.
         technology_list (list): A list of technologies that represent valid technology switches.
+        transitional_switch_mode (bool): determines the column to use for TCO values 
 
     Returns:
         str: The best technology choice for a given year.
@@ -301,13 +319,17 @@ def get_best_choice(
         elif len(best_values) == 1:
             return best_values.index.values[0]
 
-def change_cols_to_numeric(df: pd.DataFrame, numeric_cols: list):
-    df_c = df.copy()
-    for col in numeric_cols:
-        df_c[col] = pd.to_numeric(df[col])
-    return df_c
 
-def subset_presolver_df(df: pd.DataFrame, subset_type: str = False):
+def subset_presolver_df(df: pd.DataFrame, subset_type: str = False) -> pd.DataFrame:
+    """Subsets and formats the TCO or Emissions Abatement DataFrame prior to being used in the solver flow.
+
+    Args:
+        df (pd.DataFrame): The TCO or Emissions Abatement DataFrame.
+        subset_type (str, optional): Determines the subsetting logic. Either `tco_summary` or `abatement`. Defaults to False.
+
+    Returns:
+        pd.DataFrame: The subsetted DataFrame.
+    """
     df_c = df.copy()
     tco_cols = [
         "year",
