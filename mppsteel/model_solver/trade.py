@@ -9,6 +9,8 @@ from mppsteel.config.model_config import (
     MAIN_REGIONAL_SCHEMA,
     CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
     CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
+    MODEL_YEAR_END,
+    MODEL_YEAR_START,
     RELATIVE_REGIONAL_COST_BOUNDARY_FROM_MEAN_PCT
 )
 from mppsteel.model_solver.solver_classes import (
@@ -90,8 +92,7 @@ def cos_value_generator(
     Returns:
         float: The COS value for the plant
     """
-
-    technology = tech_choices[year][row.plant_name] if year == 2020 else tech_choices[year - 1][row.plant_name]
+    technology = tech_choices[year][row.plant_name] if year == MODEL_YEAR_START else tech_choices[year - 1][row.plant_name]
     plant_capacity = capacity_dict[row.plant_name]
     utilization_rate = production_demand_dict[row.rmi_region]['initial_utilization']
     variable_cost = v_costs.loc[row.country_code, year, technology]["cost"]

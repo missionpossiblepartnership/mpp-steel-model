@@ -8,6 +8,7 @@ from mppsteel.config.model_config import (
     GIGATON_TO_MEGATON_FACTOR,
     MEGATON_TO_TON,
     MODEL_YEAR_RANGE,
+    PETAJOULE_TO_GIGAJOULE,
     PETAJOULE_TO_TERAJOULE,
     PKL_DATA_FORMATTED,
     MET_COAL_ENERGY_DENSITY_MJ_PER_KG,
@@ -166,8 +167,8 @@ def production_stats_generator(
     df_c["met_coal_gj"] = df_c["met_coal_t"] * (MET_COAL_ENERGY_DENSITY_MJ_PER_KG * TON_TO_KILOGRAM_FACTOR) / GIGAJOULE_TO_MEGAJOULE_FACTOR
     df_c["coal_gj"] = df_c["met_coal_gj"] + df_c["thermal_coal_gj"]
 
-    df_c = generate_unit_cols(df_c, {'_gj': '_pj'}, 1/PETAJOULE_TO_TERAJOULE)
-    df_c = generate_unit_cols(df_c, {'_t': '_mt'}, 1/MEGATON_TO_TON)
+    df_c = generate_unit_cols(df_c, {'_gj': '_pj'}, 1 / PETAJOULE_TO_GIGAJOULE)
+    df_c = generate_unit_cols(df_c, {'_t': '_mt'}, 1 / MEGATON_TO_TON)
     return df_c
 
 

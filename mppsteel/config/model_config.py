@@ -115,5 +115,6 @@ FINAL_RESULT_PKL_FILES = [
     "production_emissions",
     "global_metaresults",
     "investment_results",
-    'green_capacity_ratio'
+    "green_capacity_ratio",
+    "cost_of_steelmaking"
 ]

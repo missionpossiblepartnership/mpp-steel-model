@@ -16,6 +16,7 @@ from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.config.model_config import (
     MEGATON_TO_KILOTON_FACTOR,
     MODEL_YEAR_RANGE,
+    MODEL_YEAR_START,
     PKL_DATA_FORMATTED,
     PKL_DATA_IMPORTS,
     MAIN_REGIONAL_SCHEMA,
@@ -406,7 +407,7 @@ def choose_technology(scenario_dict: dict) -> dict:
             current_tech = ''
             year_founded = PlantInvestmentCycleContainer.plant_start_years[plant_name]
         
-            if (year == 2020) or (year == year_founded):
+            if (year == MODEL_YEAR_START) or (year == year_founded):
                 current_tech = row.initial_technology
             else:
                 current_tech = PlantChoiceContainer.get_choice(year - 1, plant_name)
@@ -533,7 +534,7 @@ def choose_technology(scenario_dict: dict) -> dict:
             region = row.rmi_region
             year_founded = PlantInvestmentCycleContainer.plant_start_years[plant_name]
             current_tech = ''
-            if (year == 2020) or (year == year_founded):
+            if (year == MODEL_YEAR_START) or (year == year_founded):
                 current_tech = row.initial_technology
             else:
                 current_tech = PlantChoiceContainer.get_choice(year - 1, plant_name)

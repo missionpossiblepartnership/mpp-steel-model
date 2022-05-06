@@ -348,7 +348,7 @@ def create_cost_of_steelmaking_data(
     )
     cc_cos_d = dict_to_df(cc_cos, region_group, True)
     standard_cos_d = dict_to_df(standard_cos, region_group, False)
-    return standard_cos_d.join(cc_cos_d)
+    return standard_cos_d.join(cc_cos_d).reset_index()
 
 
 @timer_func

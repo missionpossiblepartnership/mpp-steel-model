@@ -18,6 +18,7 @@ from mppsteel.config.model_config import (
     CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
     CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
     MEGATON_TO_KILOTON_FACTOR,
+    MODEL_YEAR_START,
 )
 
 from mppsteel.model_solver.solver_classes import (
@@ -308,7 +309,7 @@ def production_demand_gap(
     results_container = {}
 
     for region in capacity_container.regional_capacities_agg[year]:
-        initial_utilization = utilization_container.get_utilization_values(year, region) if year == 2020 else utilization_container.get_utilization_values(year - 1, region)
+        initial_utilization = utilization_container.get_utilization_values(year, region) if year == MODEL_YEAR_START else utilization_container.get_utilization_values(year - 1, region)
         demand = steel_demand_getter(
             steel_demand_df, year=year, metric='crude', region=region)
         current_capacity = capacity_container.return_regional_capacity(year, region)

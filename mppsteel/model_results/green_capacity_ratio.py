@@ -5,7 +5,7 @@ from copy import deepcopy
 import pandas as pd
 
 from mppsteel.model_solver.solver import active_check_results
-from mppsteel.config.model_config import MODEL_YEAR_RANGE
+from mppsteel.config.model_config import MODEL_YEAR_RANGE, MODEL_YEAR_START
 from mppsteel.config.reference_lists import TECHNOLOGY_PHASES
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import add_results_metadata
@@ -49,7 +49,7 @@ def green_capacity_ratio_predata(
     
     def fix_start_year(start_year) -> int:
         if pd.isna(start_year):
-            return 2020
+            return MODEL_YEAR_START
         elif "(anticipated)" in str(start_year):
             return int(start_year[:4])
         return int(start_year)
@@ -89,7 +89,7 @@ def create_gcr_df(green_capacity_ratio_df: pd.DataFrame, rounding: int = 1) -> p
     gcr_combined = gcr_green.join(gcr_nongreen)
     gcr_combined['nongreen_capacity'] = gcr_combined['nongreen_capacity'].fillna(0)
     gcr_combined['green_capacity_ratio'] = gcr_combined['green_capacity'] / gcr_combined['nongreen_capacity']
-    return gcr_combined.round(rounding)
+    return gcr_combined.reset_index().round(rounding)
 
 @timer_func
 def generate_gcr_df(scenario_dict: dict, serialize: bool = False) -> pd.DataFrame:

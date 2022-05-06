@@ -81,8 +81,8 @@ def investment_row_calculator(
         dict: A dictionary containing the column-value pairs to be inserted in a DataFrame.
     """
     switch_type = plant_investment_cycles.loc[year, plant_name]['switch_type']
-    if year == 2020:
-        start_tech = get_tech_choice(tech_choices, active_plant_checker_dict, 2020, plant_name)
+    if year == MODEL_YEAR_START:
+        start_tech = get_tech_choice(tech_choices, active_plant_checker_dict, MODEL_YEAR_START, plant_name)
     else:
         start_tech = get_tech_choice(tech_choices, active_plant_checker_dict, year - 1, plant_name)
 
