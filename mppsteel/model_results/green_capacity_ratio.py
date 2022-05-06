@@ -6,7 +6,7 @@ import pandas as pd
 
 from mppsteel.model_solver.solver import active_check_results
 from mppsteel.config.model_config import MODEL_YEAR_RANGE
-from mppsteel.config.reference_lists import TECHNOLOGY_STATES
+from mppsteel.config.reference_lists import TECHNOLOGY_PHASES
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
@@ -39,12 +39,12 @@ def green_capacity_ratio_predata(
     """
 
     def tech_status_mapper(tech_choice: dict, inc_trans: bool) -> bool:
-        check_list = deepcopy(TECHNOLOGY_STATES['end_state'])
+        check_list = deepcopy(TECHNOLOGY_PHASES['end_state'])
         if inc_trans:
-            check_list = deepcopy(TECHNOLOGY_STATES['end_state'] + TECHNOLOGY_STATES['transitional'])
+            check_list = deepcopy(TECHNOLOGY_PHASES['end_state'] + TECHNOLOGY_PHASES['transitional'])
         if tech_choice in check_list:
             return True
-        elif tech_choice in TECHNOLOGY_STATES['current']:
+        elif tech_choice in TECHNOLOGY_PHASES['initial']:
             return False
     
     def fix_start_year(start_year) -> int:

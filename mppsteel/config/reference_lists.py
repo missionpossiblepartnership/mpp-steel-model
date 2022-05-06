@@ -193,41 +193,9 @@ SWITCH_DICT = {
 
 TECH_REFERENCE_LIST = list(SWITCH_DICT.keys())
 
-LOW_CARBON_TECHS = [
-    "BAT BF-BOF+CCUS",
-    "BAT BF-BOF+CCU",
-    "Smelting Reduction+CCUS",
-    "Electrolyzer-EAF",
-    "DRI-EAF+CCUS",
-    "DRI-EAF_100% green H2",
-    "DRI-Melt-BOF+CCUS",
-    "DRI-Melt-BOF_100% zero-C H2",
-    "Electrowinning-EAF",
-]
-
-END_STATE_TECHS = LOW_CARBON_TECHS.copy()
-END_STATE_TECHS += [r"BAT BF-BOF+BECCUS"]
-
-TRANSITIONAL_TECHS = [
-    "BAT BF-BOF_bio PCI",
-    "BAT BF-BOF_H2 PCI",
-    "DRI-EAF_50% green H2",
-    "DRI-EAF_50% bio-CH4",
-    "DRI-Melt-BOF",
-    "Smelting Reduction",
-]
-
-CURRENT_TECHS = ["Avg BF-BOF", "BAT BF-BOF", "DRI-EAF", "EAF"]
-
-TECHNOLOGY_STATES = {
-    "current": CURRENT_TECHS,
-    "transitional": TRANSITIONAL_TECHS,
-    "end_state": END_STATE_TECHS,
-}
-
 TECHNOLOGY_PHASES = {
-    "Initial": ["Avg BF-BOF"],
-    "Transition": [
+    "initial": ["Avg BF-BOF"],
+    "transitional": [
         "BAT BF-BOF",
         "BAT BF-BOF_bio PCI",
         "BAT BF-BOF_H2 PCI",
@@ -237,7 +205,7 @@ TECHNOLOGY_PHASES = {
         "Smelting Reduction",
         "DRI-Melt-BOF",
     ],
-    "End State": [
+    "end_state": [
         "BAT BF-BOF+CCUS",
         "DRI-EAF_100% green H2",
         "DRI-EAF+CCUS",

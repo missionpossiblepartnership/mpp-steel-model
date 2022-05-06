@@ -15,7 +15,7 @@ from mppsteel.config.model_config import (
 )
 
 from mppsteel.config.reference_lists import (
-    GJ_RESOURCES, LOW_CARBON_TECHS
+    GJ_RESOURCES, TECHNOLOGY_PHASES
 )
 
 from mppsteel.data_load_and_format.steel_plant_formatter import map_plant_id_to_df
@@ -94,7 +94,7 @@ def generate_production_stats(
         return 0 if row.technology == 'Close plant' else row.capacity * row.capacity_utilization
 
     tech_capacity_df["low_carbon_tech"] = tech_capacity_df["technology"].apply(
-        lambda tech: "Y" if tech in LOW_CARBON_TECHS else "N"
+        lambda tech: "Y" if tech in TECHNOLOGY_PHASES['end_state'] else "N"
     )
     tech_capacity_df['region'] = tech_capacity_df["country_code"].apply(
         lambda x: country_mapper[x])

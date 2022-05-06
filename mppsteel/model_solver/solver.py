@@ -30,7 +30,7 @@ from mppsteel.config.model_scenarios import (
 from mppsteel.config.reference_lists import (
     SWITCH_DICT,
     TECH_REFERENCE_LIST,
-    TECHNOLOGY_STATES,
+    TECHNOLOGY_PHASES,
     FURNACE_GROUP_DICT,
     RESOURCE_CONTAINER_REF,
 )
@@ -142,7 +142,7 @@ def return_best_tech(
     ]
 
     # Transitional switches
-    if transitional_switch_mode and (base_tech not in TECHNOLOGY_STATES["end_state"]):
+    if transitional_switch_mode and (base_tech not in TECHNOLOGY_PHASES["end_state"]):
         # Cannot downgrade tech
         # Must be current or transitional tech
         # Must be within the furnace group
