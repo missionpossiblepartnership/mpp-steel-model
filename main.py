@@ -71,8 +71,8 @@ if __name__ == "__main__":
     if args.output:
         outputs_only(scenario_dict=scenario_args, dated_output_folder=True, model_output_folder=model_output_folder)
 
-    if args.half_model:
-        half_model_run(scenario_dict=scenario_args, dated_output_folder=True, model_output_folder=model_output_folder)
+    if args.scenario_model_run:
+        scenario_model_run(scenario_dict=scenario_args, dated_output_folder=True, model_output_folder=model_output_folder)
 
     if args.data_import:
         data_import_refresh()

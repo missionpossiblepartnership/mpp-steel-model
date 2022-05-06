@@ -127,7 +127,7 @@ def model_presolver(scenario_dict: dict) -> None:
     abatement_presolver_reference(scenario_dict, serialize=True)
 
 
-def scenario_calculation_phase(scenario_dict: dict) -> None:
+def scenario_preprocessing_phase(scenario_dict: dict) -> None:
     data_preprocessing_scenarios(scenario_dict)
     model_presolver(scenario_dict)
 
@@ -239,13 +239,13 @@ def scenario_batch_run(scenario: str, dated_output_folder: bool) -> None:
     model_output_folder = f"{scenario} {timestamp}"
 
     # Model run
-    scenario_calculation_phase(scenario_args)
-    half_model_run(scenario_args, dated_output_folder, model_output_folder)
+    scenario_model_run(scenario_args, dated_output_folder, model_output_folder)
 
 
-def half_model_run(
+def scenario_model_run(
     scenario_dict: dict, dated_output_folder: bool, model_output_folder: str
 ) -> None:
+    scenario_preprocessing_phase(scenario_dict)
     solver_flow(scenario_dict, serialize=True)
     model_results_phase(scenario_dict)
     model_outputs_phase(scenario_dict, dated_output_folder, model_output_folder)
@@ -271,8 +271,7 @@ def graphs_only(scenario_dict: dict, model_output_folder: str, dated_output_fold
 
 def full_flow(scenario_dict: dict, dated_output_folder: bool, model_output_folder: str) -> None:
     data_import_and_preprocessing_refresh()
-    scenario_calculation_phase(scenario_dict)
-    half_model_run(scenario_dict, dated_output_folder, model_output_folder)
+    scenario_model_run(scenario_dict, dated_output_folder, model_output_folder)
 
 
 def generate_minimodels(scenario_dict: dict) -> None:
@@ -347,10 +346,10 @@ parser.add_argument(
 )  # outputs_only
 parser.add_argument(
     "-h",
-    "--half_model",
+    "--scenario_model_run",
     action="store_true",
-    help="Runs the half model sctips scripts directly",
-)  # half_model_run
+    help="Runs the complete scenario adjusted scripts directly",
+)  # scenario_model_run
 parser.add_argument(
     "-i",
     "--data_import",
