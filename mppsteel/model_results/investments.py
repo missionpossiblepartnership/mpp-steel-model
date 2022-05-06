@@ -28,12 +28,13 @@ logger = get_logger(__name__)
 
 
 def capex_getter_f(
-    capex_ref: dict, year: int, start_tech: str, new_tech: str, switch_type: str
+    capex_ref: dict, greenfield_ref: dict, year: int, start_tech: str, new_tech: str, switch_type: str
 ) -> float:
     """Returns a capex value from a reference DataFrame taking into consideration edge cases.
 
     Args:
         capex_ref (dict): The capex reference DataFrame.
+        greenfield_ref (dict): Greenfield capex reference.
         year (int): The year you want to retrieve values for.
         start_tech (str): The initial technology used.
         new_tech (str): The desired switch technology.
@@ -42,16 +43,22 @@ def capex_getter_f(
     Returns:
         float: A value containing the capex value based on the function arguments.
     """
-    if not start_tech or (new_tech == "Close plant") or (switch_type == "no switch"):
+    if not start_tech:
+        return greenfield_ref[(new_tech, year)]
+    elif new_tech == "Close plant":
         return 0
-    elif (start_tech == new_tech) & (switch_type == 'trans switch'):
+    elif switch_type == "no switch":
         return 0
-    return capex_ref[(year, start_tech, new_tech)]
+    elif (start_tech == new_tech) and (switch_type == 'trans switch'):
+        return 0
+    else:
+        return capex_ref[(year, start_tech, new_tech)]
 
 
 def investment_row_calculator(
     plant_investment_cycles: pd.DataFrame,
-    capex_ref: dict,
+    switch_capex_ref: dict,
+    greenfield_ref: dict,
     active_plant_checker_dict: dict,
     tech_choices: dict,
     capacity_ref: dict,
@@ -62,7 +69,8 @@ def investment_row_calculator(
 
     Args:
         plant_investment_cycles (pd.DataFrame): The Investment cycle reference DataFrame.
-        capex_ref (dict): A switch capex reference. 
+        switch_capex_ref (dict): A switch capex reference.
+        greenfield_ref (dict): Greenfield capex reference.
         active_plant_checker_dict (dict): Dictionary with values of whether a plant in a particular year was active or not.
         tech_choices (dict): Dictionary containing all technology choices for every plant across every year.
         capacity_ref (dict): A dictionary of capacity references.
@@ -81,7 +89,7 @@ def investment_row_calculator(
     new_tech = get_tech_choice(tech_choices, active_plant_checker_dict, year, plant_name)
     actual_capex = 0
     if new_tech:
-        capex_value = capex_getter_f(capex_ref, year, start_tech, new_tech, switch_type)
+        capex_value = capex_getter_f(switch_capex_ref, greenfield_ref, year, start_tech, new_tech, switch_type)
         actual_capex = capex_value * (capacity_ref[plant_name] * MEGATON_TO_TON)
     return {
         "plant_name": plant_name,
@@ -240,7 +248,8 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
     plant_names = plant_result_df["plant_name"].unique()
     capex_switching_df = read_pickle_folder(PKL_DATA_FORMATTED, "capex_switching_df", "df")
     capex_ref = capex_switching_df.reset_index().set_index(['Year', 'Start Technology', 'New Technology']).sort_index(ascending=True).to_dict()['value']
-
+    capex_dict = read_pickle_folder(PKL_DATA_FORMATTED, "capex_dict", "df")
+    greenfield_capex_ref = capex_dict['greenfield'].to_dict()['value']
     plant_capacity_results = read_pickle_folder(
         intermediate_path, "plant_capacity_results", "df"
     )
@@ -259,6 +268,7 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
                     investment_row_calculator(
                         plant_investment_cycles,
                         capex_ref,
+                        greenfield_capex_ref,
                         active_check_results_dict,
                         tech_choice_dict,
                         plant_capacity_results[year],
