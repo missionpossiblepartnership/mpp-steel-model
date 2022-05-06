@@ -25,22 +25,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    scenario_args = CARBON_COST
-    scenario_args = add_currency_rates_to_scenarios(scenario_args)
-
-    timestamp = datetime.today().strftime('%d-%m-%y %H-%M')
-    logger.info(f'Model running at {timestamp}')
-    model_output_folder = f"{scenario_args['scenario_name']} {timestamp}"
-
-    intermediate_path = get_scenario_pkl_path(scenario_args['scenario_name'], 'intermediate')
-    final_path = get_scenario_pkl_path(scenario_args['scenario_name'], 'final')
-    create_folders_if_nonexistant([intermediate_path, final_path])
-    create_folders_if_nonexistant(FOLDERS_TO_CHECK_IN_ORDER)
-
-    if args.custom_scenario:
-        logger.info('Including custom parameter inputs.')
-        scenario_args = get_inputted_scenarios(scenario_options=SCENARIO_SETTINGS, default_scenario=scenario_args)
-
+    # INITAL SCENARIO ARGUMENTS
+    scenario_args = DEFAULT_SCENARIO
     if args.choose_scenario:
         if args.choose_scenario in SCENARIO_OPTIONS.keys():
             logger.info(f'CORRECT SCENARIO CHOSEN: {args.choose_scenario}')
@@ -49,6 +35,24 @@ if __name__ == "__main__":
             scenario_options = list(SCENARIO_OPTIONS.keys())
             logger.info(f'INVALID SCENARIO INPUT: {args.choose_scenario}, please choose from {scenario_options}')
 
+    if args.custom_scenario:
+        logger.info('Including custom parameter inputs.')
+        scenario_args = get_inputted_scenarios(scenario_options=SCENARIO_SETTINGS, default_scenario=scenario_args)
+
+    # SCENARIO CUSTOMIZATION
+    scenario_args = add_currency_rates_to_scenarios(scenario_args)
+
+    timestamp = datetime.today().strftime('%d-%m-%y %H-%M')
+    logger.info(f'Model running at {timestamp}')
+    model_output_folder = f"{scenario_args['scenario_name']} {timestamp}"
+
+    intermediate_path = get_scenario_pkl_path(scenario_args['scenario_name'], 'intermediate')
+    final_path = get_scenario_pkl_path(scenario_args['scenario_name'], 'final')
+    create_folders_if_nonexistant(FOLDERS_TO_CHECK_IN_ORDER)
+    create_folders_if_nonexistant([intermediate_path, final_path])
+
+
+    # SCENARIO Flows
     if args.main_scenarios:
 
         logger.info(f'Running {MAIN_SCENARIO_RUNS} scenario options')
