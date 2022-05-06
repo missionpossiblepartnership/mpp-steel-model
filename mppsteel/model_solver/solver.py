@@ -230,7 +230,7 @@ def active_check_results(steel_plant_df: pd.DataFrame, year_range: range, invers
         dict: A dictionary with the plant names as keys and the boolean active check values as values. Or inversed if `inverse` is set to True.
     """
 
-    def final_active_checker(row, year):
+    def final_active_checker(row: pd.Series, year: int) -> bool:
         if year < row.start_of_operation:
             return False
         if row.end_of_operation and year >= row.end_of_operation:

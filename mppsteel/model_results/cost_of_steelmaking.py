@@ -86,7 +86,7 @@ def calculate_cc(
 
 
 def apply_cos(
-    row,
+    row: pd.Series,
     year: int,
     cap_dict: dict,
     variable_costs_ref: pd.DataFrame,
@@ -99,7 +99,7 @@ def apply_cos(
     """Applies the Cost of Steelmaking function to a given row in a DataFrame.
 
     Args:
-        row (_type_): A vectorized DataFrame row from .apply function.
+        row (pd.Series): A vectorized DataFrame row from .apply function.
         year (int): The current year.
         cap_dict (dict): A DataFrame containing the steel plant metadata.
         v_costs (pd.DataFrame): A DataFrame containing the variable costs for each technology across each year and region.

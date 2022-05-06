@@ -336,7 +336,7 @@ def create_greenfield_switching_df(gf_df: pd.DataFrame, year_range: range) -> pd
     Returns:
         pd.DataFrame: A switch capex dataframe for the greenfield dataset.
     """
-    def switch_mapper(row, ref_dict: dict):
+    def switch_mapper(row: pd.Series, ref_dict: dict):
         return ref_dict[row.switch_tech] - ref_dict[row.base_tech]
     df_container = []
     for year in tqdm(year_range, total=len(year_range), desc='Greenfield Switch Dict'):

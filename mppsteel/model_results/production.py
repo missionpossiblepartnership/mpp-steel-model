@@ -199,7 +199,7 @@ def generate_production_emission_stats(
         's3': calculated_emissivity_combined_dict['s3_emissivity']
     }
 
-    def emissions_mapper(row, emissivity_ref: dict):
+    def emissions_mapper(row: pd.Series, emissivity_ref: dict) -> pd.DataFrame:
         return 0 if row.technology == "Close plant" else (row.production * MEGATON_TO_TON) * emissivity_ref[(row.year, row.country_code, row.technology)]
 
     for emission_type in emissivity_dict:
@@ -213,7 +213,7 @@ def generate_production_emission_stats(
         df_c[f"{emission_type}_emissions_mt"] = df_c[f"{emission_type}_emissions_t"] / MEGATON_TO_TON
         df_c[f"{emission_type}_emissions_gt"] = df_c[f"{emission_type}_emissions_mt"] / GIGATON_TO_MEGATON_FACTOR
 
-        def carbon_cost_calculator(row, carbon_tax_timeseries: pd.DataFrame):
+        def carbon_cost_calculator(row: pd.Series, carbon_tax_timeseries: pd.DataFrame) -> float:
             return (row.s1_emissions_t + row.s2_emissions_t) * carbon_tax_timeseries.loc[row.year]['value']
 
     df_c['carbon_cost'] = df_c.apply(

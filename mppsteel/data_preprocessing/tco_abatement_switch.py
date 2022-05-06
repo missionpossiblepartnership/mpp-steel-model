@@ -227,7 +227,7 @@ def add_gf_capex_values_to_tco_ref(tco_ref_df: pd.DataFrame, gf_df: pd.DataFrame
         pd.DataFrame: The TCO DataFrame with the new column for Greenfield Switch Capex Values.
     """
 
-    def gf_value_mapper(row, gf_dict: dict):
+    def gf_value_mapper(row: pd.Series, gf_dict: dict):
         return gf_dict[(row.year, row.start_technology, row.end_technology)]
 
     gf_dict = gf_df.to_dict()['switch_value']
