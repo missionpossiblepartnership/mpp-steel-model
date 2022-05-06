@@ -126,6 +126,14 @@ def add_off_cycle_investment_years(
 
     # For inv_cycle_length >= 1
     first_year = net_zero_year_bring_forward(main_investment_cycle[0])
+    
+    # Add initial transitional switch window
+    if first_year - end_buff > MODEL_YEAR_START:
+        initial_range = range(
+            MODEL_YEAR_START, first_year - end_buff
+        )
+        range_list.append(initial_range)
+    
     range_list.append(first_year)
 
     if inv_cycle_length > 1:
@@ -136,7 +144,6 @@ def add_off_cycle_investment_years(
             )
             range_list.append(range_object)
             range_list.append(inv_year)
-
     return range_list
 
 def create_investment_cycle_reference(plant_investment_year_dict: dict) -> pd.DataFrame:
@@ -221,6 +228,32 @@ def adjust_investment_cycle_dict(cycle_years: list, rebase_year: int) -> list:
     new_list[index_position] = range(list(matching_range)[0], rebase_year)
     return new_list
 
+def adjust_cycles_for_first_year(plant_cycles: dict) -> dict:
+    """Adjusts the investment cycles to ensure that the initial model year will not be an investment cycle switch (main or transitional)
+
+    Args:
+        plant_cycles (dict): A dictionary of the investment cycles: plants as keys, cycles as values.
+
+    Returns:
+        dict: A dictionary containing the updated plant cycles.
+    """
+    new_plant_cycles = {}
+    for plant_name, plant_cycle in plant_cycles.items():
+        new_cycle = []
+        for obj in plant_cycle:
+            if isinstance(obj, int):
+                if obj == MODEL_YEAR_START:
+                    new_cycle.append(MODEL_YEAR_START+1)
+                else:
+                    new_cycle.append(obj)
+            elif isinstance(obj, range):
+                if MODEL_YEAR_START in obj:
+                    new_cycle.append(range(MODEL_YEAR_START+1 , min(obj[-1] +1, MODEL_YEAR_END - 1)))
+                else:
+                    new_cycle.append(obj)
+        new_plant_cycles[plant_name] = new_cycle
+    return new_plant_cycles
+
 class PlantInvestmentCycle():
     """Class for managing the the investment cycles for plants.
     """
@@ -230,7 +263,7 @@ class PlantInvestmentCycle():
         self.plant_investment_cycle_length = {}
         self.plant_cycles = {}
         self.plant_cycles_with_off_cycle = {}
-        
+
     def instantiate_plants(self, plant_names: list, plant_start_years: list):
         self.plant_names = plant_names
         start_year_dict = dict(zip(plant_names, plant_start_years))
@@ -239,7 +272,8 @@ class PlantInvestmentCycle():
             self.plant_investment_cycle_length[plant_name] = return_cycle_length(INVESTMENT_CYCLE_DURATION_YEARS)
             self.plant_cycles[plant_name] = calculate_investment_years(self.plant_start_years[plant_name], self.plant_investment_cycle_length[plant_name])
             self.plant_cycles_with_off_cycle[plant_name] = add_off_cycle_investment_years(self.plant_cycles[plant_name])
-    
+        self.plant_cycles_with_off_cycle = adjust_cycles_for_first_year(self.plant_cycles_with_off_cycle)
+
     def add_new_plants(self, plant_names: list, plant_start_years: list):
         new_dict = dict(zip(plant_names, plant_start_years))
         for plant_name in plant_names:
@@ -248,11 +282,11 @@ class PlantInvestmentCycle():
             self.plant_investment_cycle_length[plant_name] = return_cycle_length(INVESTMENT_CYCLE_DURATION_YEARS)
             self.plant_cycles[plant_name] = calculate_investment_years(self.plant_start_years[plant_name], self.plant_investment_cycle_length[plant_name])
             self.plant_cycles_with_off_cycle[plant_name] = add_off_cycle_investment_years(self.plant_cycles[plant_name])
-            
+
     def adjust_cycle_for_transitional_switch(self, plant_name: str, rebase_year: int):
         new_cycle = adjust_investment_cycle_dict(self.plant_cycles_with_off_cycle[plant_name], rebase_year)
         self.plant_cycles_with_off_cycle[plant_name] = new_cycle
-            
+
     def create_investment_df(self):
         return create_investment_cycle_reference(self.plant_cycles_with_off_cycle)
 
