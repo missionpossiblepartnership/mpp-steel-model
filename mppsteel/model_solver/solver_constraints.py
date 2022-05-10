@@ -83,7 +83,7 @@ def tech_availability_check(
     technology_phase = row.loc["technology_phase"]
     year_available_until = default_year_unavailable
 
-    if tech_moratorium and (technology_phase in ["Initial", "Transition"]):
+    if tech_moratorium and (technology_phase in ["initial", "transitional"]):
         year_available_until = TECH_MORATORIUM_DATE
     if int(year_available_from) <= int(year) < int(year_available_until):
         # Will be available
