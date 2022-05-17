@@ -7,6 +7,7 @@ from tqdm import tqdm
 from mppsteel.model_results.investments import get_investment_capital_costs
 from mppsteel.model_solver.solver import active_check_results
 from mppsteel.utility.function_timer_utility import timer_func
+from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder, serialize_file, get_scenario_pkl_path
 )
@@ -395,6 +396,11 @@ def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize: bool = 
         plant_cycle_length_mapper_result,
         investment_dict_result,
         "region_rmi",
+    )
+
+    cos_data = add_results_metadata(
+        cos_data, scenario_dict, include_regions=False, 
+        single_line=True, scenario_name=True
     )
 
     if serialize:
