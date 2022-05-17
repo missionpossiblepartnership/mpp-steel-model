@@ -283,8 +283,8 @@ def production_demand_gap(
     capacity_container: CapacityContainerClass,
     utilization_container: UtilizationContainerClass,
     year: int,
-    capacity_util_max: float = 0.95,
-    capacity_util_min: float = 0.6
+    capacity_util_max: float = CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
+    capacity_util_min: float = CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION
 ) -> dict:
     """Generates an open close dictionary of metadata for each region. The following optimization steps are taken by the algorithm.
     1) Determine whether a plant can meet its current regional demand with its current utilization levels.
@@ -296,8 +296,8 @@ def production_demand_gap(
         capacity_container (CapacityContainerClass): The CapacityContainerClass Instance containing the capacity state.
         utilization_container (UtilizationContainerClass): The UtilizationContainerClass Instance containing the utilization state.
         year (int): The current model cycle year.
-        capacity_util_max (float, optional): The maximum capacity utilization that plants are allowed to reach before having to open new plants. Defaults to 0.95.
-        capacity_util_min (float, optional): The minimum capacity utilization that plants are allowed to reach before having to close existing plants. Defaults to 0.6.
+        capacity_util_max (float, optional): The maximum capacity utilization that plants are allowed to reach before having to open new plants. Defaults to CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION.
+        capacity_util_min (float, optional): The minimum capacity utilization that plants are allowed to reach before having to close existing plants. Defaults to CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION.
 
     Returns:
         dict: A dictionary of open close metadata for each region.
