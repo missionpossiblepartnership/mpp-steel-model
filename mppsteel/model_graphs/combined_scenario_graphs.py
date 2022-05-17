@@ -9,6 +9,7 @@ from mppsteel.config.model_config import TERAWATT_TO_PETAJOULE_FACTOR, BILLION_N
 from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.model_graphs.plotly_graphs import line_chart
+from mppsteel.model_graphs.consumption_over_time import ENERGY_RESOURCES_COT
 
 logger = get_logger(__name__)
 
@@ -81,6 +82,55 @@ def combined_scenario_investment_chart(df: pd.DataFrame, save_filepath: str = No
         name="Cumulative investment | bn $/year",
         x_axis="year",
         y_axis='cumulative_investment',
+    )
+    if save_filepath:
+        fig_.write_image(f"{save_filepath}.{ext}")
+
+    return fig_
+
+
+def create_total_energy_usage_df(production_resource_usage: pd.DataFrame) -> pd.DataFrame:
+    """Formats the Production Resource DataFrame that sums all energy usage by year and scenario.
+    Produces output in two different units: Petajoules and Exajoules.
+
+    Args:
+        production_resource_usage (pd.DataFrame): The combined production resource usage DataFrame
+
+    Returns:
+        pd.DataFrame: Formatted DataFrame.
+    """
+    cols_of_interest = ['year', 'region_rmi', 'scenario'] + ENERGY_RESOURCES_COT
+    df_c = production_resource_usage[cols_of_interest].copy()
+    df_c = df_c.groupby(['year', 'scenario']).agg('sum').sum(axis=1).reset_index()
+    df_c = df_c.rename({0: 'total_energy_pj'}, axis=1)
+    df_c['total_energy_ej'] = df_c['total_energy_pj'] / 1000
+    return df_c
+
+
+def combined_scenario_energy_usage_chart(df: pd.DataFrame, save_filepath: str = None, ext: str = "png") -> px.line:
+    """Creates a plotly line chart that compares different energy amounts.
+
+    Args:
+        df (pd.DataFrame): The combined energy chart DataFrame.
+        save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
+        ext (str, optional): The extension of the image you are creating. Defaults to "png".
+
+    Returns:
+        px.line: A plotly express line graph figure.
+    """
+    energy_df = create_total_energy_usage_df(df)
+    scenarios = energy_df['scenario'].unique()
+    color_mapper = dict(zip_longest(scenarios, MPP_COLOR_LIST))
+
+    fig_ = line_chart(
+        data=energy_df,
+        x="year",
+        y='total_energy_ej',
+        color='scenario',
+        color_discrete_map=color_mapper,
+        name="Total Energy | Exajoules",
+        x_axis="Year",
+        y_axis='Total Energy [EJ]',
     )
     if save_filepath:
         fig_.write_image(f"{save_filepath}.{ext}")
@@ -174,13 +224,13 @@ def create_combined_emissions_chart(
     return combined_scenario_emissions_chart(emissions_df, cumulative=cumulative, save_filepath=filename)
 
 
-def create_combined_energy_chart(
+def create_combined_resource_chart(
     production_df: pd.DataFrame, resource: str, filepath: str = None) -> px.line:
-    """_summary_
+    """Creates a line graph for a specified resource across scenarios.
 
     Args:
         production_df (pd.DataFrame): The combined production resource usage DataFrame.
-        resource (str): The resource to subset the combined production resource usage DataFrame
+        resource (str): The resource to subset the combined production resource usage DataFrame.
         filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
 
     Returns:
@@ -192,3 +242,21 @@ def create_combined_energy_chart(
     if filepath:
         filename = f"{filepath}/{filename}"
     return scenario_resource_usage(production_df, resource, save_filepath=filename)
+
+
+def create_total_energy_usage_chart(
+    production_df: pd.DataFrame, filepath: str = None) -> px.line:
+    """Creates a line graph for combined scenario energy consumption.
+
+    Args:
+        production_df (pd.DataFrame): The combined production resource usage DataFrame.
+        filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
+
+    Returns:
+        px.line: A plotly express line graph figure.
+    """
+    filename = "combined_scenario_total_energy_usage"
+    logger.info(f"Combined Scenario | Total Energy Usage | {filename}")
+    if filepath:
+        filename = f"{filepath}/{filename}"
+    return combined_scenario_energy_usage_chart(production_df, save_filepath=filename)

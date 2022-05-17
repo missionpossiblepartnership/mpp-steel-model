@@ -18,7 +18,8 @@ from mppsteel.model_graphs.new_plant_capacity import new_plant_capacity_graph, t
 from mppsteel.model_graphs.combined_scenario_graphs import (
     create_combined_investment_chart,
     create_combined_emissions_chart,
-    create_combined_energy_chart
+    create_combined_resource_chart,
+    create_total_energy_usage_chart
 )
 
 logger = get_logger(__name__)
@@ -521,5 +522,6 @@ def create_combined_scenario_graphs(filepath: str):
     create_combined_emissions_chart(production_emissions, cumulative=False, filepath=filepath)
     create_combined_emissions_chart(production_emissions, cumulative=True, filepath=filepath)
 
-    create_combined_energy_chart(production_resource_usage, 'hydrogen_pj', filepath=filepath)
-    create_combined_energy_chart(production_resource_usage, 'electricity_pj', filepath=filepath)
+    create_combined_resource_chart(production_resource_usage, 'hydrogen_pj', filepath=filepath)
+    create_combined_resource_chart(production_resource_usage, 'electricity_pj', filepath=filepath)
+    create_total_energy_usage_chart(production_resource_usage, filepath=filepath)
