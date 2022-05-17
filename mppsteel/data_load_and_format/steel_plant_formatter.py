@@ -22,7 +22,7 @@ from mppsteel.config.model_config import (
     PKL_DATA_FORMATTED,
     PKL_DATA_IMPORTS,
     STEEL_PLANT_EARLIEST_START_DATE,
-    STEEL_PLANT_LATEST_START_DATE
+    STEEL_PLANT_LATEST_START_DATE,
 )
 
 # Create logger
@@ -43,13 +43,30 @@ NEW_COLUMN_NAMES = [
 ]
 
 NATURAL_GAS_COUNTRIES = [
-    'ARE', 'ARG', 'AUS', 'BLR', 
-    'CAN', 'DZA', 'GBR', 'GEO', 
-    'IRQ', 'IRN', 'KWT', 'LBY', 
-    'MEX', 'OMN', 'PER', 'PHL', 
-    'QAT', 'RUS', 'SAU', 'TUR', 
-    'UKR', 'USA'
+    "ARE",
+    "ARG",
+    "AUS",
+    "BLR",
+    "CAN",
+    "DZA",
+    "GBR",
+    "GEO",
+    "IRQ",
+    "IRN",
+    "KWT",
+    "LBY",
+    "MEX",
+    "OMN",
+    "PER",
+    "PHL",
+    "QAT",
+    "RUS",
+    "SAU",
+    "TUR",
+    "UKR",
+    "USA",
 ]
+
 
 def steel_plant_formatter(df: pd.DataFrame) -> pd.DataFrame:
     """Formats the steel plants data input. By dropping columns.
@@ -64,11 +81,17 @@ def steel_plant_formatter(df: pd.DataFrame) -> pd.DataFrame:
     """
     logger.info("Formatting the Steel Plant Data")
     df_c = df.copy()
-    df_c = df_c[(df_c['Status'] == 'operating') & (df_c['Plant Technology in 2020'] != '')].copy()
+    df_c = df_c[
+        (df_c["Status"] == "operating") & (df_c["Plant Technology in 2020"] != "")
+    ].copy()
     df_c.dropna(subset=["Plant Technology in 2020"], inplace=True)
-    cols_to_remove = [col for col in df_c.columns if any(
-        substring in col for substring in ['Nominal', 'Pure', 'present', 'Source']
-    )]
+    cols_to_remove = [
+        col
+        for col in df_c.columns
+        if any(
+            substring in col for substring in ["Nominal", "Pure", "present", "Source"]
+        )
+    ]
     df_c.drop(cols_to_remove, axis=1, inplace=True)
     df_c = df_c.rename(mapper=dict(zip(df_c.columns, NEW_COLUMN_NAMES)), axis=1)
     df_c["country_code"] = ""
@@ -77,7 +100,7 @@ def steel_plant_formatter(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def extract_steel_plant_capacity(df: pd.DataFrame) -> pd.DataFrame:
-    """Creates new columns `plant_capacity` based on technology capacity columns. 
+    """Creates new columns `plant_capacity` based on technology capacity columns.
 
     Args:
         df (pd.DataFrame): Formatted Steel Plant data.
@@ -100,7 +123,7 @@ def extract_steel_plant_capacity(df: pd.DataFrame) -> pd.DataFrame:
             return val
         try:
             return float(val)
-        except:    
+        except:
             return float(0)
 
     df_c = df.copy()
@@ -116,12 +139,13 @@ def extract_steel_plant_capacity(df: pd.DataFrame) -> pd.DataFrame:
         return 0
 
     tqdma.pandas(desc="Extract Steel Plant Capacity")
-    df_c['plant_capacity'] = df_c.progress_apply(assign_plant_capacity, axis=1)
+    df_c["plant_capacity"] = df_c.progress_apply(assign_plant_capacity, axis=1)
     return df_c
 
 
 def get_plant_capacity(
-    tech_capacities: dict, plant: str,
+    tech_capacities: dict,
+    plant: str,
 ) -> float:
     """Returns the plant capacity value.
 
@@ -136,7 +160,10 @@ def get_plant_capacity(
 
 
 def map_plant_id_to_df(
-    df: pd.DataFrame, steel_plants: pd.DataFrame, plant_identifier: str, reverse: bool = False
+    df: pd.DataFrame,
+    steel_plants: pd.DataFrame,
+    plant_identifier: str,
+    reverse: bool = False,
 ) -> pd.DataFrame:
     """Creates a column references with either the plant ID of the steel plant or the plant name based on the ID.
 
@@ -149,9 +176,7 @@ def map_plant_id_to_df(
     Returns:
         pd.DataFrame: A DataFrame with the newly added column.
     """
-    plant_id_dict = dict(
-        zip(steel_plants["plant_name"], steel_plants["plant_id"])
-    )
+    plant_id_dict = dict(zip(steel_plants["plant_name"], steel_plants["plant_id"]))
     df_c = df.copy()
     if reverse:
         id_plant_dict = {v: k for k, v in plant_id_dict.items()}
@@ -160,7 +185,9 @@ def map_plant_id_to_df(
     return df_c
 
 
-def apply_countries_to_steel_plants(steel_plant_formatted: pd.DataFrame) -> pd.DataFrame:
+def apply_countries_to_steel_plants(
+    steel_plant_formatted: pd.DataFrame,
+) -> pd.DataFrame:
     """Maps a country codes and region column to the Steel Plants.
 
     Args:
@@ -175,16 +202,16 @@ def apply_countries_to_steel_plants(steel_plant_formatted: pd.DataFrame) -> pd.D
     matching_dict, _ = country_matcher(steel_plant_countries)
     df_c["country_code"] = df_c["country"].apply(lambda x: matching_dict[x])
     country_fixer_dict = {"North Korea": "PRK", "South Korea": "KOR"}
-    df_c = country_mapping_fixer(
-        df_c, "country", "country_code", country_fixer_dict
-    )
+    df_c = country_mapping_fixer(df_c, "country", "country_code", country_fixer_dict)
     df_c["cheap_natural_gas"] = df_c["country_code"].apply(
-        lambda country_code: 1 if country_code in NATURAL_GAS_COUNTRIES else 0)
-    wsa_mapper = create_country_mapper('wsa')
+        lambda country_code: 1 if country_code in NATURAL_GAS_COUNTRIES else 0
+    )
+    wsa_mapper = create_country_mapper("wsa")
     df_c["wsa_region"] = df_c["country_code"].apply(lambda x: wsa_mapper[x])
-    rmi_mapper = create_country_mapper('rmi')
+    rmi_mapper = create_country_mapper("rmi")
     df_c["rmi_region"] = df_c["country_code"].apply(lambda x: rmi_mapper[x])
     return df_c
+
 
 def convert_start_year(year_value: str) -> int:
     """Converts a string or int year value to an int year value.
@@ -196,13 +223,12 @@ def convert_start_year(year_value: str) -> int:
     Returns:
         int: An integer containing the year value.
     """
-    if year_value == 'unknown':
+    if year_value == "unknown":
         return random.randrange(
-            STEEL_PLANT_EARLIEST_START_DATE, 
-            STEEL_PLANT_LATEST_START_DATE, 
-            1
+            STEEL_PLANT_EARLIEST_START_DATE, STEEL_PLANT_LATEST_START_DATE, 1
         )
     return int(year_value)
+
 
 def create_active_check_col(row: pd.Series, year: int) -> bool:
     """Checks whether a plant should be considered active or not based on its status attribute or whether the current year if before its start of operation.
@@ -214,7 +240,11 @@ def create_active_check_col(row: pd.Series, year: int) -> bool:
     Returns:
         bool: A boolean value depedning on the logic check.
     """
-    return row.status in ['operating', 'new model plant'] and row.start_of_operation <= year
+    return (
+        row.status in ["operating", "new model plant"]
+        and row.start_of_operation <= year
+    )
+
 
 @timer_func
 def steel_plant_processor(serialize: bool = False) -> pd.DataFrame:
@@ -229,10 +259,13 @@ def steel_plant_processor(serialize: bool = False) -> pd.DataFrame:
     steel_plants = read_pickle_folder(PKL_DATA_IMPORTS, "steel_plants")
     steel_plants = steel_plant_formatter(steel_plants)
     steel_plants = apply_countries_to_steel_plants(steel_plants)
-    steel_plants['start_of_operation'] = steel_plants['start_of_operation'].apply(
-        lambda year_value: convert_start_year(year_value))
-    steel_plants['end_of_operation'] = ''
-    steel_plants['active_check'] = steel_plants.apply(create_active_check_col, year=MODEL_YEAR_START, axis=1)
+    steel_plants["start_of_operation"] = steel_plants["start_of_operation"].apply(
+        lambda year_value: convert_start_year(year_value)
+    )
+    steel_plants["end_of_operation"] = ""
+    steel_plants["active_check"] = steel_plants.apply(
+        create_active_check_col, year=MODEL_YEAR_START, axis=1
+    )
     if serialize:
         serialize_file(steel_plants, PKL_DATA_FORMATTED, "steel_plants_processed")
     return steel_plants

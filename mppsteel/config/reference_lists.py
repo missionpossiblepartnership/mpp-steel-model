@@ -2,36 +2,36 @@
 
 # RESOURCE GROUPINGS
 RESOURCE_CATEGORY_MAPPER = {
-    'Iron ore': 'Feedstock',
-    'Scrap': 'Feedstock',
-    'DRI': 'Feedstock',
-    'Met coal': 'Fossil Fuels',
-    'Thermal coal': 'Fossil Fuels',
-    'Coke': 'Fossil Fuels',
-    'COG': 'Fossil Fuels',
-    'BF gas': 'Fossil Fuels',
-    'BOF gas': 'Fossil Fuels',
-    'Natural gas': 'Fossil Fuels',
-    'Plastic waste': 'Fossil Fuels',
-    'Biomass': 'Bio Fuels',
-    'Biomethane': 'Bio Fuels',
-    'Hydrogen': 'Hydrogen',
-    'Electricity': 'Electricity',
-    'Steam': 'Other Opex',
-    'BF slag': 'Other Opex',
-    'Other slag': 'Other Opex',
-    'Captured CO2': 'CCS',
-    'Used CO2': 'CCS',
-    'Process emissions': 'Emissivity',
-    'Emissivity wout CCS': 'Emissivity',
-    'Emissivity': 'Carbon Cost'
+    "Iron ore": "Feedstock",
+    "Scrap": "Feedstock",
+    "DRI": "Feedstock",
+    "Met coal": "Fossil Fuels",
+    "Thermal coal": "Fossil Fuels",
+    "Coke": "Fossil Fuels",
+    "COG": "Fossil Fuels",
+    "BF gas": "Fossil Fuels",
+    "BOF gas": "Fossil Fuels",
+    "Natural gas": "Fossil Fuels",
+    "Plastic waste": "Fossil Fuels",
+    "Biomass": "Bio Fuels",
+    "Biomethane": "Bio Fuels",
+    "Hydrogen": "Hydrogen",
+    "Electricity": "Electricity",
+    "Steam": "Other Opex",
+    "BF slag": "Other Opex",
+    "Other slag": "Other Opex",
+    "Captured CO2": "CCS",
+    "Used CO2": "CCS",
+    "Process emissions": "Emissivity",
+    "Emissivity wout CCS": "Emissivity",
+    "Emissivity": "Carbon Cost",
 }
 
 RESOURCE_CONTAINER_REF = {
-    'scrap': ['Scrap'],
-    'biomass': ['Biomass', 'Biomethane'],
-    'ccs': ['Captured CO2'],
-    'co2': ['Used CO2']
+    "scrap": ["Scrap"],
+    "biomass": ["Biomass", "Biomethane"],
+    "ccs": ["Captured CO2"],
+    "co2": ["Used CO2"],
 }
 
 # TECHNOLOGY GROUPINGS
@@ -278,7 +278,7 @@ GRAPH_COL_ORDER = [
     "Electrolyzer-EAF",
     "Electrowinning-EAF",
     "Smelting Reduction+CCUS",
-    "EAF"
+    "EAF",
 ]
 
 # BUSINESS CASE UNITS
@@ -294,13 +294,10 @@ GJ_RESOURCES = [
     "Electricity",
     "Steam",
     "Coke",
-    "Thermal coal"
+    "Thermal coal",
 ]
 
-KG_RESOURCES = [
-    "BF slag",
-    "Other slag"
-]
+KG_RESOURCES = ["BF slag", "Other slag"]
 
 TON_RESOURCES = [
     "Iron ore",
@@ -311,5 +308,5 @@ TON_RESOURCES = [
     "Emissivity wout CCS",
     "Captured CO2",
     "Used CO2",
-    "Emissivity"
+    "Emissivity",
 ]

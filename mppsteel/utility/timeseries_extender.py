@@ -122,9 +122,7 @@ def create_timeseries_extension_array(
             start=start_value, stop=terminal_value, num=series_length, endpoint=True
         )
 
-    if (
-        series_type == "logarithmic"
-    ):  # slowest growth / transforms into actual logs
+    if series_type == "logarithmic":  # slowest growth / transforms into actual logs
         generated_series = np.logspace(
             start=start_value, stop=terminal_value, num=series_length, endpoint=True
         )
@@ -178,7 +176,7 @@ def combine_timeseries(
     Returns:
         pd.DataFrame: A new combined timeseries
     """
-    logger.info('Combining the original and extended timeseries')
+    logger.info("Combining the original and extended timeseries")
     df_c = df.copy()
     new_df = pd.DataFrame(index=range(len(added_date_range)), columns=df_c.columns)
     new_df[year_value_col_dict["year"]] = added_date_range
@@ -198,7 +196,7 @@ def generate_timeseries_plots(
         year_colname (str): The name of the column containing the years.
         value_colname (str): The name of the column containing the values.
     """
-    logger.info('Generating plots for the original and extended timeseries')
+    logger.info("Generating plots for the original and extended timeseries")
     for df in df_list:
         df.plot(x=year_colname, y=value_colname)
 
@@ -228,7 +226,7 @@ def full_model_flow(
     Returns:
         pd.DataFrame: A dataframe containing the new extended timeseries.
     """
-    logger.info('Running through the complete timeseries generation flow.')
+    logger.info("Running through the complete timeseries generation flow.")
     (
         df_f,
         full_date_range,

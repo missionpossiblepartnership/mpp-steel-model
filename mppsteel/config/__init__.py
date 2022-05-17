@@ -1,6 +1,1 @@
-from . import (
-    model_config,
-    model_grouping,
-    model_scenarios,
-    reference_lists
-)
+from . import model_config, model_grouping, model_scenarios, reference_lists

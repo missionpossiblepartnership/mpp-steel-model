@@ -4,6 +4,7 @@
 import pandas as pd
 import pandera as pa
 import pycountry
+
 # For logger and units dict
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.data_validation.data_import_tests import COUNTRY_REF_SCHEMA
@@ -26,6 +27,7 @@ def official_name_getter(country_code: str) -> str:
     if "official_name" in match_attributes:
         return match.official_name
     return ""
+
 
 @pa.check_input(COUNTRY_REF_SCHEMA)
 def country_df_formatter(df: pd.DataFrame) -> pd.DataFrame:

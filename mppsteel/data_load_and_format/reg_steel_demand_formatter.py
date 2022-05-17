@@ -3,14 +3,19 @@
 import pandas as pd
 import pandera as pa
 
-from mppsteel.config.model_config import (
-    PKL_DATA_IMPORTS
-)
+from mppsteel.config.model_config import PKL_DATA_IMPORTS
 from mppsteel.config.model_scenarios import STEEL_DEMAND_SCENARIO_MAPPER
 from mppsteel.utility.dataframe_utility import melt_and_index
 from mppsteel.utility.function_timer_utility import timer_func
-from mppsteel.utility.location_utility import get_unique_countries, get_countries_from_group
-from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file, get_scenario_pkl_path
+from mppsteel.utility.location_utility import (
+    get_unique_countries,
+    get_countries_from_group,
+)
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder,
+    serialize_file,
+    get_scenario_pkl_path,
+)
 from mppsteel.data_validation.data_import_tests import REGIONAL_STEEL_DEMAND_SCHEMA
 from mppsteel.utility.log_utility import get_logger
 
@@ -23,7 +28,9 @@ RMI_MATCHER = {
 }
 
 
-def steel_demand_region_assignor(region: str, country_ref: pd.DataFrame, rmi_matcher: dict) -> list:
+def steel_demand_region_assignor(
+    region: str, country_ref: pd.DataFrame, rmi_matcher: dict
+) -> list:
     """Returns the country codes in a region_dictionary based on keys.
 
     Args:
@@ -36,7 +43,7 @@ def steel_demand_region_assignor(region: str, country_ref: pd.DataFrame, rmi_mat
     """
     if region in rmi_matcher:
         return rmi_matcher[region]
-    return get_countries_from_group(country_ref, 'RMI Model Region', region)
+    return get_countries_from_group(country_ref, "RMI Model Region", region)
 
 
 @pa.check_input(REGIONAL_STEEL_DEMAND_SCHEMA)
@@ -59,10 +66,13 @@ def steel_demand_creator(df: pd.DataFrame, rmi_matcher: dict) -> pd.DataFrame:
 
     df_c.columns = [col.lower() for col in df_c.columns]
 
-    return melt_and_index(df_c, 
-        id_vars=["metric", "region", "scenario", "country_code"], 
-        var_name=["year"], 
-        index=["year", "scenario", "metric"])
+    return melt_and_index(
+        df_c,
+        id_vars=["metric", "region", "scenario", "country_code"],
+        var_name=["year"],
+        index=["year", "scenario", "metric"],
+    )
+
 
 def add_average_values(df: pd.DataFrame) -> pd.DataFrame:
     """Adds a new set of values for the data which is the average of the `BAU` and `High Circ` scenarios.
@@ -74,10 +84,14 @@ def add_average_values(df: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: The modified DataFrame with the 'Average' data at the same level as the other scenarios.
     """
     df_c = df.copy()
-    average_values = (df_c.loc[:,'BAU',:]['value'].values + df_c.loc[:,'High Circ',:]['value'].values) / 2
-    average_base = df_c.loc[:,'BAU',:].rename({'BAU': 'Average'}).copy()
-    average_base['value'] = average_values
+    average_values = (
+        df_c.loc[:, "BAU", :]["value"].values
+        + df_c.loc[:, "High Circ", :]["value"].values
+    ) / 2
+    average_base = df_c.loc[:, "BAU", :].rename({"BAU": "Average"}).copy()
+    average_base["value"] = average_values
     return pd.concat([df_c, average_base])
+
 
 @timer_func
 def get_steel_demand(scenario_dict: dict, serialize: bool = False) -> pd.DataFrame:
@@ -90,12 +104,16 @@ def get_steel_demand(scenario_dict: dict, serialize: bool = False) -> pd.DataFra
     Returns:
         pd.DataFrame: The formatted DataFrame of regional Steel Demand data.
     """
-    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
+    intermediate_path = get_scenario_pkl_path(
+        scenario_dict["scenario_name"], "intermediate"
+    )
     steel_demand = read_pickle_folder(PKL_DATA_IMPORTS, "regional_steel_demand", "df")
     steel_demand_f = steel_demand_creator(steel_demand, RMI_MATCHER)
     steel_demand_f = add_average_values(steel_demand_f)
-    scenario_entry = STEEL_DEMAND_SCENARIO_MAPPER[scenario_dict['steel_demand_scenario']]
-    steel_demand_f = steel_demand_f.loc[:,scenario_entry,:].copy()
+    scenario_entry = STEEL_DEMAND_SCENARIO_MAPPER[
+        scenario_dict["steel_demand_scenario"]
+    ]
+    steel_demand_f = steel_demand_f.loc[:, scenario_entry, :].copy()
     steel_demand_f.reset_index().set_index(["year", "metric"])
     if serialize:
         serialize_file(
@@ -114,7 +132,7 @@ def steel_demand_getter(
     default_region: str = "RoW",
     default_country: str = "GBL",
 ) -> float:
-    """A getter function for the regional steel demand data. 
+    """A getter function for the regional steel demand data.
 
     Args:
         df (pd.DataFrame): The DataFrame containing the preprocessed Regional Steel Demand data.
@@ -136,29 +154,41 @@ def steel_demand_getter(
     country_list = get_unique_countries(df_c["country_code"].values)
 
     if not region and not country_code:
-        raise AttributeError('Neither `region` or `country_code` attributes were entered. Enter a valid option for one.')
+        raise AttributeError(
+            "Neither `region` or `country_code` attributes were entered. Enter a valid option for one."
+        )
     # Apply country check and use default
 
     if region and country_code:
-        raise AttributeError('You entered both region and country_code attributes were entered. Enter a valid option for one.')
+        raise AttributeError(
+            "You entered both region and country_code attributes were entered. Enter a valid option for one."
+        )
 
     if region:
         if region in region_list:
             df_c = df_c[df_c["region"].str.contains(region, regex=False)]
         elif force_default:
-            print(f'Invalid region string entered: {region}. Reverting to default region: {default_region}. Valid entries here: {region_list}.')
+            print(
+                f"Invalid region string entered: {region}. Reverting to default region: {default_region}. Valid entries here: {region_list}."
+            )
             df_c = df_c[df_c["region"].str.contains(default_region, regex=False)]
         else:
-            AttributeError(f'You entered an incorrect region. Valid entries here: {region_list}.')
+            AttributeError(
+                f"You entered an incorrect region. Valid entries here: {region_list}."
+            )
 
     if country_code:
         if country_code in country_list:
             df_c = df_c[df_c["country_code"].str.contains(country_code, regex=False)]
         elif force_default:
-            print(f'Invalid country string entered: {country_code}. Reverting to default country_code: {default_country}.')
+            print(
+                f"Invalid country string entered: {country_code}. Reverting to default country_code: {default_country}."
+            )
             df_c = df_c[df_c["country_code"].str.contains(default_country, regex=False)]
         else:
-            AttributeError(f'You entered an incorrect country_code. Valid entries here: {country_list}.')
+            AttributeError(
+                f"You entered an incorrect country_code. Valid entries here: {country_list}."
+            )
 
     # Cap year at 2050
     MODEL_YEAR_END = 2050

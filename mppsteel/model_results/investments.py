@@ -10,13 +10,15 @@ from mppsteel.config.model_config import (
     MODEL_YEAR_RANGE,
     MODEL_YEAR_START,
     MODEL_YEAR_END,
-    PKL_DATA_FORMATTED
+    PKL_DATA_FORMATTED,
 )
 
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
-    read_pickle_folder, serialize_file, get_scenario_pkl_path
+    read_pickle_folder,
+    serialize_file,
+    get_scenario_pkl_path,
 )
 from mppsteel.model_results.production import get_tech_choice
 from mppsteel.utility.log_utility import get_logger
@@ -28,7 +30,12 @@ logger = get_logger(__name__)
 
 
 def capex_getter_f(
-    capex_ref: dict, greenfield_ref: dict, year: int, start_tech: str, new_tech: str, switch_type: str
+    capex_ref: dict,
+    greenfield_ref: dict,
+    year: int,
+    start_tech: str,
+    new_tech: str,
+    switch_type: str,
 ) -> float:
     """Returns a capex value from a reference DataFrame taking into consideration edge cases.
 
@@ -49,7 +56,7 @@ def capex_getter_f(
         return 0
     elif switch_type == "no switch":
         return 0
-    elif (start_tech == new_tech) and (switch_type == 'trans switch'):
+    elif (start_tech == new_tech) and (switch_type == "trans switch"):
         return 0
     else:
         return capex_ref[(year, start_tech, new_tech)]
@@ -63,7 +70,7 @@ def investment_row_calculator(
     tech_choices: dict,
     capacity_ref: dict,
     year: int,
-    plant_name: str
+    plant_name: str,
 ) -> dict:
     """Calculates a row for the investment DataFrame by establishing the switch type for the plant in a particular year, and where necessary, applying a capex value.
 
@@ -80,16 +87,24 @@ def investment_row_calculator(
     Returns:
         dict: A dictionary containing the column-value pairs to be inserted in a DataFrame.
     """
-    switch_type = plant_investment_cycles.loc[year, plant_name]['switch_type']
+    switch_type = plant_investment_cycles.loc[year, plant_name]["switch_type"]
     if year == MODEL_YEAR_START:
-        start_tech = get_tech_choice(tech_choices, active_plant_checker_dict, MODEL_YEAR_START, plant_name)
+        start_tech = get_tech_choice(
+            tech_choices, active_plant_checker_dict, MODEL_YEAR_START, plant_name
+        )
     else:
-        start_tech = get_tech_choice(tech_choices, active_plant_checker_dict, year - 1, plant_name)
+        start_tech = get_tech_choice(
+            tech_choices, active_plant_checker_dict, year - 1, plant_name
+        )
 
-    new_tech = get_tech_choice(tech_choices, active_plant_checker_dict, year, plant_name)
+    new_tech = get_tech_choice(
+        tech_choices, active_plant_checker_dict, year, plant_name
+    )
     actual_capex = 0
     if new_tech:
-        capex_value = capex_getter_f(switch_capex_ref, greenfield_ref, year, start_tech, new_tech, switch_type)
+        capex_value = capex_getter_f(
+            switch_capex_ref, greenfield_ref, year, start_tech, new_tech, switch_type
+        )
         actual_capex = capex_value * (capacity_ref[plant_name] * MEGATON_TO_TON)
     return {
         "plant_name": plant_name,
@@ -159,7 +174,13 @@ def create_inv_stats(
         return region_dict
 
 
-def get_plant_cycle(plant_cycles: dict, plant_name: str, current_year: int, model_start_year: int, model_end_year: int) -> range:
+def get_plant_cycle(
+    plant_cycles: dict,
+    plant_name: str,
+    current_year: int,
+    model_start_year: int,
+    model_end_year: int,
+) -> range:
     """Get a plant's cycle based on the current year.
 
     Args:
@@ -199,7 +220,12 @@ def get_plant_cycle(plant_cycles: dict, plant_name: str, current_year: int, mode
     return range(current_year, model_end_year + 1)
 
 
-def get_investment_capital_costs(investment_df: pd.DataFrame, investment_cycles: dict, plant_name: str, current_year: int) -> float:
+def get_investment_capital_costs(
+    investment_df: pd.DataFrame,
+    investment_cycles: dict,
+    plant_name: str,
+    current_year: int,
+) -> float:
     """Calculates the investment costs within a specified range of years.
 
     Args:
@@ -211,12 +237,15 @@ def get_investment_capital_costs(investment_df: pd.DataFrame, investment_cycles:
     Returns:
         float: Get capex costs within a specified range of years.
     """
-    range_obj = get_plant_cycle(investment_cycles, plant_name, current_year, MODEL_YEAR_START, MODEL_YEAR_END)
-    
+    range_obj = get_plant_cycle(
+        investment_cycles, plant_name, current_year, MODEL_YEAR_START, MODEL_YEAR_END
+    )
+
     if range_obj:
-        return investment_df.iloc[list(range_obj)]['capital_cost'].sum()
+        return investment_df.iloc[list(range_obj)]["capital_cost"].sum()
     else:
         return 0
+
 
 @timer_func
 def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataFrame:
@@ -230,30 +259,37 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
         pd.DataFrame: A DataFrame containing the investment results.
     """
     logger.info("Generating Investment Results")
-    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
-    final_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'final')
-    
-    tech_choice_dict = read_pickle_folder(
-        intermediate_path, "tech_choice_dict", "df"
+    intermediate_path = get_scenario_pkl_path(
+        scenario_dict["scenario_name"], "intermediate"
     )
+    final_path = get_scenario_pkl_path(scenario_dict["scenario_name"], "final")
+
+    tech_choice_dict = read_pickle_folder(intermediate_path, "tech_choice_dict", "df")
     plant_investment_cycles = read_pickle_folder(
         intermediate_path, "investment_cycle_ref_result", "df"
     )
     active_check_results_dict = read_pickle_folder(
         intermediate_path, "active_check_results_dict", "df"
     )
-    plant_result_df = read_pickle_folder(
-        intermediate_path, "plant_result_df", "df"
-    )
+    plant_result_df = read_pickle_folder(intermediate_path, "plant_result_df", "df")
     plant_names = plant_result_df["plant_name"].unique()
-    capex_switching_df = read_pickle_folder(PKL_DATA_FORMATTED, "capex_switching_df", "df")
-    capex_ref = capex_switching_df.reset_index().set_index(['Year', 'Start Technology', 'New Technology']).sort_index(ascending=True).to_dict()['value']
+    capex_switching_df = read_pickle_folder(
+        PKL_DATA_FORMATTED, "capex_switching_df", "df"
+    )
+    capex_ref = (
+        capex_switching_df.reset_index()
+        .set_index(["Year", "Start Technology", "New Technology"])
+        .sort_index(ascending=True)
+        .to_dict()["value"]
+    )
     capex_dict = read_pickle_folder(PKL_DATA_FORMATTED, "capex_dict", "df")
-    greenfield_capex_ref = capex_dict['greenfield'].to_dict()['value']
+    greenfield_capex_ref = capex_dict["greenfield"].to_dict()["value"]
     plant_capacity_results = read_pickle_folder(
         intermediate_path, "plant_capacity_results", "df"
     )
-    plant_country_code_ref = dict(zip(plant_result_df['plant_name'], plant_result_df['country_code']))
+    plant_country_code_ref = dict(
+        zip(plant_result_df["plant_name"], plant_result_df["country_code"])
+    )
 
     data_container = []
     for year in tqdm(
@@ -273,19 +309,23 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
                         tech_choice_dict,
                         plant_capacity_results[year],
                         year,
-                        plant_name
+                        plant_name,
                     )
                 )
     investment_results = (
         pd.DataFrame(data_container).set_index(["year"]).sort_values("year")
     )
     rmi_mapper = create_country_mapper()
-    investment_results['country_code'] = investment_results['plant_name'].apply(
-        lambda x: plant_country_code_ref[x])
-    investment_results['region'] = investment_results['country_code'].apply(
-            lambda x: rmi_mapper[x])
+    investment_results["country_code"] = investment_results["plant_name"].apply(
+        lambda x: plant_country_code_ref[x]
+    )
+    investment_results["region"] = investment_results["country_code"].apply(
+        lambda x: rmi_mapper[x]
+    )
     investment_results.reset_index(inplace=True)
-    investment_results = map_plant_id_to_df(investment_results, plant_result_df, "plant_name")
+    investment_results = map_plant_id_to_df(
+        investment_results, plant_result_df, "plant_name"
+    )
     investment_results = add_results_metadata(
         investment_results, scenario_dict, single_line=True, scenario_name=True
     )
@@ -293,16 +333,15 @@ def investment_results(scenario_dict: dict, serialize: bool = False) -> pd.DataF
         investment_results, results="regional", agg=True, operation="cumsum"
     )
     cumulative_investment_results = add_results_metadata(
-        cumulative_investment_results, scenario_dict, single_line=True, 
-        include_regions=False, scenario_name=True
+        cumulative_investment_results,
+        scenario_dict,
+        single_line=True,
+        include_regions=False,
+        scenario_name=True,
     )
     if serialize:
         logger.info(f"-- Serializing dataframes")
-        serialize_file(
-            investment_results, 
-            final_path, 
-            "investment_results"
-        )
+        serialize_file(investment_results, final_path, "investment_results")
         serialize_file(
             cumulative_investment_results,
             final_path,

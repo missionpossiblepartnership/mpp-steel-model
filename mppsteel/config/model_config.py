@@ -72,7 +72,9 @@ PETAJOULE_TO_TERAJOULE = 1000
 TERAJOULE_TO_GIGAJOULE = 1000
 GIGAJOULE_TO_MEGAJOULE_FACTOR = 1000
 PETAJOULE_TO_GIGAJOULE = PETAJOULE_TO_TERAJOULE * TERAJOULE_TO_GIGAJOULE
-EXAJOULE_TO_GIGAJOULE = EXAJOULE_TO_PETAJOULE * PETAJOULE_TO_TERAJOULE * TERAJOULE_TO_GIGAJOULE
+EXAJOULE_TO_GIGAJOULE = (
+    EXAJOULE_TO_PETAJOULE * PETAJOULE_TO_TERAJOULE * TERAJOULE_TO_GIGAJOULE
+)
 
 # ENERGY DENSITY FACTORS
 BIOMASS_ENERGY_DENSITY_GJ_PER_TON = 18
@@ -96,7 +98,7 @@ ABATEMENT_RANK_2 = 2.37656461606311  # Switching from Avg BF-BOF to BAT BF-BOF+C
 ABATEMENT_RANK_3 = 0.932690243851946  # Switching from Avg BF-BOF to BAT BF-BOF_bio PCI
 
 # REGIONAL PARAMETERS
-MAIN_REGIONAL_SCHEMA = 'rmi_region'
+MAIN_REGIONAL_SCHEMA = "rmi_region"
 RESULTS_REGIONS_TO_MAP = ["continent", "wsa", "rmi"]
 
 # OUTPUT FILE NAMES
@@ -107,7 +109,7 @@ INTERMEDIATE_RESULT_PKL_FILES = [
     "emissivity_abatement_switches",
     "tco_summary_data",
     "trade_summary_results",
-    "tech_choice_records"
+    "tech_choice_records",
 ]
 
 FINAL_RESULT_PKL_FILES = [
@@ -116,5 +118,5 @@ FINAL_RESULT_PKL_FILES = [
     "global_metaresults",
     "investment_results",
     "green_capacity_ratio",
-    "cost_of_steelmaking"
+    "cost_of_steelmaking",
 ]

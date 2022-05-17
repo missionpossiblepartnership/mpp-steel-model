@@ -4,13 +4,14 @@ import random
 import string
 import pandas as pd
 
+
 class PlantIdContainer:
     def __init__(self):
         self.id_container = []
-        
+
     def __repr__(self):
         return "PlantIdContainer"
-        
+
     def __str__(self):
         return "Instance of PlantIdContainer"
 
@@ -23,7 +24,7 @@ class PlantIdContainer:
     def remove_id(self, plant_id: str) -> None:
         if self.check_id_exists(plant_id):
             self.id_container.remove(plant_id)
-            print(f'Plant ID removed {plant_id}')
+            print(f"Plant ID removed {plant_id}")
 
     def generate_plant_id(self, add_to_container: bool = False):
         unmatched = True
@@ -38,18 +39,19 @@ class PlantIdContainer:
     def return_ids(self) -> None:
         self.remove_duplicate_ids()
         return self.id_container
-    
+
     def clear_ids(self) -> None:
         self.id_container = []
-        
+
     def remove_duplicate_ids(self) -> None:
         self.id_container = list(set(self.id_container))
-        
+
     def remove_duplicate_ids(self) -> None:
-            self.id_container = list(set(self.id_container))
+        self.id_container = list(set(self.id_container))
 
     def add_steel_plant_ids(self, plant_df: pd.DataFrame):
-        plant_df['plant_id'].apply(lambda x: self.add_id(x))
+        plant_df["plant_id"].apply(lambda x: self.add_id(x))
+
 
 def generate_plant_id(chars: list = string.digits, n: int = 5):
-    return 'MPP' + ''.join(random.choice(chars) for _ in range(n))
+    return "MPP" + "".join(random.choice(chars) for _ in range(n))

@@ -3,18 +3,20 @@ from datetime import datetime
 
 from mppsteel.utility.utils import multiprocessing_scenarios
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.utility.file_handling_utility import (
-    create_folders_if_nonexistant
-)
+from mppsteel.utility.file_handling_utility import create_folders_if_nonexistant
 from mppsteel.utility.function_timer_utility import TIME_CONTAINER
 
 from mppsteel.config.model_config import FOLDERS_TO_CHECK_IN_ORDER
 
 from mppsteel.config.model_scenarios import (
-    MAIN_SCENARIO_RUNS, DEFAULT_SCENARIO,
-    SCENARIO_SETTINGS, SCENARIO_OPTIONS,
-    ABATEMENT_SCENARIO, BAU_SCENARIO,
-    CARBON_COST, TECH_MORATORIUM
+    MAIN_SCENARIO_RUNS,
+    DEFAULT_SCENARIO,
+    SCENARIO_SETTINGS,
+    SCENARIO_OPTIONS,
+    ABATEMENT_SCENARIO,
+    BAU_SCENARIO,
+    CARBON_COST,
+    TECH_MORATORIUM,
 )
 
 from mppsteel.config.model_grouping import *
@@ -29,42 +31,59 @@ if __name__ == "__main__":
     scenario_args = DEFAULT_SCENARIO
     if args.choose_scenario:
         if args.choose_scenario in SCENARIO_OPTIONS.keys():
-            logger.info(f'CORRECT SCENARIO CHOSEN: {args.choose_scenario}')
+            logger.info(f"CORRECT SCENARIO CHOSEN: {args.choose_scenario}")
             scenario_args = SCENARIO_OPTIONS[args.choose_scenario]
         else:
             scenario_options = list(SCENARIO_OPTIONS.keys())
-            logger.info(f'INVALID SCENARIO INPUT: {args.choose_scenario}, please choose from {scenario_options}')
+            logger.info(
+                f"INVALID SCENARIO INPUT: {args.choose_scenario}, please choose from {scenario_options}"
+            )
 
     if args.custom_scenario:
-        logger.info('Including custom parameter inputs.')
-        scenario_args = get_inputted_scenarios(scenario_options=SCENARIO_SETTINGS, default_scenario=scenario_args)
+        logger.info("Including custom parameter inputs.")
+        scenario_args = get_inputted_scenarios(
+            scenario_options=SCENARIO_SETTINGS, default_scenario=scenario_args
+        )
 
     # SCENARIO CUSTOMIZATION
     scenario_args = add_currency_rates_to_scenarios(scenario_args)
 
-    timestamp = datetime.today().strftime('%d-%m-%y %H-%M')
-    logger.info(f'Model running at {timestamp}')
+    timestamp = datetime.today().strftime("%d-%m-%y %H-%M")
+    logger.info(f"Model running at {timestamp}")
     model_output_folder = f"{scenario_args['scenario_name']} {timestamp}"
 
-    intermediate_path = get_scenario_pkl_path(scenario_args['scenario_name'], 'intermediate')
-    final_path = get_scenario_pkl_path(scenario_args['scenario_name'], 'final')
+    intermediate_path = get_scenario_pkl_path(
+        scenario_args["scenario_name"], "intermediate"
+    )
+    final_path = get_scenario_pkl_path(scenario_args["scenario_name"], "final")
     create_folders_if_nonexistant(FOLDERS_TO_CHECK_IN_ORDER)
     create_folders_if_nonexistant([intermediate_path, final_path])
-
 
     # SCENARIO Flows
     if args.main_scenarios:
 
-        logger.info(f'Running {MAIN_SCENARIO_RUNS} scenario options')
+        logger.info(f"Running {MAIN_SCENARIO_RUNS} scenario options")
         data_import_and_preprocessing_refresh()
-        multiprocessing_scenarios(scenario_options=MAIN_SCENARIO_RUNS, func=scenario_batch_run)
-        join_scenario_data(scenario_options=MAIN_SCENARIO_RUNS, timestamp=timestamp, final_outputs_only=True)
+        multiprocessing_scenarios(
+            scenario_options=MAIN_SCENARIO_RUNS, func=scenario_batch_run
+        )
+        join_scenario_data(
+            scenario_options=MAIN_SCENARIO_RUNS,
+            timestamp=timestamp,
+            final_outputs_only=True,
+        )
 
-    logger.info(f'''Running model with the following parameters:  
-    {scenario_args}''')
+    logger.info(
+        f"""Running model with the following parameters:  
+    {scenario_args}"""
+    )
 
     if args.full_model:
-        full_flow(scenario_dict=scenario_args, dated_output_folder=True, model_output_folder=model_output_folder)
+        full_flow(
+            scenario_dict=scenario_args,
+            dated_output_folder=True,
+            model_output_folder=model_output_folder,
+        )
 
     if args.solver:
         solver_flow(scenario_dict=scenario_args, serialize=True)
@@ -73,10 +92,18 @@ if __name__ == "__main__":
         model_results_phase(scenario_dict=scenario_args)
 
     if args.output:
-        outputs_only(scenario_dict=scenario_args, dated_output_folder=True, model_output_folder=model_output_folder)
+        outputs_only(
+            scenario_dict=scenario_args,
+            dated_output_folder=True,
+            model_output_folder=model_output_folder,
+        )
 
     if args.scenario_model_run:
-        scenario_model_run(scenario_dict=scenario_args, dated_output_folder=True, model_output_folder=model_output_folder)
+        scenario_model_run(
+            scenario_dict=scenario_args,
+            dated_output_folder=True,
+            model_output_folder=model_output_folder,
+        )
 
     if args.data_import:
         data_import_refresh()
@@ -100,10 +127,18 @@ if __name__ == "__main__":
         lcost_flow(scenario_dict=scenario_args)
 
     if args.results_and_output:
-        results_and_output(scenario_dict=scenario_args, dated_output_folder=True, model_output_folder=model_output_folder)
+        results_and_output(
+            scenario_dict=scenario_args,
+            dated_output_folder=True,
+            model_output_folder=model_output_folder,
+        )
 
     if args.graphs:
-        graphs_only(scenario_dict=scenario_args, model_output_folder=model_output_folder, dated_output_folder=True)
+        graphs_only(
+            scenario_dict=scenario_args,
+            model_output_folder=model_output_folder,
+            dated_output_folder=True,
+        )
 
     if args.minimodels:
         generate_minimodels(scenario_dict=scenario_args)
@@ -121,7 +156,12 @@ if __name__ == "__main__":
         investment_flow(scenario_dict=scenario_args)
 
     if args.join_final_data:
-        join_scenario_data(scenario_options=MAIN_SCENARIO_RUNS, new_folder=True, timestamp=timestamp, final_outputs_only=True)
+        join_scenario_data(
+            scenario_options=MAIN_SCENARIO_RUNS,
+            new_folder=True,
+            timestamp=timestamp,
+            final_outputs_only=True,
+        )
 
     if args.tco:
         tco_switch_reference(scenario_dict=scenario_args)

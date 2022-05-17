@@ -10,6 +10,7 @@ from mppsteel.model_graphs.plotly_graphs import bar_chart
 
 logger = get_logger(__name__)
 
+
 def get_lcost_lowest_vals(
     df: pd.DataFrame, chosen_year: int, value_col: str
 ) -> Union[pd.DataFrame, dict]:
@@ -21,7 +22,7 @@ def get_lcost_lowest_vals(
         value_col (str): The column containing the values with the LCOS.
 
     Returns:
-        Union[pd.DataFrame, dict]: Returns the subsetted DataFrame with the lowest costs and 
+        Union[pd.DataFrame, dict]: Returns the subsetted DataFrame with the lowest costs and
         also a dictionary with the delta values between the lowest and highest cost regions.
     """
     tech_delta_dict = {}
@@ -41,7 +42,11 @@ def get_lcost_lowest_vals(
             & (df_c["country_code"] == min_region)
         ]
         tech_list.append(df_subset)
-    df_combined = pd.concat(tech_list).set_index(["technology"]).drop(["year", "country_code"], axis=1)
+    df_combined = (
+        pd.concat(tech_list)
+        .set_index(["technology"])
+        .drop(["year", "country_code"], axis=1)
+    )
     return df_combined, tech_delta_dict
 
 
@@ -66,8 +71,10 @@ def assign_country_deltas(df: pd.DataFrame, delta_dict: dict) -> pd.DataFrame:
 
 
 def lcost_graph(
-    lcost_data: pd.DataFrame, chosen_year: int = 2030, 
-    save_filepath: str = None, ext: str = "png"
+    lcost_data: pd.DataFrame,
+    chosen_year: int = 2030,
+    save_filepath: str = None,
+    ext: str = "png",
 ) -> px.bar:
     """Creates a bar graph for the Levelized Cost.
 

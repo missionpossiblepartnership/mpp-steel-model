@@ -6,6 +6,5 @@ from . import (
     tco_abatement_switch,
     tco_calculation_functions,
     timeseries_generator,
-    variable_plant_cost_archetypes
-
+    variable_plant_cost_archetypes,
 )

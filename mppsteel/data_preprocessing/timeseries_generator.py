@@ -12,12 +12,12 @@ from mppsteel.config.model_config import (
     MODEL_YEAR_END,
     MODEL_YEAR_START,
     CARBON_TAX_START_YEAR,
-    GREEN_PREMIUM_START_YEAR
+    GREEN_PREMIUM_START_YEAR,
 )
 
 from mppsteel.config.model_scenarios import (
     CARBON_TAX_SCENARIOS,
-    GREEN_PREMIUM_SCENARIOS
+    GREEN_PREMIUM_SCENARIOS,
 )
 from mppsteel.utility.log_utility import get_logger
 
@@ -63,7 +63,7 @@ def timeseries_generator(
     df["year"] = year_range
     df["units"] = units
     df["units"] = df["units"].apply(lambda x: x.lower())
-    df.set_index(['year'], inplace=True)
+    df.set_index(["year"], inplace=True)
 
     def levy_logic(df: pd.DataFrame) -> pd.DataFrame:
         """Applies logic to generate carbon tax timeseries
@@ -114,7 +114,9 @@ def generate_timeseries(scenario_dict: dict = None, serialize: bool = False) -> 
     Returns:
         dict: A dict containing dataframes with the following keys: 'biomass', 'carbon_tax', 'electricity'.
     """
-    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
+    intermediate_path = get_scenario_pkl_path(
+        scenario_dict["scenario_name"], "intermediate"
+    )
     carbon_tax_scenario_values = CARBON_TAX_SCENARIOS[
         scenario_dict["carbon_tax_scenario"]
     ]
@@ -131,7 +133,8 @@ def generate_timeseries(scenario_dict: dict = None, serialize: bool = False) -> 
         carbon_tax_scenario_values[0],
     )
     carbon_tax_timeseries = convert_currency_col(
-        carbon_tax_timeseries, 'value', scenario_dict["eur_to_usd"])
+        carbon_tax_timeseries, "value", scenario_dict["eur_to_usd"]
+    )
 
     green_premium_timeseries = timeseries_generator(
         "green_premium",
@@ -142,7 +145,8 @@ def generate_timeseries(scenario_dict: dict = None, serialize: bool = False) -> 
         green_premium_scenario_values[0],
     )
     green_premium_timeseries = convert_currency_col(
-        green_premium_timeseries, 'value', scenario_dict["eur_to_usd"])
+        green_premium_timeseries, "value", scenario_dict["eur_to_usd"]
+    )
 
     if serialize:
         # Serialize timeseries

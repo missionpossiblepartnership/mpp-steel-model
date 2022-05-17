@@ -9,7 +9,9 @@ from mppsteel.model_solver.solver import active_check_results
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
-    read_pickle_folder, serialize_file, get_scenario_pkl_path
+    read_pickle_folder,
+    serialize_file,
+    get_scenario_pkl_path,
 )
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.config.model_config import (
@@ -22,6 +24,7 @@ from mppsteel.config.model_config import (
 
 logger = get_logger(__name__)
 
+
 def create_region_plant_ref(df: pd.DataFrame, region_string: str) -> dict:
     """Creates a mapping of plants to a region(s) of interest.
 
@@ -32,9 +35,10 @@ def create_region_plant_ref(df: pd.DataFrame, region_string: str) -> dict:
     Returns:
         dict: A dictionary containing a mapping of region to plant names
     """
-    return {region: list(
-            df[df[region_string] == region]["plant_name"].unique()
-        ) for region in df[region_string].unique()}
+    return {
+        region: list(df[df[region_string] == region]["plant_name"].unique())
+        for region in df[region_string].unique()
+    }
 
 
 def extract_dict_values(
@@ -51,13 +55,7 @@ def extract_dict_values(
     """
     if reference_dict and ref_key:
         ref_list = reference_dict[ref_key]
-        return sum(
-            [
-                main_dict[key]
-                for key in main_dict
-                if key in ref_list
-            ]
-        )
+        return sum([main_dict[key] for key in main_dict if key in ref_list])
     return sum([main_dict[key] for key in main_dict])
 
 
@@ -81,7 +79,10 @@ def calculate_cc(
         float: The capital charge value.
     """
     year_range = range(year, year + year_span)
-    year_range = [year if (year <= MODEL_YEAR_END) else min(MODEL_YEAR_END, year) for year in year_range]
+    year_range = [
+        year if (year <= MODEL_YEAR_END) else min(MODEL_YEAR_END, year)
+        for year in year_range
+    ]
     value_arr = [capex_ref[(year, technology)] for year in year_range]
     return npf.npv(discount_rate, value_arr)
 
@@ -126,11 +127,11 @@ def apply_cos(
 
     if capital_charges and row.technology:
         relining_cost = calculate_cc(
-            capex_ref['brownfield'],
+            capex_ref["brownfield"],
             year,
             relining_year_span,
             row.technology,
-            discount_rate
+            discount_rate,
         )
 
     if row.capacity_utilization == 0:
@@ -148,7 +149,10 @@ def apply_cos(
     if production_value == 0:
         result_2 = 0
     else:
-        result_2 = npf.pmt(discount_rate, relining_year_span, capital_investment) / production_value
+        result_2 = (
+            npf.pmt(discount_rate, relining_year_span, capital_investment)
+            / production_value
+        )
 
     return result_1 - result_2
 
@@ -188,8 +192,9 @@ def cost_of_steelmaking(
     regions = production_df[region_group].unique()
     years = production_df["year"].unique()
     production_stats_modified = production_df[cols_to_keep].set_index("year").copy()
-    
+
     cos_year_list = []
+
     def calculate_cos(df, ref=None) -> float:
         df_c = df.copy()
         cos_values = df_c.apply(
@@ -205,10 +210,9 @@ def cost_of_steelmaking(
             axis=1,
         )
         cos_sum = cos_values.sum()
-        capacity_sum = extract_dict_values(
-            capacities_dict, plant_region_ref, ref
-        )
+        capacity_sum = extract_dict_values(capacities_dict, plant_region_ref, ref)
         return cos_sum / capacity_sum
+
     desc = "Cost of Steelmaking without Captial Charges: Year Loop"
     if capital_charges:
         desc = "Cost of Steelmaking with Captial Charges: Year Loop"
@@ -231,7 +235,9 @@ def cost_of_steelmaking(
     return dict(zip(years, cos_year_list))
 
 
-def dict_to_df(df_values_dict: dict, region_group: str, cc: bool = False) -> pd.DataFrame:
+def dict_to_df(
+    df_values_dict: dict, region_group: str, cc: bool = False
+) -> pd.DataFrame:
     """Turns a dictionary of of cost of steelmaking values into a DataFrame.
 
     Args:
@@ -280,36 +286,75 @@ def create_cost_of_steelmaking_data(
         pd.DataFrame: A DataFrame containing the new Cost of Steelmaking columns.
     """
 
-    variable_cost_ref = variable_costs_df.reset_index().set_index(['year', 'country_code', 'technology']).to_dict()['cost']
-    brownfield_capex_ref = capex_ref['brownfield'].reset_index().set_index(['Year', 'Technology']).to_dict()['value']
-    greenfield_capex_ref = capex_ref['greenfield'].reset_index().set_index(['Year', 'Technology']).to_dict()['value']
-    other_opex_ref = capex_ref['other_opex'].reset_index().set_index(['Year', 'Technology']).to_dict()['value']
+    variable_cost_ref = (
+        variable_costs_df.reset_index()
+        .set_index(["year", "country_code", "technology"])
+        .to_dict()["cost"]
+    )
+    brownfield_capex_ref = (
+        capex_ref["brownfield"]
+        .reset_index()
+        .set_index(["Year", "Technology"])
+        .to_dict()["value"]
+    )
+    greenfield_capex_ref = (
+        capex_ref["greenfield"]
+        .reset_index()
+        .set_index(["Year", "Technology"])
+        .to_dict()["value"]
+    )
+    other_opex_ref = (
+        capex_ref["other_opex"]
+        .reset_index()
+        .set_index(["Year", "Technology"])
+        .to_dict()["value"]
+    )
 
     combined_capex_ref = {
-        'brownfield': brownfield_capex_ref,
-        'greenfield': greenfield_capex_ref,
-        'other_opex': other_opex_ref
+        "brownfield": brownfield_capex_ref,
+        "greenfield": greenfield_capex_ref,
+        "other_opex": other_opex_ref,
     }
 
     investment_dict_result_cycles_only = {
-        key: [val for val in values if isinstance(val, int)] for key, values in full_investment_cycles.items()
-        }
+        key: [val for val in values if isinstance(val, int)]
+        for key, values in full_investment_cycles.items()
+    }
 
-    investment_df.set_index(['year'], inplace=True)
-    inverse_active_plant_checker = active_check_results(plant_df, MODEL_YEAR_RANGE, inverse=True)
+    investment_df.set_index(["year"], inplace=True)
+    inverse_active_plant_checker = active_check_results(
+        plant_df, MODEL_YEAR_RANGE, inverse=True
+    )
     investment_cost_ref = {}
-    production_ref = production_df[['year', 'plant_name', 'production']].set_index(['year', 'plant_name']).to_dict()['production']
-    for year in tqdm(MODEL_YEAR_RANGE, total=len(MODEL_YEAR_RANGE), desc='COS Investment Reference Loop'):
-        active_plants = [plant_name for plant_name in inverse_active_plant_checker[year] if inverse_active_plant_checker[year][plant_name]]
+    production_ref = (
+        production_df[["year", "plant_name", "production"]]
+        .set_index(["year", "plant_name"])
+        .to_dict()["production"]
+    )
+    for year in tqdm(
+        MODEL_YEAR_RANGE,
+        total=len(MODEL_YEAR_RANGE),
+        desc="COS Investment Reference Loop",
+    ):
+        active_plants = [
+            plant_name
+            for plant_name in inverse_active_plant_checker[year]
+            if inverse_active_plant_checker[year][plant_name]
+        ]
         for plant_name in active_plants:
             investment_cost_ref[(year, plant_name)] = get_investment_capital_costs(
-                investment_df, investment_dict_result_cycles_only, plant_name, year)
+                investment_df, investment_dict_result_cycles_only, plant_name, year
+            )
 
     relining_span_ref = {}
-    plant_names = plant_df['plant_name'].unique()
+    plant_names = plant_df["plant_name"].unique()
 
-    for plant_name in tqdm(plant_names, total=len(plant_names), desc='Relining Year Span Loop'):
-        relining_span_ref[plant_name] = investment_cycle_lengths.get(plant_name, INVESTMENT_CYCLE_DURATION_YEARS)
+    for plant_name in tqdm(
+        plant_names, total=len(plant_names), desc="Relining Year Span Loop"
+    ):
+        relining_span_ref[plant_name] = investment_cycle_lengths.get(
+            plant_name, INVESTMENT_CYCLE_DURATION_YEARS
+        )
 
     cols_to_keep = [
         "year",
@@ -319,7 +364,7 @@ def create_cost_of_steelmaking_data(
         "capacity",
         "production",
         "capacity_utilization",
-        region_group
+        region_group,
     ]
 
     standard_cos = cost_of_steelmaking(
@@ -353,7 +398,9 @@ def create_cost_of_steelmaking_data(
 
 
 @timer_func
-def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize: bool = False) -> dict:
+def generate_cost_of_steelmaking_results(
+    scenario_dict: dict, serialize: bool = False
+) -> dict:
     """Full flow to create the Cost of Steelmaking and the Levelized Cost of Steelmaking DataFrames.
 
     Args:
@@ -363,23 +410,23 @@ def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize: bool = 
     Returns:
         dict: A dictionary with the Cost of Steelmaking DataFrame and the Levelized Cost of Steelmaking DataFrame.
     """
-    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
-    final_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'final')
+    intermediate_path = get_scenario_pkl_path(
+        scenario_dict["scenario_name"], "intermediate"
+    )
+    final_path = get_scenario_pkl_path(scenario_dict["scenario_name"], "final")
     variable_costs_regional = read_pickle_folder(
         intermediate_path, "variable_costs_regional", "df"
     )
     capex_dict = read_pickle_folder(PKL_DATA_FORMATTED, "capex_dict", "df")
-    
+
     production_resource_usage = read_pickle_folder(
         final_path, "production_resource_usage", "df"
     )
-    plant_result_df = read_pickle_folder(
-        intermediate_path, "plant_result_df", "df"
+    plant_result_df = read_pickle_folder(intermediate_path, "plant_result_df", "df")
+    plant_capacity_results = read_pickle_folder(
+        intermediate_path, "plant_capacity_results", "df"
     )
-    plant_capacity_results = read_pickle_folder(intermediate_path, "plant_capacity_results", "df")
-    investment_results = read_pickle_folder(
-        final_path, "investment_results", "df"
-    )
+    investment_results = read_pickle_folder(final_path, "investment_results", "df")
     investment_dict_result = read_pickle_folder(
         intermediate_path, "investment_dict_result", "df"
     )
@@ -399,8 +446,11 @@ def generate_cost_of_steelmaking_results(scenario_dict: dict, serialize: bool = 
     )
 
     cos_data = add_results_metadata(
-        cos_data, scenario_dict, include_regions=False, 
-        single_line=True, scenario_name=True
+        cos_data,
+        scenario_dict,
+        include_regions=False,
+        single_line=True,
+        scenario_name=True,
     )
 
     if serialize:

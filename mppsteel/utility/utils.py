@@ -82,13 +82,15 @@ def get_currency_rate(base: str, target: str) -> str:
         str: [description]
     """
     logger.info(f"Getting currency exchange rate for {base}")
-    
+
     if (len(base) == 3) & (len(target) == 3):
         try:
             curr = CurrencyConverter()
             return curr.convert(1, base.upper(), target.upper())
         except:
-            raise ValueError(f'You entered an incorrect currency, either {base} or {target}')
+            raise ValueError(
+                f"You entered an incorrect currency, either {base} or {target}"
+            )
 
 
 def enumerate_iterable(iterable: it) -> dict:
@@ -118,7 +120,9 @@ def cast_to_float(val: Union[float, int, Iterable]) -> float:
         return float(val.sum())
 
 
-def create_bin_rank_dict(data: np.array, bins: int = 10, reverse: bool = False, rounding: int = 3) -> dict:
+def create_bin_rank_dict(
+    data: np.array, bins: int = 10, reverse: bool = False, rounding: int = 3
+) -> dict:
     """Create a dictionary of bin value: bin rank key: value pairs.
 
     Args:
@@ -154,13 +158,18 @@ def return_bin_rank(x: float, bin_dict: dict) -> float:
     """
     bin_dict_vals = list(bin_dict.keys())
     if x < bin_dict_vals[0]:
-        raise ValueError(f'Value provided {x} is smaller than the initial bin size {bin_dict_vals[0]}')
+        raise ValueError(
+            f"Value provided {x} is smaller than the initial bin size {bin_dict_vals[0]}"
+        )
     elif x > bin_dict_vals[-1]:
-        raise ValueError(f'Value provided {x} is bigger than the last bin size {bin_dict_vals[-1]}')
+        raise ValueError(
+            f"Value provided {x} is bigger than the last bin size {bin_dict_vals[-1]}"
+        )
     else:
         for val in bin_dict_vals:
             if x <= val:
                 return bin_dict[val]
+
 
 def replace_dict_items(base_dict: dict, repl_dict: dict):
     base_dict_c = deepcopy(base_dict)
@@ -169,9 +178,11 @@ def replace_dict_items(base_dict: dict, repl_dict: dict):
             base_dict_c[col_entry] = repl_dict[col_entry]
     return base_dict_c
 
+
 def get_dict_keys_by_value(base_dict: dict, value):
     item_list = base_dict.items()
     return [item[0] for item in item_list if item[1] == value]
+
 
 def multiprocessing_scenarios(scenario_options: list, func):
     # Multiprocessing
@@ -182,10 +193,7 @@ def multiprocessing_scenarios(scenario_options: list, func):
     # Model flow - Load reusable data
     for scenario in scenario_options:
         # run the multiprocessing pool over the cores
-        pool.apply_async(
-            func,
-            args=(scenario, True)
-        )
+        pool.apply_async(func, args=(scenario, True))
 
     # close and join the pools
     pool.close()

@@ -30,8 +30,9 @@ MATERIAL_RESOURCES_COT = [
     "used_co2_mt",
     "captured_co2_mt",
     "bf_slag_mt",
-    "other_slag_mt"
+    "other_slag_mt",
 ]
+
 
 def format_cot_graph(
     df: pd.DataFrame, region: list = None, resource_list: list = None
@@ -61,15 +62,17 @@ def format_cot_graph(
     if region:
         df_c = df_c.loc[df_c["region"] == region]
     df_c = (
-        df_c.groupby(["year", "metric"], as_index=False)
-        .agg({"value": "sum"})
-        .round(2)
+        df_c.groupby(["year", "metric"], as_index=False).agg({"value": "sum"}).round(2)
     )
     return df_c
 
 
 def consumption_over_time_graph(
-    production_resource_usage: pd.DataFrame, resource_type: str = 'energy', region: str = None, save_filepath: str = None, ext: str = "png"
+    production_resource_usage: pd.DataFrame,
+    resource_type: str = "energy",
+    region: str = None,
+    save_filepath: str = None,
+    ext: str = "png",
 ) -> px.bar:
     """Generates a Graph showing the consumption over time of a material resource.
 
@@ -84,18 +87,16 @@ def consumption_over_time_graph(
         px.bar: A Plotly express bar chart.
     """
 
-    if resource_type == 'energy':
+    if resource_type == "energy":
         resource_list = ENERGY_RESOURCES_COT
-        y_axis_title = '[PJ/year]'
+        y_axis_title = "[PJ/year]"
 
-    elif resource_type == 'material':
+    elif resource_type == "material":
         resource_list = MATERIAL_RESOURCES_COT
-        y_axis_title = '[Mt/year]'
+        y_axis_title = "[Mt/year]"
 
     production_resource_usage = format_cot_graph(
-        production_resource_usage, 
-        region, 
-        resource_list=resource_list
+        production_resource_usage, region, resource_list=resource_list
     )
 
     color_mapper = dict(zip_longest(resource_list, MPP_COLOR_LIST))
@@ -134,8 +135,8 @@ def generate_resource_usage_subset(
     df_c = df.copy()
     if region:
         df_c = df_c[df_c[grouping_col] == region]
-    df_c = df_c[['year', grouping_col, value_col]].copy()
-    df_c = df_c.groupby(['year', grouping_col]).agg('sum').round(2)
+    df_c = df_c[["year", grouping_col, value_col]].copy()
+    df_c = df_c.groupby(["year", grouping_col]).agg("sum").round(2)
     return df_c.reset_index()
 
 
@@ -157,8 +158,8 @@ def resource_line_charts(
     if not region:
         filename = f"{resource}_global_line_graph"
     resource_string = resource.replace("_", " ").capitalize()
-    subset_data = generate_resource_usage_subset(df, 'region', resource, region)
-    regions = subset_data['region'].unique()
+    subset_data = generate_resource_usage_subset(df, "region", resource, region)
+    regions = subset_data["region"].unique()
     color_mapper = dict(zip_longest(regions, MPP_COLOR_LIST))
     logger.info(f"Creating line graph output: {filename}")
     if filepath:
@@ -167,7 +168,7 @@ def resource_line_charts(
         data=subset_data,
         x="year",
         y=resource,
-        color='region',
+        color="region",
         color_discrete_map=color_mapper,
         name=f"{resource_string} consumption in {region}",
         x_axis="year",

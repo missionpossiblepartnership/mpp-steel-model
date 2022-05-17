@@ -7,7 +7,7 @@ from mppsteel.config.model_config import (
     DISCOUNT_RATE,
     INVESTMENT_CYCLE_DURATION_YEARS,
     MEGATON_TO_TON,
-    MODEL_YEAR_END
+    MODEL_YEAR_END,
 )
 from mppsteel.config.reference_lists import SWITCH_DICT
 from mppsteel.utility.log_utility import get_logger
@@ -39,7 +39,7 @@ def calculate_green_premium(
     country_code: str,
     plant_name: str,
     year: int,
-    usd_eur_rate: float
+    usd_eur_rate: float,
 ) -> dict:
     """Calculates a green premium amout based on the product of the green premium capacity and the green premium timeseries value.
 
@@ -57,18 +57,25 @@ def calculate_green_premium(
     """
 
     def green_premium_calc(loop_year: int):
-        variable_tech_costs = variable_cost_ref.loc[country_code, loop_year] # ts
-        plant_capacity = capacity_ref[plant_name] # float
-        green_premium = green_premium_timeseries.loc[loop_year]["value"] # float
-        return (variable_tech_costs * green_premium * usd_eur_rate) / (plant_capacity * MEGATON_TO_TON) # ts
+        variable_tech_costs = variable_cost_ref.loc[country_code, loop_year]  # ts
+        plant_capacity = capacity_ref[plant_name]  # float
+        green_premium = green_premium_timeseries.loc[loop_year]["value"]  # float
+        return (variable_tech_costs * green_premium * usd_eur_rate) / (
+            plant_capacity * MEGATON_TO_TON
+        )  # ts
 
     year_range = range(year, year + INVESTMENT_CYCLE_DURATION_YEARS + 1)
-    year_range = [year if (year <= MODEL_YEAR_END) else min(MODEL_YEAR_END, year) for year in year_range]
+    year_range = [
+        year if (year <= MODEL_YEAR_END) else min(MODEL_YEAR_END, year)
+        for year in year_range
+    ]
     df_list = [green_premium_calc(loop_year) for loop_year in year_range]
     df_combined = pd.concat(df_list)
     technologies = df_combined.index.unique()
-    return {technology: npf.npv(DISCOUNT_RATE, df_combined.loc[technology]["cost"].values) for technology in technologies}
-
+    return {
+        technology: npf.npv(DISCOUNT_RATE, df_combined.loc[technology]["cost"].values)
+        for technology in technologies
+    }
 
 
 def get_opex_costs(
@@ -78,7 +85,7 @@ def get_opex_costs(
     opex_df: pd.DataFrame,
     s1_emissions_ref: dict,
     s2_emissions_ref: float,
-    carbon_tax_timeseries: pd.DataFrame
+    carbon_tax_timeseries: pd.DataFrame,
 ) -> pd.DataFrame:
     """Returns the combined Opex costs for each technology in each region.
 
@@ -95,7 +102,6 @@ def get_opex_costs(
         pd.DataFrame: A DataFrame containing the opex costs for each technology for a given year.
     """
 
-    
     opex_costs = opex_df.loc[year]
     carbon_tax_value = carbon_tax_timeseries.loc[year]["value"]
     s1_emissions_value = s1_emissions_ref.loc[year]
@@ -111,8 +117,9 @@ def get_opex_costs(
 
 
 def calculate_capex(
-    capex_df: pd.DataFrame, start_year: int, base_tech: str) -> pd.DataFrame:
-    """Creates a capex DataFrame for a given base tech along with capex values for potential switches. 
+    capex_df: pd.DataFrame, start_year: int, base_tech: str
+) -> pd.DataFrame:
+    """Creates a capex DataFrame for a given base tech along with capex values for potential switches.
 
     Args:
         capex_df (pd.DataFrame): A capex DataFrame containing all switch capex values.
@@ -123,8 +130,8 @@ def calculate_capex(
         pd.DataFrame: A DataFrame with the Capex values with a multiindex as year and start_technology.
     """
     df_c = capex_df.loc[base_tech, start_year].copy()
-    df_c = df_c[df_c['end_technology'].isin(SWITCH_DICT[base_tech])]
-    return df_c.loc[base_tech].set_index('end_technology')
+    df_c = df_c[df_c["end_technology"].isin(SWITCH_DICT[base_tech])]
+    return df_c.loc[base_tech].set_index("end_technology")
 
 
 def get_discounted_opex_values(
@@ -147,9 +154,15 @@ def get_discounted_opex_values(
         dict: A dictionary of technology key values and opex values as an array.
     """
     year_range = range(year_start, year_start + year_interval + 1)
-    loop_year_range = [year if (year <= MODEL_YEAR_END) else min(MODEL_YEAR_END, year) for year in year_range]
+    loop_year_range = [
+        year if (year <= MODEL_YEAR_END) else min(MODEL_YEAR_END, year)
+        for year in year_range
+    ]
     df_list = [opex_cost_ref[(year, country_code)] for year in loop_year_range]
     df_combined = pd.concat(df_list)
     test_negative_df_values(df_combined)
     technologies = df_combined.index.unique()
-    return {technology: npf.npv(int_rate, df_combined.loc[technology]["opex"].values) for technology in technologies}
+    return {
+        technology: npf.npv(int_rate, df_combined.loc[technology]["opex"].values)
+        for technology in technologies
+    }

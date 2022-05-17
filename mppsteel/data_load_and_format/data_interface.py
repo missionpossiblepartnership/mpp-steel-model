@@ -18,13 +18,8 @@ from mppsteel.data_validation.data_import_tests import (
 )
 
 # For logger and units dict
-from mppsteel.utility.file_handling_utility import (
-    read_pickle_folder,
-    serialize_file
-)
-from mppsteel.utility.dataframe_utility import (
-    melt_and_index, convert_currency_col
-    )
+from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
+from mppsteel.utility.dataframe_utility import melt_and_index, convert_currency_col
 
 # Get model parameters
 from mppsteel.config.model_config import (
@@ -37,9 +32,10 @@ from mppsteel.config.model_config import (
     MET_COAL_ENERGY_DENSITY_MJ_PER_KG,
     PLASTIC_WASTE_ENERGY_DENSITY_MJ_PER_KG,
     TON_TO_KILOGRAM_FACTOR,
-    USD_TO_EUR_CONVERSION_DEFAULT
+    USD_TO_EUR_CONVERSION_DEFAULT,
 )
 from mppsteel.config.reference_lists import KG_RESOURCES
+
 # Create logger
 logger = get_logger(__name__)
 
@@ -48,6 +44,7 @@ COMMODITY_MATERIAL_MAPPER = {
     "220710": "ethanol",
     "391510": "Plastic waste",
 }
+
 
 @pa.check_input(SCOPE3_EF_SCHEMA_2)
 def format_scope3_ef_2(df: pd.DataFrame, emissions_factor_slag: float) -> pd.DataFrame:
@@ -97,9 +94,15 @@ def modify_scope3_ef_1(
     ] = met_coal_values
     scope3_df.reset_index(inplace=True)
     scope3_df = scope3_df.melt(id_vars=["Category", "Fuel", "Unit"], var_name="Year")
+
     def standardise_units(row):
-        return row.value * (MEGATON_TO_TON / PETAJOULE_TO_GIGAJOULE) if row.Fuel in {'Natural gas', 'Met coal', 'Thermal coal'} else row.value
-    scope3_df['value'] = scope3_df.apply(standardise_units, axis=1)  # to ton/GJ
+        return (
+            row.value * (MEGATON_TO_TON / PETAJOULE_TO_GIGAJOULE)
+            if row.Fuel in {"Natural gas", "Met coal", "Thermal coal"}
+            else row.value
+        )
+
+    scope3_df["value"] = scope3_df.apply(standardise_units, axis=1)  # to ton/GJ
     return scope3_df
 
 
@@ -135,8 +138,10 @@ def capex_generator(
 
 @pa.check_input(CAPEX_OPEX_PER_TECH_SCHEMA)
 def capex_dictionary_generator(
-    greenfield_df: pd.DataFrame, brownfield_df: pd.DataFrame, 
-    other_df: pd.DataFrame, eur_to_usd: float,
+    greenfield_df: pd.DataFrame,
+    brownfield_df: pd.DataFrame,
+    other_df: pd.DataFrame,
+    eur_to_usd: float,
 ) -> dict:
     """A dictionary of greenfield, brownfield and other_opex.
 
@@ -150,18 +155,16 @@ def capex_dictionary_generator(
         dict: A dictionary of the formatted capex and opex dataframes.
     """
     gf_df = melt_and_index(
-            greenfield_df, ["Technology"], "Year", ["Technology", "Year"]
-        )
+        greenfield_df, ["Technology"], "Year", ["Technology", "Year"]
+    )
     bf_df = melt_and_index(
-            brownfield_df, ["Technology"], "Year", ["Technology", "Year"]
-        )
-    oo_df = melt_and_index(
-            other_df, ["Technology"], "Year", ["Technology", "Year"]
-        )
-    gf_df = convert_currency_col(gf_df, 'value', eur_to_usd)
-    bf_df = convert_currency_col(bf_df, 'value', eur_to_usd)
-    oo_df = convert_currency_col(oo_df, 'value', eur_to_usd)
-    
+        brownfield_df, ["Technology"], "Year", ["Technology", "Year"]
+    )
+    oo_df = melt_and_index(other_df, ["Technology"], "Year", ["Technology", "Year"])
+    gf_df = convert_currency_col(gf_df, "value", eur_to_usd)
+    bf_df = convert_currency_col(bf_df, "value", eur_to_usd)
+    oo_df = convert_currency_col(oo_df, "value", eur_to_usd)
+
     return {
         "greenfield": gf_df,
         "brownfield": bf_df,
@@ -182,6 +185,7 @@ def format_commodities_data(df: pd.DataFrame, material_mapper: dict) -> pd.DataF
     """
     df_c = df.copy()
     logger.info("Formatting the ethanol_plastics_charcoal data")
+
     def generate_implied_prices(row):
         return 0 if row.netenergy_gj == 0 else row.trade_value / row.netenergy_gj
 
@@ -195,11 +199,14 @@ def format_commodities_data(df: pd.DataFrame, material_mapper: dict) -> pd.DataF
     df_c = df_c[columns_of_interest]
     df_c.columns = ["year", "reporter", "commodity_code", "netweight_kg", "trade_value"]
     df_c["commodity"] = df_c["commodity_code"].apply(lambda x: material_mapper[str(x)])
-    df_c = df_c[df_c["commodity"] == 'Plastic waste'].copy()
+    df_c = df_c[df_c["commodity"] == "Plastic waste"].copy()
     df_c["netweight_kg"].fillna(0, inplace=True)
-    df_c["netenergy_gj"] = df_c["netweight_kg"] * (PLASTIC_WASTE_ENERGY_DENSITY_MJ_PER_KG / GIGAJOULE_TO_MEGAJOULE_FACTOR)
+    df_c["netenergy_gj"] = df_c["netweight_kg"] * (
+        PLASTIC_WASTE_ENERGY_DENSITY_MJ_PER_KG / GIGAJOULE_TO_MEGAJOULE_FACTOR
+    )
     df_c["implied_price"] = df_c.apply(generate_implied_prices, axis=1)
     return df_c
+
 
 @timer_func
 def format_business_cases(bc_df: pd.DataFrame) -> pd.DataFrame:
@@ -212,10 +219,24 @@ def format_business_cases(bc_df: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: The formatted business cases sheet.
     """
     bc_df_c = bc_df.copy()
-    bc_df_c =  bc_df_c.melt(id_vars=['Material', 'Type of metric', 'Unit'], var_name='technology', value_name='value').copy()
-    bc_df_c.rename({'Material': 'material_category', 'Type of metric': 'metric_type', 'Unit': 'unit'}, axis=1, inplace=True)
-    bc_df_c["material_category"] = bc_df_c["material_category"].apply(lambda x: x.strip())
-    return bc_df_c.set_index(['technology', 'material_category'])
+    bc_df_c = bc_df_c.melt(
+        id_vars=["Material", "Type of metric", "Unit"],
+        var_name="technology",
+        value_name="value",
+    ).copy()
+    bc_df_c.rename(
+        {
+            "Material": "material_category",
+            "Type of metric": "metric_type",
+            "Unit": "unit",
+        },
+        axis=1,
+        inplace=True,
+    )
+    bc_df_c["material_category"] = bc_df_c["material_category"].apply(
+        lambda x: x.strip()
+    )
+    return bc_df_c.set_index(["technology", "material_category"])
 
 
 @timer_func
@@ -232,11 +253,15 @@ def create_capex_opex_dict(serialize: bool = False) -> dict:
     brownfield_capex_df = read_pickle_folder(PKL_DATA_IMPORTS, "brownfield_capex")
     other_opex_df = read_pickle_folder(PKL_DATA_IMPORTS, "other_opex")
     capex_dict = capex_dictionary_generator(
-        greenfield_capex_df, brownfield_capex_df, other_opex_df, 1 / USD_TO_EUR_CONVERSION_DEFAULT
+        greenfield_capex_df,
+        brownfield_capex_df,
+        other_opex_df,
+        1 / USD_TO_EUR_CONVERSION_DEFAULT,
     )
     if serialize:
         serialize_file(capex_dict, PKL_DATA_FORMATTED, "capex_dict")
     return capex_dict
+
 
 @timer_func
 def generate_preprocessed_emissions_data(
@@ -285,7 +310,12 @@ def bc_unit_adjustments(row: pd.Series) -> pd.Series:
         pd.Series: The reformatted units.
     """
 
-    return row.value / TON_TO_KILOGRAM_FACTOR if row.material_category in KG_RESOURCES else row.value
+    return (
+        row.value / TON_TO_KILOGRAM_FACTOR
+        if row.material_category in KG_RESOURCES
+        else row.value
+    )
+
 
 @timer_func
 def create_business_case_reference(serialize: bool = True) -> dict:
@@ -300,10 +330,14 @@ def create_business_case_reference(serialize: bool = True) -> dict:
     business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "technology_business_cases")
     business_cases = format_business_cases(business_cases)
     business_cases.reset_index(inplace=True)
-    business_cases['value'] = business_cases.apply(bc_unit_adjustments, axis=1)
-    business_cases.set_index(['technology', 'material_category'], inplace=True)
-    business_case_reference = business_cases.to_dict()['value']
+    business_cases["value"] = business_cases.apply(bc_unit_adjustments, axis=1)
+    business_cases.set_index(["technology", "material_category"], inplace=True)
+    business_case_reference = business_cases.to_dict()["value"]
     if serialize:
-        serialize_file(business_cases, PKL_DATA_FORMATTED, "standardised_business_cases")
-        serialize_file(business_case_reference, PKL_DATA_FORMATTED, "business_case_reference")
+        serialize_file(
+            business_cases, PKL_DATA_FORMATTED, "standardised_business_cases"
+        )
+        serialize_file(
+            business_case_reference, PKL_DATA_FORMATTED, "business_case_reference"
+        )
     return business_case_reference

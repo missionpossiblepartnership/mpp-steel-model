@@ -12,18 +12,18 @@ from mppsteel.config.model_config import (
     PETAJOULE_TO_TERAJOULE,
     PKL_DATA_FORMATTED,
     MET_COAL_ENERGY_DENSITY_MJ_PER_KG,
-    TON_TO_KILOGRAM_FACTOR
+    TON_TO_KILOGRAM_FACTOR,
 )
 
-from mppsteel.config.reference_lists import (
-    GJ_RESOURCES, TECHNOLOGY_PHASES
-)
+from mppsteel.config.reference_lists import GJ_RESOURCES, TECHNOLOGY_PHASES
 
 from mppsteel.data_load_and_format.steel_plant_formatter import map_plant_id_to_df
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
-    read_pickle_folder, serialize_file, get_scenario_pkl_path
+    read_pickle_folder,
+    serialize_file,
+    get_scenario_pkl_path,
 )
 from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.utility.log_utility import get_logger
@@ -55,12 +55,22 @@ def tech_capacity_splits(
 
     df_list = []
 
-    for year in tqdm(MODEL_YEAR_RANGE, total=len(MODEL_YEAR_RANGE), desc="Tech Capacity Splits"):
+    for year in tqdm(
+        MODEL_YEAR_RANGE, total=len(MODEL_YEAR_RANGE), desc="Tech Capacity Splits"
+    ):
         steel_plant_names = capacity_dict[year].keys()
         df = pd.DataFrame({"year": year, "plant_name": steel_plant_names})
-        df["technology"] = df["plant_name"].apply(lambda plant: get_tech_choice(tech_choices, active_check_results_dict, year, plant))
-        df['capacity'] = df['plant_name'].apply(lambda plant_name: get_capacity(capacity_dict, active_check_results_dict, year, plant_name))
-        df = df[df['technology'] != '']
+        df["technology"] = df["plant_name"].apply(
+            lambda plant: get_tech_choice(
+                tech_choices, active_check_results_dict, year, plant
+            )
+        )
+        df["capacity"] = df["plant_name"].apply(
+            lambda plant_name: get_capacity(
+                capacity_dict, active_check_results_dict, year, plant_name
+            )
+        )
+        df = df[df["technology"] != ""]
         df_list.append(df)
 
     df_combined = pd.concat(df_list)
@@ -72,9 +82,7 @@ def tech_capacity_splits(
 
 
 def generate_production_stats(
-    tech_capacity_df: pd.DataFrame,
-    utilization_results: dict,
-    country_mapper: dict
+    tech_capacity_df: pd.DataFrame, utilization_results: dict, country_mapper: dict
 ) -> pd.DataFrame:
     """Creates new columns for production, capacity_utilisation and a check for whether the technology is a low carbon tech.
 
@@ -89,22 +97,35 @@ def generate_production_stats(
     logger.info("- Generating Production Results from capacity")
 
     def utilization_mapper(row):
-        return 0 if row.technology == 'Close plant' else utilization_results[row.year][row.region]
+        return (
+            0
+            if row.technology == "Close plant"
+            else utilization_results[row.year][row.region]
+        )
 
     def production_mapper(row):
-        return 0 if row.technology == 'Close plant' else row.capacity * row.capacity_utilization
+        return (
+            0
+            if row.technology == "Close plant"
+            else row.capacity * row.capacity_utilization
+        )
 
     tech_capacity_df["low_carbon_tech"] = tech_capacity_df["technology"].apply(
-        lambda tech: "Y" if tech in TECHNOLOGY_PHASES['end_state'] else "N"
+        lambda tech: "Y" if tech in TECHNOLOGY_PHASES["end_state"] else "N"
     )
-    tech_capacity_df['region'] = tech_capacity_df["country_code"].apply(
-        lambda x: country_mapper[x])
-    tech_capacity_df["capacity_utilization"] = tech_capacity_df.apply(utilization_mapper, axis=1)
+    tech_capacity_df["region"] = tech_capacity_df["country_code"].apply(
+        lambda x: country_mapper[x]
+    )
+    tech_capacity_df["capacity_utilization"] = tech_capacity_df.apply(
+        utilization_mapper, axis=1
+    )
     tech_capacity_df["production"] = tech_capacity_df.apply(production_mapper, axis=1)
     return tech_capacity_df
 
 
-def production_material_usage(row: pd.Series, business_case_ref: dict, material_category: str) -> float:
+def production_material_usage(
+    row: pd.Series, business_case_ref: dict, material_category: str
+) -> float:
     """Returns the value of the material usage based on the type of resource in material_category the consumption rate, and the amount produced.
 
     Args:
@@ -117,10 +138,15 @@ def production_material_usage(row: pd.Series, business_case_ref: dict, material_
     """
     # Production is in Mt, material usage is t/t, energy usage is GJ/t
     # Transform to t usage for materials and GJ usage for energy
-    return (row.production * MEGATON_TO_TON) * business_case_ref[(row.technology, material_category)]
+    return (row.production * MEGATON_TO_TON) * business_case_ref[
+        (row.technology, material_category)
+    ]
 
-def generate_unit_cols(df: pd.DataFrame, replace_dict: dict, conversion: float) -> pd.DataFrame:
-    """Creates a new column with the units specified in the `replace_dict` values using the `conversion` rate specifued. 
+
+def generate_unit_cols(
+    df: pd.DataFrame, replace_dict: dict, conversion: float
+) -> pd.DataFrame:
+    """Creates a new column with the units specified in the `replace_dict` values using the `conversion` rate specifued.
 
     Args:
         df (pd.DataFrame): The DataFrame to modify by creating the new column.
@@ -128,7 +154,7 @@ def generate_unit_cols(df: pd.DataFrame, replace_dict: dict, conversion: float) 
         conversion (float): The conversion rate to apply to the new unit column.
 
     Returns:
-        pd.DataFrame: A DataFrame with 
+        pd.DataFrame: A DataFrame with
     """
     df_c = df.copy()
     for item in replace_dict.items():
@@ -138,8 +164,10 @@ def generate_unit_cols(df: pd.DataFrame, replace_dict: dict, conversion: float) 
             df_c[new_col] = df_c[old_col].astype(float) * conversion
     return df_c
 
+
 def production_stats_generator(
-    production_df: pd.DataFrame, materials_list: list) -> pd.DataFrame:
+    production_df: pd.DataFrame, materials_list: list
+) -> pd.DataFrame:
     """Generate the consumption of resources for each plant in each year depending on the technologies used.
 
     Args:
@@ -153,27 +181,38 @@ def production_stats_generator(
     df_c = production_df.copy()
     inverse_material_dict_mapper = load_materials_mapper(materials_list, reverse=True)
     new_materials = inverse_material_dict_mapper.keys()
-    business_case_ref = read_pickle_folder(PKL_DATA_FORMATTED, "business_case_reference", "df")
+    business_case_ref = read_pickle_folder(
+        PKL_DATA_FORMATTED, "business_case_reference", "df"
+    )
 
     # Create columns
-    for new_material_name in tqdm(new_materials, total=len(new_materials), desc='Material Loop'):
+    for new_material_name in tqdm(
+        new_materials, total=len(new_materials), desc="Material Loop"
+    ):
         df_c[new_material_name] = df_c.apply(
             production_material_usage,
             business_case_ref=business_case_ref,
             material_category=inverse_material_dict_mapper[new_material_name],
-            axis=1
+            axis=1,
         )
     df_c["bioenergy_gj"] = df_c["biomass_gj"] + df_c["biomethane_gj"]
-    df_c["met_coal_gj"] = df_c["met_coal_t"] * (MET_COAL_ENERGY_DENSITY_MJ_PER_KG * TON_TO_KILOGRAM_FACTOR) / GIGAJOULE_TO_MEGAJOULE_FACTOR
+    df_c["met_coal_gj"] = (
+        df_c["met_coal_t"]
+        * (MET_COAL_ENERGY_DENSITY_MJ_PER_KG * TON_TO_KILOGRAM_FACTOR)
+        / GIGAJOULE_TO_MEGAJOULE_FACTOR
+    )
     df_c["coal_gj"] = df_c["met_coal_gj"] + df_c["thermal_coal_gj"]
 
-    df_c = generate_unit_cols(df_c, {'_gj': '_pj'}, 1 / PETAJOULE_TO_GIGAJOULE)
-    df_c = generate_unit_cols(df_c, {'_t': '_mt'}, 1 / MEGATON_TO_TON)
+    df_c = generate_unit_cols(df_c, {"_gj": "_pj"}, 1 / PETAJOULE_TO_GIGAJOULE)
+    df_c = generate_unit_cols(df_c, {"_t": "_mt"}, 1 / MEGATON_TO_TON)
     return df_c
 
 
 def generate_production_emission_stats(
-    production_df: pd.DataFrame, emissions_df: pd.DataFrame, carbon_tax_timeseries: pd.DataFrame) -> pd.DataFrame:
+    production_df: pd.DataFrame,
+    emissions_df: pd.DataFrame,
+    carbon_tax_timeseries: pd.DataFrame,
+) -> pd.DataFrame:
     """Generates a DataFrame with the emissions generated for S1, S2 & S3, and a carbon cost column.
 
     Args:
@@ -185,45 +224,58 @@ def generate_production_emission_stats(
     """
     logger.info("- Generating Production Emission Stats")
 
-
     df_c = production_df.copy()
 
     calculated_emissivity_combined_dict = (
-        emissions_df.reset_index(drop=True).set_index(
-            ["year", "country_code", "technology"]
-        ).to_dict()
+        emissions_df.reset_index(drop=True)
+        .set_index(["year", "country_code", "technology"])
+        .to_dict()
     )
 
     emissivity_dict = {
-        's1': calculated_emissivity_combined_dict['s1_emissivity'],
-        's2': calculated_emissivity_combined_dict['s2_emissivity'],
-        's3': calculated_emissivity_combined_dict['s3_emissivity']
+        "s1": calculated_emissivity_combined_dict["s1_emissivity"],
+        "s2": calculated_emissivity_combined_dict["s2_emissivity"],
+        "s3": calculated_emissivity_combined_dict["s3_emissivity"],
     }
 
     def emissions_mapper(row: pd.Series, emissivity_ref: dict) -> pd.DataFrame:
-        return 0 if row.technology == "Close plant" else (row.production * MEGATON_TO_TON) * emissivity_ref[(row.year, row.country_code, row.technology)]
+        return (
+            0
+            if row.technology == "Close plant"
+            else (row.production * MEGATON_TO_TON)
+            * emissivity_ref[(row.year, row.country_code, row.technology)]
+        )
 
     for emission_type in emissivity_dict:
         df_c[f"{emission_type}_emissions_t"] = df_c.apply(
-            emissions_mapper,
-            emissivity_ref=emissivity_dict[emission_type],
-            axis=1
+            emissions_mapper, emissivity_ref=emissivity_dict[emission_type], axis=1
         )
         # emissivity is tCO2 per t Steel
         # therefore get production in t units
-        df_c[f"{emission_type}_emissions_mt"] = df_c[f"{emission_type}_emissions_t"] / MEGATON_TO_TON
-        df_c[f"{emission_type}_emissions_gt"] = df_c[f"{emission_type}_emissions_mt"] / GIGATON_TO_MEGATON_FACTOR
+        df_c[f"{emission_type}_emissions_mt"] = (
+            df_c[f"{emission_type}_emissions_t"] / MEGATON_TO_TON
+        )
+        df_c[f"{emission_type}_emissions_gt"] = (
+            df_c[f"{emission_type}_emissions_mt"] / GIGATON_TO_MEGATON_FACTOR
+        )
 
-        def carbon_cost_calculator(row: pd.Series, carbon_tax_timeseries: pd.DataFrame) -> float:
-            return (row.s1_emissions_t + row.s2_emissions_t) * carbon_tax_timeseries.loc[row.year]['value']
+        def carbon_cost_calculator(
+            row: pd.Series, carbon_tax_timeseries: pd.DataFrame
+        ) -> float:
+            return (
+                row.s1_emissions_t + row.s2_emissions_t
+            ) * carbon_tax_timeseries.loc[row.year]["value"]
 
-    df_c['carbon_cost'] = df_c.apply(
-        carbon_cost_calculator, carbon_tax_timeseries=carbon_tax_timeseries, axis=1)
+    df_c["carbon_cost"] = df_c.apply(
+        carbon_cost_calculator, carbon_tax_timeseries=carbon_tax_timeseries, axis=1
+    )
 
     return df_c
 
 
-def get_tech_choice(tc_dict: dict, active_plant_checker_dict: dict, year: int, plant_name: str) -> str:
+def get_tech_choice(
+    tc_dict: dict, active_plant_checker_dict: dict, year: int, plant_name: str
+) -> str:
     """Return a technology choice for a given plant in a given year.
 
     Args:
@@ -235,9 +287,14 @@ def get_tech_choice(tc_dict: dict, active_plant_checker_dict: dict, year: int, p
     Returns:
         str: The technology choice requested via the function arguments.
     """
-    return tc_dict[year][plant_name] if active_plant_checker_dict[plant_name][year] else ''
+    return (
+        tc_dict[year][plant_name] if active_plant_checker_dict[plant_name][year] else ""
+    )
 
-def get_capacity(capacity_dict: dict, active_plant_checker_dict: dict, year: int, plant_name: str) -> str:
+
+def get_capacity(
+    capacity_dict: dict, active_plant_checker_dict: dict, year: int, plant_name: str
+) -> str:
     """Return a technology choice for a given plant in a given year.
 
     Args:
@@ -249,7 +306,11 @@ def get_capacity(capacity_dict: dict, active_plant_checker_dict: dict, year: int
     Returns:
         str: The technology choice requested via the function arguments.
     """
-    return capacity_dict[year][plant_name] if active_plant_checker_dict[plant_name][year] else 0
+    return (
+        capacity_dict[year][plant_name]
+        if active_plant_checker_dict[plant_name][year]
+        else 0
+    )
 
 
 def load_materials_mapper(materials_list: list, reverse: bool = False) -> dict:
@@ -258,9 +319,18 @@ def load_materials_mapper(materials_list: list, reverse: bool = False) -> dict:
     Returns:
         dict: A dictionary containing a mapping of original material names to column reference material names.
     """
-    material_col_names = [material.lower().replace(" ", "_") for material in materials_list]
+    material_col_names = [
+        material.lower().replace(" ", "_") for material in materials_list
+    ]
     dict_obj = dict(zip(materials_list, material_col_names))
-    dict_obj = {(original_material): (f'{new_material}_gj' if original_material in GJ_RESOURCES else f'{new_material}_t') for original_material, new_material in dict_obj.items()}
+    dict_obj = {
+        (original_material): (
+            f"{new_material}_gj"
+            if original_material in GJ_RESOURCES
+            else f"{new_material}_t"
+        )
+        for original_material, new_material in dict_obj.items()
+    }
     if reverse:
         return {v: k for k, v in dict_obj.items()}
     return dict_obj
@@ -277,12 +347,12 @@ def production_results_flow(scenario_dict: dict, serialize: bool = False) -> dic
     Returns:
         dict: A dictionary containing the two DataFrames.
     """
-    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
-    final_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'final')
-    logger.info("- Starting Production Results Model Flow")
-    plant_result_df = read_pickle_folder(
-        intermediate_path, "plant_result_df", "df"
+    intermediate_path = get_scenario_pkl_path(
+        scenario_dict["scenario_name"], "intermediate"
     )
+    final_path = get_scenario_pkl_path(scenario_dict["scenario_name"], "final")
+    logger.info("- Starting Production Results Model Flow")
+    plant_result_df = read_pickle_folder(intermediate_path, "plant_result_df", "df")
     tech_choices_dict = read_pickle_folder(
         intermediate_path, "tech_choice_dict", "dict"
     )
@@ -308,15 +378,28 @@ def production_results_flow(scenario_dict: dict, serialize: bool = False) -> dic
     carbon_tax_timeseries.set_index("year", inplace=True)
     materials_list = business_cases.index.get_level_values(1).unique()
     plant_to_country_code_ref = dict(
-        zip(plant_result_df["plant_name"].values, plant_result_df["country_code"].values)
+        zip(
+            plant_result_df["plant_name"].values, plant_result_df["country_code"].values
+        )
     )
     tech_capacity_df = tech_capacity_splits(
-        plant_result_df, tech_choices_dict, plant_capacity_results, active_check_results_dict, plant_to_country_code_ref)
-    production_results = generate_production_stats(
-        tech_capacity_df, utilization_results, rmi_mapper,
+        plant_result_df,
+        tech_choices_dict,
+        plant_capacity_results,
+        active_check_results_dict,
+        plant_to_country_code_ref,
     )
-    production_resource_usage = production_stats_generator(production_results, materials_list)
-    production_emissions = generate_production_emission_stats(production_results, calculated_emissivity_combined, carbon_tax_timeseries)
+    production_results = generate_production_stats(
+        tech_capacity_df,
+        utilization_results,
+        rmi_mapper,
+    )
+    production_resource_usage = production_stats_generator(
+        production_results, materials_list
+    )
+    production_emissions = generate_production_emission_stats(
+        production_results, calculated_emissivity_combined, carbon_tax_timeseries
+    )
 
     results_dict = {
         "production_resource_usage": production_resource_usage,
@@ -337,8 +420,6 @@ def production_results_flow(scenario_dict: dict, serialize: bool = False) -> dic
             "production_resource_usage",
         )
         serialize_file(
-            results_dict["production_emissions"],
-            final_path,
-            "production_emissions"
+            results_dict["production_emissions"], final_path, "production_emissions"
         )
     return results_dict

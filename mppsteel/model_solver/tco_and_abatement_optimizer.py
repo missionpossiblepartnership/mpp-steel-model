@@ -142,9 +142,14 @@ def min_ranker(
 
 
 def get_tco_and_abatement_values(
-    tco_df: pd.DataFrame, emissions_df: pd.DataFrame, 
-    cost_value_col: str, year: int, country_code: str, 
-    start_tech: str, technology_list: list, rank: bool
+    tco_df: pd.DataFrame,
+    emissions_df: pd.DataFrame,
+    cost_value_col: str,
+    year: int,
+    country_code: str,
+    start_tech: str,
+    technology_list: list,
+    rank: bool,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Sends both the TCO DataFrame and the Emissions Abatement DataFrame through a minimum ranking function and filters the list based on the `technology_list`.
 
@@ -184,6 +189,7 @@ def get_tco_and_abatement_values(
     abatement_values = abatement_values.filter(items=technology_list, axis=0)
     return tco_values, abatement_values
 
+
 def get_best_choice(
     tco_df: pd.DataFrame,
     emissions_df: pd.DataFrame,
@@ -193,7 +199,7 @@ def get_best_choice(
     solver_logic: str,
     weighting_dict: dict,
     technology_list: list,
-    transitional_switch_mode: bool
+    transitional_switch_mode: bool,
 ) -> str:
     """Returns the best technology choice from a list of potential logic according to the paramter settings provided in the function.
 
@@ -206,12 +212,12 @@ def get_best_choice(
         solver_logic (str): Determines the algorithm used to pick the best technology.
         weighting_dict (dict): A dictionary containing the weighting scenario of lowest cost vs. emission abatement.
         technology_list (list): A list of technologies that represent valid technology switches.
-        transitional_switch_mode (bool): determines the column to use for TCO values 
+        transitional_switch_mode (bool): determines the column to use for TCO values
 
     Returns:
         str: The best technology choice for a given year.
     """
-    cost_value_col = 'tco_gf_capex' if transitional_switch_mode else 'tco_regular_capex'
+    cost_value_col = "tco_gf_capex" if transitional_switch_mode else "tco_regular_capex"
     # Scaling algorithm
     if solver_logic in {"scaled", "scaled_bins"}:
         # Calculate minimum scaled values
@@ -223,7 +229,7 @@ def get_best_choice(
             country_code,
             start_tech,
             technology_list,
-            rank=False
+            rank=False,
         )
         # Simply return current technology if no other options
         if len(tco_values) < 2:
@@ -231,30 +237,56 @@ def get_best_choice(
         # Scale the data
         tco_values_scaled = tco_values.copy()
 
-        if solver_logic == 'scaled':
-            tco_values_scaled["tco_scaled"] = scale_data(tco_values_scaled[cost_value_col])
-            tco_values_scaled.drop(columns=tco_values_scaled.columns.difference(["tco_scaled"]), axis=1, inplace=True)
+        if solver_logic == "scaled":
+            tco_values_scaled["tco_scaled"] = scale_data(
+                tco_values_scaled[cost_value_col]
+            )
+            tco_values_scaled.drop(
+                columns=tco_values_scaled.columns.difference(["tco_scaled"]),
+                axis=1,
+                inplace=True,
+            )
             abatement_values_scaled = abatement_values.copy()
             abatement_values_scaled["abatement_scaled"] = scale_data(
                 abatement_values_scaled["abated_combined_emissivity"], reverse=True
             )
-            abatement_values_scaled.drop(columns=
-                abatement_values_scaled.columns.difference(["abatement_scaled"]), axis=1, inplace=True
+            abatement_values_scaled.drop(
+                columns=abatement_values_scaled.columns.difference(
+                    ["abatement_scaled"]
+                ),
+                axis=1,
+                inplace=True,
             )
 
-        elif solver_logic == 'scaled_bins':
-            binned_rank_dict = create_bin_rank_dict(tco_values_scaled[cost_value_col], len(technology_list))
-            tco_values_scaled["tco_scaled"] = tco_values_scaled[cost_value_col].apply(
-                lambda x: return_bin_rank(x, bin_dict=binned_rank_dict))
-            tco_values_scaled.drop(columns=tco_values_scaled.columns.difference(["tco_scaled"]), axis=1, inplace=True)
-            abatement_values_scaled = abatement_values.copy()
-            binned_rank_dict = create_bin_rank_dict(tco_values_scaled['abated_combined_emissivity'], len(technology_list), reverse=True)
-            tco_values_scaled["abatement_scaled"] = tco_values_scaled['abated_combined_emissivity'].apply(
-                lambda x: return_bin_rank(x, bin_dict=binned_rank_dict))
-            abatement_values_scaled.drop(columns=
-                abatement_values_scaled.columns.difference(["abatement_scaled"]), axis=1, inplace=True
+        elif solver_logic == "scaled_bins":
+            binned_rank_dict = create_bin_rank_dict(
+                tco_values_scaled[cost_value_col], len(technology_list)
             )
-    
+            tco_values_scaled["tco_scaled"] = tco_values_scaled[cost_value_col].apply(
+                lambda x: return_bin_rank(x, bin_dict=binned_rank_dict)
+            )
+            tco_values_scaled.drop(
+                columns=tco_values_scaled.columns.difference(["tco_scaled"]),
+                axis=1,
+                inplace=True,
+            )
+            abatement_values_scaled = abatement_values.copy()
+            binned_rank_dict = create_bin_rank_dict(
+                tco_values_scaled["abated_combined_emissivity"],
+                len(technology_list),
+                reverse=True,
+            )
+            tco_values_scaled["abatement_scaled"] = tco_values_scaled[
+                "abated_combined_emissivity"
+            ].apply(lambda x: return_bin_rank(x, bin_dict=binned_rank_dict))
+            abatement_values_scaled.drop(
+                columns=abatement_values_scaled.columns.difference(
+                    ["abatement_scaled"]
+                ),
+                axis=1,
+                inplace=True,
+            )
+
         # Join the abatement and tco data and calculate an overall score using the weightings
         combined_scales = tco_values_scaled.join(abatement_values_scaled)
         combined_scales["overall_score"] = (
@@ -262,10 +294,10 @@ def get_best_choice(
         ) + (combined_scales["abatement_scaled"] * weighting_dict["emissions"])
         combined_scales.sort_values("overall_score", axis=0, inplace=True)
 
-        if solver_logic == 'scaled':
+        if solver_logic == "scaled":
             return combined_scales.idxmin()["overall_score"]
-        
-        elif solver_logic == 'scaled_bins':
+
+        elif solver_logic == "scaled_bins":
             min_value = combined_scales["overall_score"].min()
             best_values = combined_scales[combined_scales["overall_rank"] == min_value]
 
@@ -288,15 +320,17 @@ def get_best_choice(
             country_code,
             start_tech,
             technology_list,
-            rank=True
+            rank=True,
         )
         tco_values = tco_values.filter(items=technology_list, axis=0)
         abatement_values = abatement_values.filter(items=technology_list, axis=0)
-        tco_values.drop(columns=
-            tco_values.columns.difference(["tco_rank_score"]), axis=1, inplace=True
+        tco_values.drop(
+            columns=tco_values.columns.difference(["tco_rank_score"]),
+            axis=1,
+            inplace=True,
         )
-        abatement_values.drop(columns=
-            abatement_values.columns.difference(["abatement_rank_score"]),
+        abatement_values.drop(
+            columns=abatement_values.columns.difference(["abatement_rank_score"]),
             axis=1,
             inplace=True,
         )
@@ -345,15 +379,21 @@ def subset_presolver_df(df: pd.DataFrame, subset_type: str = False) -> pd.DataFr
         "base_tech",
         "switch_tech",
         "country_code",
-        "abated_combined_emissivity"
+        "abated_combined_emissivity",
     ]
     index_cols = ["year", "country_code", "base_tech"]
-    if subset_type == 'tco_summary':
-        df_c = change_cols_to_numeric(df_c, ['tco_regular_capex', 'tco_gf_capex', 'capex_value'])
-        df_c.rename({'start_technology': 'base_tech', 'end_technology': 'switch_tech'}, axis=1, inplace=True)
+    if subset_type == "tco_summary":
+        df_c = change_cols_to_numeric(
+            df_c, ["tco_regular_capex", "tco_gf_capex", "capex_value"]
+        )
+        df_c.rename(
+            {"start_technology": "base_tech", "end_technology": "switch_tech"},
+            axis=1,
+            inplace=True,
+        )
         df_c = df_c[tco_cols].set_index(index_cols)
         return df_c.sort_index(ascending=True)
-    elif subset_type == 'abatement':
-        df_c = change_cols_to_numeric(df_c, ['abated_combined_emissivity'])
+    elif subset_type == "abatement":
+        df_c = change_cols_to_numeric(df_c, ["abated_combined_emissivity"])
         df_c = df_c[emissions_cols].set_index(index_cols)
         return df_c.sort_index(ascending=True)

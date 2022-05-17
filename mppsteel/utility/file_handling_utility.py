@@ -7,7 +7,11 @@ from pathlib import Path
 from typing import Union
 
 import pandas as pd
-from mppsteel.config.model_config import PKL_DATA_FINAL, PKL_DATA_INTERMEDIATE, PKL_FOLDER
+from mppsteel.config.model_config import (
+    PKL_DATA_FINAL,
+    PKL_DATA_INTERMEDIATE,
+    PKL_FOLDER,
+)
 
 from mppsteel.utility.log_utility import get_logger
 
@@ -114,7 +118,11 @@ def create_folders_if_nonexistant(folder_list: list) -> None:
 
 
 def pickle_to_csv(
-    folder_path: str, pkl_folder: str, pickle_filename: str, csv_filename: str = "", reset_index: bool = False
+    folder_path: str,
+    pkl_folder: str,
+    pickle_filename: str,
+    csv_filename: str = "",
+    reset_index: bool = False,
 ) -> None:
     """Checks a folder path where a pickled DataFrame is stored. Loads the DataFrame and converts it to a .csv file.
 
@@ -140,14 +148,17 @@ def pickle_to_csv(
 def create_folder_if_nonexist(folder_path: str):
     Path(folder_path).mkdir(parents=True, exist_ok=True)
 
-def get_scenario_pkl_path(scenario: str = None, pkl_folder_type: str = None, default_path: bool = False):
-    if pkl_folder_type == 'intermediate':
+
+def get_scenario_pkl_path(
+    scenario: str = None, pkl_folder_type: str = None, default_path: bool = False
+):
+    if pkl_folder_type == "intermediate":
         if default_path:
             return PKL_DATA_INTERMEDIATE
-        return f'{PKL_FOLDER}/{scenario}/intermediate_data'
-    if pkl_folder_type == 'final':
+        return f"{PKL_FOLDER}/{scenario}/intermediate_data"
+    if pkl_folder_type == "final":
         if default_path:
             return PKL_DATA_FINAL
-        return f'{PKL_FOLDER}/{scenario}/final_data'
-    if pkl_folder_type == 'combined':
-        return f'{PKL_FOLDER}/combined_output'
+        return f"{PKL_FOLDER}/{scenario}/final_data"
+    if pkl_folder_type == "combined":
+        return f"{PKL_FOLDER}/combined_output"

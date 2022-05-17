@@ -7,10 +7,7 @@ from mppsteel.utility.file_handling_utility import extract_data, serialize_df_di
 from mppsteel.utility.function_timer_utility import timer_func
 
 # Get model parameters
-from mppsteel.config.model_config import (
-    IMPORT_DATA_PATH,
-    PKL_DATA_IMPORTS
-)
+from mppsteel.config.model_config import IMPORT_DATA_PATH, PKL_DATA_IMPORTS
 from mppsteel.utility.log_utility import get_logger
 
 # Create logger
@@ -104,7 +101,9 @@ def load_data(serialize: bool = False) -> dict:
         IMPORT_DATA_PATH, "Scope 3 Emissions Factors edit", "xlsx", 0
     )
     s3_emissions_factors_2 = pd.read_excel(
-        f"{IMPORT_DATA_PATH}/Scope 3 Emissions Factors edit.xlsx", sheet_name=1, skiprows=1
+        f"{IMPORT_DATA_PATH}/Scope 3 Emissions Factors edit.xlsx",
+        sheet_name=1,
+        skiprows=1,
     )
 
     # Import static energy prices
@@ -116,7 +115,9 @@ def load_data(serialize: bool = False) -> dict:
     feedstock_prices = extract_data(IMPORT_DATA_PATH, "Feedstock Prices", "xlsx")
 
     # Import steel plant data
-    steel_plants = extract_data(IMPORT_DATA_PATH, "Steel Plant Data Anon Latest", "xlsx")
+    steel_plants = extract_data(
+        IMPORT_DATA_PATH, "Steel Plant Data Anon Latest", "xlsx"
+    )
 
     # Import technology availability
     tech_availability = extract_data(IMPORT_DATA_PATH, "Technology Availability", "csv")

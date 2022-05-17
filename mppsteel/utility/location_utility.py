@@ -80,6 +80,7 @@ def country_matcher(country_list: list, output_type: str = "all") -> dict:
     if output_type == "nonmatches":
         return unmatched_dict
 
+
 def get_unique_countries(country_arrays) -> list:
     """Gets a unique list of countries from a list of arrays of countries.
 
@@ -121,27 +122,33 @@ def get_countries_from_group(
         return list(set(code_list).difference(exc_codes))
     return code_list
 
-def create_country_mapper(schema: str = 'rmi'):
+
+def create_country_mapper(schema: str = "rmi"):
     country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
     mapper = {
-        'Country': 'country_name', 
-        'ISO-alpha3 code': 'country_code', 
-        'M49 Code': 'm49', 
-        'Region 1': 'region', 
-        'Continent': 'continent', 
-        'WSA Group Region': 'wsa', 
-        'RMI Model Region': 'rmi'
+        "Country": "country_name",
+        "ISO-alpha3 code": "country_code",
+        "M49 Code": "m49",
+        "Region 1": "region",
+        "Continent": "continent",
+        "WSA Group Region": "wsa",
+        "RMI Model Region": "rmi",
     }
     country_ref_c = country_ref.rename(mapper, axis=1)
-    mapper = dict(zip(country_ref_c['country_code'], country_ref_c[schema]))
-    mapper['TWN'] = 'Japan, South Korea, and Taiwan'
+    mapper = dict(zip(country_ref_c["country_code"], country_ref_c[schema]))
+    mapper["TWN"] = "Japan, South Korea, and Taiwan"
     return mapper
 
-def pick_random_country_from_region(country_df: pd.DataFrame, region: str, region_schema):
+
+def pick_random_country_from_region(
+    country_df: pd.DataFrame, region: str, region_schema
+):
     country_list = get_countries_from_group(country_df, region_schema, region)
     return random.choice(country_list)
 
 
 def pick_random_country_from_region_subset(plant_df: pd.DataFrame, region: str):
-    country_list = plant_df[plant_df[MAIN_REGIONAL_SCHEMA] == region]['country_code'].unique()
+    country_list = plant_df[plant_df[MAIN_REGIONAL_SCHEMA] == region][
+        "country_code"
+    ].unique()
     return random.choice(country_list)

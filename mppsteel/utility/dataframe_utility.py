@@ -8,10 +8,7 @@ from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.utility.file_handling_utility import read_pickle_folder
 from mppsteel.utility.location_utility import create_country_mapper
-from mppsteel.config.model_config import (
-    RESULTS_REGIONS_TO_MAP,
-    PKL_DATA_IMPORTS
-)
+from mppsteel.config.model_config import RESULTS_REGIONS_TO_MAP, PKL_DATA_IMPORTS
 
 logger = get_logger(__name__)
 
@@ -97,7 +94,9 @@ def expand_dataset_years(df: pd.DataFrame, year_pairs: List[tuple]) -> pd.DataFr
     return df_c
 
 
-def column_sorter(df: pd.DataFrame, col_to_sort: List[str], col_order: List[str]) -> pd.DataFrame:
+def column_sorter(
+    df: pd.DataFrame, col_to_sort: List[str], col_order: List[str]
+) -> pd.DataFrame:
     """Sorts a DataFrames values according to a specified column and the column value order.
 
     Args:
@@ -108,6 +107,7 @@ def column_sorter(df: pd.DataFrame, col_to_sort: List[str], col_order: List[str]
     Returns:
         pd.DataFrame: A DataFrame with values sorted according to col_to_sort, ordered by 'col_order'
     """
+
     def sorter(column):
         correspondence = {val: order for order, val in enumerate(col_order)}
         return column.map(correspondence)
@@ -116,7 +116,10 @@ def column_sorter(df: pd.DataFrame, col_to_sort: List[str], col_order: List[str]
 
 
 def add_scenarios(
-    df: pd.DataFrame, scenario_dict: dict, single_line: bool = False, scenario_name: bool = True
+    df: pd.DataFrame,
+    scenario_dict: dict,
+    single_line: bool = False,
+    scenario_name: bool = True,
 ) -> pd.DataFrame:
     """Adds scenario metadata column(s) with metadata to each row in a DataFrame.
 
@@ -130,7 +133,7 @@ def add_scenarios(
     """
     df_c = df.copy()
     if scenario_name:
-        df_c["scenario"] = scenario_dict['scenario_name']
+        df_c["scenario"] = scenario_dict["scenario_name"]
     if single_line:
         df_c["scenarios"] = str(scenario_dict)
     else:
@@ -140,7 +143,8 @@ def add_scenarios(
 
 
 def add_regions(
-    df: pd.DataFrame, country_ref: dict, region_schema: str) -> pd.DataFrame:
+    df: pd.DataFrame, country_ref: dict, region_schema: str
+) -> pd.DataFrame:
     """Adds regional metadata column(s) to each row in a DataFrame.
 
     Args:
@@ -154,8 +158,9 @@ def add_regions(
     """
     df_c = df.copy()
     country_mapper = create_country_mapper(region_schema)
-    df_c[f"region_{region_schema}"] = df_c['country_code'].apply(
-        lambda country: country_mapper[country])
+    df_c[f"region_{region_schema}"] = df_c["country_code"].apply(
+        lambda country: country_mapper[country]
+    )
     return df_c
 
 
@@ -221,7 +226,9 @@ def melt_and_index(
     return df_c.set_index(index)
 
 
-def expand_melt_and_sort_years(df: pd.DataFrame, year_pairs: List[tuple]) -> pd.DataFrame:
+def expand_melt_and_sort_years(
+    df: pd.DataFrame, year_pairs: List[tuple]
+) -> pd.DataFrame:
     """Expands a DataFrame's years according to the year pairings passed. Also melts the DataFrame based on all columns that aren't years.
     Finally Sorts the DataFrame in ascending order of the years.
 
@@ -238,10 +245,14 @@ def expand_melt_and_sort_years(df: pd.DataFrame, year_pairs: List[tuple]) -> pd.
     df_c = df_c.melt(id_vars=set(df_c.columns).difference(set(years)), var_name="year")
     return df_c.sort_values(by=["year"], axis=0)
 
-def convert_currency_col(df: pd.DataFrame, curr_col: str, conversion_rate: float) -> pd.DataFrame:
+
+def convert_currency_col(
+    df: pd.DataFrame, curr_col: str, conversion_rate: float
+) -> pd.DataFrame:
     df_c = df.copy()
     df_c[curr_col] = df_c[curr_col] * conversion_rate
     return df_c
+
 
 def change_cols_to_numeric(df: pd.DataFrame, numeric_cols: list) -> pd.DataFrame:
     df_c = df.copy()

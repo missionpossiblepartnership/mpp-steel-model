@@ -51,7 +51,9 @@ def investment_line_chart(
         fig_.write_image(f"{save_filepath}.{ext}")
 
 
-def investment_per_tech(investment_df: pd.DataFrame, save_filepath: str = None, ext: str = "png") -> px.bar:
+def investment_per_tech(
+    investment_df: pd.DataFrame, save_filepath: str = None, ext: str = "png"
+) -> px.bar:
     """Creates a bar graph showing the level of investment per technology.
 
     Args:

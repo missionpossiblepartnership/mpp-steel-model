@@ -3,6 +3,7 @@
 import time
 from typing import Union
 
+
 def format_times(start_t: float, end_t: float, formatted: bool = True) -> str:
     """Formats a time duration between a start time and end time as a string.
 
@@ -23,6 +24,7 @@ class TimeContainerClass:
     """A Timer class that times the difference between events.
     Insantiates with an empty dictionary where the function event timings will be stored.
     """
+
     def __init__(self):
         self.time_container = {}
         self.raw_times = {}
@@ -34,7 +36,9 @@ class TimeContainerClass:
             func_name (str): The name of the function you want to time.
             timings (str): The time it took to run the function.
         """
-        self.time_container[func_name] = format_times(starttime, endtime, formatted=True)
+        self.time_container[func_name] = format_times(
+            starttime, endtime, formatted=True
+        )
         self.raw_times[func_name] = endtime - starttime
 
     def return_time_container(self, return_object: bool = False) -> Union[None, dict]:
@@ -49,7 +53,9 @@ class TimeContainerClass:
         for entry in self.time_container:
             print(f"The {entry} function took {self.time_container[entry]}")
         total_time_seconds = sum(self.raw_times.values())
-        print(f'The total runtime for the scripts was {total_time_seconds :0.2f} seconds | {total_time_seconds / 60 :0.2f} minutes')
+        print(
+            f"The total runtime for the scripts was {total_time_seconds :0.2f} seconds | {total_time_seconds / 60 :0.2f} minutes"
+        )
         if return_object:
             return self.time_container
 

@@ -4,5 +4,5 @@ from . import (
     plant_open_close,
     solver_classes,
     solver_constraints,
-    trade
+    trade,
 )

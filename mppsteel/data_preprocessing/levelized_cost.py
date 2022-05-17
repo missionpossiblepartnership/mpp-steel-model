@@ -9,7 +9,9 @@ from tqdm.auto import tqdm as tqdma
 
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import (
-    read_pickle_folder, serialize_file, get_scenario_pkl_path
+    read_pickle_folder,
+    serialize_file,
+    get_scenario_pkl_path,
 )
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.config.model_config import (
@@ -29,18 +31,23 @@ def create_contracted_year_range(year_start: int, year_span: int) -> list:
     """Limits a year range based on a max model year.
 
     Args:
-        year_start (int): The start of the model 
+        year_start (int): The start of the model
         year_span (int): The span of the range.
 
     Returns:
         list: _description_
     """
     year_range = range(year_start, year_start + year_span)
-    return [year if (year <= MODEL_YEAR_END) else min(MODEL_YEAR_END, year) for year in year_range]
+    return [
+        year if (year <= MODEL_YEAR_END) else min(MODEL_YEAR_END, year)
+        for year in year_range
+    ]
 
 
 @lru_cache(maxsize=1000)
-def calculate_cycle_discount_factor(start_year: int, cycle_year: int, discount_rate: int) -> float:
+def calculate_cycle_discount_factor(
+    start_year: int, cycle_year: int, discount_rate: int
+) -> float:
     """Calculates the discount factor to apply for a specific year.
 
     Args:
@@ -82,12 +89,16 @@ def calculate_lcox_cost(
 
     sum_container = []
     for cycle_year in year_range:
-        cycle_discount_factor = calculate_cycle_discount_factor(year_start, cycle_year, discount_rate)
-        brownfield_value = capex_ref['brownfield'][(cycle_year, technology)]
-        greenfield_value = capex_ref['greenfield'][(cycle_year, technology)]
-        fixed_opex_value = capex_ref['other_opex'][(cycle_year, technology)]
+        cycle_discount_factor = calculate_cycle_discount_factor(
+            year_start, cycle_year, discount_rate
+        )
+        brownfield_value = capex_ref["brownfield"][(cycle_year, technology)]
+        greenfield_value = capex_ref["greenfield"][(cycle_year, technology)]
+        fixed_opex_value = capex_ref["other_opex"][(cycle_year, technology)]
         variable_opex_value = variable_cost_ref[(cycle_year, country_code, technology)]
-        cost_factor = (brownfield_value + greenfield_value + fixed_opex_value + variable_opex_value) / cycle_discount_factor
+        cost_factor = (
+            brownfield_value + greenfield_value + fixed_opex_value + variable_opex_value
+        ) / cycle_discount_factor
         sum_container.append(cost_factor)
     return sum(sum_container)
 
@@ -112,9 +123,9 @@ def get_lcost_costs(
         row.country_code,
         row.technology,
         STEEL_PLANT_LIFETIME_YEARS,
-        DISCOUNT_RATE
+        DISCOUNT_RATE,
     )
-    row['costs'] = lcox_cost
+    row["costs"] = lcox_cost
     return row
 
 
@@ -128,14 +139,18 @@ def get_lcost_capacity(plant_df: pd.DataFrame) -> dict:
         dict: A dictoinary reference for each plant containing [plant_id][year] keys.
     """
     ref_container = {}
-    for row in tqdm(plant_df.itertuples(), total=len(plant_df), desc='LCOX Capacity Ref'):
+    for row in tqdm(
+        plant_df.itertuples(), total=len(plant_df), desc="LCOX Capacity Ref"
+    ):
         ref_container[row.plant_id] = {}
         for year_start in MODEL_YEAR_RANGE:
             year_range = range(year_start, year_start + STEEL_PLANT_LIFETIME_YEARS)
             sum_container = []
             for cycle_year in year_range:
                 capacity = row.plant_capacity / KILOTON_TO_TON_FACTOR
-                cycle_discount_factor = calculate_cycle_discount_factor(year_start, cycle_year, DISCOUNT_RATE)
+                cycle_discount_factor = calculate_cycle_discount_factor(
+                    year_start, cycle_year, DISCOUNT_RATE
+                )
                 sum_container.append(capacity / cycle_discount_factor)
             ref_container[row.plant_id][year_start] = sum(sum_container)
     return ref_container
@@ -154,8 +169,12 @@ def create_df_reference(plant_df: pd.DataFrame, cols_to_create: list) -> pd.Data
     country_codes = plant_df["country_code"].unique()
     init_cols = ["year", "country_code", "technology"]
     df_list = []
-    product_range_full = list(itertools.product(MODEL_YEAR_RANGE, country_codes, TECH_REFERENCE_LIST))
-    for year, country_code, tech in tqdm(product_range_full, total=len(product_range_full), desc='DataFrame Reference'):
+    product_range_full = list(
+        itertools.product(MODEL_YEAR_RANGE, country_codes, TECH_REFERENCE_LIST)
+    )
+    for year, country_code, tech in tqdm(
+        product_range_full, total=len(product_range_full), desc="DataFrame Reference"
+    ):
         entry = dict(zip(init_cols, [year, country_code, tech]))
         df_list.append(entry)
     combined_df = pd.DataFrame(df_list)
@@ -173,12 +192,16 @@ def summarise_levelized_cost(plant_lev_cost_df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: The formatted levelized cost DataFrame.
     """
-    df_c = plant_lev_cost_df[['year', 'country_code', 'technology', 'levelized_cost']].copy()
-    df_c = df_c.groupby(['year', 'country_code', 'technology']).agg('mean')
+    df_c = plant_lev_cost_df[
+        ["year", "country_code", "technology", "levelized_cost"]
+    ].copy()
+    df_c = df_c.groupby(["year", "country_code", "technology"]).agg("mean")
     return df_c.reset_index()
 
 
-def combined_levelized_cost(lev_cost_df: pd.DataFrame, capacity_ref: dict, plant_df: pd.DataFrame) -> pd.DataFrame:
+def combined_levelized_cost(
+    lev_cost_df: pd.DataFrame, capacity_ref: dict, plant_df: pd.DataFrame
+) -> pd.DataFrame:
     """Combined the costs and capacity compoenents of levelized costs to form a new levelized_cost column.
 
     Args:
@@ -189,25 +212,28 @@ def combined_levelized_cost(lev_cost_df: pd.DataFrame, capacity_ref: dict, plant
     Returns:
         pd.DataFrame: The combined dataframe for the levelised cost.
     """
-    plant_df_c = plant_df.set_index(['plant_id']).copy()
-    lev_cost_df_c = lev_cost_df.set_index(['year', 'country_code', 'technology']).copy()
+    plant_df_c = plant_df.set_index(["plant_id"]).copy()
+    lev_cost_df_c = lev_cost_df.set_index(["year", "country_code", "technology"]).copy()
     product_ref = list(itertools.product(capacity_ref.keys(), MODEL_YEAR_RANGE))
     df_container = []
-    for plant_id, year in tqdm(product_ref, total=len(product_ref), desc='Combining LCOX'):
-        country_code = plant_df_c.loc[plant_id, 'country_code']
+    for plant_id, year in tqdm(
+        product_ref, total=len(product_ref), desc="Combining LCOX"
+    ):
+        country_code = plant_df_c.loc[plant_id, "country_code"]
         capacity_value = capacity_ref[plant_id][year]
         new_df = lev_cost_df_c.loc[(year, country_code)].copy()
-        new_df['capacity'] = capacity_value
-        new_df['levelized_cost'] =  new_df['costs'] / capacity_value
-        new_df['year'] = year
-        new_df['country_code'] = country_code
-        new_df['plant_id'] = plant_id
+        new_df["capacity"] = capacity_value
+        new_df["levelized_cost"] = new_df["costs"] / capacity_value
+        new_df["year"] = year
+        new_df["country_code"] = country_code
+        new_df["plant_id"] = plant_id
         df_container.append(new_df)
     return pd.concat(df_container).reset_index()
 
 
 def create_levelized_cost(
-    plant_df: pd.DataFrame, variable_costs: pd.DataFrame, capex_ref: dict) -> pd.DataFrame:
+    plant_df: pd.DataFrame, variable_costs: pd.DataFrame, capex_ref: dict
+) -> pd.DataFrame:
     """Generate a DataFrame with Levelized Cost values.
     Args:
         plant_df: Plant DataFrame containing Plant Metadata.
@@ -218,15 +244,34 @@ def create_levelized_cost(
         pd.DataFrame: A DataFrame with Levelized Cost of Steelmaking values.
     """
 
-    brownfield_capex_ref = capex_ref['brownfield'].reset_index().set_index(['Year', 'Technology']).to_dict()['value']
-    greenfield_capex_ref = capex_ref['greenfield'].reset_index().set_index(['Year', 'Technology']).to_dict()['value']
-    other_opex_ref = capex_ref['other_opex'].reset_index().set_index(['Year', 'Technology']).to_dict()['value']
-    variable_cost_ref = variable_costs.reset_index().set_index(['year', 'country_code', 'technology']).to_dict()['cost']
+    brownfield_capex_ref = (
+        capex_ref["brownfield"]
+        .reset_index()
+        .set_index(["Year", "Technology"])
+        .to_dict()["value"]
+    )
+    greenfield_capex_ref = (
+        capex_ref["greenfield"]
+        .reset_index()
+        .set_index(["Year", "Technology"])
+        .to_dict()["value"]
+    )
+    other_opex_ref = (
+        capex_ref["other_opex"]
+        .reset_index()
+        .set_index(["Year", "Technology"])
+        .to_dict()["value"]
+    )
+    variable_cost_ref = (
+        variable_costs.reset_index()
+        .set_index(["year", "country_code", "technology"])
+        .to_dict()["cost"]
+    )
 
     combined_capex_ref = {
-        'brownfield': brownfield_capex_ref,
-        'greenfield': greenfield_capex_ref,
-        'other_opex': other_opex_ref
+        "brownfield": brownfield_capex_ref,
+        "greenfield": greenfield_capex_ref,
+        "other_opex": other_opex_ref,
     }
 
     df_reference = create_df_reference(plant_df, ["levelized_cost", "costs"])
@@ -245,7 +290,9 @@ def create_levelized_cost(
 
 
 @timer_func
-def generate_levelized_cost_results(scenario_dict: dict, serialize: bool = False, steel_plant_df = None) -> dict:
+def generate_levelized_cost_results(
+    scenario_dict: dict, serialize: bool = False, steel_plant_df=None
+) -> dict:
     """Full flow to create the Levelized Cost DataFrame.
 
     Args:
@@ -255,7 +302,9 @@ def generate_levelized_cost_results(scenario_dict: dict, serialize: bool = False
     Returns:
         dict: A dictionary with the Levelized Cost DataFrame.
     """
-    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
+    intermediate_path = get_scenario_pkl_path(
+        scenario_dict["scenario_name"], "intermediate"
+    )
     variable_costs_regional = read_pickle_folder(
         intermediate_path, "variable_costs_regional", "df"
     )

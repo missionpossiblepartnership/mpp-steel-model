@@ -6,9 +6,7 @@ from tqdm import tqdm
 
 # For logger
 from mppsteel.utility.function_timer_utility import timer_func
-from mppsteel.utility.file_handling_utility import (
-    read_pickle_folder, serialize_file
-)
+from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
 from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.config.model_config import (
@@ -124,13 +122,13 @@ def get_capex_values(
                             or new_technology == "BAT BF-BOF+CCU"
                             or new_technology == "BAT BF-BOF+BECCUS"
                         ):
-                        
+
                             switch_capex_value = (
                                 capex_generator(capex_dict_ref, "BAT BF-BOF", year)[
-                                "brownfield"
+                                    "brownfield"
                                 ]
                                 + capex_difference
-                                )
+                            )
                             df_temp.loc[
                                 (df_temp["Start Technology"] == technology)
                                 & (df_temp["New Technology"] == new_technology),
@@ -139,11 +137,9 @@ def get_capex_values(
 
                         else:  # bio PCI or H2PCI
                             if technology == "Avg BF-BOF":
-                                switch_capex_value = (
-                                    capex_generator(capex_dict_ref, "BAT BF-BOF", year)[
-                                    'brownfield'
-                                    ]
-                                )
+                                switch_capex_value = capex_generator(
+                                    capex_dict_ref, "BAT BF-BOF", year
+                                )["brownfield"]
                                 df_temp.loc[
                                     (df_temp["Start Technology"] == technology)
                                     & (df_temp["New Technology"] == new_technology),
@@ -238,49 +234,45 @@ def get_capex_values(
                         technology in FURNACE_GROUP_DICT["blast_furnace"]
                         and new_technology in FURNACE_GROUP_DICT["dri-bof"]
                     ):
-                        if new_technology== "DRI-Melt-BOF+CCUS":
-                            switch_capex_value=(
+                        if new_technology == "DRI-Melt-BOF+CCUS":
+                            switch_capex_value = (
                                 capex_generator(capex_dict_ref, new_technology, year)[
-                                    'greenfield'
+                                    "greenfield"
                                 ]
-                                -460/4
+                                - 460 / 4
                             )
                             df_temp.loc[
-                            (df_temp["Start Technology"] == technology)
-                            & (df_temp["New Technology"] == new_technology),
-                            "value",
-                        ] = switch_capex_value
+                                (df_temp["Start Technology"] == technology)
+                                & (df_temp["New Technology"] == new_technology),
+                                "value",
+                            ] = switch_capex_value
 
-                        elif new_technology == 'DRI-Melt-BOF' or new_technology =='DRI-Melt-BOF_100% zero-C H2':
-                            switch_capex_value=(
-                                capex_generator(capex_dict_ref, 'DRI-EAF', year)[
-                                    'greenfield'
-                                ]-
-                                capex_generator(capex_dict_ref, 'EAF', year)[
-                                    'greenfield'
+                        elif (
+                            new_technology == "DRI-Melt-BOF"
+                            or new_technology == "DRI-Melt-BOF_100% zero-C H2"
+                        ):
+                            switch_capex_value = (
+                                capex_generator(capex_dict_ref, "DRI-EAF", year)[
+                                    "greenfield"
+                                ]
+                                - capex_generator(capex_dict_ref, "EAF", year)[
+                                    "greenfield"
                                 ]
                             )
                             df_temp.loc[
-                            (df_temp["Start Technology"] == technology)
-                            & (df_temp["New Technology"] == new_technology),
-                            "value",
-                        ] = switch_capex_value
+                                (df_temp["Start Technology"] == technology)
+                                & (df_temp["New Technology"] == new_technology),
+                                "value",
+                            ] = switch_capex_value
                     elif (
-                        technology in FURNACE_GROUP_DICT['dri-eaf']
-                        and new_technology in FURNACE_GROUP_DICT['eaf-advanced']
+                        technology in FURNACE_GROUP_DICT["dri-eaf"]
+                        and new_technology in FURNACE_GROUP_DICT["eaf-advanced"]
                     ):
-                        switch_capex_value=(
-                            capex_generator(capex_dict_ref, new_technology, year)[
-                                'greenfield'
-                            ]-
-                            (
-                            capex_generator(capex_dict_ref, 'EAF', year)[
-                                'greenfield'
-                            ]-
-                            capex_generator(capex_dict_ref, 'EAF', year)[
-                                'brownfield'
-                            ]
-                            )
+                        switch_capex_value = capex_generator(
+                            capex_dict_ref, new_technology, year
+                        )["greenfield"] - (
+                            capex_generator(capex_dict_ref, "EAF", year)["greenfield"]
+                            - capex_generator(capex_dict_ref, "EAF", year)["brownfield"]
                         )
                         df_temp.loc[
                             (df_temp["Start Technology"] == technology)
@@ -310,6 +302,7 @@ def get_capex_values(
         .sort_index(ascending=True)
     )
 
+
 def greenfield_preprocessing(greenfield_df: pd.DataFrame) -> pd.DataFrame:
     """Preprocessing operations for the greenfield DataFrame in preparation for a greenfield-specific DataFrame.
 
@@ -321,12 +314,17 @@ def greenfield_preprocessing(greenfield_df: pd.DataFrame) -> pd.DataFrame:
     """
     df_c = greenfield_df.copy()
     df_c.reset_index(inplace=True)
-    df_c.columns = [col.lower().replace(' ', '_') for col in df_c.columns]
-    df_c.rename({'technology': 'base_tech'}, axis=1, inplace=True)
-    df_c = df_c[~df_c['base_tech'].isin(['Charcoal mini furnace', 'Close plant'])].copy()
-    return df_c.set_index('year')
+    df_c.columns = [col.lower().replace(" ", "_") for col in df_c.columns]
+    df_c.rename({"technology": "base_tech"}, axis=1, inplace=True)
+    df_c = df_c[
+        ~df_c["base_tech"].isin(["Charcoal mini furnace", "Close plant"])
+    ].copy()
+    return df_c.set_index("year")
 
-def create_greenfield_switching_df(gf_df: pd.DataFrame, year_range: range) -> pd.DataFrame:
+
+def create_greenfield_switching_df(
+    gf_df: pd.DataFrame, year_range: range
+) -> pd.DataFrame:
     """Creates a switching DataFrame for the greenfield DataFrame.
 
     Args:
@@ -336,18 +334,28 @@ def create_greenfield_switching_df(gf_df: pd.DataFrame, year_range: range) -> pd
     Returns:
         pd.DataFrame: A switch capex dataframe for the greenfield dataset.
     """
+
     def switch_mapper(row: pd.Series, ref_dict: dict):
         return ref_dict[row.switch_tech] - ref_dict[row.base_tech]
+
     df_container = []
-    for year in tqdm(year_range, total=len(year_range), desc='Greenfield Switch Dict'):
+    for year in tqdm(year_range, total=len(year_range), desc="Greenfield Switch Dict"):
         df = gf_df.loc[year].copy()
-        ref_dict = dict(zip(df['base_tech'], df['value']))
-        technology_df_ref = {tech: pd.DataFrame({'year': year, 'base_tech': tech, 'switch_tech': SWITCH_DICT[tech]}) for tech in TECH_REFERENCE_LIST}
+        ref_dict = dict(zip(df["base_tech"], df["value"]))
+        technology_df_ref = {
+            tech: pd.DataFrame(
+                {"year": year, "base_tech": tech, "switch_tech": SWITCH_DICT[tech]}
+            )
+            for tech in TECH_REFERENCE_LIST
+        }
         technology_df_ref = pd.concat(technology_df_ref.values())
-        technology_df_ref['switch_value'] = technology_df_ref.apply(switch_mapper, ref_dict=ref_dict, axis=1)
-        technology_df_ref.set_index(['year', 'base_tech', 'switch_tech'], inplace=True)
+        technology_df_ref["switch_value"] = technology_df_ref.apply(
+            switch_mapper, ref_dict=ref_dict, axis=1
+        )
+        technology_df_ref.set_index(["year", "base_tech", "switch_tech"], inplace=True)
         df_container.append(technology_df_ref)
     return pd.concat(df_container)
+
 
 @timer_func
 def create_capex_timeseries(serialize: bool = False) -> dict:
@@ -368,8 +376,10 @@ def create_capex_timeseries(serialize: bool = False) -> dict:
         capex_dict_ref=capex_dict,
         year_end=max_model_year,
     )
-    greenfield_df_f = greenfield_preprocessing(capex_dict['greenfield'])
-    greenfield_switch_df = create_greenfield_switching_df(greenfield_df_f, MODEL_YEAR_RANGE)
+    greenfield_df_f = greenfield_preprocessing(capex_dict["greenfield"])
+    greenfield_switch_df = create_greenfield_switching_df(
+        greenfield_df_f, MODEL_YEAR_RANGE
+    )
     if serialize:
         serialize_file(
             switching_df_with_capex, PKL_DATA_FORMATTED, "capex_switching_df"
@@ -378,6 +388,6 @@ def create_capex_timeseries(serialize: bool = False) -> dict:
             greenfield_switch_df, PKL_DATA_FORMATTED, "greenfield_switching_df"
         )
     return {
-        'capex_switching_df': switching_df_with_capex,
-        'greenfield_switching_df': greenfield_switch_df
+        "capex_switching_df": switching_df_with_capex,
+        "greenfield_switching_df": greenfield_switch_df,
     }

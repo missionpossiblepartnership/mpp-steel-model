@@ -5,21 +5,39 @@ import plotly.express as px
 from mppsteel.config.model_config import PKL_DATA_FORMATTED
 from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.utility.function_timer_utility import timer_func
-from mppsteel.utility.file_handling_utility import read_pickle_folder, get_scenario_pkl_path
+from mppsteel.utility.file_handling_utility import (
+    read_pickle_folder,
+    get_scenario_pkl_path,
+)
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.model_graphs.plotly_graphs import TECHNOLOGY_ARCHETYPE_COLORS, area_chart
-from mppsteel.model_graphs.opex_capex_graph import opex_capex_graph, opex_capex_graph_regional
-from mppsteel.model_graphs.consumption_over_time import consumption_over_time_graph, resource_line_charts
+from mppsteel.model_graphs.opex_capex_graph import (
+    opex_capex_graph,
+    opex_capex_graph_regional,
+)
+from mppsteel.model_graphs.consumption_over_time import (
+    consumption_over_time_graph,
+    resource_line_charts,
+)
 from mppsteel.model_graphs.cost_of_steelmaking_graphs import lcost_graph
-from mppsteel.model_graphs.investment_graph import investment_line_chart, investment_per_tech
-from mppsteel.model_graphs.emissions_per_tech import generate_emissivity_charts, steel_emissions_line_chart
+from mppsteel.model_graphs.investment_graph import (
+    investment_line_chart,
+    investment_per_tech,
+)
+from mppsteel.model_graphs.emissions_per_tech import (
+    generate_emissivity_charts,
+    steel_emissions_line_chart,
+)
 from mppsteel.model_graphs.tco_graph import generate_tco_charts
-from mppsteel.model_graphs.new_plant_capacity import new_plant_capacity_graph, trade_balance_graph
+from mppsteel.model_graphs.new_plant_capacity import (
+    new_plant_capacity_graph,
+    trade_balance_graph,
+)
 from mppsteel.model_graphs.combined_scenario_graphs import (
     create_combined_investment_chart,
     create_combined_emissions_chart,
     create_combined_resource_chart,
-    create_total_energy_usage_chart
+    create_total_energy_usage_chart,
 )
 
 logger = get_logger(__name__)
@@ -107,7 +125,7 @@ def generate_production_emissions(
 def generate_production_stats(
     df: pd.DataFrame, grouping_col: str, value_cols: list
 ) -> pd.DataFrame:
-    """Preprocesses a production resource usage DataFrame for the purpose of creating a graph. 
+    """Preprocesses a production resource usage DataFrame for the purpose of creating a graph.
 
     Args:
         df (pd.DataFrame): A DataFrame of production statistics.
@@ -126,7 +144,12 @@ def generate_production_stats(
     return df.reset_index(drop=True)
 
 
-def steel_production_area_chart(df: pd.DataFrame, filepath: str = None, region: str = None, scenario_name: str = None) -> px.area:
+def steel_production_area_chart(
+    df: pd.DataFrame,
+    filepath: str = None,
+    region: str = None,
+    scenario_name: str = None,
+) -> px.area:
     """Handler function for the Area graph of Steel Production.
 
     Args:
@@ -141,13 +164,13 @@ def steel_production_area_chart(df: pd.DataFrame, filepath: str = None, region: 
     filename = "steel_production_per_technology"
     graph_title = "Steel production per tech"
     df_c = df.copy()
-    region_list = df_c['region'].unique()
+    region_list = df_c["region"].unique()
     if region and (region in region_list):
         graph_title = f"{graph_title} - {region}"
-        df_c = df_c[df_c['region'] == region]
-        filename = f'{filename}_for_{region}'
+        df_c = df_c[df_c["region"] == region]
+        filename = f"{filename}_for_{region}"
     elif region and (region not in region_list):
-        raise ValueError(f'Incorrect region listed {region}')
+        raise ValueError(f"Incorrect region listed {region}")
     logger.info(f"Creating area graph output: {filename}")
     if filepath:
         filename = f"{filepath}/{filename}"
@@ -189,8 +212,12 @@ def emissions_area_chart(
     if filepath:
         filename = f"{filepath}/{filename}"
 
-    data = generate_production_emissions(
-        df, "technology", emission_cols).groupby(["year", "technology"]).agg("sum").reset_index()
+    data = (
+        generate_production_emissions(df, "technology", emission_cols)
+        .groupby(["year", "technology"])
+        .agg("sum")
+        .reset_index()
+    )
 
     return area_chart(
         data=data,
@@ -207,7 +234,14 @@ def emissions_area_chart(
 
 
 def create_opex_capex_graph(
-    variable_cost_df: pd.DataFrame, carbon_tax_timeseries: pd.DataFrame, emissivity_df: pd.DataFrame, capex_dict: dict, country_mapper: dict, year: int, filepath: str = None) -> px.bar:
+    variable_cost_df: pd.DataFrame,
+    carbon_tax_timeseries: pd.DataFrame,
+    emissivity_df: pd.DataFrame,
+    capex_dict: dict,
+    country_mapper: dict,
+    year: int,
+    filepath: str = None,
+) -> px.bar:
     """Handler function for the Opex Capex split graph.
 
     Args:
@@ -226,9 +260,27 @@ def create_opex_capex_graph(
     logger.info(f"Creating Opex Capex Graph Output: {filename}")
     if filepath:
         filename = f"{filepath}/{filename}"
-    return opex_capex_graph(variable_cost_df, carbon_tax_timeseries, emissivity_df, capex_dict, country_mapper, year, save_filepath=filename)
+    return opex_capex_graph(
+        variable_cost_df,
+        carbon_tax_timeseries,
+        emissivity_df,
+        capex_dict,
+        country_mapper,
+        year,
+        save_filepath=filename,
+    )
 
-def create_opex_capex_graph_regional(vcsmb: pd.DataFrame, carbon_tax_timeseries: pd.DataFrame, emissivity_df: pd.DataFrame, capex_dict: dict, country_mapper: dict, filepath: str = None, year: int = 2050, region: str = 'NAFTA') -> px.bar:
+
+def create_opex_capex_graph_regional(
+    vcsmb: pd.DataFrame,
+    carbon_tax_timeseries: pd.DataFrame,
+    emissivity_df: pd.DataFrame,
+    capex_dict: dict,
+    country_mapper: dict,
+    filepath: str = None,
+    year: int = 2050,
+    region: str = "NAFTA",
+) -> px.bar:
     """Handler function for the Opex Capex split graph.
 
     Args:
@@ -247,7 +299,16 @@ def create_opex_capex_graph_regional(vcsmb: pd.DataFrame, carbon_tax_timeseries:
     logger.info(f"Creating Opex Capex Graph Output: {filename}")
     if filepath:
         filename = f"{filepath}/{filename}"
-    return opex_capex_graph_regional(vcsmb, carbon_tax_timeseries, emissivity_df, capex_dict, country_mapper, save_filepath=filename, year=year, region=region)
+    return opex_capex_graph_regional(
+        vcsmb,
+        carbon_tax_timeseries,
+        emissivity_df,
+        capex_dict,
+        country_mapper,
+        save_filepath=filename,
+        year=year,
+        region=region,
+    )
 
 
 def create_investment_line_graph(
@@ -273,7 +334,9 @@ def create_investment_line_graph(
     )
 
 
-def create_investment_per_tech_graph(investment_results: pd.DataFrame, filepath: str = None) -> px.bar:
+def create_investment_per_tech_graph(
+    investment_results: pd.DataFrame, filepath: str = None
+) -> px.bar:
     """Creates a line graph showing the level of investment across all technologies.
 
     Args:
@@ -289,7 +352,9 @@ def create_investment_per_tech_graph(investment_results: pd.DataFrame, filepath:
     return investment_per_tech(investment_results, save_filepath=filename)
 
 
-def create_new_plant_capacity_graph(plant_df: pd.DataFrame, graph_type: str, filepath: str = None) -> px.line:
+def create_new_plant_capacity_graph(
+    plant_df: pd.DataFrame, graph_type: str, filepath: str = None
+) -> px.line:
     """Handler function for the New Plant Capacity graph.
 
     Args:
@@ -305,6 +370,7 @@ def create_new_plant_capacity_graph(plant_df: pd.DataFrame, graph_type: str, fil
     if filepath:
         filename = f"{filepath}/{filename}"
     return new_plant_capacity_graph(plant_df, graph_type, save_filepath=filename)
+
 
 def create_trade_balance_graph(trade_df: pd.DataFrame, filepath: str = None) -> px.line:
     """Handler function for the Trade Balance graph.
@@ -323,7 +389,12 @@ def create_trade_balance_graph(trade_df: pd.DataFrame, filepath: str = None) -> 
     return trade_balance_graph(trade_df, save_filepath=filename)
 
 
-def create_cot_graph(production_resource_usage: pd.DataFrame, resource_type: str, region: str = None, filepath: str = None) -> px.bar:
+def create_cot_graph(
+    production_resource_usage: pd.DataFrame,
+    resource_type: str,
+    region: str = None,
+    filepath: str = None,
+) -> px.bar:
     """Generates a Graph showing the consumption over time of a material resource.
 
     Args:
@@ -341,10 +412,17 @@ def create_cot_graph(production_resource_usage: pd.DataFrame, resource_type: str
     logger.info(f"Consumption Over Time Output: {filename}")
     if filepath:
         filename = f"{filepath}/{filename}"
-    return consumption_over_time_graph(production_resource_usage, resource_type=resource_type, region=region, save_filepath=filename)
+    return consumption_over_time_graph(
+        production_resource_usage,
+        resource_type=resource_type,
+        region=region,
+        save_filepath=filename,
+    )
 
 
-def create_lcost_graph(lcost_df: pd.DataFrame, chosen_year: int, filepath: str = None) -> px.bar:
+def create_lcost_graph(
+    lcost_df: pd.DataFrame, chosen_year: int, filepath: str = None
+) -> px.bar:
     """Handler function for the Levelized Cost graph.
 
     Args:
@@ -361,9 +439,14 @@ def create_lcost_graph(lcost_df: pd.DataFrame, chosen_year: int, filepath: str =
         filename = f"{filepath}/{filename}"
     return lcost_graph(lcost_df, chosen_year=chosen_year, save_filepath=filename)
 
+
 def create_tco_graph(
-    df: pd.DataFrame, year: int = None, region: str = None, 
-    tech: str = None, filepath: str = None) -> px.bar:
+    df: pd.DataFrame,
+    year: int = None,
+    region: str = None,
+    tech: str = None,
+    filepath: str = None,
+) -> px.bar:
     """Handler function for the TCO graph.
 
     Args:
@@ -376,17 +459,23 @@ def create_tco_graph(
     Returns:
         px.bar: A plotly express bar graph.
     """
-    filename = f'TCO_{year}_from_{tech}'
+    filename = f"TCO_{year}_from_{tech}"
     logger.info(f"TCO Output: {filename}")
     if region:
-        filename = f'TCO_{year}_in_{region}_from_{tech}_'
+        filename = f"TCO_{year}_in_{region}_from_{tech}_"
     if filepath:
         filename = f"{filepath}/{filename}"
-    
-    return generate_tco_charts(df, year,region, tech, save_filepath=filename)
+
+    return generate_tco_charts(df, year, region, tech, save_filepath=filename)
 
 
-def create_emissions_graph(df: pd.DataFrame, year: int = None, region: str = None, scope: str= None, filepath: str =None) -> px.bar:
+def create_emissions_graph(
+    df: pd.DataFrame,
+    year: int = None,
+    region: str = None,
+    scope: str = None,
+    filepath: str = None,
+) -> px.bar:
     """Creates an emissions graph.
 
     Args:
@@ -399,13 +488,14 @@ def create_emissions_graph(df: pd.DataFrame, year: int = None, region: str = Non
     Returns:
         px.bar: A plotly express bar graph.
     """
-    filename = f'emissivity_chart {scope}'
+    filename = f"emissivity_chart {scope}"
     if region:
-        filename = f'emissivity_chart_{scope}_in_{region}'
+        filename = f"emissivity_chart_{scope}_in_{region}"
     logger.info(f"Emissivity_chart: {filename}")
     if filepath:
         filename = f"{filepath}/{filename}"
     return generate_emissivity_charts(df, year, region, scope, save_filepath=filename)
+
 
 @timer_func
 def create_graphs(filepath: str, scenario_dict: dict) -> None:
@@ -415,51 +505,57 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
         filepath (str): The folder path you want to save the chart to. Defaults to None.
         scenario_dict (dict): A dictionary with scenarios key value mappings from the current model execution.
     """
-    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
-    final_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'final')
+    intermediate_path = get_scenario_pkl_path(
+        scenario_dict["scenario_name"], "intermediate"
+    )
+    final_path = get_scenario_pkl_path(scenario_dict["scenario_name"], "final")
     production_resource_usage = read_pickle_folder(
         final_path, "production_resource_usage", "df"
     )
-    production_emissions = read_pickle_folder(
-        final_path, "production_emissions", "df"
-    )
-    tco_ref = read_pickle_folder(
-        intermediate_path, "tco_summary_data", "df"
-    )
+    production_emissions = read_pickle_folder(final_path, "production_emissions", "df")
+    tco_ref = read_pickle_folder(intermediate_path, "tco_summary_data", "df")
     calculated_emissivity_combined_df = read_pickle_folder(
         intermediate_path, "calculated_emissivity_combined", "df"
     )
-    lcost_data = read_pickle_folder(
-        intermediate_path, "levelized_cost_updated", "df"
-    )
+    lcost_data = read_pickle_folder(intermediate_path, "levelized_cost_updated", "df")
     investment_results = read_pickle_folder(final_path, "investment_results", "df")
     capex_dict = read_pickle_folder(PKL_DATA_FORMATTED, "capex_dict", "df")
     variable_cost_df = read_pickle_folder(
         intermediate_path, "variable_costs_regional_material_breakdown", "df"
     )
     plant_result_df = read_pickle_folder(intermediate_path, "plant_result_df", "df")
-    trade_summary_results = read_pickle_folder(intermediate_path, "trade_summary_results", "df")
+    trade_summary_results = read_pickle_folder(
+        intermediate_path, "trade_summary_results", "df"
+    )
 
-    carbon_tax_timeseries = read_pickle_folder(intermediate_path, 'carbon_tax_timeseries')
+    carbon_tax_timeseries = read_pickle_folder(
+        intermediate_path, "carbon_tax_timeseries"
+    )
     rmi_mapper = create_country_mapper()
 
     steel_production_area_chart(
         production_emissions,
         filepath=filepath,
-        scenario_name=scenario_dict['scenario_name']
+        scenario_name=scenario_dict["scenario_name"],
     )
-    for region in ['India', 'China', 'NAFTA', 'Europe', 'Japan, South Korea, and Taiwan']:
+    for region in [
+        "India",
+        "China",
+        "NAFTA",
+        "Europe",
+        "Japan, South Korea, and Taiwan",
+    ]:
         steel_production_area_chart(
             df=production_emissions,
             filepath=filepath,
             region=region,
-            scenario_name=scenario_dict['scenario_name']
+            scenario_name=scenario_dict["scenario_name"],
         )
         steel_emissions_line_chart(
             df=production_emissions,
             filepath=filepath,
             region=region,
-            scenario_name=scenario_dict['scenario_name']
+            scenario_name=scenario_dict["scenario_name"],
         )
 
     for scope in ["s1", "s2", "s3", "combined"]:
@@ -470,58 +566,106 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
             df=production_resource_usage, resource=resource, filepath=filepath
         )
 
-    for resource, region in list(itertools.product(RESOURCE_COLS, ["Europe", "China", "India", "NAFTA"])):
+    for resource, region in list(
+        itertools.product(RESOURCE_COLS, ["Europe", "China", "India", "NAFTA"])
+    ):
         resource_line_charts(
-            df=production_resource_usage, resource=resource, region=region, filepath=filepath
+            df=production_resource_usage,
+            resource=resource,
+            region=region,
+            filepath=filepath,
         )
 
-    create_opex_capex_graph(variable_cost_df, carbon_tax_timeseries, calculated_emissivity_combined_df, capex_dict, rmi_mapper, year=2050, filepath=filepath)
+    create_opex_capex_graph(
+        variable_cost_df,
+        carbon_tax_timeseries,
+        calculated_emissivity_combined_df,
+        capex_dict,
+        rmi_mapper,
+        year=2050,
+        filepath=filepath,
+    )
 
-    for year, region in list(itertools.product({2030, 2050}, {'China', 'India', 'Europe', 'NAFTA'})):
-        create_opex_capex_graph_regional(variable_cost_df, carbon_tax_timeseries, calculated_emissivity_combined_df, capex_dict, rmi_mapper, year=year, region=region, filepath=filepath)
+    for year, region in list(
+        itertools.product({2030, 2050}, {"China", "India", "Europe", "NAFTA"})
+    ):
+        create_opex_capex_graph_regional(
+            variable_cost_df,
+            carbon_tax_timeseries,
+            calculated_emissivity_combined_df,
+            capex_dict,
+            rmi_mapper,
+            year=year,
+            region=region,
+            filepath=filepath,
+        )
 
-    create_investment_line_graph(investment_results, group="global", operation="cumsum", filepath=filepath)
+    create_investment_line_graph(
+        investment_results, group="global", operation="cumsum", filepath=filepath
+    )
 
     create_investment_per_tech_graph(investment_results, filepath=filepath)
 
-    create_new_plant_capacity_graph(plant_result_df, 'area', filepath=filepath)
-    create_new_plant_capacity_graph(plant_result_df, 'bar', filepath=filepath)
+    create_new_plant_capacity_graph(plant_result_df, "area", filepath=filepath)
+    create_new_plant_capacity_graph(plant_result_df, "bar", filepath=filepath)
 
     create_trade_balance_graph(trade_summary_results, filepath=filepath)
 
-    for resource_type, region in list(itertools.product({'energy', 'material'}, {'China', 'India', 'Europe', 'NAFTA'})):
-        create_cot_graph(production_resource_usage, resource_type=resource_type, region=region, filepath=filepath)
+    for resource_type, region in list(
+        itertools.product({"energy", "material"}, {"China", "India", "Europe", "NAFTA"})
+    ):
+        create_cot_graph(
+            production_resource_usage,
+            resource_type=resource_type,
+            region=region,
+            filepath=filepath,
+        )
 
     create_lcost_graph(lcost_data, 2030, filepath=filepath)
 
-    for year, region in list(itertools.product({2020, 2030, 2040, 2050}, {'China', 'India', 'Europe', 'NAFTA'})):
-        create_tco_graph(tco_ref, year, region, 'Avg BF-BOF', filepath=filepath)
+    for year, region in list(
+        itertools.product(
+            {2020, 2030, 2040, 2050}, {"China", "India", "Europe", "NAFTA"}
+        )
+    ):
+        create_tco_graph(tco_ref, year, region, "Avg BF-BOF", filepath=filepath)
 
-    for year, region, scope in list(itertools.product(
-        {2020, 2030, 2050},
-        {'China', 'India', 'Europe', 'NAFTA'},
-        {'s1_emissivity', 's2_emissivity', 's3_emissivity', 's1+s2', 'combined'}
-    )):
-        create_emissions_graph(calculated_emissivity_combined_df, year, region, scope, filepath=filepath)
+    for year, region, scope in list(
+        itertools.product(
+            {2020, 2030, 2050},
+            {"China", "India", "Europe", "NAFTA"},
+            {"s1_emissivity", "s2_emissivity", "s3_emissivity", "s1+s2", "combined"},
+        )
+    ):
+        create_emissions_graph(
+            calculated_emissivity_combined_df, year, region, scope, filepath=filepath
+        )
 
 
 @timer_func
 def create_combined_scenario_graphs(filepath: str):
-    combined_path = get_scenario_pkl_path(pkl_folder_type='combined')
+    combined_path = get_scenario_pkl_path(pkl_folder_type="combined")
     production_resource_usage = read_pickle_folder(
         combined_path, "production_resource_usage", "df"
     )
     production_emissions = read_pickle_folder(
         combined_path, "production_emissions", "df"
     )
-    investment_results = read_pickle_folder(
-        combined_path, "investment_results", "df")
+    investment_results = read_pickle_folder(combined_path, "investment_results", "df")
 
     create_combined_investment_chart(investment_results, filepath=filepath)
-    
-    create_combined_emissions_chart(production_emissions, cumulative=False, filepath=filepath)
-    create_combined_emissions_chart(production_emissions, cumulative=True, filepath=filepath)
 
-    create_combined_resource_chart(production_resource_usage, 'hydrogen_pj', filepath=filepath)
-    create_combined_resource_chart(production_resource_usage, 'electricity_pj', filepath=filepath)
+    create_combined_emissions_chart(
+        production_emissions, cumulative=False, filepath=filepath
+    )
+    create_combined_emissions_chart(
+        production_emissions, cumulative=True, filepath=filepath
+    )
+
+    create_combined_resource_chart(
+        production_resource_usage, "hydrogen_pj", filepath=filepath
+    )
+    create_combined_resource_chart(
+        production_resource_usage, "electricity_pj", filepath=filepath
+    )
     create_total_energy_usage_chart(production_resource_usage, filepath=filepath)

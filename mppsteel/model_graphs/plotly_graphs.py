@@ -69,7 +69,12 @@ def line_chart(
     """
     ## this need to be updated to account for multiple facets https://github.com/plotly/plotly.py/issues/2545
     fig_ = px.line(
-        data, x=x, y=y, color=color, text=text, color_discrete_map=color_discrete_map,
+        data,
+        x=x,
+        y=y,
+        color=color,
+        text=text,
+        color_discrete_map=color_discrete_map,
     )
     fig_.update_traces(mode="lines", hovertemplate=None)
     fig_.update_layout(

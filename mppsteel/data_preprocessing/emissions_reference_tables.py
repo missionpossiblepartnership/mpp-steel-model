@@ -11,7 +11,9 @@ from tqdm import tqdm
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import move_cols_to_front
 from mppsteel.utility.file_handling_utility import (
-    read_pickle_folder, serialize_file, get_scenario_pkl_path
+    read_pickle_folder,
+    serialize_file,
+    get_scenario_pkl_path,
 )
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.location_utility import create_country_mapper
@@ -22,6 +24,7 @@ from mppsteel.config.model_config import (
     TON_TO_KILOGRAM_FACTOR,
 )
 from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
+
 # Create logger
 logger = get_logger(__name__)
 
@@ -50,7 +53,7 @@ def generate_s1_s3_emissions(
     s3_emissions_resources = s3_emissivity_factors["Fuel"].unique().tolist()
     s1_emissivity_factors.set_index(["Metric"], inplace=True)
     s3_emissivity_factors.set_index(["Fuel", "Year"], inplace=True)
-    s1_emissivity_factors['Value'] = s1_emissivity_factors['Value']
+    s1_emissivity_factors["Value"] = s1_emissivity_factors["Value"]
 
     # Create a year range
     year_range = MODEL_YEAR_RANGE
@@ -62,15 +65,17 @@ def generate_s1_s3_emissions(
     logger.info(f"calculating emissions reference tables")
 
     def s1_s2_emissions_mapper(row):
-        if row.material_category in s1_emissivity_resources: # tCO2 / GJ
+        if row.material_category in s1_emissivity_resources:  # tCO2 / GJ
             # S1 emissions without process emissions or CCS/CCU
             s1_value = s1_emissivity_factors.loc[row.material_category]["Value"]
             row["S1"] = row.value * (s1_value / TON_TO_KILOGRAM_FACTOR)
         else:
             row["S1"] = 0
         if row.material_category in s3_emissions_resources:  # t / GJ or t / t
-            emission_unit_value = s3_emissivity_factors.loc[row.material_category, year]["value"]
-            if row.material_category == 'BF slag':
+            emission_unit_value = s3_emissivity_factors.loc[
+                row.material_category, year
+            ]["value"]
+            if row.material_category == "BF slag":
                 emission_unit_value = emission_unit_value * -1
             row["S3"] = row.value * emission_unit_value
         else:
@@ -86,7 +91,10 @@ def generate_s1_s3_emissions(
         df_c["S1"] = ""
         df_c["S2"] = ""
         df_c["S3"] = ""
-        df_c = df_c.apply(s1_s2_emissions_mapper, axis=1,)
+        df_c = df_c.apply(
+            s1_s2_emissions_mapper,
+            axis=1,
+        )
         df_list.append(df_c)
     combined_df = pd.concat(df_list)
     combined_df.drop(labels=["value"], axis=1, inplace=True)
@@ -97,7 +105,10 @@ def generate_s1_s3_emissions(
     )
     return combined_df.reset_index(drop=True).copy()
 
-def scope1_emissions_calculator(s1_emissions: pd.DataFrame, business_case_ref: dict) -> pd.DataFrame:
+
+def scope1_emissions_calculator(
+    s1_emissions: pd.DataFrame, business_case_ref: dict
+) -> pd.DataFrame:
     """Combines regular emissions with process emissions and ccs/ccu emissions to get a complete
     emissions reference for a list of technologies.
 
@@ -106,16 +117,27 @@ def scope1_emissions_calculator(s1_emissions: pd.DataFrame, business_case_ref: d
         business_case_ref (list): The busienss cases reference dictionary.
 
     Returns:
-        pd.DataFrame: A DataFrame of the emissivity for scope 1. 
+        pd.DataFrame: A DataFrame of the emissivity for scope 1.
     """
     df_c = s1_emissions.copy()
-    year_tech_product_list = itertools.product(df_c.index.get_level_values(0).unique().values, TECH_REFERENCE_LIST)
+    year_tech_product_list = itertools.product(
+        df_c.index.get_level_values(0).unique().values, TECH_REFERENCE_LIST
+    )
     for year, technology in year_tech_product_list:
-        emissions_difference = business_case_ref[(technology, "Process emissions")] - business_case_ref[(technology, "Used CO2")] - business_case_ref[(technology, "Captured CO2")]
-        df_c.loc[year, technology]["emissions"] = df_c.loc[year, technology]["emissions"] + emissions_difference
+        emissions_difference = (
+            business_case_ref[(technology, "Process emissions")]
+            - business_case_ref[(technology, "Used CO2")]
+            - business_case_ref[(technology, "Captured CO2")]
+        )
+        df_c.loc[year, technology]["emissions"] = (
+            df_c.loc[year, technology]["emissions"] + emissions_difference
+        )
     return df_c
 
-def generate_emissions_dataframe(business_cases: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+
+def generate_emissions_dataframe(
+    business_cases: pd.DataFrame,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Creates the base of an emissions DataFrame based on S1 and S3 emissions.
     Args:
         business_cases (pd.DataFrame): The standardised business cases DataFrame.
@@ -147,7 +169,7 @@ def get_s2_emissions(
     business_case_ref: dict,
     year: int,
     country_code: str,
-    technology: str
+    technology: str,
 ) -> float:
     """Calculates the Scope 2 Emissions based on the power_grid_emissions_ref and the business_case_ref, for a given technology, year and country code.
 
@@ -162,10 +184,14 @@ def get_s2_emissions(
     """
     # Scope 2 Emissions: These are the emissions it makes indirectly
     # like when the electricity or energy it buys for heating and cooling buildings
-    return power_grid_emissions_ref[(year, country_code)] * business_case_ref[(technology, 'Electricity')]
+    return (
+        power_grid_emissions_ref[(year, country_code)]
+        * business_case_ref[(technology, "Electricity")]
+    )
+
 
 def add_hydrogen_emissions_to_s3_column(
-    combined_emissions_df: pd.DataFrame, 
+    combined_emissions_df: pd.DataFrame,
     h2_emissions_ref: dict,
     business_case_ref: dict,
     country_codes: list,
@@ -179,45 +205,52 @@ def add_hydrogen_emissions_to_s3_column(
         country_codes (list): A list of all country codes of steel plants in the model.
 
     Returns:
-        pd.DataFrame: The DataFrame with the modified Scope 3 emissivity values. 
+        pd.DataFrame: The DataFrame with the modified Scope 3 emissivity values.
     """
     df = combined_emissions_df.copy()
     years = df.index.get_level_values(0).unique()
     technologies = df.index.get_level_values(1).unique()
-    year_tech_country_product = list(itertools.product(years, technologies, country_codes))
+    year_tech_country_product = list(
+        itertools.product(years, technologies, country_codes)
+    )
     for year, technology, country_code in tqdm(
-        year_tech_country_product, total=len(year_tech_country_product), desc='Hydrogen S3 emission additions'):
+        year_tech_country_product,
+        total=len(year_tech_country_product),
+        desc="Hydrogen S3 emission additions",
+    ):
         h2_emissions = h2_emissions_ref[(year, country_code)]
-        hydrogen_consumption = business_case_ref[(technology, 'Hydrogen')]
-        current_s3_value = df.loc[(year, technology), 's3_emissivity'].copy()
-        df.loc[(year, technology), 's3_emissivity'] = current_s3_value + (h2_emissions * hydrogen_consumption)
+        hydrogen_consumption = business_case_ref[(technology, "Hydrogen")]
+        current_s3_value = df.loc[(year, technology), "s3_emissivity"].copy()
+        df.loc[(year, technology), "s3_emissivity"] = current_s3_value + (
+            h2_emissions * hydrogen_consumption
+        )
     return df
 
 
 def regional_s2_emissivity(
-    power_grid_emissions_ref: dict, 
-    plant_country_codes: list, 
-    business_case_ref: dict
+    power_grid_emissions_ref: dict, plant_country_codes: list, business_case_ref: dict
 ) -> pd.DataFrame:
     """Creates a DataFrame for S2 emissivity reference for each region.
 
     Args:
-        power_grid_emissions_ref (dict): The power model values dictionary ref. 
-        plant_country_codes (list): List of all country codes in the steel plant DataFrame. 
+        power_grid_emissions_ref (dict): The power model values dictionary ref.
+        plant_country_codes (list): List of all country codes in the steel plant DataFrame.
         business_case_ref (dict): The standardised business cases reference dict.
 
     Returns:
         pd.DataFrame: A DataFrame with the S2 emissivity values for each country code, tech and year iteration.
     """
     df_list = []
-    year_country_code_tech_product = list(itertools.product(MODEL_YEAR_RANGE, plant_country_codes, TECH_REFERENCE_LIST))
-    for year, country_code, technology in tqdm(year_country_code_tech_product, total=len(year_country_code_tech_product), desc="All Country Code S2 Emission: Year Loop"):
+    year_country_code_tech_product = list(
+        itertools.product(MODEL_YEAR_RANGE, plant_country_codes, TECH_REFERENCE_LIST)
+    )
+    for year, country_code, technology in tqdm(
+        year_country_code_tech_product,
+        total=len(year_country_code_tech_product),
+        desc="All Country Code S2 Emission: Year Loop",
+    ):
         value = get_s2_emissions(
-            power_grid_emissions_ref,
-            business_case_ref,
-            year,
-            country_code,
-            technology
+            power_grid_emissions_ref, business_case_ref, year, country_code, technology
         )
         entry = {
             "year": year,
@@ -244,20 +277,24 @@ def combine_emissivity(
     """
     logger.info("Combining S2 Emissions with S1 & S3 emissivity")
     rmi_mapper = create_country_mapper()
-    s2_ref = s2_ref.reset_index(drop=True).set_index(['year', 'technology']).copy()
+    s2_ref = s2_ref.reset_index(drop=True).set_index(["year", "technology"]).copy()
     total_emissivity = s2_ref.join(
-        s1_ref.rename({'emissions': 's1_emissivity'}, axis=1)
-        ).join(s3_ref.rename({'emissions': 's3_emissivity'}, axis=1)
-    )
+        s1_ref.rename({"emissions": "s1_emissivity"}, axis=1)
+    ).join(s3_ref.rename({"emissions": "s3_emissivity"}, axis=1))
     total_emissivity["combined_emissivity"] = (
         total_emissivity["s1_emissivity"]
         + total_emissivity["s2_emissivity"]
         + total_emissivity["s3_emissivity"]
     )
-    total_emissivity['region'] = total_emissivity['country_code'].apply(lambda x: rmi_mapper[x])
+    total_emissivity["region"] = total_emissivity["country_code"].apply(
+        lambda x: rmi_mapper[x]
+    )
     return total_emissivity
 
-def final_combined_emissions_formatting(combined_emissions_df: pd.DataFrame) -> pd.DataFrame:
+
+def final_combined_emissions_formatting(
+    combined_emissions_df: pd.DataFrame,
+) -> pd.DataFrame:
     """Formats the Combined Emissions DataFrame.
 
     Args:
@@ -271,13 +308,21 @@ def final_combined_emissions_formatting(combined_emissions_df: pd.DataFrame) -> 
     # change_column_order
     new_col_order = move_cols_to_front(
         df_c,
-        ["region", "s1_emissivity", "s2_emissivity", "s3_emissivity", "combined_emissivity"],
+        [
+            "region",
+            "s1_emissivity",
+            "s2_emissivity",
+            "s3_emissivity",
+            "combined_emissivity",
+        ],
     )
     return df_c[new_col_order].reset_index()
 
 
 @timer_func
-def generate_emissions_flow(scenario_dict: dict, serialize: bool = False) -> pd.DataFrame:
+def generate_emissions_flow(
+    scenario_dict: dict, serialize: bool = False
+) -> pd.DataFrame:
     """Complete flow for createing the emissivity reference for Scopes 1, 2 & 3.
 
     Args:
@@ -285,9 +330,11 @@ def generate_emissions_flow(scenario_dict: dict, serialize: bool = False) -> pd.
         serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
 
     Returns:
-        pd.DataFrame: The combined S1, S2 & S3 emissions DataFrame reference. 
+        pd.DataFrame: The combined S1, S2 & S3 emissions DataFrame reference.
     """
-    intermediate_path = get_scenario_pkl_path(scenario_dict['scenario_name'], 'intermediate')
+    intermediate_path = get_scenario_pkl_path(
+        scenario_dict["scenario_name"], "intermediate"
+    )
     business_cases_summary = read_pickle_folder(
         PKL_DATA_FORMATTED, "standardised_business_cases", "df"
     ).reset_index()
@@ -297,9 +344,7 @@ def generate_emissions_flow(scenario_dict: dict, serialize: bool = False) -> pd.
     power_grid_emissions_ref = read_pickle_folder(
         intermediate_path, "power_grid_emissions_ref", "df"
     )
-    h2_emissions_ref = read_pickle_folder(
-        intermediate_path, "h2_emissions_ref", "df"
-    )
+    h2_emissions_ref = read_pickle_folder(intermediate_path, "h2_emissions_ref", "df")
     steel_plants = read_pickle_folder(
         PKL_DATA_FORMATTED, "steel_plants_processed", "df"
     )
@@ -317,11 +362,18 @@ def generate_emissions_flow(scenario_dict: dict, serialize: bool = False) -> pd.
         .groupby(by=["year", "technology"])
         .sum()
     )
-    s2_emissivity = regional_s2_emissivity(power_grid_emissions_ref, steel_plant_country_codes, business_case_ref)
+    s2_emissivity = regional_s2_emissivity(
+        power_grid_emissions_ref, steel_plant_country_codes, business_case_ref
+    )
     combined_emissivity = combine_emissivity(
         s1_emissivity, s2_emissivity, s3_emissivity
     )
-    combined_emissivity = add_hydrogen_emissions_to_s3_column(combined_emissivity, h2_emissions_ref, business_case_ref, steel_plant_country_codes)
+    combined_emissivity = add_hydrogen_emissions_to_s3_column(
+        combined_emissivity,
+        h2_emissions_ref,
+        business_case_ref,
+        steel_plant_country_codes,
+    )
     combined_emissivity = final_combined_emissions_formatting(combined_emissivity)
     if serialize:
         serialize_file(s1_emissivity, intermediate_path, "calculated_s1_emissivity")
