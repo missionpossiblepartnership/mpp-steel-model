@@ -37,7 +37,6 @@ def tech_capacity_splits(
     tech_choices: dict,
     capacity_dict: dict,
     active_check_results_dict: dict,
-    plant_country_code_mapper: dict,
 ) -> pd.DataFrame:
     """Create a DataFrame containing the technologies and capacities for every plant in every year.
 
@@ -46,7 +45,6 @@ def tech_capacity_splits(
         tech_choices (dict): A dictionary containing the technology choices for each plant.
         capacity_dict (dict): A dictionary containing the capacity values for each plant
         active_check_results_dict (dict): A dictionary containing a reference to whether a plant in a specified year was active or not.
-        plant_country_code_mapper (dict): A mapper of country_code to region.
 
     Returns:
         pd.DataFrame: A DataFrame containing the technologies and capacities for every plant in every year.
@@ -54,6 +52,10 @@ def tech_capacity_splits(
     logger.info("- Generating Capacity split DataFrame")
 
     df_list = []
+
+    plant_country_code_mapper = dict(
+        zip(steel_plants["plant_name"].values, steel_plants["country_code"].values)
+    )
 
     for year in tqdm(
         MODEL_YEAR_RANGE, total=len(MODEL_YEAR_RANGE), desc="Tech Capacity Splits"
@@ -70,14 +72,15 @@ def tech_capacity_splits(
                 capacity_dict, active_check_results_dict, year, plant_name
             )
         )
+        df["country_code"] = df["plant_name"].apply(
+            lambda plant_name: plant_country_code_mapper[plant_name]
+        )
         df = df[df["technology"] != ""]
         df_list.append(df)
 
     df_combined = pd.concat(df_list)
     df_combined = map_plant_id_to_df(df_combined, steel_plants, "plant_name")
-    df_combined["country_code"] = df["plant_name"].apply(
-        lambda plant: plant_country_code_mapper[plant]
-    )
+
     return df_combined
 
 
@@ -113,6 +116,7 @@ def generate_production_stats(
     tech_capacity_df["low_carbon_tech"] = tech_capacity_df["technology"].apply(
         lambda tech: "Y" if tech in TECHNOLOGY_PHASES["end_state"] else "N"
     )
+    # print(tech_capacity_df[tech_capacity_df['country_code'].isna()])
     tech_capacity_df["region"] = tech_capacity_df["country_code"].apply(
         lambda x: country_mapper[x]
     )
@@ -377,17 +381,12 @@ def production_results_flow(scenario_dict: dict, serialize: bool = False) -> dic
     )
     carbon_tax_timeseries.set_index("year", inplace=True)
     materials_list = business_cases.index.get_level_values(1).unique()
-    plant_to_country_code_ref = dict(
-        zip(
-            plant_result_df["plant_name"].values, plant_result_df["country_code"].values
-        )
-    )
+    print(plant_result_df[plant_result_df["country_code"].isna()])
     tech_capacity_df = tech_capacity_splits(
         plant_result_df,
         tech_choices_dict,
         plant_capacity_results,
         active_check_results_dict,
-        plant_to_country_code_ref,
     )
     production_results = generate_production_stats(
         tech_capacity_df,
