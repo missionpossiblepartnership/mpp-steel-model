@@ -311,8 +311,4 @@ TON_RESOURCES = [
     "Emissivity",
 ]
 
-OECD_REGIONS = [
-    'NAFTA',
-    'Europe',
-    
-]
+OECD_REGIONS = ["NAFTA", "Europe", "Japan, South Korea, and Taiwan"]
