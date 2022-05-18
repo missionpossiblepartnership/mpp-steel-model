@@ -195,7 +195,7 @@ def cost_of_steelmaking(
 
     cos_year_list = []
 
-    def calculate_cos(df, ref=None) -> float:
+    def calculate_cos(df, region_ref=None) -> float:
         df_c = df.copy()
         cos_values = df_c.apply(
             apply_cos,
@@ -210,7 +210,7 @@ def cost_of_steelmaking(
             axis=1,
         )
         cos_sum = cos_values.sum()
-        capacity_sum = extract_dict_values(capacities_dict, plant_region_ref, ref)
+        capacity_sum = extract_dict_values(capacities_dict[year], plant_region_ref, region_ref)
         return cos_sum / capacity_sum
 
     desc = "Cost of Steelmaking without Captial Charges: Year Loop"
@@ -394,6 +394,7 @@ def create_cost_of_steelmaking_data(
     )
     cc_cos_d = dict_to_df(cc_cos, region_group, True)
     standard_cos_d = dict_to_df(standard_cos, region_group, False)
+    print(standard_cos_d)
     return standard_cos_d.join(cc_cos_d).reset_index()
 
 
