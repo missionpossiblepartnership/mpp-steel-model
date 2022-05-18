@@ -78,6 +78,7 @@ def return_best_tech(
     plant_capacities: dict,
     scenario_dict: dict,
     investment_container: PlantInvestmentCycle,
+    plant_choice_container: PlantChoices,
     year: int,
     plant_name: str,
     region: str,
@@ -99,6 +100,7 @@ def return_best_tech(
         plant_capacities (dict): A dictionary containing plant: capacity/inital tech key:value pairs.
         scenario_dict (dict): Scenario dictionary containing the model run's scenario settings.
         investment_container (PlantInvestmentCycle): The PlantInvestmentCycle Instance containing each plant's investment cycle.
+        plant_choice_container (PlantChoices): The PlantChoices Instance containing each plant's choices.
         year (int): The current model year to get the best technology for.
         plant_name (str): The plant name.
         region (str): The plant's region.
@@ -215,6 +217,7 @@ def return_best_tech(
         proportions_dict,
         combined_available_list,
         transitional_switch_mode,
+        plant_choice_container
     )
 
     if not isinstance(best_choice, str):
@@ -456,7 +459,7 @@ def choose_technology(scenario_dict: dict) -> dict:
                 "switch_tech": current_tech,
                 "switch_type": "not a switch year",
             }
-            PlantChoiceContainer.update_records(entry)
+            PlantChoiceContainer.update_records('choice', entry)
 
             create_material_usage_dict(
                 material_usage_dict_container=MaterialUsageContainer,
@@ -503,7 +506,7 @@ def choose_technology(scenario_dict: dict) -> dict:
                 "switch_tech": "EAF",
                 "switch_type": "Secondary capacity is always EAF",
             }
-            PlantChoiceContainer.update_records(entry)
+            PlantChoiceContainer.update_records('choice', entry)
             PlantChoiceContainer.update_choice(year, plant_name, "EAF")
 
             create_material_usage_dict(
@@ -622,6 +625,7 @@ def choose_technology(scenario_dict: dict) -> dict:
                         plant_capacities=plant_capacities_dict,
                         scenario_dict=scenario_dict,
                         investment_container=PlantInvestmentCycleContainer,
+                        plant_choice_container=PlantChoiceContainer,
                         year=year,
                         plant_name=plant_name,
                         region=region,
@@ -653,6 +657,7 @@ def choose_technology(scenario_dict: dict) -> dict:
                             plant_capacities=plant_capacities_dict,
                             scenario_dict=scenario_dict,
                             investment_container=PlantInvestmentCycleContainer,
+                            plant_choice_container=PlantChoiceContainer,
                             year=year,
                             plant_name=plant_name,
                             region=region,
@@ -678,7 +683,7 @@ def choose_technology(scenario_dict: dict) -> dict:
 
                 entry["switch_tech"] = best_choice_tech
 
-            PlantChoiceContainer.update_records(entry)
+            PlantChoiceContainer.update_records('choice', entry)
         year_start_df = pd.concat(
             [capacity_adjusted_df, inactive_year_start_df]
         ).reset_index(drop=True)
@@ -695,7 +700,8 @@ def choose_technology(scenario_dict: dict) -> dict:
     plant_cycle_length_mapper = PlantInvestmentCycleContainer.return_cycle_lengths()
     investment_df = PlantInvestmentCycleContainer.create_investment_df()
     tech_choice_dict = PlantChoiceContainer.return_choices()
-    tech_choice_records = PlantChoiceContainer.output_records_to_df()
+    tech_choice_records = PlantChoiceContainer.output_records_to_df('choice')
+    tech_rank_records = PlantChoiceContainer.output_records_to_df('rank')
     regional_capacity_results = CapacityContainer.return_regional_capacity()
     plant_capacity_results = CapacityContainer.return_plant_capacity()
     utilization_results = UtilizationContainer.get_utilization_values()
@@ -706,6 +712,7 @@ def choose_technology(scenario_dict: dict) -> dict:
     return {
         "tech_choice_dict": tech_choice_dict,
         "tech_choice_records": tech_choice_records,
+        "tech_rank_records": tech_rank_records,
         "plant_result_df": final_steel_plant_df,
         "active_check_results_dict": active_check_results_dict,
         "investment_cycle_ref_result": investment_df,
@@ -749,6 +756,11 @@ def solver_flow(scenario_dict: dict, serialize: bool = False) -> dict:
             results_dict["tech_choice_records"],
             intermediate_path,
             "tech_choice_records",
+        )
+        serialize_file(
+            results_dict["tech_rank_records"],
+            intermediate_path,
+            "tech_rank_records",
         )
         serialize_file(
             results_dict["plant_result_df"], intermediate_path, "plant_result_df"

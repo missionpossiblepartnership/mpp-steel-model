@@ -38,7 +38,8 @@ class PlantChoices:
 
     def __init__(self):
         self.choices = {}
-        self.records = []
+        self.choice_records = []
+        self.rank_records = []
         self.active_check = {}
 
     def initiate_container(self, year_range: range):
@@ -53,16 +54,8 @@ class PlantChoices:
         if tech == "Close plant":
             self.active_check[year][plant] = False
 
-    def return_nans(self, year: int):
-        return [
-            plant for plant in self.choices[year] if pd.isna(self.choices[year][plant])
-        ]
-
     def remove_choice(self, year: int, plant: str):
         del self[year][plant]
-
-    def update_records(self, df_entry: pd.DataFrame):
-        self.records.append(df_entry)
 
     def get_choice(self, year: int, plant: str):
         return self.choices[year][plant]
@@ -70,8 +63,23 @@ class PlantChoices:
     def return_choices(self, year: int = None):
         return self.choices[year] if year else self.choices
 
-    def output_records_to_df(self):
-        return pd.DataFrame(self.records).reset_index(drop=True)
+    def return_nans(self, year: int):
+        return [
+            plant for plant in self.choices[year] if pd.isna(self.choices[year][plant])
+        ]
+
+    def update_records(self, record_type: str, df_entry: pd.DataFrame):
+        if record_type == 'choice':
+            self.choice_records.append(df_entry)
+        elif record_type == 'rank':
+            self.rank_records.append(df_entry)
+
+    def output_records_to_df(self, record_type: str):
+        if record_type == 'choice':
+            return pd.DataFrame(self.choice_records).reset_index(drop=True)
+        elif record_type == 'rank':
+            df = pd.DataFrame(self.rank_records).reset_index(drop=True)
+            return df[~df.index.duplicated(keep='first')]
 
 
 class MaterialUsage:

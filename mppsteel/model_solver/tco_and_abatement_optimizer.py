@@ -5,6 +5,7 @@ from typing import Tuple
 
 import pandas as pd
 import numpy as np
+from mppsteel.model_solver.solver_classes import PlantChoices
 
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.utils import create_bin_rank_dict, return_bin_rank
@@ -189,6 +190,27 @@ def get_tco_and_abatement_values(
     abatement_values = abatement_values.filter(items=technology_list, axis=0)
     return tco_values, abatement_values
 
+def record_ranking(combined_ranks: pd.DataFrame, plant_choice_container: PlantChoices, year: int, start_tech: str, solver_logic: str) -> None:
+    """Formats the combined rank dataframe and adds it to a plant choice container class instance.
+
+    Args:
+        combined_ranks (pd.DataFrame): A DataFrame showing the ranking.
+        plant_choice_container (PlantChoices): The PlantChoices Instance containing each plant's choices.
+        year (int): The current model cycle year.
+        start_tech (str): The base technonlogy for the ranking.
+        solver_logic (str): Determines the algorithm used to pick the best technology.
+    """
+    if not combined_ranks.empty:
+        records = combined_ranks.reset_index().copy()
+        records['year'] = year
+        records['start_tech'] = start_tech
+        records['solver_logic'] = solver_logic
+        if solver_logic == 'rank':
+            records = records[['year', 'start_tech', 'solver_logic', 'switch_tech', 'tco_rank_score', 'abatement_rank_score', 'overall_rank']]
+        elif solver_logic in {'scaled', 'scaled_bins'}:
+            records = records[['year', 'start_tech', 'solver_logic', 'switch_tech', 'tco_scaled', 'abatement_scaled', 'overall_score']]
+        records = records.set_index(['year', 'solver_logic', 'start_tech']).sort_index(ascending=True)
+        plant_choice_container.update_records('rank', records)
 
 def get_best_choice(
     tco_df: pd.DataFrame,
@@ -200,6 +222,7 @@ def get_best_choice(
     weighting_dict: dict,
     technology_list: list,
     transitional_switch_mode: bool,
+    plant_choice_container: PlantChoices
 ) -> str:
     """Returns the best technology choice from a list of potential logic according to the paramter settings provided in the function.
 
@@ -213,6 +236,7 @@ def get_best_choice(
         weighting_dict (dict): A dictionary containing the weighting scenario of lowest cost vs. emission abatement.
         technology_list (list): A list of technologies that represent valid technology switches.
         transitional_switch_mode (bool): determines the column to use for TCO values
+        plant_choice_container (PlantChoices): The PlantChoices Instance containing each plant's choices.
 
     Returns:
         str: The best technology choice for a given year.
@@ -293,6 +317,7 @@ def get_best_choice(
             combined_scales["tco_scaled"] * weighting_dict["tco"]
         ) + (combined_scales["abatement_scaled"] * weighting_dict["emissions"])
         combined_scales.sort_values("overall_score", axis=0, inplace=True)
+        record_ranking(combined_scales, plant_choice_container, year, start_tech, solver_logic)
 
         if solver_logic == "scaled":
             return combined_scales.idxmin()["overall_score"]
@@ -322,8 +347,6 @@ def get_best_choice(
             technology_list,
             rank=True,
         )
-        tco_values = tco_values.filter(items=technology_list, axis=0)
-        abatement_values = abatement_values.filter(items=technology_list, axis=0)
         tco_values.drop(
             columns=tco_values.columns.difference(["tco_rank_score"]),
             axis=1,
@@ -339,6 +362,7 @@ def get_best_choice(
             combined_ranks["tco_rank_score"] * weighting_dict["tco"]
         ) + (combined_ranks["abatement_rank_score"] * weighting_dict["emissions"])
         combined_ranks.sort_values("overall_rank", axis=0, inplace=True)
+        record_ranking(combined_ranks, plant_choice_container, year, start_tech, solver_logic)
         min_value = combined_ranks["overall_rank"].min()
         best_values = combined_ranks[combined_ranks["overall_rank"] == min_value]
 
