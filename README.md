@@ -15,7 +15,7 @@ Twenty technology archetypes for steel production are considered in the model. T
 
 Business cases for each of these archetypes consider feedstock, fuel, and energy consumption, associated emissions, and operating and capital expenditures from publicly available data sources as well as Technology Readiness Levels (TRLs).
 
-The model asses the technological, economic and ecological implications of 700+ steel plants in 12 geopolitical regions transitioning to net-zero production. Each of the 12 regions is represented with an individual set of assumptions, such as resource availability, feedstock prices, crude steel demand, scrap availability and steel production capacity.
+The model assesses the technological, economic and ecological implications of 700+ steel plants in 12 geopolitical regions transitioning to net-zero production. Each of the 12 regions is represented with an individual set of assumptions, such as resource availability, feedstock prices, crude steel demand, scrap availability and steel production capacity.
 
 ## Project Goals
 
@@ -42,8 +42,7 @@ Change the `Your_GITHUB_TOKEN` to your personal access token. You can create one
 
 ## Setting up and running the model
 
-Set up a virtual environment and activate it
-Install project requirements using pip install -r requirements.txt
+See the model setup guide in the [official documentation](https://app.gitbook.com/o/vfc6mmxMh4Zr7LjKZ5yL/s/ZgShyrOk78V0ixbxKFrP/model-set-up).
 
 ## Contacts
 
