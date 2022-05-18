@@ -11,8 +11,10 @@ from mppsteel.config.model_config import (
     CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
     MODEL_YEAR_END,
     MODEL_YEAR_START,
-    RELATIVE_REGIONAL_COST_BOUNDARY_FROM_MEAN_PCT,
+    RELATIVE_REGIONAL_COST_BOUNDARY_FROM_MEAN_PCT_OECD,
+    RELATIVE_REGIONAL_COST_BOUNDARY_FROM_MEAN_PCT_NON_OECD
 )
+from mppsteel.config.reference_lists import OECD_REGIONS
 from mppsteel.model_solver.solver_classes import (
     CapacityContainerClass,
     UtilizationContainerClass,
@@ -35,7 +37,7 @@ DATA_ENTRY_DICT_KEYS = [
 
 
 def check_relative_production_cost(
-    cos_df: pd.DataFrame, value_col: str, pct_boundary: float
+    cos_df: pd.DataFrame, value_col: str
 ) -> pd.DataFrame:
     """Adds new columns to a dataframe that groups regional cost of steelmaking dataframe around whether the region's COS are above or below the average.
 
@@ -47,14 +49,20 @@ def check_relative_production_cost(
     Returns:
         pd.DataFrame: The COS DataFrame with new columns `relative_cost_below_avg` and `relative_cost_close_to_mean`
     """
+    def map_pct_boundary(row, value_range: float, mean_val: float) -> float:
+        if row.index in OECD_REGIONS:
+            return mean_val + (value_range * RELATIVE_REGIONAL_COST_BOUNDARY_FROM_MEAN_PCT_OECD)
+        return mean_val + (value_range * RELATIVE_REGIONAL_COST_BOUNDARY_FROM_MEAN_PCT_NON_OECD)
+    def mean_boundary_checker(row, value_col) -> bool:
+        return row[value_col] < row["upper_boundary"]
     df_c = cos_df.copy()
     mean_val = df_c[value_col].mean()
     value_range = df_c[value_col].max() - df_c[value_col].min()
-    value_range_boundary = value_range * pct_boundary
-    upper_boundary = mean_val + value_range_boundary
+    df_c["upper_boundary"] = df_c.apply(
+        map_pct_boundary, value_range=value_range, mean_val=mean_val, axis=1)
     df_c["relative_cost_below_avg"] = df_c[value_col].apply(lambda x: x <= mean_val)
-    df_c["relative_cost_close_to_mean"] = df_c[value_col].apply(
-        lambda x: x < upper_boundary
+    df_c["relative_cost_close_to_mean"] = df_c.apply(
+        mean_boundary_checker, value_col=value_col, axis=1
     )
     return df_c
 
@@ -210,8 +218,7 @@ def trade_flow(
     tech_choices_ref: dict,
     year: int,
     util_min: float = CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
-    util_max: float = CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
-    relative_boundary_from_mean: float = RELATIVE_REGIONAL_COST_BOUNDARY_FROM_MEAN_PCT,
+    util_max: float = CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION
 ) -> dict:
     """Modifies an open close dictionary of metadata for each region. The following optimization steps are taken by the algorithm.
     1) Determine whether a plant can meet its current regional demand with its current utilization levels.
@@ -230,7 +237,6 @@ def trade_flow(
         year (int): The current model year.
         util_min (float, optional): The minimum capacity utilization that plants are allowed to reach before having to close existing plants. Defaults to CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION.
         util_max (float, optional): The maximum capacity utilization that plants are allowed to reach before having to open new plants. Defaults to CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION.
-        relative_boundary_from_mean (float, optional): _description_. Defaults to RELATIVE_REGIONAL_COST_BOUNDARY_FROM_MEAN_PCT.
 
     Returns:
         dict: A dictionary of open close metadata for each region.
@@ -247,7 +253,7 @@ def trade_flow(
         capacity_dict,
     )
     relative_production_cost_df = check_relative_production_cost(
-        cos_df, "cost_of_steelmaking", relative_boundary_from_mean
+        cos_df, "cost_of_steelmaking"
     )
 
     region_list = list(plant_df[MAIN_REGIONAL_SCHEMA].unique())

@@ -310,3 +310,9 @@ TON_RESOURCES = [
     "Used CO2",
     "Emissivity",
 ]
+
+OECD_REGIONS = [
+    'NAFTA',
+    'Europe',
+    
+]
