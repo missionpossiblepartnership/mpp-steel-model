@@ -66,6 +66,8 @@ def global_metaresults_calculator(
     )  # Mt
     df["capacity_utilization_factor"] = df["year"].apply(
         lambda year: utilization_results[year]["World"]
+    ).round(
+        3
     )
     df["steel_production"] = (
         df["steel_capacity"] * df["capacity_utilization_factor"]

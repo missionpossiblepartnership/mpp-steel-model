@@ -644,6 +644,14 @@ def open_close_plants(
     utilization_container.calculate_world_utilization(
         year, regional_capacities, global_demand
     )
+
+    # Standardize utilization rates across each region to ensure global production = global demand
+    world_utilization = utilization_container.get_utilization_values(year, "World")
+    for region in regions:
+        utilization_container.update_region(year, region, world_utilization)
+    logger.info(
+        f"Balanced Supply Demand results for {year}: Demand: {global_demand :0.2f}  | Production: {sum(regional_capacities.values()) * world_utilization :0.2f}"
+    )
     new_open_plants = return_modified_plants(new_active_plants, year, "open")
     investment_container.add_new_plants(
         new_open_plants["plant_name"], new_open_plants["start_of_operation"]
