@@ -213,7 +213,11 @@ def combined_levelized_cost(
         pd.DataFrame: The combined dataframe for the levelised cost.
     """
     plant_df_c = plant_df.set_index(["plant_id"]).copy()
-    lev_cost_df_c = lev_cost_df.set_index(["year", "country_code", "technology"]).sort_index(ascending=True).copy()
+    lev_cost_df_c = (
+        lev_cost_df.set_index(["year", "country_code", "technology"])
+        .sort_index(ascending=True)
+        .copy()
+    )
     product_ref = list(itertools.product(capacity_ref.keys(), MODEL_YEAR_RANGE))
     df_container = []
     for plant_id, year in tqdm(

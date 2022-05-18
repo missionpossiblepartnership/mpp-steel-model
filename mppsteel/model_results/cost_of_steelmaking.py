@@ -210,7 +210,9 @@ def cost_of_steelmaking(
             axis=1,
         )
         cos_sum = cos_values.sum()
-        capacity_sum = extract_dict_values(capacities_dict[year], plant_region_ref, region_ref)
+        capacity_sum = extract_dict_values(
+            capacities_dict[year], plant_region_ref, region_ref
+        )
         return cos_sum / capacity_sum
 
     desc = "Cost of Steelmaking without Captial Charges: Year Loop"

@@ -69,17 +69,17 @@ class PlantChoices:
         ]
 
     def update_records(self, record_type: str, df_entry: pd.DataFrame):
-        if record_type == 'choice':
+        if record_type == "choice":
             self.choice_records.append(df_entry)
-        elif record_type == 'rank':
+        elif record_type == "rank":
             self.rank_records.append(df_entry)
 
     def output_records_to_df(self, record_type: str):
-        if record_type == 'choice':
+        if record_type == "choice":
             return pd.DataFrame(self.choice_records).reset_index(drop=True)
-        elif record_type == 'rank':
+        elif record_type == "rank":
             df = pd.DataFrame(self.rank_records).reset_index(drop=True)
-            return df[~df.index.duplicated(keep='first')]
+            return df[~df.index.duplicated(keep="first")]
 
 
 class MaterialUsage:

@@ -111,7 +111,7 @@ INTERMEDIATE_RESULT_PKL_FILES = [
     "tco_summary_data",
     "trade_summary_results",
     "tech_choice_records",
-    "tech_rank_records"
+    "tech_rank_records",
 ]
 
 FINAL_RESULT_PKL_FILES = [
