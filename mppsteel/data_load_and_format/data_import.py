@@ -25,7 +25,7 @@ PE_MODEL_SHEETNAME_DICT = {
     "power": ["GridPrice", "GridEmissions", "RESPrice"],
     "hydrogen": ["Prices", "Emissions"],
     "bio": ["Feedstock_Prices", "Biomass_constraint"],
-    "ccs": ["Transport", "Storage", "Constraint"],
+    "ccs": ["Transport", "Storage", "Capture", "Constraint"],
 }
 
 
