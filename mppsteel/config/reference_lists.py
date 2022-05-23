@@ -312,3 +312,148 @@ TON_RESOURCES = [
 ]
 
 OECD_REGIONS = ["NAFTA", "Europe", "Japan, South Korea, and Taiwan"]
+
+WESTERN_EUROPE_COUNTRIES = [
+    "ITA",
+    "AND",
+    "SMR",
+    "PRT",
+    "AUT",
+    "BEL",
+    "DNK",
+    "FRO",
+    "FRA",
+    "GER",
+    "ISL",
+    "IRL",
+    "IMN",
+    "LIE",
+    "LUX",
+    "MCO",
+    "NLD",
+    "NOR",
+    "SWE",
+    "CHE",
+    "ESP",
+    "GBR",
+]
+
+EASTERN_EUROPE_COUNTRIES = [
+    "GEO",
+    "ALB",
+    "BLR",
+    "BIH",
+    "BGR",
+    "HRV",
+    "CZE",
+    "EST",
+    "FIN",
+    "GIB",
+    "GRC",
+    "VAT",
+    "HUN",
+    "LVA",
+    "LTU",
+    "MKD",
+    "MLT",
+    "MNE",
+    "POL",
+    "MDA",
+    "ROU",
+    "SRB",
+    "SVK",
+    "SVN",
+    "UKR",
+]
+
+EU_COUNTRIES = [
+    "AUT",
+    "BEL",
+    "BGR",
+    "HRV",
+    "CYP",
+    "CZE",
+    "DNK",
+    "EST",
+    "FIN",
+    "FRA",
+    "DEU",
+    "GRC",
+    "HUN",
+    "IRL",
+    "ITA",
+    "LVA",
+    "LTU",
+    "LUX",
+    "MLT",
+    "NLD",
+    "POL",
+    "PRT",
+    "ROU",
+    "SVK",
+    "SVN",
+    "ESP",
+    "SWE"
+]
+
+CIS_COUNTRIES = [
+    "ARM",
+    "AZE",
+    "BLR",
+    "KAZ",
+    "KGZ",
+    "MDA",
+    "TJK",
+    "TKM",
+    "UKR",
+    "UZB",
+    "RUS",
+]
+
+NAFTA_COUNTRIES = ["BMU", "CAN", "GRL", "MEX", "SPM", "USA"]
+
+MIDDLE_EAST_COUNTRIES = [
+    "BHR",
+    "CYP",
+    "EGY",
+    "IRN",
+    "IRQ",
+    "ISR",
+    "JOR",
+    "KWT",
+    "LBN",
+    "OMN",
+    "PSE",
+    "QAT",
+    "SAU",
+    "SYR",
+    "TUR",
+    "ARE",
+    "YEM",
+]
+
+SOUTHEAST_ASIA_COUNTRIES = [
+    "BRN",
+    "KHM",
+    "TLS",
+    "IDN",
+    "LAO",
+    "MYS",
+    "MMR",
+    "PHL",
+    "SGP",
+    "THA",
+    "VNM",
+]
+
+CENTRAL_ASIA_COUNTRIES = ["KAZ", "KGZ", "TJK", "TKM", "UZB"]
+
+SOUTH_ASIA_COUNTRIES = ["AFG", "BGD", "BTN", "IND", "IRN", "MDV", "NPL", "PAK", "LKA"]
+
+NORTH_ASIA_COUNTRIES = ["CHN", "HKG", "MAC", "MNG", "KOR", "TWN"]
+
+JAPAN_SOUTHKOREA_TAIWAN = ["JPN", "PRK", "TWN"],
+
+ALL_ASIA_COUNTRIES = CENTRAL_ASIA_COUNTRIES + SOUTH_ASIA_COUNTRIES + NORTH_ASIA_COUNTRIES + JAPAN_SOUTHKOREA_TAIWAN
+
+ALL_EUROPE_COUNTRIES = WESTERN_EUROPE_COUNTRIES + EASTERN_EUROPE_COUNTRIES
