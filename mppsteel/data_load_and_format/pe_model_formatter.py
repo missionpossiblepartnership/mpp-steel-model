@@ -60,6 +60,8 @@ RE_DICT = {
 
 def power_hydrogen_region_reference_generator(country_ref: pd.DataFrame) -> dict:
     """Creates a dictionary reference for the CCS model by mapping each model region to a distinct country code.
+    The order of regions needs to proceed from the broadest region to the individual country to ensure that
+    the lowest level of detail is preserved in a later function.
 
     Args:
         country_ref (pd.DataFrame): The country ref used to map country codes to regions.
@@ -68,17 +70,12 @@ def power_hydrogen_region_reference_generator(country_ref: pd.DataFrame) -> dict
         dict: A dictionary containing a mapping key of [country_code] to CCS value.
     """
     return {
-        "EU": get_countries_from_group(
-            country_ref, "RMI Model Region", "Europe"
+        "RoW": get_countries_from_group(
+            country_ref, "RMI Model Region", "RoW"
         ),
-        "US": NAFTA_COUNTRIES,
-        "China": ["CHN"],
-        "India": ["IND"],
-        "Russia": get_countries_from_group(
-            country_ref, "RMI Model Region", "CIS"
+        "Asia": get_countries_from_group(
+            country_ref, "Continent", "Asia"
         ),
-        "DE": ["GER"],
-        "Japan_SthKorea_Taiwan": JAPAN_SOUTHKOREA_TAIWAN,
         "South_BAU_Americas": get_countries_from_group(
             country_ref, "RMI Model Region", "South and Central America"
         ),
@@ -89,22 +86,29 @@ def power_hydrogen_region_reference_generator(country_ref: pd.DataFrame) -> dict
             country_ref, "RMI Model Region", "Africa"
         ),
         "AustralasiaOceania": get_countries_from_group(
-            country_ref, "WSA Group Region", "Oceania"
+            country_ref, "Continent", "Oceania"
         ),
         "Southeast_Asia": get_countries_from_group(
             country_ref, "RMI Model Region", "Southeast Asia"
         ),
-        "Asia": get_countries_from_group(
-            country_ref, "Continent", "Asia"
+        "EU": get_countries_from_group(
+            country_ref, "RMI Model Region", "Europe"
         ),
-        "RoW": get_countries_from_group(
-            country_ref, "RMI Model Region", "RoW"
+        "Russia": get_countries_from_group(
+            country_ref, "RMI Model Region", "CIS"
         ),
+        "US": NAFTA_COUNTRIES,
+        "Japan_SthKorea_Taiwan": JAPAN_SOUTHKOREA_TAIWAN,
+        "China": ["CHN"],
+        "India": ["IND"],
+        "DE": ["GER"],
     }
 
 
 def bio_region_reference_generator(country_ref: pd.DataFrame) -> dict:
     """Creates a dictionary reference for the Biomass model by mapping each model region to a distinct country code.
+    The order of regions needs to proceed from the broadest region to the individual country to ensure that
+    the lowest level of detail is preserved in a later function.
 
     Args:
         country_ref (pd.DataFrame): The country ref used to map country codes to regions.
@@ -114,32 +118,34 @@ def bio_region_reference_generator(country_ref: pd.DataFrame) -> dict:
     """
     return {
         "EU": get_countries_from_group(country_ref, "RMI Model Region", "Europe"),
-        "US": ["USA"],
-        "India": ["IND"],
-        "China": ["CHN"],
         "South and central Americas": get_countries_from_group(
             country_ref, "RMI Model Region", "South and Central America"
         ),
         "Africa": get_countries_from_group(country_ref, "RMI Model Region", "Africa"),
-        "AustralasiaOceania": get_countries_from_group(
-            country_ref, "WSA Group Region", "Oceania"
-        ),
-        "Carribbean": get_countries_from_group(country_ref, "Region 1", "Caribbean"),
-        "Central Asia": get_countries_from_group(country_ref, "Region 1", "Central Asia") + ["GEO", "TUR"],
         "CIS": get_countries_from_group(country_ref, "RMI Model Region", "CIS"),
-        "East Europe": get_countries_from_group(country_ref, "Region 1", "Eastern Europe"),
-        "Japan_SthKorea_Taiwan": JAPAN_SOUTHKOREA_TAIWAN,
         "Middle_East": get_countries_from_group(country_ref, "RMI Model Region", "Middle East"),
-        "NAFTA": NAFTA_COUNTRIES,
-        "North Asia": NORTH_ASIA_COUNTRIES,
-        "Russia": ["RUS"],
         "South Asia": get_countries_from_group(country_ref, "Region 1", "Southern Asia"),
         "Southeast_Asia": get_countries_from_group(country_ref, "Region 1", "South-eastern Asia"),
         "Western Europe": get_countries_from_group(country_ref, "Region 1", "Western Europe"),
+        "East Europe": get_countries_from_group(country_ref, "Region 1", "Eastern Europe"),
+        "Carribbean": get_countries_from_group(country_ref, "Region 1", "Caribbean"),
+        "Central Asia": get_countries_from_group(country_ref, "Region 1", "Central Asia") + ["GEO", "TUR"],
+        "AustralasiaOceania": get_countries_from_group(
+            country_ref, "Continent", "Oceania"
+        ),
+        "North Asia": NORTH_ASIA_COUNTRIES,
+        "Japan_SthKorea_Taiwan": JAPAN_SOUTHKOREA_TAIWAN,
+        "NAFTA": NAFTA_COUNTRIES,
+        "US": ["USA"],
+        "India": ["IND"],
+        "China": ["CHN"],
+        "Russia": ["RUS"]
     }
 
 def ccs_region_reference_generator(country_ref: pd.DataFrame) -> dict:
     """Creates a dictionary reference for the CCS model by mapping each model region to a distinct country code.
+    The order of regions needs to proceed from the broadest region to the individual country to ensure that
+    the lowest level of detail is preserved in a later function.
 
     Args:
         country_ref (pd.DataFrame): The country ref used to map country codes to regions.
@@ -149,19 +155,11 @@ def ccs_region_reference_generator(country_ref: pd.DataFrame) -> dict:
     """
     return {
         "Global": get_countries_from_group(country_ref, "RMI Model Region", "RoW"),
-        "US": ["USA"],
         "Europe": get_countries_from_group(country_ref, "RMI Model Region", "Europe"),
-        "China": ["CHN", "TWN"],
-        "India": ["IND"],
-        "Mexico": ["MEX"],
-        "Canada": ["CAN"],
         "Africa": get_countries_from_group(country_ref, "RMI Model Region", "Africa"),
         "Middle East": get_countries_from_group(
             country_ref, "RMI Model Region", "Middle East"
         ),
-        "Russia": ["RUS"],
-        "Indonesia": ["IDN"],
-        "Brazil": ["BRA"],
         "Other Latin America": get_countries_from_group(
             country_ref, "RMI Model Region", "South and Central America"
         ),
@@ -176,6 +174,14 @@ def ccs_region_reference_generator(country_ref: pd.DataFrame) -> dict:
         ),
         "Japan": ["JPN"],
         "Korea": ["KOR", "PRK"],
+        "US": ["USA"],
+        "China": ["CHN", "TWN"],
+        "India": ["IND"],
+        "Mexico": ["MEX"],
+        "Canada": ["CAN"],
+        "Russia": ["RUS"],
+        "Indonesia": ["IDN"],
+        "Brazil": ["BRA"]
     }
 
 
@@ -214,13 +220,13 @@ def final_mapper(
             total=len(year_range),
             desc="Generating PE Model Reference Dictionary",
         ):
-            for model_region in model.index.get_level_values(1).unique():
+            for model_region in set.intersection(set(reference_mapper.keys()), set(model.index.get_level_values(1).unique())):
                 for country_code in reference_mapper[model_region]:
                     final_mapper[(year, country_code)] = model.loc[
                         (year, model_region), "value"
                     ]
     else:
-        for model_region in model.index:
+        for model_region in set.intersection(set(reference_mapper.keys()), set(model.index)):
             for country_code in reference_mapper[model_region]:
                 final_mapper[country_code] = model.loc[model_region, "value"]
     return final_mapper
