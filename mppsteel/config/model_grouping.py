@@ -342,6 +342,8 @@ def gcr_flow(scenario_dict: dict) -> None:
 parser = argparse.ArgumentParser(
     description="The MPP Python Steel Model Command Line Interface", add_help=False
 )
+
+### THESE ARGUMENTS ARE FOR MAIN MODEL FLOWS: RUNNING SECTIONS OF THE MODEL IN FULL
 parser.add_argument(
     "-q",
     "--custom_scenario",
@@ -363,6 +365,9 @@ parser.add_argument(
 parser.add_argument(
     "-f", "--full_model", action="store_true", help="Runs the complete model flow"
 )  # full_flow
+
+
+### THESE ARGUMENTS ARE FOR DEVELOPMENT PRUPORSES: RUNNING SECTIONS OF THE MODEL IN ISOLATION
 parser.add_argument(
     "-s", "--solver", action="store_true", help="Runs the solver scripts directly"
 )  # solver_flow
