@@ -38,7 +38,7 @@ BIOMASS_SCENARIOS = {
 }
 
 CCS_SCENARIOS = {"high": "high", "low": "low"}
-CCS_CAPACITY_SCENARIOS = {"low": "Low", "average": "Medium", "high": "High"}
+CCS_CAPACITY_SCENARIOS = {"low": "Low", "high": "High"}
 
 SOLVER_LOGICS = {"rank": "ranked", "scale": "scaled", "bins": "scaled_bins"}
 
@@ -205,4 +205,8 @@ SCENARIO_OPTIONS = {
     "fastest_abatement": ABATEMENT_HIGH_CIRC_SCENARIO,
 }
 
-MAIN_SCENARIO_RUNS = ["baseline", "tech_moratorium", "abatement", "carbon_cost"]
+MAIN_SCENARIO_RUNS = [
+    "baseline", "baseline_high_circ",
+    "abatement", "fastest_abatement",
+    "carbon_cost", "tech_moratorium"
+]
