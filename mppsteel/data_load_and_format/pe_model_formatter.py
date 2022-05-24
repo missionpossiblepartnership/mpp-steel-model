@@ -21,6 +21,19 @@ from mppsteel.config.model_scenarios import (
     BIOMASS_SCENARIOS,
     CCS_SCENARIOS,
 )
+from mppsteel.config.reference_lists import (
+    ALL_EUROPE_COUNTRIES,
+    CENTRAL_ASIA_COUNTRIES,
+    CIS_COUNTRIES,
+    EASTERN_EUROPE_COUNTRIES,
+    EU_COUNTRIES,
+    JAPAN_SOUTHKOREA_TAIWAN,
+    NAFTA_COUNTRIES,
+    NORTH_ASIA_COUNTRIES,
+    SOUTH_ASIA_COUNTRIES,
+    SOUTHEAST_ASIA_COUNTRIES,
+    WESTERN_EUROPE_COUNTRIES
+)
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import (
     expand_melt_and_sort_years,
@@ -45,197 +58,96 @@ RE_DICT = {
     "gas": "Price of onsite gas + ccs",
 }
 
-POWER_HYDROGEN_REGION_MAPPER_LIST = {
-    "US": ["NAFTA"],
-    "EU": ["Europe"],
-    "India": ["India"],
-    "China": ["China"],
-    "Japan, South Korea, Taiwan": ["Japan, South Korea, and Taiwan"],
-    "South and central Americas": ["South and Central America"],
-    "Middle East": ["Middle East"],
-    "Africa": ["Africa"],
-    "CIS": ["CIS"],
-    "Southeast Asia": ["Southeast Asia"],
-    "RoW": ["RoW"],
-}
-
-HYDROGEN_EMISSIONS_MAPPER_LIST = {
-    "US": ["NAFTA"],
-    "EU": ["Europe", "CIS"],
-    "India": ["India", "South and Central America", "Middle East", "Africa", "RoW"],
-    "China": ["China", "Japan, South Korea, and Taiwan", "Southeast Asia"],
-}
-
-CCS_CAPACITY_REGION_MAPPER = {
-    "China": ["China"],
-    "Europe": ["Europe"],
-    "Latin America": ["South and Central America"],
-    "Middle East": ["Middle East"],
-    "North America": ["NAFTA"],
-    "Rest of Asia and Pacific": ["RoW"],
-    "North + South Korea": ["Southeast Asia"],
-    "Japan": ["Japan, South Korea, and Taiwan"],
-    "India": ["India"],
-    "Russia": ["CIS"],
-    "Africa": ["Africa"],
-}
-
-BIO_PRICE_REGION_MAPPER = {
-    "Europe": ["Europe", "CIS"],
-    "US": ["NAFTA"],
-    "China": ["China", "Southeast Asia", "Japan, South Korea, and Taiwan"],
-    "India": ["India", "RoW", "Middle East"],
-    "South and central Americas": ["South and Central America"],
-    "Africa": ["Africa"],
-}
-
-
-def bio_model_reference_generator(
-    model: pd.DataFrame, country_ref: pd.DataFrame, year_range: range
-) -> dict:
-    """Creates a dictionary reference for the Biomass model by mapping each model region to a distinct country code.
-
-    Args:
-        model (pd.DataFrame): The biomass model.
-        country_ref (pd.DataFrame): The country ref used to map country codes to regions.
-        year_range (range): The year range of the biomass model.
-
-    Returns:
-        dict: A dictionary containing a mapping key of [year, country_code] to biomodel value.
-    """
-    mapper_dict = {
-        "East Europe": [
-            "GEO",
-            "ALB",
-            "BLR",
-            "BIH",
-            "BGR",
-            "HRV",
-            "CZE",
-            "EST",
-            "FIN",
-            "GIB",
-            "GRC",
-            "VAT",
-            "HUN",
-            "LVA",
-            "LTU",
-            "MKD",
-            "MLT",
-            "MNE",
-            "POL",
-            "MDA",
-            "ROU",
-            "SRB",
-            "SVK",
-            "SVN",
-            "UKR",
-        ],
-        "Western Europe": [
-            "ITA",
-            "AND",
-            "SMR",
-            "PRT",
-            "AUT",
-            "BEL",
-            "DNK",
-            "FRO",
-            "FRA",
-            "GER",
-            "ISL",
-            "IRL",
-            "IMN",
-            "LIE",
-            "LUX",
-            "MCO",
-            "NLD",
-            "NOR",
-            "SWE",
-            "CHE",
-            "ESP",
-            "GBR",
-        ],
-        "CIS": [
-            "ARM",
-            "AZE",
-            "BLR",
-            "KAZ",
-            "KGZ",
-            "MDA",
-            "TJK",
-            "TKM",
-            "UKR",
-            "UZB",
-            "RUS",
-        ],
-        "NAFTA": ["BMU", "CAN", "GRL", "MEX", "SPM", "USA"],
-        "Middle East": [
-            "BHR",
-            "CYP",
-            "EGY",
-            "IRN",
-            "IRQ",
-            "ISR",
-            "JOR",
-            "KWT",
-            "LBN",
-            "OMN",
-            "PSE",
-            "QAT",
-            "SAU",
-            "SYR",
-            "TUR",
-            "ARE",
-            "YEM",
-        ],
-        "South and central Americas": get_countries_from_group(
-            country_ref, "RMI Model Region", "South and Central America"
-        ),
-        "Africa": get_countries_from_group(country_ref, "RMI Model Region", "Africa"),
-        "Japan + South Korea + Taiwan": ["JPN", "PRK"],
-        "North Asia, e.g., China": ["CHN", "HKG", "MAC", "MNG", "KOR", "TWN"],
-        "Caribbean": get_countries_from_group(country_ref, "Region 1", "Caribbean"),
-        "South Asia": ["AFG", "BGD", "BTN", "IND", "IRN", "MDV", "NPL", "PAK", "LKA"],
-        "Central Asia": ["KAZ", "KGZ", "TJK", "TKM", "UZB"],
-        "Southeast Asia": [
-            "BRN",
-            "KHM",
-            "TLS",
-            "IDN",
-            "LAO",
-            "MYS",
-            "MMR",
-            "PHL",
-            "SGP",
-            "THA",
-            "VNM",
-        ],
-        "Australia / Oceania": get_countries_from_group(
-            country_ref, "WSA Group Region", "Oceania"
-        ),
-    }
-    mapper_dict["Europe"] = mapper_dict["East Europe"] + mapper_dict["Western Europe"]
-    mapper_dict["US"] = ["USA"]
-    mapper_dict["China"] = ["CHN"]
-    mapper_dict["India"] = ["IND"]
-    mapper_dict["Russia"] = ["RUS"]
-
-    return final_mapper(model, mapper_dict, year_range)
-
-
-def ccs_model_reference_generator(
-    model: pd.DataFrame, country_ref: pd.DataFrame
-) -> dict:
+def power_hydrogen_region_reference_generator(country_ref: pd.DataFrame) -> dict:
     """Creates a dictionary reference for the CCS model by mapping each model region to a distinct country code.
 
     Args:
-        model (pd.DataFrame): The CCS model.
         country_ref (pd.DataFrame): The country ref used to map country codes to regions.
 
     Returns:
         dict: A dictionary containing a mapping key of [country_code] to CCS value.
     """
-    CCS_REGION_MAPPER = {
+    return {
+        "EU": get_countries_from_group(
+            country_ref, "RMI Model Region", "Europe"
+        ),
+        "US": NAFTA_COUNTRIES,
+        "China": ["CHN"],
+        "India": ["IND"],
+        "Russia": get_countries_from_group(
+            country_ref, "RMI Model Region", "CIS"
+        ),
+        "DE": ["GER"],
+        "Japan_SthKorea_Taiwan": JAPAN_SOUTHKOREA_TAIWAN,
+        "South_BAU_Americas": get_countries_from_group(
+            country_ref, "RMI Model Region", "South and Central America"
+        ),
+        "Middle_East": get_countries_from_group(
+            country_ref, "RMI Model Region", "Middle East"
+        ),
+        "Africa": get_countries_from_group(
+            country_ref, "RMI Model Region", "Africa"
+        ),
+        "AustralasiaOceania": get_countries_from_group(
+            country_ref, "WSA Group Region", "Oceania"
+        ),
+        "Southeast_Asia": get_countries_from_group(
+            country_ref, "RMI Model Region", "Southeast Asia"
+        ),
+        "Asia": get_countries_from_group(
+            country_ref, "Continent", "Asia"
+        ),
+        "RoW": get_countries_from_group(
+            country_ref, "RMI Model Region", "RoW"
+        ),
+    }
+
+
+def bio_region_reference_generator(country_ref: pd.DataFrame) -> dict:
+    """Creates a dictionary reference for the Biomass model by mapping each model region to a distinct country code.
+
+    Args:
+        country_ref (pd.DataFrame): The country ref used to map country codes to regions.
+
+    Returns:
+        dict: A dictionary containing a mapping key of [year, country_code] to biomodel value.
+    """
+    return {
+        "EU": get_countries_from_group(country_ref, "RMI Model Region", "Europe"),
+        "US": ["USA"],
+        "India": ["IND"],
+        "China": ["CHN"],
+        "South and central Americas": get_countries_from_group(
+            country_ref, "RMI Model Region", "South and Central America"
+        ),
+        "Africa": get_countries_from_group(country_ref, "RMI Model Region", "Africa"),
+        "AustralasiaOceania": get_countries_from_group(
+            country_ref, "WSA Group Region", "Oceania"
+        ),
+        "Carribbean": get_countries_from_group(country_ref, "Region 1", "Caribbean"),
+        "Central Asia": get_countries_from_group(country_ref, "Region 1", "Central Asia") + ["GEO", "TUR"],
+        "CIS": get_countries_from_group(country_ref, "RMI Model Region", "CIS"),
+        "East Europe": get_countries_from_group(country_ref, "Region 1", "Eastern Europe"),
+        "Japan_SthKorea_Taiwan": JAPAN_SOUTHKOREA_TAIWAN,
+        "Middle_East": get_countries_from_group(country_ref, "RMI Model Region", "Middle East"),
+        "NAFTA": NAFTA_COUNTRIES,
+        "North Asia": NORTH_ASIA_COUNTRIES,
+        "Russia": ["RUS"],
+        "South Asia": get_countries_from_group(country_ref, "Region 1", "Southern Asia"),
+        "Southeast_Asia": get_countries_from_group(country_ref, "Region 1", "South-eastern Asia"),
+        "Western Europe": get_countries_from_group(country_ref, "Region 1", "Western Europe"),
+    }
+
+def ccs_region_reference_generator(country_ref: pd.DataFrame) -> dict:
+    """Creates a dictionary reference for the CCS model by mapping each model region to a distinct country code.
+
+    Args:
+        country_ref (pd.DataFrame): The country ref used to map country codes to regions.
+
+    Returns:
+        dict: A dictionary containing a mapping key of [country_code] to CCS value.
+    """
+    return {
         "Global": get_countries_from_group(country_ref, "RMI Model Region", "RoW"),
         "US": ["USA"],
         "Europe": get_countries_from_group(country_ref, "RMI Model Region", "Europe"),
@@ -263,9 +175,23 @@ def ccs_model_reference_generator(
             country_ref, "RMI Model Region", "RoW"
         ),
         "Japan": ["JPN"],
-        "Korea": ["KOR"],
+        "Korea": ["KOR", "PRK"],
     }
-    return final_mapper(model, CCS_REGION_MAPPER)
+
+
+CCS_CAPACITY_REGION_MAPPER = {
+    "China": ["China"],
+    "Europe": ["Europe"],
+    "Latin America": ["South and Central America"],
+    "Middle East": ["Middle East"],
+    "North America": ["NAFTA"],
+    "Rest of Asia and Pacific": ["RoW"],
+    "North + South Korea": ["Southeast Asia"],
+    "Japan": ["Japan, South Korea, and Taiwan"],
+    "India": ["India"],
+    "Russia": ["CIS"],
+    "Africa": ["Africa"],
+}
 
 
 def final_mapper(
@@ -340,10 +266,10 @@ def model_reference_generator(
 
 
 def subset_power(
-    pdf,
+    pdf: pd.DataFrame,
     scenario_dict: dict = None,
     customer: str = "Industry",
-    grid_scenario: str = "Central",
+    grid_scenario: str = "BAU",
     cost_scenario: str = "Baseline",
     currency_conversion_factor: float = None,
     per_gj: bool = False,
@@ -351,7 +277,7 @@ def subset_power(
     """Subsets the power model according to scenario parameters passed from the scenario dict.
 
     Args:
-        pdf (_type_): The full reference power dataframe.
+        pdf (pd.DataFrame): The full reference power dataframe.
         scenario_dict (dict, optional): The scenario_dict containing the full scenario setting for the current model run. Defaults to None.
         customer (str, optional): The parameter setting for the customer column. Defaults to 'Industry'.
         grid_scenario (str, optional): The parameter setting for the grid_scenario. Defaults to 'Central'.
@@ -387,7 +313,7 @@ def subset_power(
 
 
 def subset_hydrogen(
-    h2df,
+    h2df: pd.DataFrame,
     scenario_dict: dict = None,
     prices: bool = False,
     variable: str = "H2 price",
@@ -400,7 +326,7 @@ def subset_hydrogen(
     """Subsets the hydrogen model according to scenario parameters passed from the scenario dict.
 
     Args:
-        h2df (_type_): The full reference hydrogen dataframe.
+        h2df (pd.DataFrame): The full reference hydrogen dataframe.
         scenario_dict (dict, optional): The scenario_dict containing the full scenario setting for the current model run. Defaults to None.
         prices (bool, optional): A boolean flag to determine if the variable parameter will be used to subset the model's variable column.
         variable (str, optional): The parameter setting for the variable column. Defaults to 'H2 price'.
@@ -424,11 +350,11 @@ def subset_hydrogen(
         h2df_c = h2df_c[(h2df_c["Variable"] == variable)]
     years = [year_col for year_col in h2df_c.columns if isinstance(year_col, int)]
     h2df_c = h2df_c.melt(
-        id_vars=["Region", "Unit "],
+        id_vars=["Region", "Unit"],
         value_vars=years,
         var_name="year",
         value_name="value",
-    )
+    ).copy()
     h2df_c.columns = [col.lower().strip() for col in h2df_c.columns]
     if currency_conversion_factor:
         h2df_c = convert_currency_col(h2df_c, "value", currency_conversion_factor)
@@ -447,7 +373,8 @@ def subset_bio_prices(
     bdf: pd.DataFrame,
     scenario_dict: dict = None,
     cost_scenario: str = "Medium",
-    feedstock_type: str = "Weighted average",
+    growth_scenario: str = "Stable",
+    feedstock_type: str = "Weighted Average",
     currency_conversion_factor: float = None,
 ) -> pd.DataFrame:
     """Subsets the Biomass prices model according to scenario parameters passed from the scenario dict.
@@ -456,6 +383,7 @@ def subset_bio_prices(
         bdf (pd.DataFrame): The biomass prices model
         scenario_dict (dict, optional): The scenario_dict containing the full scenario setting for the current model run. Defaults to None.
         cost_scenario (str, optional): The parameter setting for the cost_scenario column. Defaults to 'Medium'.
+        growth_scenario (str, optional): The parameter setting for the growth_scenario column. Defaults to 'Stable'.
         feedstock_type (str, optional): The parameter setting for the column feedstock type. Defaults to 'Weighted average'.
         currency_conversion_factor (float, optional): The currency conversion factor that converts one currency to another. Defaults to None.
 
@@ -466,6 +394,7 @@ def subset_bio_prices(
         cost_scenario = BIOMASS_SCENARIOS[scenario_dict["biomass_cost_scenario"]]
     bdf_c = bdf[
         (bdf["Price scenario"] == cost_scenario)
+        & (bdf["Growth scenario"] == growth_scenario)
         & (bdf["Feedstock type"] == feedstock_type)
     ].copy()
     year_pairs = [(2020, 2030), (2030, 2040), (2040, 2050)]
@@ -605,14 +534,14 @@ def subset_ccs_storage(
 
 
 def subset_ccs_constraint(
-    cdf: pd.DataFrame, scenario_dict: dict, as_mt: bool = False
+    cdf: pd.DataFrame, scenario_dict: dict, as_gt: bool = False
 ) -> pd.DataFrame:
     """Subsets the CCS transport model according to scenario parameters passed from the scenario dict.
 
     Args:
         cdf (pd.DataFrame): A DataFrame of the CCS Constraint model.
         scenario_dict (dict): The scenario_dict containing the full scenario setting for the current model run. Defaults to None.
-        as_mt (bool, optional): Converts the constraint price from per gigaton to megaton. Defaults to False.
+        as_gt (bool, optional): Converts the constraint price from per megaton to gigaton. Defaults to False.
 
     Returns:
         pd.DataFrame: A DataFrame containing the subset of the model.
@@ -627,9 +556,9 @@ def subset_ccs_constraint(
         var_name="Region",
         value_name="value",
     )
-    if as_mt:
-        df["value"] = df["value"] * GIGATON_TO_MEGATON_FACTOR
-        df["unit"] = "Mton"
+    if as_gt:
+        df["value"] = df["value"] / GIGATON_TO_MEGATON_FACTOR
+        df["unit"] = "Gton"
     df.columns = [col.lower() for col in df.columns]
     return df.set_index(["year", "region"])
 
@@ -650,6 +579,8 @@ def format_pe_data(
         dict: Dictionary of the Power & Energy data.
     """
     logger.info("Initiating full format flow for all models")
+
+    # LOAD PKL FILES
     h2_prices = read_pickle_folder(PKL_DATA_IMPORTS, "hydrogen_model", "df")["Prices"]
     h2_emissions = read_pickle_folder(PKL_DATA_IMPORTS, "hydrogen_model", "df")[
         "Emissions"
@@ -666,17 +597,13 @@ def format_pe_data(
     bio_model_constraints = read_pickle_folder(PKL_DATA_IMPORTS, "bio_model", "df")[
         "Biomass_constraint"
     ]
-    ccs_model_transport = read_pickle_folder(PKL_DATA_IMPORTS, "ccs_model", "df")[
-        "Transport"
-    ]
-    ccs_model_storage = read_pickle_folder(PKL_DATA_IMPORTS, "ccs_model", "df")[
-        "Storage"
-    ]
-    ccs_model_constraints = read_pickle_folder(PKL_DATA_IMPORTS, "ccs_model", "df")[
-        "Constraint"
-    ]
+    ccs_model = read_pickle_folder(PKL_DATA_IMPORTS, "ccs_model", "df")
+    ccs_model_transport = ccs_model["Transport"]
+    ccs_model_storage = ccs_model["Storage"]
+    ccs_model_constraints = ccs_model["Constraint"]
     country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
 
+    # FORMAT INITIAL DATA
     h2_prices_f = subset_hydrogen(
         h2_prices, scenario_dict, prices=True, price_per_gj=standarside_units
     )  # from usd / kg to usd / gj
@@ -702,36 +629,30 @@ def format_pe_data(
         ccs_model_storage, scenario_dict
     )  # no conversion required
     ccs_model_constraints_f = subset_ccs_constraint(
-        ccs_model_constraints, scenario_dict, as_mt=True
-    )  # from Gt to Mt
+        ccs_model_constraints, scenario_dict, as_gt=False
+    )  # from Mt to Gt
 
-    h2_prices_ref = model_reference_generator(
-        h2_prices_f, country_ref, POWER_HYDROGEN_REGION_MAPPER_LIST, MODEL_YEAR_RANGE
+    # CREATE REFERENCE_DFs
+    power_hydrogen_regions = power_hydrogen_region_reference_generator(country_ref)
+    power_grid_prices_ref = final_mapper(
+        power_grid_prices_f, power_hydrogen_regions, MODEL_YEAR_RANGE
     )
-    h2_emissions_ref = model_reference_generator(
-        h2_emissions_f, country_ref, HYDROGEN_EMISSIONS_MAPPER_LIST, MODEL_YEAR_RANGE
+    power_grid_emissions_ref = final_mapper(
+        power_grid_emissions_f, power_hydrogen_regions, MODEL_YEAR_RANGE
     )
-    power_grid_prices_ref = model_reference_generator(
-        power_grid_prices_f,
-        country_ref,
-        POWER_HYDROGEN_REGION_MAPPER_LIST,
-        MODEL_YEAR_RANGE,
+    h2_prices_ref = final_mapper(
+        h2_prices_f, power_hydrogen_regions, MODEL_YEAR_RANGE
     )
-    power_grid_emissions_ref = model_reference_generator(
-        power_grid_emissions_f,
-        country_ref,
-        POWER_HYDROGEN_REGION_MAPPER_LIST,
-        MODEL_YEAR_RANGE,
+    h2_emissions_ref = final_mapper(
+        h2_emissions_f, power_hydrogen_regions, MODEL_YEAR_RANGE
     )
-    bio_model_prices_ref = model_reference_generator(
-        bio_model_prices_f, country_ref, BIO_PRICE_REGION_MAPPER, MODEL_YEAR_RANGE
+    bio_regions = bio_region_reference_generator(country_ref)
+    bio_model_prices_ref = final_mapper(
+        bio_model_prices_f, bio_regions, MODEL_YEAR_RANGE
     )
-    ccs_model_storage_ref = ccs_model_reference_generator(
-        ccs_model_storage_f, country_ref
-    )
-    ccs_model_transport_ref = ccs_model_reference_generator(
-        ccs_model_transport_f, country_ref
-    )
+    ccs_regions = ccs_region_reference_generator(country_ref)
+    ccs_model_storage_ref = final_mapper(ccs_model_storage_f, ccs_regions)
+    ccs_model_transport_ref = final_mapper(ccs_model_transport_f, ccs_regions)
     ccs_model_constraints_ref = model_reference_generator(
         ccs_model_constraints_f,
         country_ref,
