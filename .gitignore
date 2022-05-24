@@ -151,3 +151,6 @@ experimental.py
 
 # devcontainer
 .devcontainer
+
+# jupyter notebooks
+.ipynb_checkpoints
