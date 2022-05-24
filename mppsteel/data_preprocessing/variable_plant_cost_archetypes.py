@@ -3,6 +3,7 @@
 import itertools
 import pandas as pd
 from tqdm import tqdm
+from pathlib import Path
 
 from mppsteel.config.model_config import (
     PKL_DATA_FORMATTED,
@@ -29,7 +30,7 @@ from mppsteel.utility.dataframe_utility import convert_currency_col
 logger = get_logger(__name__)
 
 
-def generate_feedstock_dict(eur_to_usd_rate: float) -> dict:
+def generate_feedstock_dict(eur_to_usd_rate: float, project_dir=None) -> dict:
     """Creates a feedstock dictionary that combines all non-energy model commodities into one dictionary.
     The dictionary has a pairing of the commodity name and the price.
 
@@ -46,11 +47,16 @@ def generate_feedstock_dict(eur_to_usd_rate: float) -> dict:
             if row.Metric in {"BF slag", "Other slag"}
             else row.Value
         )
-
-    feedstock_prices = read_pickle_folder(PKL_DATA_IMPORTS, "feedstock_prices", "df")
+    if project_dir is not None:
+        feedstock_prices = read_pickle_folder(project_dir / PKL_DATA_IMPORTS, "feedstock_prices", "df")
+    else:
+        feedstock_prices = read_pickle_folder(PKL_DATA_IMPORTS, "feedstock_prices", "df")
     feedstock_prices = convert_currency_col(feedstock_prices, "Value", eur_to_usd_rate)
     feedstock_prices["Value"] = feedstock_prices.apply(standardise_units, axis=1)
-    commodities_df = read_pickle_folder(PKL_DATA_FORMATTED, "commodities_df", "df")
+    if project_dir is not None:
+        commodities_df = read_pickle_folder(project_dir / PKL_DATA_FORMATTED, "commodities_df", "df")
+    else:
+        commodities_df = read_pickle_folder(PKL_DATA_FORMATTED, "commodities_df", "df")
     commodities_dict = {
         "Plastic waste": sum(
             commodities_df["netenergy_gj"] * commodities_df["implied_price"]
