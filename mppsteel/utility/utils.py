@@ -186,9 +186,10 @@ def get_dict_keys_by_value(base_dict: dict, value):
 
 def multiprocessing_scenarios(scenario_options: list, func):
     # Multiprocessing
+    virtual_cores = len(scenario_options)
     n_cores = mp.cpu_count()
-    logger.info(f"{n_cores} cores detected")
-    pool = mp.Pool(processes=n_cores)
+    logger.info(f"{n_cores} cores detected, creating {virtual_cores} virtual cores")
+    pool = mp.Pool(processes=virtual_cores)
 
     # Model flow - Load reusable data
     for scenario in scenario_options:
