@@ -49,3 +49,22 @@ def test_plant_variable_costs_electricity(business_case):
     actual = df.cost.values[0]
     assert actual == expected
 
+
+def test_plant_variable_costs_hydrogen(business_case):
+    """
+    Assert that cost is calculated correctly for hydrogen material_category.
+    """
+    value, h2_price = 1.0, 0.5
+    expected = value * h2_price
+    year_country = 2020, "DEU"
+    business_case |= {"value": value, "material_category": "Hydrogen"}
+    business_cases = pd.DataFrame([business_case])
+    input_data = PlantVariableCostsInput(
+        product_range_year_country=[year_country],
+        business_cases=business_cases,
+        h2_prices_ref={year_country: h2_price},
+        steel_plant_region_ng_dict={"DEU": 0},
+    )
+    df = plant_variable_costs(input_data)
+    actual = df.cost.values[0]
+    assert actual == expected
