@@ -31,6 +31,9 @@ def business_case():
 
 
 def test_plant_variable_costs_electricity(business_case):
+    """
+    Assert that cost is calculated correctly for electricity material_category.
+    """
     value, power_grid_price = 1.0, 0.5
     expected = value * power_grid_price
     year_country = 2020, "DEU"
@@ -45,3 +48,4 @@ def test_plant_variable_costs_electricity(business_case):
     df = plant_variable_costs(input_data)
     actual = df.cost.values[0]
     assert actual == expected
+
