@@ -1,6 +1,9 @@
 """Config file for model parameters"""
 
+from pathlib import Path
+
 # PATH NAMES
+PROJECT_PATH = Path(__file__).parent.parent.parent
 CORE_DATA_PATH = "mppsteel/data"
 LOG_PATH = "logs/"
 TEST_FOLDER = "tests/"
@@ -122,3 +125,4 @@ FINAL_RESULT_PKL_FILES = [
     "green_capacity_ratio",
     "cost_of_steelmaking",
 ]
+
