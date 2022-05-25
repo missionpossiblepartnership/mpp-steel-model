@@ -88,3 +88,24 @@ def test_plant_variable_costs_biomass(business_case):
     df = plant_variable_costs(input_data)
     actual = df.cost.values[0]
     assert actual == expected
+
+
+def test_plant_variable_costs_captured_co2(business_case):
+    """
+    Assert that cost is calculated correctly for the captured_co2 material_category.
+    """
+    value, transport_price, storage_price = 1.0, 0.25, 0.25
+    expected = value * (transport_price + storage_price)
+    year_country = 2020, "DEU"
+    business_case |= {"value": value, "material_category": "Captured CO2"}
+    business_cases = pd.DataFrame([business_case])
+    input_data = PlantVariableCostsInput(
+        product_range_year_country=[year_country],
+        business_cases=business_cases,
+        ccs_model_transport_ref={year_country[-1]: transport_price},
+        ccs_model_storage_ref={year_country[-1]: storage_price},
+        steel_plant_region_ng_dict={"DEU": 0},
+    )
+    df = plant_variable_costs(input_data)
+    actual = df.cost.values[0]
+    assert actual == expected
