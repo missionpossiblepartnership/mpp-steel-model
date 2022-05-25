@@ -136,7 +136,7 @@ dmypy.json
 *.log
 
 # tests
-mppsteel/tests/business_case_tests
+mppsteel/model_tests/business_case_tests
 pandera_testing.py
 
 # pickle files
@@ -154,3 +154,9 @@ experimental.py
 
 # jupyter notebooks
 .ipynb_checkpoints
+
+# macOS
+.DS_Store
+
+# PyCharm
+.idea
