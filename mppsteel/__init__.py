@@ -5,4 +5,3 @@ from mppsteel import model_solver
 from mppsteel import model_results
 from mppsteel import model_graphs
 from mppsteel import data_validation
-from mppsteel import model_tests
