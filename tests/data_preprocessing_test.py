@@ -32,7 +32,7 @@ def business_case():
 
 def test_plant_variable_costs_electricity(business_case):
     """
-    Assert that cost is calculated correctly for electricity material_category.
+    Assert that cost is calculated correctly for the electricity material_category.
     """
     value, power_grid_price = 1.0, 0.5
     expected = value * power_grid_price
@@ -52,7 +52,7 @@ def test_plant_variable_costs_electricity(business_case):
 
 def test_plant_variable_costs_hydrogen(business_case):
     """
-    Assert that cost is calculated correctly for hydrogen material_category.
+    Assert that cost is calculated correctly for the hydrogen material_category.
     """
     value, h2_price = 1.0, 0.5
     expected = value * h2_price
@@ -63,6 +63,26 @@ def test_plant_variable_costs_hydrogen(business_case):
         product_range_year_country=[year_country],
         business_cases=business_cases,
         h2_prices_ref={year_country: h2_price},
+        steel_plant_region_ng_dict={"DEU": 0},
+    )
+    df = plant_variable_costs(input_data)
+    actual = df.cost.values[0]
+    assert actual == expected
+
+
+def test_plant_variable_costs_biomass(business_case):
+    """
+    Assert that cost is calculated correctly for the biomass material_category.
+    """
+    value, bio_price = 1.0, 0.5
+    expected = value * bio_price
+    year_country = 2020, "DEU"
+    business_case |= {"value": value, "material_category": "Biomass"}
+    business_cases = pd.DataFrame([business_case])
+    input_data = PlantVariableCostsInput(
+        product_range_year_country=[year_country],
+        business_cases=business_cases,
+        bio_model_prices_ref={year_country: bio_price},
         steel_plant_region_ng_dict={"DEU": 0},
     )
     df = plant_variable_costs(input_data)
