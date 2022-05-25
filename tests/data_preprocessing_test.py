@@ -20,7 +20,7 @@ from mppsteel.data_preprocessing.variable_plant_cost_archetypes import PlantVari
 
 
 @pytest.fixture
-def business_case_row():
+def business_case():
     return {
         "technology": "Avg BF-BOF",
         "material_category": "Electricity",
@@ -30,17 +30,18 @@ def business_case_row():
     }
 
 
-def test_plant_variable_costs_electricity(business_case_row):
+def test_plant_variable_costs_electricity(business_case):
     value, power_grid_price = 1.0, 0.5
     expected = value * power_grid_price
     year_country = 2020, "DEU"
-    business_case_row["value"] = value
-    business_cases = pd.DataFrame([business_case_row])
+    business_case |= {"value": value, "material_category": "Electricity"}
+    business_cases = pd.DataFrame([business_case])
     input_data = PlantVariableCostsInput(
         product_range_year_country=[year_country],
         business_cases=business_cases,
         power_grid_prices_ref={year_country: power_grid_price},
         steel_plant_region_ng_dict={"DEU": 0},
     )
-    df = (plant_variable_costs(input_data))
-    assert df.cost.values[0] == expected
+    df = plant_variable_costs(input_data)
+    actual = df.cost.values[0]
+    assert actual == expected
