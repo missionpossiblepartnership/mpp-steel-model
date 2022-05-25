@@ -160,3 +160,7 @@ experimental.py
 
 # PyCharm
 .idea
+
+# vim
+.*swp
+.*swo
