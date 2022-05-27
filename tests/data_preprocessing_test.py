@@ -138,3 +138,23 @@ def test_plant_variable_costs_natural_gas(business_case):
         df = plant_variable_costs(input_data)
         actual = df.cost.values[0]
         assert actual == expected
+
+
+def test_plant_variable_costs_plastic_waste(business_case):
+    """
+    Assert that cost is calculated correctly for the plastic_waste material_category.
+    """
+    value, plastic_waste_price = 1.0, 0.5
+    expected = value * plastic_waste_price
+    year_country = 2020, "DEU"
+    business_case |= {"value": value, "material_category": "Plastic waste"}
+    business_cases = pd.DataFrame([business_case])
+    input_data = PlantVariableCostsInput(
+        product_range_year_country=[year_country],
+        business_cases=business_cases,
+        feedstock_dict={"Plastic waste": plastic_waste_price},
+        steel_plant_region_ng_dict={"DEU": 0},
+    )
+    df = plant_variable_costs(input_data)
+    actual = df.cost.values[0]
+    assert actual == expected
