@@ -116,7 +116,7 @@ def data_preprocessing_generic() -> None:
 def data_preprocessing_scenarios(scenario_dict: dict) -> None:
     get_steel_demand(scenario_dict=scenario_dict, serialize=True)
     generate_timeseries(scenario_dict=scenario_dict, serialize=True)
-    format_pe_data(scenario_dict=scenario_dict, serialize=True, standarside_units=True)
+    format_pe_data(scenario_dict=scenario_dict, serialize=True, standardize_units=True)
     generate_preprocessed_emissions_data(serialize=True)
     generate_emissions_flow(scenario_dict=scenario_dict, serialize=True)
     generate_variable_plant_summary(scenario_dict, serialize=True)

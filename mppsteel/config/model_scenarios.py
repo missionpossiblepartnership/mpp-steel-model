@@ -33,6 +33,11 @@ GRID_DECARBONISATION_SCENARIOS = {
     "high": "BAU",
 }
 
+FOSSIL_FUEL_SCENARIOS = {
+    "low": "Decarbonized",
+    "high": "BAU",
+}
+
 BIOMASS_SCENARIOS = {
     "average": "Medium",
 }
@@ -54,6 +59,7 @@ SCENARIO_SETTINGS = {
     "biomass_cost_scenario": BIOMASS_SCENARIOS.keys(),
     "ccs_cost_scenario": CCS_SCENARIOS.keys(),
     "ccs_capacity_scenario": CCS_CAPACITY_SCENARIOS.keys(),
+    "fossil_fuel_scenario": FOSSIL_FUEL_SCENARIOS.keys(),
     "steel_demand_scenario": STEEL_DEMAND_SCENARIO_MAPPER.keys(),
     "tech_switch_scenario": TECH_SWITCH_SCENARIOS.keys(),
     "solver_logic": SOLVER_LOGICS.keys(),
@@ -74,6 +80,7 @@ DEFAULT_SCENARIO = {
     "biomass_cost_scenario": "average",  # average
     "ccs_cost_scenario": "low",  # low / average
     "ccs_capacity_scenario": "low",  # low / high
+    "fossil_fuel_scenario": "high", # low / high
     "steel_demand_scenario": "average",  # bau / average / high
     "tech_switch_scenario": "lowest_cost",  # max_abatement / lowest_cost / equal_weight
     "solver_logic": "scale",  # scale / rank / bins
@@ -93,6 +100,7 @@ TECH_MORATORIUM = {
     "biomass_cost_scenario": "average",
     "ccs_cost_scenario": "low",
     "ccs_capacity_scenario": "low",
+    "fossil_fuel_scenario": "high",
     "steel_demand_scenario": "bau",
     "tech_switch_scenario": "lowest_cost",
     "solver_logic": "rank",
@@ -112,6 +120,7 @@ CARBON_COST = {
     "biomass_cost_scenario": "average",
     "ccs_cost_scenario": "low",
     "ccs_capacity_scenario": "low",
+    "fossil_fuel_scenario": "high",
     "steel_demand_scenario": "bau",
     "tech_switch_scenario": "lowest_cost",
     "solver_logic": "rank",
@@ -131,6 +140,7 @@ BAU_SCENARIO = {
     "biomass_cost_scenario": "average",
     "ccs_cost_scenario": "low",
     "ccs_capacity_scenario": "low",
+    "fossil_fuel_scenario": "high",
     "steel_demand_scenario": "bau",
     "tech_switch_scenario": "lowest_cost",
     "solver_logic": "rank",
@@ -150,6 +160,7 @@ BAU_HIGH_CIRC_SCENARIO = {
     "biomass_cost_scenario": "average",
     "ccs_cost_scenario": "low",
     "ccs_capacity_scenario": "low",
+    "fossil_fuel_scenario": "high",
     "steel_demand_scenario": "high",
     "tech_switch_scenario": "lowest_cost",
     "solver_logic": "rank",
@@ -169,6 +180,7 @@ ABATEMENT_SCENARIO = {
     "biomass_cost_scenario": "average",
     "ccs_cost_scenario": "low",
     "ccs_capacity_scenario": "low",
+    "fossil_fuel_scenario": "high",
     "steel_demand_scenario": "bau",
     "tech_switch_scenario": "max_abatement",
     "solver_logic": "rank",
@@ -188,6 +200,7 @@ ABATEMENT_HIGH_CIRC_SCENARIO = {
     "biomass_cost_scenario": "average",
     "ccs_cost_scenario": "low",
     "ccs_capacity_scenario": "low",
+    "fossil_fuel_scenario": "high",
     "steel_demand_scenario": "high",
     "tech_switch_scenario": "max_abatement",
     "solver_logic": "rank",
