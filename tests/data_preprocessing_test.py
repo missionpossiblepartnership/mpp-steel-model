@@ -208,3 +208,51 @@ def test_plant_variable_costs_iron_ore(business_case):
     assert actual == expected
 
 
+def test_plant_variable_costs_bf_slag(business_case):
+    """
+    Assert that cost is calculated correctly for the bf_slag material_category.
+    """
+    value, price = 1.0, 0.5
+    material_category = "BF slag"
+    expected = value * price
+    year_country = 2020, "DEU"
+    business_case |= {"value": value, "material_category": material_category}
+    business_cases = pd.DataFrame([business_case])
+    input_data = PlantVariableCostsInput(
+        product_range_year_country=[year_country],
+        business_cases=business_cases,
+        feedstock_dict={material_category: price},
+        steel_plant_region_ng_dict={"DEU": 0},
+    )
+    df = plant_variable_costs(input_data)
+    actual = df.cost.values[0]
+    assert actual == expected
+
+
+def test_plant_variable_costs_steam(business_case):
+    """
+    Assert that cost is calculated correctly for the steam material_category.
+    """
+    value, price, year, country_code = 1.0, 0.5, 2020, "DEU"
+    material_category = "Steam"
+    year_country = year, country_code
+    expected = value * price
+    energy_price_rows = [
+        [material_category, year, price],
+    ]
+    static_energy_prices = pd.DataFrame(
+        energy_price_rows, columns=["Metric", "Year", "Value"]
+    ).set_index(["Metric", "Year"])
+    business_case |= {"value": value, "material_category": material_category}
+    business_cases = pd.DataFrame([business_case])
+    input_data = PlantVariableCostsInput(
+        product_range_year_country=[year_country],
+        business_cases=business_cases,
+        static_energy_prices=static_energy_prices,
+        steel_plant_region_ng_dict={"DEU": 0},
+    )
+    df = plant_variable_costs(input_data)
+    actual = df.cost.values[0]
+    assert actual == expected
+
+
