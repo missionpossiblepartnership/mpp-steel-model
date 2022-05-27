@@ -80,11 +80,6 @@ def plant_variable_costs(scenario_dict: dict) -> pd.DataFrame:
     steel_plants = read_pickle_folder(
         PKL_DATA_FORMATTED, "steel_plants_processed", "df"
     )
-    steel_plant_region_ng_dict = (
-        steel_plants[["country_code", "cheap_natural_gas"]]
-        .set_index("country_code")
-        .to_dict()["cheap_natural_gas"]
-    )
     power_grid_prices_ref = read_pickle_folder(
         intermediate_path, "power_grid_prices_ref", "df"
     )
@@ -97,6 +92,9 @@ def plant_variable_costs(scenario_dict: dict) -> pd.DataFrame:
     )
     ccs_model_storage_ref = read_pickle_folder(
         intermediate_path, "ccs_model_storage_ref", "df"
+    )
+    fossil_fuel_ref = read_pickle_folder(
+        intermediate_path, "fossil_fuel_ref", "df"
     )
     business_cases = read_pickle_folder(
         PKL_DATA_FORMATTED, "standardised_business_cases", "df"
@@ -120,7 +118,6 @@ def plant_variable_costs(scenario_dict: dict) -> pd.DataFrame:
             year=year,
             country_code=country_code,
             business_cases_df=business_cases,
-            ng_dict=steel_plant_region_ng_dict,
             feedstock_dict=feedstock_dict,
             static_energy_df=static_energy_prices,
             electricity_ref=power_grid_prices_ref,
@@ -128,6 +125,7 @@ def plant_variable_costs(scenario_dict: dict) -> pd.DataFrame:
             bio_ref=bio_model_prices_ref,
             ccs_storage_ref=ccs_model_storage_ref,
             ccs_transport_ref=ccs_model_transport_ref,
+            fossil_fuel_ref=fossil_fuel_ref,
         )
         df_list.append(df)
 
@@ -150,7 +148,7 @@ def vc_mapper(
     ccs_storage_ref: dict,
     feedstock_dict: dict,
     static_energy_df: pd.DataFrame,
-    ng_flag: int,
+    fossil_fuel_ref: dict,
 ) -> float:
     """_summary_
 
@@ -166,7 +164,7 @@ def vc_mapper(
         ccs_storage_ref (dict): The ccs storage price reference dict.
         feedstock_dict (dict): The feedstock price reference dict.
         static_energy_df (pd.DataFrame): The static energy reference dict.
-        ng_flag (int): The natural gas flag price.
+        fossil_fuel_ref (dict): The reference for the fossil_fuel_prices.
 
     Returns:
         float: A float value containing the variable cost value to assign.
@@ -185,21 +183,22 @@ def vc_mapper(
             ccs_transport_ref[country_code] + ccs_storage_ref[country_code]
         )
 
-    elif (row.material_category == "Natural gas") and (ng_flag == 1):
+    elif row.material_category == "Natural gas":
         return (
-            row.value * static_energy_df.loc["Natural gas - low", static_year]["Value"]
-        )
-
-    elif (row.material_category == "Natural gas") and (ng_flag == 0):
-        return (
-            row.value * static_energy_df.loc["Natural gas - high", static_year]["Value"]
+            row.value * fossil_fuel_ref[(year, country_code, 'Natural gas')]
         )
 
     elif row.material_category == "Plastic waste":
         return row.value * feedstock_dict["Plastic waste"]
 
+    elif row.material_category == "Thermal coal":
+        return row.value * fossil_fuel_ref[(year, country_code, 'Thermal coal')]
+
+    elif row.material_category == "Met coal":
+        return row.value * fossil_fuel_ref[(year, country_code, 'Met coal')]
+
     elif (RESOURCE_CATEGORY_MAPPER[row.material_category] == "Fossil Fuels") and (
-        row.material_category not in ["Natural gas", "Plastic waste"]
+        row.material_category not in ["Natural gas", "Plastic waste", "Thermal coal", "Met coal"]
     ):
         return (
             row.value
@@ -222,7 +221,6 @@ def generate_variable_costs(
     year: int,
     country_code: str,
     business_cases_df: pd.DataFrame,
-    ng_dict: dict,
     feedstock_dict: dict = None,
     static_energy_df: pd.DataFrame = None,
     electricity_ref: pd.DataFrame = None,
@@ -230,6 +228,7 @@ def generate_variable_costs(
     bio_ref: pd.DataFrame = None,
     ccs_storage_ref: pd.DataFrame = None,
     ccs_transport_ref: pd.DataFrame = None,
+    fossil_fuel_ref: dict = None,
 ) -> pd.DataFrame:
     """Generates a DataFrame based on variable cost parameters for a particular region passed to it.
 
@@ -237,7 +236,6 @@ def generate_variable_costs(
         year (int): The year you want to create variable costs for.
         country_code (str): The country code that you want to get energy assumption prices for.
         business_cases_df (pd.DataFrame): A DataFrame of standardised variable costs.
-        ng_dict (dict): A dictionary of country_codes as keys and ng_flags as values for whether a particular country contains natural gas
         feedstock_dict (dict, optional): A dictionary containing feedstock resources and prices. Defaults to None.
         static_energy_df (pd.DataFrame, optional): A DataFrame containing static energy prices. Defaults to None.
         electricity_ref (pd.DataFrame, optional): The shared MPP Power assumptions model. Defaults to None.
@@ -245,12 +243,12 @@ def generate_variable_costs(
         bio_ref (pd.DataFrame, optional): The shared MPP Bio assumptions model. Defaults to None.
         ccs_storage_ref (pd.DataFrame, optional): The shared MPP CCS assumptions model. Defaults to None.
         ccs_transport_ref (pd.DataFrame, optional): The shared MPP CCS assumptions model. Defaults to None.
+        fossil_fuel_ref (dict): The reference for the fossil_fuel_prices.
     Returns:
         pd.DataFrame: A DataFrame containing variable costs for a particular region.
     """
     df_c = business_cases_df.copy()
     static_year = min(2026, year)
-    ng_flag = ng_dict[country_code]
     df_c["year"] = year
     df_c["country_code"] = country_code
     df_c["cost"] = df_c.apply(
@@ -265,7 +263,7 @@ def generate_variable_costs(
         ccs_storage_ref=ccs_storage_ref,
         feedstock_dict=feedstock_dict,
         static_energy_df=static_energy_df,
-        ng_flag=ng_flag,
+        fossil_fuel_ref=fossil_fuel_ref,
         axis=1,
     )
     return df_c

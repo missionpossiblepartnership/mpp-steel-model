@@ -1,5 +1,6 @@
 """Formats Price & Emissions Model Data and defines getter functions"""
 
+import itertools
 import pandas as pd
 from tqdm import tqdm
 
@@ -7,7 +8,10 @@ from mppsteel.config.model_config import (
     EXAJOULE_TO_GIGAJOULE,
     GIGAJOULE_TO_MEGAJOULE_FACTOR,
     GIGATON_TO_MEGATON_FACTOR,
+    INITIAL_MET_COAL_PRICE_USD_PER_GJ,
     MEGATON_TO_TON,
+    MMBTU_TO_GJ,
+    THERMAL_COAL_ENERGY_DENSITY,
     TON_TO_KILOGRAM_FACTOR,
     MEGAWATT_HOURS_TO_GIGAJOULES,
     MODEL_YEAR_RANGE,
@@ -17,6 +21,7 @@ from mppsteel.config.model_config import (
 from mppsteel.config.model_scenarios import (
     CCS_CAPACITY_SCENARIOS,
     COST_SCENARIO_MAPPER,
+    FOSSIL_FUEL_SCENARIOS,
     GRID_DECARBONISATION_SCENARIOS,
     BIOMASS_SCENARIOS,
     CCS_SCENARIOS,
@@ -200,6 +205,56 @@ CCS_CAPACITY_REGION_MAPPER = {
 }
 
 
+def fossil_fuel_region_reference_generator(country_ref: pd.DataFrame) -> dict:
+    """Creates a dictionary reference for the Fossil Fuel model by mapping each model region to a distinct country code.
+    The order of regions needs to proceed from the broadest region to the individual country to ensure that
+    the lowest level of detail is preserved in a later function.
+
+    Args:
+        country_ref (pd.DataFrame): The country ref used to map country codes to regions.
+
+    Returns:
+        dict: A dictionary containing a mapping key of [country_code] to Fossil Fuel value.
+    """
+    asia_and_pacific = get_countries_from_group(
+        country_ref, "RMI Model Region", "Southeast Asia"
+        ) + get_countries_from_group(
+            country_ref, "RMI Model Region", "RoW"
+        )
+    return {
+
+        "North America": get_countries_from_group(
+            country_ref, "RMI Model Region", "NAFTA"
+        ),
+        "Latin America": get_countries_from_group(
+            country_ref, "RMI Model Region", "South and Central America"
+        ),
+        "Europe": get_countries_from_group(
+            country_ref, "RMI Model Region", "Europe"
+        ),
+        "Russia": get_countries_from_group(
+            country_ref, "RMI Model Region", "CIS"
+        ),
+        "Africa": get_countries_from_group(
+            country_ref, "RMI Model Region", "Africa"
+        ),
+        "Middle East": get_countries_from_group(
+            country_ref, "RMI Model Region", "Middle East"
+        ),
+        "Rest of Asia and Pacific": asia_and_pacific,
+        "Australasia/Oceania": asia_and_pacific,
+        "China": get_countries_from_group(
+            country_ref, "RMI Model Region", "China"
+        ),
+        "India": get_countries_from_group(
+            country_ref, "RMI Model Region", "India"
+        ),
+        "Japan": get_countries_from_group(
+            country_ref, "RMI Model Region", "Japan, South Korea, and Taiwan"
+        )
+}
+
+
 def final_mapper(
     model: pd.DataFrame, reference_mapper: dict, year_range: range = None
 ) -> dict:
@@ -230,6 +285,42 @@ def final_mapper(
             for country_code in reference_mapper[model_region]:
                 final_mapper[country_code] = model.loc[model_region, "value"]
     return final_mapper
+
+
+def fossil_fuel_mapper(
+    model: pd.DataFrame, reference_mapper: dict, year_range
+) -> dict:
+    """Helper function that creates a dictionary mapping of of country codes to regions and optionally a year range to a model's values.
+
+    Args:
+        model (pd.DataFrame): The model used to create a dict reference.
+        reference_mapper (dict): The reference mapper of region to country codes.
+        year_range (range, optional): The year range of the model incase the model varies by year. Defaults to None.
+
+    Returns:
+        dict: The dictionary mapping of the model with a key of [country_code] to value or [year, country_code] to value if `year_range` is active.
+    """
+    final_mapper = {}
+    resources = model['variable'].unique()
+
+    for year in tqdm(
+        year_range,
+        total=len(year_range),
+        desc="Generating PE Model Reference Dictionary",
+    ):
+        for resource in resources:
+            model_r = model[model['variable'] == resource].copy()
+            for model_region in set.intersection(set(reference_mapper.keys()), set(model_r.index.get_level_values(1).unique())):
+                for country_code in reference_mapper[model_region]:
+                    final_mapper[(year, country_code, resource)] = model_r.loc[
+                        (year, model_region), "value"
+                    ]
+    for resource in resources:
+        model_r = model[model['variable'] == resource].copy()
+        for year in year_range:
+            final_mapper[(year, "TWN", resource)] = model_r.loc[(year, "China"), "value"]
+    return final_mapper
+
 
 
 def model_reference_generator(
@@ -373,6 +464,65 @@ def subset_hydrogen(
             GIGAJOULE_TO_MEGAJOULE_FACTOR / TON_TO_KILOGRAM_FACTOR
         )
     return h2df_c[["year", "region", "unit", "value"]].set_index(["year", "region"])
+
+
+def subset_fossil_fuel_prices(
+    fossil_fuel_prices: pd.DataFrame,
+    scenario_dict: dict = None,
+    currency_conversion_factor: float = None,
+    price_per_gj: bool = False
+) -> pd.DataFrame:
+    """Subsets the hydrogen model according to scenario parameters passed from the scenario dict.
+
+    Args:
+        fossil_fuel_prices (pd.DataFrame): The full reference for Fossil Fuel prices.
+        scenario_dict (dict, optional): The scenario_dict containing the full scenario setting for the current model run. Defaults to None.
+        currency_conversion_factor (float, optional): The currency conversion factor that converts one currency to another. Defaults to None.
+        price_per_gj (bool, optional): A boolean flag that converts the price metric from per kg to per gigajoule. Defaults to False.
+
+    Returns:
+        pd.DataFrame: A DataFrame of the subsetted model.
+    """
+    def format_prices(df_c, resource_type, conversion_variable):
+        result = df_c[df_c["variable"] == resource_type].copy()
+        result["value"] = result["value"] / conversion_variable
+        result["unit"] = "USD/GJ"
+        return result
+    df_c = fossil_fuel_prices.copy()
+    df_c['Variable'] = df_c['Variable'].replace({'Coal':'Thermal coal'})
+    if scenario_dict:
+        price_scenario = FOSSIL_FUEL_SCENARIOS[scenario_dict["fossil_fuel_scenario"]]
+        df_c = df_c[(df_c["Scenario"] == price_scenario)]
+    years = [year_col for year_col in df_c.columns if year_col.isnumeric()]
+    df_c = df_c.melt(
+        id_vars=["Region", "Variable", "Unit"],
+        value_vars=years,
+        var_name="year",
+        value_name="value",
+    ).copy()
+    df_c.columns = [col.lower().strip() for col in df_c.columns]
+    df_c['year'] = df_c['year'].astype('int')
+    met_coal = df_c[df_c['variable'] == 'Thermal coal'].copy()
+    met_coal['variable'] = met_coal['variable'].replace({'Thermal coal':'Met coal'})
+    mc_regions = met_coal['region'].unique()
+    df_list = []
+    for region in mc_regions:
+        mc_r = met_coal[met_coal['region'] == region].copy()
+        mc_r_values = mc_r['value'].values
+        growth_series = mc_r_values / mc_r_values[0]
+        new_values = INITIAL_MET_COAL_PRICE_USD_PER_GJ * growth_series
+        mc_r['value'] = new_values
+        df_list.append(mc_r)
+    met_coal = pd.concat(df_list)
+    df_c = pd.concat([df_c, met_coal])
+    if currency_conversion_factor:
+        df_c = convert_currency_col(df_c, "value", currency_conversion_factor)
+    if price_per_gj:
+        natural_gas = format_prices(df_c, "Natural gas", MMBTU_TO_GJ)
+        thermal_coal = format_prices(df_c, "Thermal coal", THERMAL_COAL_ENERGY_DENSITY)
+        met_coal = format_prices(df_c, "Met coal", 1)
+        final_df = pd.concat([natural_gas, thermal_coal, met_coal])
+    return final_df[["year", "region", "variable", "unit", "value"]].set_index(["year", "region"])
 
 
 def subset_bio_prices(
@@ -571,7 +721,7 @@ def subset_ccs_constraint(
 
 @timer_func
 def format_pe_data(
-    scenario_dict: dict, serialize: bool = False, standarside_units: bool = True
+    scenario_dict: dict, serialize: bool = False, standardize_units: bool = True
 ) -> dict:
     """Full process flow for the Power & Energy data.
     Inputs the the import data, subsets the data, then creates a model reference dictionary for the model.
@@ -607,29 +757,30 @@ def format_pe_data(
     ccs_model_transport = ccs_model["Transport"]
     ccs_model_storage = ccs_model["Storage"]
     ccs_model_constraints = ccs_model["Constraint"]
+    fossil_fuel_model = read_pickle_folder(PKL_DATA_IMPORTS, "fossil_fuel_model", "df")
     country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
 
     # FORMAT INITIAL DATA
     h2_prices_f = subset_hydrogen(
-        h2_prices, scenario_dict, prices=True, price_per_gj=standarside_units
+        h2_prices, scenario_dict, prices=True, price_per_gj=standardize_units
     )  # from usd / kg to usd / gj
     h2_emissions_f = subset_hydrogen(
-        h2_emissions, scenario_dict, prices=False, emissions_per_gj=standarside_units
+        h2_emissions, scenario_dict, prices=False, emissions_per_gj=standardize_units
     )  # from kg / kg to t / gj
     power_grid_prices_f = subset_power(
-        power_grid_prices, scenario_dict, per_gj=standarside_units
+        power_grid_prices, scenario_dict, per_gj=standardize_units
     )  # from usd / mwh to usd / gj
     power_grid_emissions_f = subset_power(
-        power_grid_emissions, scenario_dict, per_gj=standarside_units
+        power_grid_emissions, scenario_dict, per_gj=standardize_units
     )  # from tco2 / mwh to tco2 / gj
     bio_model_prices_f = subset_bio_prices(
         bio_model_prices, scenario_dict
     )  # no conversion required
     bio_model_constraints_f = subset_bio_constraints(
-        bio_model_constraints, as_gj=standarside_units
+        bio_model_constraints, as_gj=standardize_units
     )  # ej to gj
     ccs_model_transport_f = subset_ccs_transport(
-        ccs_model_transport, scenario_dict, price_per_ton=standarside_units
+        ccs_model_transport, scenario_dict, price_per_ton=standardize_units
     )  # from USD/Mt to USD/t
     ccs_model_storage_f = subset_ccs_storage(
         ccs_model_storage, scenario_dict
@@ -637,7 +788,9 @@ def format_pe_data(
     ccs_model_constraints_f = subset_ccs_constraint(
         ccs_model_constraints, scenario_dict, as_gt=False
     )  # from Mt to Gt
-
+    fossil_fuel_prices_f = subset_fossil_fuel_prices(
+        fossil_fuel_model, scenario_dict, price_per_gj=standardize_units
+    )
     # CREATE REFERENCE_DFs
     power_hydrogen_regions = power_hydrogen_region_reference_generator(country_ref)
     power_grid_prices_ref = final_mapper(
@@ -665,7 +818,8 @@ def format_pe_data(
         CCS_CAPACITY_REGION_MAPPER,
         MODEL_YEAR_RANGE,
     )
-
+    fossil_fuel_regions = fossil_fuel_region_reference_generator(country_ref)
+    fossil_fuel_ref = fossil_fuel_mapper(fossil_fuel_prices_f, fossil_fuel_regions, MODEL_YEAR_RANGE)
     data_dict = {
         "hydrogen_prices": h2_prices_f,
         "hydrogen_emissions": h2_emissions_f,
@@ -676,6 +830,7 @@ def format_pe_data(
         "ccs_transport": ccs_model_storage_f,
         "ccs_storage": ccs_model_transport_f,
         "ccs_constraints": ccs_model_constraints_f,
+        "fossil_fuel_prices": fossil_fuel_prices_f
     }
 
     if serialize:
@@ -710,6 +865,9 @@ def format_pe_data(
             intermediate_path,
             "ccs_constraints_model_formatted",
         )
+        serialize_file(
+            fossil_fuel_prices_f, intermediate_path, "fossil_fuel_model_formatted"
+        )
         # Dictionaries
         serialize_file(h2_prices_ref, intermediate_path, "h2_prices_ref")
         serialize_file(h2_emissions_ref, intermediate_path, "h2_emissions_ref")
@@ -728,5 +886,8 @@ def format_pe_data(
         )
         serialize_file(
             ccs_model_constraints_ref, intermediate_path, "ccs_model_constraints_ref"
+        )
+        serialize_file(
+            fossil_fuel_ref, intermediate_path, "fossil_fuel_ref"
         )
     return data_dict
