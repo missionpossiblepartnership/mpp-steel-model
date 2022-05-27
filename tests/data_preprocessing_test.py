@@ -185,3 +185,26 @@ def test_plant_variable_costs_thermal_coal(business_case):
     df = plant_variable_costs(input_data)
     actual = df.cost.values[0]
     assert actual == expected
+
+
+def test_plant_variable_costs_iron_ore(business_case):
+    """
+    Assert that cost is calculated correctly for the iron ore material_category.
+    """
+    value, iron_ore_price = 1.0, 0.5
+    material_category = "Iron ore"
+    expected = value * iron_ore_price
+    year_country = 2020, "DEU"
+    business_case |= {"value": value, "material_category": material_category}
+    business_cases = pd.DataFrame([business_case])
+    input_data = PlantVariableCostsInput(
+        product_range_year_country=[year_country],
+        business_cases=business_cases,
+        feedstock_dict={material_category: iron_ore_price},
+        steel_plant_region_ng_dict={"DEU": 0},
+    )
+    df = plant_variable_costs(input_data)
+    actual = df.cost.values[0]
+    assert actual == expected
+
+
