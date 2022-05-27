@@ -311,8 +311,6 @@ TON_RESOURCES = [
     "Emissivity",
 ]
 
-OECD_REGIONS = ["NAFTA", "Europe", "Japan, South Korea, and Taiwan"]
-
 WESTERN_EUROPE_COUNTRIES = [
     "ITA",
     "AND",

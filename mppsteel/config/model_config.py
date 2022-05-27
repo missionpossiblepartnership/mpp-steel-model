@@ -89,8 +89,6 @@ PLASTIC_WASTE_ENERGY_DENSITY_MJ_PER_KG = 45
 # CAPACITY UTILIZATION PARAMETERS
 CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION = 0.95
 CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION = 0.6
-RELATIVE_REGIONAL_COST_BOUNDARY_FROM_MEAN_PCT_OECD = 0.1
-RELATIVE_REGIONAL_COST_BOUNDARY_FROM_MEAN_PCT_NON_OECD = 0.3
 
 # CONSTRAINT PARAMETERS
 SCRAP_CONSTRAINT_TOLERANCE_FACTOR = 0.1
@@ -125,3 +123,17 @@ FINAL_RESULT_PKL_FILES = [
     "green_capacity_ratio",
     "cost_of_steelmaking",
 ]
+
+TRADE_PCT_BOUNDARY_DICT = {
+    "Middle East": 0.1,
+    "Europe": 0.1,
+    "Africa": 0.1,
+    "Southeast Asia": 0.1,
+    "South and Central America": 0.1,
+    "RoW": 0.1,
+    "CIS": 0.1,
+    "NAFTA": 0.1,
+    "China": 0.1,
+    "India": 0.8,
+    "Japan, South Korea, and Taiwan": 0.1
+}

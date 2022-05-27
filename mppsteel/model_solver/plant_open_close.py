@@ -655,7 +655,6 @@ def open_close_plants(
             steel_demand_df, year=year, metric="crude", region=region
         )
         regional_cuf = (regional_demand + trade_balance) / regional_capacity
-        print(f'Region: {region} | CUF: {regional_cuf} | TB: {trade_balance}')
         utilization_container.update_region(year, region, regional_cuf)
         production_container.append(regional_capacity * regional_cuf)
     logger.info(
