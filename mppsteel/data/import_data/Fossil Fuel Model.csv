@@ -1,0 +1,41 @@
+﻿Tab,Region,Variable,Scenario,Unit,2020,2021,2022,2023,2024,2025,2026,2027,2028,2029,2030,2031,2032,2033,2034,2035,2036,2037,2038,2039,2040,2041,2042,2043,2044,2045,2046,2047,2048,2049,2050
+Fossil Prices,North America,Natural gas,BAU,USD/MMBTu,2,4,5,4,4,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4
+Fossil Prices,Latin America,Natural gas,BAU,USD/MMBTu,5,11,19,15,10,6,6,6,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,8,8,8,8,8,8,8,8
+Fossil Prices,Europe,Natural gas,BAU,USD/MMBTu,4,16,34,25,15,6,6,6,7,7,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8
+Fossil Prices,Russia,Natural gas,BAU,USD/MMBTu,2,4,5,4,4,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4
+Fossil Prices,Africa,Natural gas,BAU,USD/MMBTu,5,11,19,15,10,6,6,6,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,8,8,8,8,8,8,8,8
+Fossil Prices,Middle East,Natural gas,BAU,USD/MMBTu,2,4,5,4,4,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4
+Fossil Prices,China,Natural gas,BAU,USD/MMBTu,6,14,18,15,11,7,8,8,8,8,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9
+Fossil Prices,India,Natural gas,BAU,USD/MMBTu,5,11,19,15,10,6,6,6,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,8,8,8,8,8,8,8,8
+Fossil Prices,Japan,Natural gas,BAU,USD/MMBTu,8,11,19,15,12,8,8,8,8,8,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9
+Fossil Prices,Rest of Asia and Pacific,Natural gas,BAU,USD/MMBTu,5,11,19,15,10,6,6,6,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,8,8,8,8,8,8,8,8
+Fossil Prices,North America,Coal,BAU,USD/t,43,97,176,131,86,41,41,40,40,39,39,39,39,39,39,39,39,39,39,39,39,38,38,38,38,38,38,38,38,38,38
+Fossil Prices,Latin America,Coal,BAU,USD/t,63,143,258,194,129,65,65,65,66,66,67,66,66,66,66,65,65,65,65,64,64,64,64,63,63,63,63,62,62,62,62
+Fossil Prices,Europe,Coal,BAU,USD/t,50,114,207,157,108,59,60,62,64,65,67,67,67,66,66,66,66,66,65,65,65,65,65,64,64,64,64,64,63,63,63
+Fossil Prices,Russia,Coal,BAU,USD/t,63,143,258,194,129,65,65,65,66,66,67,66,66,66,66,65,65,65,65,64,64,64,64,63,63,63,63,62,62,62,62
+Fossil Prices,Africa,Coal,BAU,USD/t,63,143,258,194,129,65,65,65,66,66,67,66,66,66,66,65,65,65,65,64,64,64,64,63,63,63,63,62,62,62,62
+Fossil Prices,Middle East,Coal,BAU,USD/t,63,143,258,194,129,65,65,65,66,66,67,66,66,66,66,65,65,65,65,64,64,64,64,63,63,63,63,62,62,62,62
+Fossil Prices,China,Coal,BAU,USD/t,83,189,342,256,169,83,83,83,83,83,83,83,82,82,81,81,80,80,79,79,79,78,78,77,77,76,76,75,75,74,74
+Fossil Prices,India,Coal,BAU,USD/t,63,143,258,194,129,65,65,65,66,66,67,66,66,66,66,65,65,65,65,64,64,64,64,63,63,63,63,62,62,62,62
+Fossil Prices,Japan,Coal,BAU,USD/t,75,171,309,231,154,76,76,76,77,77,77,77,76,76,76,75,75,75,74,74,74,73,73,72,72,72,71,71,71,70,70
+Fossil Prices,Australasia/Oceania,Coal,BAU,USD/t,61,138,250,188,125,63,63,63,64,64,64,64,64,64,63,63,63,63,63,62,62,62,62,61,61,61,61,60,60,60,60
+Fossil Prices,North America,Natural gas,Decarbonized,USD/MMBTu,2,4,5,4,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2
+Fossil Prices,Latin America,Natural gas,Decarbonized,USD/MMBTu,5,11,19,14,9,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4
+Fossil Prices,Europe,Natural gas,Decarbonized,USD/MMBTu,4,16,34,24,14,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4
+Fossil Prices,Russia,Natural gas,Decarbonized,USD/MMBTu,2,4,5,4,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2
+Fossil Prices,Africa,Natural gas,Decarbonized,USD/MMBTu,5,11,19,14,9,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4
+Fossil Prices,Middle East,Natural gas,Decarbonized,USD/MMBTu,2,4,5,4,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2
+Fossil Prices,China,Natural gas,Decarbonized,USD/MMBTu,6,14,18,14,10,6,6,6,6,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5
+Fossil Prices,India,Natural gas,Decarbonized,USD/MMBTu,5,11,19,14,9,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4
+Fossil Prices,Japan,Natural gas,Decarbonized,USD/MMBTu,8,11,19,15,10,6,6,5,5,5,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4
+Fossil Prices,Rest of Asia and Pacific,Natural gas,Decarbonized,USD/MMBTu,5,11,19,14,9,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4
+Fossil Prices,North America,Coal,Decarbonized,USD/t,43,97,176,128,81,34,32,30,28,26,24,24,24,24,24,24,23,23,23,23,23,23,23,23,23,23,22,22,22,22,22
+Fossil Prices,Latin America,Coal,Decarbonized,USD/t,63,143,258,191,123,56,54,53,52,50,49,48,48,48,47,47,47,46,46,46,45,45,45,44,44,44,43,43,43,43,42
+Fossil Prices,Europe,Coal,Decarbonized,USD/t,50,114,207,155,103,51,51,51,52,52,52,52,51,51,50,50,50,49,49,48,48,48,47,47,46,46,46,45,45,44,44
+Fossil Prices,Russia,Coal,Decarbonized,USD/t,63,143,258,191,123,56,54,53,52,50,49,48,48,48,47,47,47,46,46,46,45,45,45,44,44,44,43,43,43,43,42
+Fossil Prices,Africa,Coal,Decarbonized,USD/t,63,143,258,191,123,56,54,53,52,50,49,48,48,48,47,47,47,46,46,46,45,45,45,44,44,44,43,43,43,43,42
+Fossil Prices,Middle East,Coal,Decarbonized,USD/t,63,143,258,191,123,56,54,53,52,50,49,48,48,48,47,47,47,46,46,46,45,45,45,44,44,44,43,43,43,43,42
+Fossil Prices,China,Coal,Decarbonized,USD/t,83,189,342,252,162,72,70,68,65,63,61,61,60,60,59,59,58,58,57,57,56,56,55,55,54,54,53,53,52,52,51
+Fossil Prices,India,Coal,Decarbonized,USD/t,63,143,258,191,123,56,54,53,52,50,49,48,48,48,47,47,47,46,46,46,45,45,45,44,44,44,43,43,43,43,42
+Fossil Prices,Japan,Coal,Decarbonized,USD/t,75,171,309,228,148,67,65,63,61,60,58,58,57,57,56,56,56,55,55,54,54,54,53,53,52,52,52,51,51,50,50
+Fossil Prices,Australasia/Oceania,Coal,Decarbonized,USD/t,61,138,250,185,119,54,53,51,50,49,47,47,47,46,46,46,45,45,45,44,44,44,43,43,43,42,42,42,41,41,41
