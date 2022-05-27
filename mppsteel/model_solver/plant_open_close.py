@@ -452,7 +452,7 @@ def market_balance_test(
     plants_required = production_supply_df["plants_required"].sum()
     plants_to_close = production_supply_df["plants_to_close"].sum()
     logger.info(
-        f"Trade Results for {year}: Capacity: {capacity_sum :0.2f} | Production: {production_sum :0.2f} Demand: {demand_sum :0.2f} | New Plants: {plants_required} | Closed Plants {plants_to_close}"
+        f"Trade Results for {year}: Capacity: {capacity_sum :0.2f} | Production: {production_sum :0.2f} | Demand: {demand_sum :0.2f} | New Plants: {plants_required} | Closed Plants {plants_to_close}"
     )
     assert capacity_sum > demand_sum
     assert capacity_sum > production_sum
