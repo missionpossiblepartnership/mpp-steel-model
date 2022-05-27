@@ -158,3 +158,30 @@ def test_plant_variable_costs_plastic_waste(business_case):
     df = plant_variable_costs(input_data)
     actual = df.cost.values[0]
     assert actual == expected
+
+
+def test_plant_variable_costs_thermal_coal(business_case):
+    """
+    Assert that cost is calculated correctly for the thermal coal material_category.
+    """
+    value, energy_price, year, country_code = 1.0, 0.5, 2020, "DEU"
+    material_category = "Thermal coal"
+    year_country = year, country_code
+    expected = value * energy_price
+    energy_price_rows = [
+        [material_category, year, energy_price],
+    ]
+    static_energy_prices = pd.DataFrame(
+        energy_price_rows, columns=["Metric", "Year", "Value"]
+    ).set_index(["Metric", "Year"])
+    business_case |= {"value": value, "material_category": material_category}
+    business_cases = pd.DataFrame([business_case])
+    input_data = PlantVariableCostsInput(
+        product_range_year_country=[year_country],
+        business_cases=business_cases,
+        static_energy_prices=static_energy_prices,
+        steel_plant_region_ng_dict={"DEU": 0},
+    )
+    df = plant_variable_costs(input_data)
+    actual = df.cost.values[0]
+    assert actual == expected
