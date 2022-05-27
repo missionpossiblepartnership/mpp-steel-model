@@ -109,3 +109,32 @@ def test_plant_variable_costs_captured_co2(business_case):
     df = plant_variable_costs(input_data)
     actual = df.cost.values[0]
     assert actual == expected
+
+
+def test_plant_variable_costs_natural_gas(business_case):
+    """
+    Assert that cost is calculated correctly for the natural gas material_category.
+    """
+    value, energy_price, year, country_code = 1.0, 0.5, 2020, "DEU"
+    year_country = year, country_code
+    expected = value * energy_price
+    energy_price_rows = [
+        ["Natural gas - low", year, energy_price],
+        ["Natural gas - high", year, energy_price],
+    ]
+    static_energy_prices = pd.DataFrame(
+        energy_price_rows, columns=["Metric", "Year", "Value"]
+    ).set_index(["Metric", "Year"])
+    business_case |= {"value": value, "material_category": "Natural gas"}
+    business_cases = pd.DataFrame([business_case])
+    for ng_flag in (0, 1):
+        # 1: low, 0: high
+        input_data = PlantVariableCostsInput(
+            product_range_year_country=[year_country],
+            business_cases=business_cases,
+            static_energy_prices=static_energy_prices,
+            steel_plant_region_ng_dict={"DEU": ng_flag},
+        )
+        df = plant_variable_costs(input_data)
+        actual = df.cost.values[0]
+        assert actual == expected
