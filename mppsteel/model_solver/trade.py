@@ -183,30 +183,21 @@ def calculate_cos(
 
 
 def modify_production_demand_dict(
-    production_demand_dict: dict, data_entry_values: list, region: str
+    production_demand_dict: dict, data_entry_dict: dict, region: str
 ) -> dict:
     """Modifies the open close dictionary by taking an ordered list of `data_entry_values`, mapping them to their corresponding dictionary keys and amending the original demand dictionary values.
 
     Args:
         production_demand_dict (dict): The original open close dictionary reference.
-        data_entry_values (list): The list of values to update the production_demand_dict with.
+        data_entry_dict (dict): The dict of values to update the production_demand_dict with.
         region (str): The selected region to update the `production_demand_dict` with the `data_entry_values`.
 
     Returns:
         dict: The modified open close dictionary.
     """
     production_demand_dict_c = deepcopy(production_demand_dict)
-    data_entry_dict = dict(zip(DATA_ENTRY_DICT_KEYS, data_entry_values))
 
-    for dict_key in [
-        "new_capacity_required",
-        "plants_required",
-        "plants_to_close",
-        "new_total_capacity",
-        "new_utilized_capacity",
-        "new_balance",
-        "new_utilization",
-    ]:
+    for dict_key in data_entry_dict:
         production_demand_dict_c[region][dict_key] = data_entry_dict[dict_key]
     return production_demand_dict_c
 
@@ -283,8 +274,9 @@ def trade_flow(
         # COL ORDER FOR LIST
         # 'new_capacity_required', 'plants_required', 'plants_to_close',
         # 'new_total_capacity', 'new_utilized_capacity', 'new_balance', 'new_utilization'
+
         export_contribution = 0
-        data_entry_dict_values = None
+        data_entry_dict = None
         if (regional_balance > 0) and relative_cost_below_avg:
             # CHEAP EXCESS SUPPLY -> export
             new_min_utilization_required = utilization
@@ -293,15 +285,15 @@ def trade_flow(
             )
             new_utilized_capacity = new_min_utilization_required * capacity
             export_contribution = new_utilized_capacity - demand
-            data_entry_dict_values = [
-                0,
-                0,
-                0,
-                capacity,
-                new_utilized_capacity,
-                export_contribution,
-                new_min_utilization_required,
-            ]
+            data_entry_dict = {
+                "new_capacity_required": 0,
+                "plants_required": 0,
+                "plants_to_close": 0,
+                "new_total_capacity": capacity,
+                "new_utilized_capacity": new_utilized_capacity,
+                "new_balance": export_contribution,
+                "new_utilization": new_min_utilization_required,
+            }
 
         elif (
             (regional_balance > 0)
@@ -315,15 +307,15 @@ def trade_flow(
             )
             new_utilized_capacity = capacity * new_min_utilization_required
             export_contribution = new_utilized_capacity - demand
-            data_entry_dict_values = [
-                0,
-                0,
-                0,
-                capacity,
-                new_utilized_capacity,
-                export_contribution,
-                new_min_utilization_required,
-            ]
+            data_entry_dict = {
+                "new_capacity_required": 0,
+                "plants_required": 0,
+                "plants_to_close": 0,
+                "new_total_capacity": capacity,
+                "new_utilized_capacity": new_utilized_capacity,
+                "new_balance": export_contribution,
+                "new_utilization": new_min_utilization_required
+            }
 
         elif (
             (regional_balance > 0)
@@ -342,15 +334,15 @@ def trade_flow(
             )
             new_utilized_capacity = new_min_utilization_required * new_total_capacity
             export_contribution = new_utilized_capacity - demand
-            data_entry_dict_values = [
-                0,
-                0,
-                plants_to_close,
-                new_total_capacity,
-                new_utilized_capacity,
-                export_contribution,
-                new_min_utilization_required,
-            ]
+            data_entry_dict = {
+                "new_capacity_required": 0,
+                "plants_required": 0,
+                "plants_to_close": plants_to_close,
+                "new_total_capacity": new_total_capacity,
+                "new_utilized_capacity": new_utilized_capacity,
+                "new_balance": export_contribution,
+                "new_utilization": new_min_utilization_required,
+            }
 
         elif (regional_balance < 0) and (utilization < util_max):
             # INSUFFICIENT SUPPLY -> increase utilization (test)
@@ -363,15 +355,15 @@ def trade_flow(
             if (export_contribution < 0) and not relative_cost_below_avg:
                 # STILL INSUFFICIENT SUPPLY
                 # EXPENSIVE REGION -> import
-                data_entry_dict_values = [
-                    0,
-                    0,
-                    0,
-                    capacity,
-                    new_utilized_capacity,
-                    export_contribution,
-                    new_min_utilization_required,
-                ]
+                data_entry_dict = {
+                    "new_capacity_required": 0,
+                    "plants_required": 0,
+                    "plants_to_close": 0,
+                    "new_total_capacity": capacity,
+                    "new_utilized_capacity": new_utilized_capacity,
+                    "new_balance": export_contribution,
+                    "new_utilization": new_min_utilization_required
+                }
             elif (export_contribution < 0) and relative_cost_below_avg:
                 # CHEAP REGION -> open plant
                 new_capacity_required = demand - (capacity * util_max)
@@ -389,26 +381,27 @@ def trade_flow(
                     new_min_utilization_required * new_total_capacity
                 )
                 export_contribution = new_utilized_capacity - demand
-                data_entry_dict_values = [
-                    new_capacity_required,
-                    new_plants_required,
-                    0,
-                    new_total_capacity,
-                    new_utilized_capacity,
-                    export_contribution,
-                    new_min_utilization_required,
-                ]
+                data_entry_dict = {
+                    "new_capacity_required": new_capacity_required,
+                    "plants_required": new_plants_required,
+                    "plants_to_close": 0,
+                    "new_total_capacity": new_total_capacity,
+                    "new_utilized_capacity": new_utilized_capacity,
+                    "new_balance": export_contribution,
+                    "new_utilization": new_min_utilization_required
+                }
+
             else:
                 # SUFFICIENT SUPPLY -> increase utilization
-                data_entry_dict_values = [
-                    0,
-                    0,
-                    0,
-                    capacity,
-                    new_utilized_capacity,
-                    export_contribution,
-                    new_min_utilization_required,
-                ]
+                data_entry_dict = {
+                    "new_capacity_required": 0,
+                    "plants_required": 0,
+                    "plants_to_close": 0,
+                    "new_total_capacity": capacity,
+                    "new_utilized_capacity": new_utilized_capacity,
+                    "new_balance": export_contribution,
+                    "new_utilization": new_min_utilization_required
+                }
 
         elif (
             (regional_balance < 0)
@@ -427,15 +420,15 @@ def trade_flow(
             )
             new_utilized_capacity = new_min_utilization_required * new_total_capacity
             export_contribution = new_utilized_capacity - demand
-            data_entry_dict_values = [
-                new_capacity_required,
-                new_plants_required,
-                0,
-                new_total_capacity,
-                new_utilized_capacity,
-                export_contribution,
-                new_min_utilization_required,
-            ]
+            data_entry_dict = {
+                "new_capacity_required": new_capacity_required,
+                "plants_required": new_plants_required,
+                "plants_to_close": 0,
+                "new_total_capacity": new_total_capacity,
+                "new_utilized_capacity": new_utilized_capacity,
+                "new_balance": export_contribution,
+                "new_utilization": new_min_utilization_required
+            }
 
         elif (
             (regional_balance < 0)
@@ -449,20 +442,20 @@ def trade_flow(
             )
             new_utilized_capacity = new_min_utilization_required * capacity
             export_contribution = new_utilized_capacity - demand
-            data_entry_dict_values = [
-                0,
-                0,
-                0,
-                capacity,
-                new_utilized_capacity,
-                export_contribution,
-                new_min_utilization_required,
-            ]
+            data_entry_dict = {
+                "new_capacity_required": 0,
+                "plants_required": 0,
+                "plants_to_close": 0,
+                "new_total_capacity": capacity,
+                "new_utilized_capacity": new_utilized_capacity,
+                "new_balance": export_contribution,
+                "new_utilization": new_min_utilization_required
+            }
 
         market_container.assign_trade_balance(year, region, export_contribution)
         utilization_container.update_region(year, region, new_min_utilization_required)
         production_demand_dict_c = modify_production_demand_dict(
-            production_demand_dict_c, data_entry_dict_values, region
+            production_demand_dict_c, data_entry_dict, region
         )
 
     global_trade_balance = round(market_container.trade_container_getter(year), 3)
@@ -491,13 +484,30 @@ def trade_flow(
 
     if global_trade_balance > 0:
         logger.info(
-            f"TRADE BALANCING ROUND 1: Trade Balance Surplus of {global_trade_balance} Mt in year {year}. No balancing to zero."
+            f"TRADE BALANCING ROUND 1: Trade Balance Surplus of {global_trade_balance} Mt in year {year}. Balancing to zero."
         )
+        for region in exporting_regions:
+            if global_trade_balance > 0:
+                demand = production_demand_dict_c[region]["demand"]
+                capacity = production_demand_dict_c[region]["capacity"]
+                current_balance = market_container.trade_container_getter(year, region)
+                value_to_subtract = min(current_balance, global_trade_balance)
+                new_balance = current_balance - value_to_subtract
+                market_container.assign_trade_balance(year, region, new_balance)
+                global_trade_balance -= value_to_subtract
+                total_production = demand + new_balance
+                data_entry_dict = {
+                    "new_balance": new_balance,
+                    "new_utilized_capacity": total_production,
+                    "new_utilization": total_production / capacity
+                }
+                production_demand_dict_c = modify_production_demand_dict(
+                    production_demand_dict_c, data_entry_dict, region
+                )
     elif global_trade_balance < 0:
         logger.info(
             f"TRADE BALANCING ROUND 2: Trade Balance Deficit of {global_trade_balance} Mt in year {year}, balancing to zero via utilization optimization."
         )
-
         rpc_df = relative_production_cost_df[
             relative_production_cost_df["relative_cost_close_to_mean"] == True
         ].sort_values(["cost_of_steelmaking"], ascending=True)
@@ -535,20 +545,21 @@ def trade_flow(
                     combined_balance = abs(
                         global_trade_balance
                     ) + market_container.trade_container_getter(year, region)
-                    data_entry_dict_values = [
-                        0,
-                        0,
-                        0,
-                        total_capacity,
-                        new_utilized_capacity,
-                        combined_balance,
-                        new_min_utilization_required,
-                    ]
+                    data_entry_dict = {
+                        "new_capacity_required": 0,
+                        "plants_required": 0,
+                        "plants_to_close": 0,
+                        "new_total_capacity": total_capacity,
+                        "new_utilized_capacity": new_utilized_capacity,
+                        "new_balance": combined_balance,
+                        "new_utilization": new_min_utilization_required
+                    }
+
                     market_container.assign_trade_balance(
                         year, region, combined_balance
                     )
                     production_demand_dict_c = modify_production_demand_dict(
-                        production_demand_dict_c, data_entry_dict_values, region
+                        production_demand_dict_c, data_entry_dict, region
                     )
                     utilization_container.update_region(
                         year, region, new_min_utilization_required
@@ -571,20 +582,21 @@ def trade_flow(
                         potential_extra_production
                         + market_container.trade_container_getter(year, region)
                     )
-                    data_entry_dict_values = [
-                        0,
-                        0,
-                        0,
-                        total_capacity,
-                        new_utilized_capacity,
-                        combined_balance,
-                        new_min_utilization_required,
-                    ]
+                    data_entry_dict = {
+                        "new_capacity_required": 0,
+                        "plants_required": 0,
+                        "plants_to_close": 0,
+                        "new_total_capacity": total_capacity,
+                        "new_utilized_capacity": new_utilized_capacity,
+                        "new_balance": combined_balance,
+                        "new_utilization": new_min_utilization_required,
+                    }
+
                     market_container.assign_trade_balance(
                         year, region, combined_balance
                     )
                     production_demand_dict_c = modify_production_demand_dict(
-                        production_demand_dict_c, data_entry_dict_values, region
+                        production_demand_dict_c, data_entry_dict, region
                     )
                     utilization_container.update_region(
                         year, region, new_min_utilization_required
@@ -614,15 +626,15 @@ def trade_flow(
                 new_min_utilization_required, util_min, util_max
             )
             new_utilized_capacity = new_min_utilization_required * new_total_capacity
-            data_entry_dict_values = [
-                new_capacity_required,
-                new_plants_required,
-                0,
-                new_total_capacity,
-                new_utilized_capacity,
-                combined_balance,
-                new_min_utilization_required,
-            ]
+            data_entry_dict = {
+                "new_capacity_required": new_capacity_required,
+                "plants_required": new_plants_required,
+                "plants_to_close": 0,
+                "new_total_capacity": new_total_capacity,
+                "new_utilized_capacity": new_utilized_capacity,
+                "new_balance": combined_balance,
+                "new_utilization": new_min_utilization_required
+            }
             market_container.assign_trade_balance(
                 year, cheapest_region, combined_balance
             )
@@ -630,7 +642,7 @@ def trade_flow(
                 year, cheapest_region, new_min_utilization_required
             )
             production_demand_dict_c = modify_production_demand_dict(
-                production_demand_dict_c, data_entry_dict_values, cheapest_region
+                production_demand_dict_c, data_entry_dict, cheapest_region
             )
             global_trade_balance = 0
 

@@ -452,7 +452,7 @@ def market_balance_test(
     plants_required = production_supply_df["plants_required"].sum()
     plants_to_close = production_supply_df["plants_to_close"].sum()
     logger.info(
-        f"Trade Results for {year}: Demand: {demand_sum :0.2f}  | Capacity: {capacity_sum :0.2f} | Production: {production_sum :0.2f}  | New Plants: {plants_required} | Closed Plants {plants_to_close}"
+        f"Trade Results for {year}: Capacity: {capacity_sum :0.2f} | Production: {production_sum :0.2f} Demand: {demand_sum :0.2f} | New Plants: {plants_required} | Closed Plants {plants_to_close}"
     )
     assert capacity_sum > demand_sum
     assert capacity_sum > production_sum
@@ -647,10 +647,19 @@ def open_close_plants(
 
     # Standardize utilization rates across each region to ensure global production = global demand
     world_utilization = utilization_container.get_utilization_values(year, "World")
+    production_container = []
     for region in regions:
-        utilization_container.update_region(year, region, world_utilization)
+        trade_balance = market_container.trade_container_getter(year, region)
+        regional_capacity = regional_capacities[region]
+        regional_demand = steel_demand_getter(
+            steel_demand_df, year=year, metric="crude", region=region
+        )
+        regional_cuf = (regional_demand + trade_balance) / regional_capacity
+        print(f'Region: {region} | CUF: {regional_cuf} | TB: {trade_balance}')
+        utilization_container.update_region(year, region, regional_cuf)
+        production_container.append(regional_capacity * regional_cuf)
     logger.info(
-        f"Balanced Supply Demand results for {year}: Demand: {global_demand :0.2f}  | Production: {sum(regional_capacities.values()) * world_utilization :0.2f}"
+        f"Balanced Supply Demand results for {year}: Demand: {global_demand :0.2f}  | Production: {sum(production_container) :0.2f}"
     )
     new_open_plants = return_modified_plants(new_active_plants, year, "open")
     investment_container.add_new_plants(
