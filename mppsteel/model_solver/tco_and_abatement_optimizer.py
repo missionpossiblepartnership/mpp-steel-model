@@ -242,6 +242,19 @@ def record_ranking(
         plant_choice_container.update_records("rank", records)
 
 
+def return_best_choice(best_values: list, start_tech: str):
+    # pick random choice if there is more than one option
+    if len(best_values) > 1:
+        potential_techs = best_values.index.to_list()
+        return random.choice(potential_techs)
+    # pick the only option if there is one option
+    elif len(best_values) == 1:
+        return best_values.index.values[0]
+    # pick initial tech if there are no options
+    elif len(best_values) == 0:
+        return start_tech
+
+
 def get_best_choice(
     tco_df: pd.DataFrame,
     emissions_df: pd.DataFrame,
@@ -314,7 +327,9 @@ def get_best_choice(
 
         elif solver_logic == "scaled_bins":
             binned_rank_dict = create_bin_rank_dict(
-                tco_values_scaled[cost_value_col], len(technology_list)
+                tco_values_scaled[cost_value_col],
+                number_of_items=len(technology_list),
+                max_bin_size=3
             )
             tco_values_scaled["tco_scaled"] = tco_values_scaled[cost_value_col].apply(
                 lambda x: return_bin_rank(x, bin_dict=binned_rank_dict)
@@ -327,7 +342,8 @@ def get_best_choice(
             abatement_values_scaled = abatement_values.copy()
             binned_rank_dict = create_bin_rank_dict(
                 tco_values_scaled["abated_combined_emissivity"],
-                len(technology_list),
+                number_of_items=len(technology_list),
+                max_bin_size=3,
                 reverse=True,
             )
             tco_values_scaled["abatement_scaled"] = tco_values_scaled[
@@ -358,13 +374,7 @@ def get_best_choice(
             min_value = combined_scales["overall_score"].min()
             best_values = combined_scales[combined_scales["overall_rank"] == min_value]
 
-            # pick the only option if there is one option
-            if len(best_values) == 1:
-                return best_values.index.values[0]
-            # pick random choice if there is more than one option
-            elif len(best_values) > 1:
-                potential_techs = best_values.index.to_list()
-                return random.choice(potential_techs)
+            return return_best_choice(best_values, start_tech)
 
     # Ranking algorithm
     if solver_logic == "ranked":
@@ -399,17 +409,7 @@ def get_best_choice(
         )
         min_value = combined_ranks["overall_rank"].min()
         best_values = combined_ranks[combined_ranks["overall_rank"] == min_value]
-
-        # pick random choice if there is more than one option
-        if len(best_values) > 1:
-            potential_techs = best_values.index.to_list()
-            return random.choice(potential_techs)
-        # pick initial tech if there are no options
-        elif len(best_values) == 0:
-            return start_tech
-        # pick the only option if there is one option
-        elif len(best_values) == 1:
-            return best_values.index.values[0]
+        return return_best_choice(best_values, start_tech)
 
 
 def subset_presolver_df(df: pd.DataFrame, subset_type: str = False) -> pd.DataFrame:

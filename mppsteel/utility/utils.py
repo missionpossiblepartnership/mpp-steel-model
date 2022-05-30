@@ -121,19 +121,22 @@ def cast_to_float(val: Union[float, int, Iterable]) -> float:
 
 
 def create_bin_rank_dict(
-    data: np.array, bins: int = 10, reverse: bool = False, rounding: int = 3
+    data: np.array, number_of_items: int, max_bin_size: int = 3, reverse: bool = False, rounding: int = 3
 ) -> dict:
     """Create a dictionary of bin value: bin rank key: value pairs.
 
     Args:
         data (np.array): The data that you want to create bins for.
-        bins (int, optional): The number of bins you want to create. Defaults to 10.
+        number_of_items: The number of items that determines the minium number of bins you want to create.
+        max_bin_size (int, optional): The max number of bins you want to create. Defaults to 3.
         reverse (bool, optional): Reverse the enumeration of the bins (descending rather than ascending order). Defaults to False.
         rounding (int, optional): Optionally round the numbers for the bin groups. Defaults to 3.
 
     Returns:
         dict: A dictionary of bin value: bin rank.
     """
+
+    bins = min(number_of_items, max_bin_size)
     bins = np.linspace(data.min(), data.max(), bins)
     digitized = np.digitize(data, bins)
     new_data_list = [data[digitized == i].mean() for i in range(1, len(bins))]
