@@ -30,6 +30,29 @@ def business_case():
     }
 
 
+def test_plant_variable_costs_emissivity(business_case):
+    """
+    Assert that cost is calculated correctly for the emissivity material_category.
+    This category is special, because it is not handled by the model
+    and should trigger the default price of 0.
+    """
+    value, price, year, country_code = 1.0, 0.0, 2020, "DEU"
+    material_category = "Emissivity"
+    year_country = year, country_code
+    expected = value * price
+    business_case |= {"value": value, "material_category": material_category}
+    business_cases = pd.DataFrame([business_case])
+    input_data = PlantVariableCostsInput(
+        product_range_year_country=[year_country],
+        business_cases=business_cases,
+        steel_plant_region_ng_dict={"DEU": 0},
+        # resource_category_mapper={material_category: "Unknown material category"},
+    )
+    df = plant_variable_costs(input_data)
+    actual = df.cost.values[0]
+    assert actual == expected
+
+
 def test_plant_variable_costs_electricity(business_case):
     """
     Assert that cost is calculated correctly for the electricity material_category.
