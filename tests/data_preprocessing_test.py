@@ -1,7 +1,10 @@
 import pandas as pd
 import pytest
 
-from mppsteel.data_preprocessing.variable_plant_cost_archetypes import PlantVariableCostsInput, plant_variable_costs
+from mppsteel.data_preprocessing.variable_plant_cost_archetypes import (
+    PlantVariableCostsInput,
+    plant_variable_costs,
+)
 
 
 @pytest.fixture
@@ -26,7 +29,10 @@ def make_business_case():
     }
 
     def _make_business_case(material_category, value):
-        return business_case_template.copy() | {"value": value, "material_category": material_category}
+        return business_case_template.copy() | {
+            "value": value,
+            "material_category": material_category,
+        }
 
     return _make_business_case
 
@@ -50,7 +56,10 @@ def test_plant_variable_costs_emissivity(make_business_case, make_input_data):
     This category is special, because it is not handled by the model
     and should trigger the default price of 0.
     """
-    value, price,  = 1.0, 0.0
+    value, price, = (
+        1.0,
+        0.0,
+    )
     expected = value * price
     business_cases = pd.DataFrame([make_business_case("Emissivity", value)])
     input_data = make_input_data(business_cases, 2020, "DEU")
@@ -283,5 +292,3 @@ def test_plant_variable_costs_steam(business_case):
     df = plant_variable_costs(input_data)
     actual = df.cost.values[0]
     assert actual == expected
-
-
