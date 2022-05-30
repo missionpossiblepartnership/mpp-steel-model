@@ -205,7 +205,7 @@ class PlantVariableCostsInput:
         ]
         df = pd.DataFrame(pgp_ref_list, columns=("year", "country_code", "price"))
         df["material_category"] = "Electricity"
-        return (df,)
+        return df,
 
     def get_hydrogen_prices(self):
         h2_ref_list = [
@@ -213,7 +213,7 @@ class PlantVariableCostsInput:
         ]
         df = pd.DataFrame(h2_ref_list, columns=("year", "country_code", "price"))
         df["material_category"] = "Hydrogen"
-        return (df,)
+        return df,
 
     def get_bio_model_prices(self):
         df_mass = pd.DataFrame(
@@ -292,7 +292,7 @@ class PlantVariableCostsInput:
         df = self.create_df_from_years_and_country_codes()
         df["price"] = self.feedstock_dict["Plastic waste"]
         df["material_category"] = "Plastic waste"
-        return (df,)
+        return df,
 
     def get_fossil_category_prices(self, category):
         fossil_prices = self.static_energy_prices.loc[category].reset_index().copy()
@@ -345,7 +345,7 @@ class PlantVariableCostsInput:
     def get_steam_prices(self):
         df_steam = self.get_gas_prices_per_country_and_year("Steam", self.country_codes)
         df_steam["material_category"] = "Steam"
-        return (df_steam,)
+        return df_steam,
 
     def get_price_lookup_df(self):
         price_lookup_dfs = [
@@ -379,20 +379,36 @@ class PlantVariableCostsInput:
         df["cost"] = 0.0
         return df
 
-    def plant_variable_costs(self):
-        df = self.get_base_data_frame()
-        df_prices = self.get_price_lookup_df()
-        dm = df.merge(
-            df_prices, on=("material_category", "year", "country_code"), how="left"
-        )
-        dm["country_code"] = dm["country_code"].astype("category")
-        dm["material_category"] = dm["material_category"].astype("category")
-        dm["cost"] = dm.value * dm.price
-        dm["cost"] = dm.cost.fillna(0.0)
-        return dm
+
+def plant_variable_costs_vectorized(input_data: PlantVariableCostsInput) -> pd.DataFrame:
+    df = input_data.get_base_data_frame()
+    df_prices = input_data.get_price_lookup_df()
+    dm = df.merge(
+        df_prices, on=("material_category", "year", "country_code"), how="left"
+    )
+    dm["country_code"] = dm["country_code"].astype("category")
+    dm["material_category"] = dm["material_category"].astype("category")
+    dm["cost"] = dm.value * dm.price
+    dm["cost"] = dm.cost.fillna(0.0)
+    return dm
 
 
 def plant_variable_costs(input_data: PlantVariableCostsInput) -> pd.DataFrame:
+    """
+    Creates a DataFrame reference of each plant's variable cost.
+
+    Args:
+        input_data (PlantVariableCostsInput): object holding all the input data for calculation.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing each plant's variable costs.
+
+    """
+    # return plant_variable_costs_legacy(input_data)
+    return plant_variable_costs_vectorized(input_data)
+
+
+def plant_variable_costs_legacy(input_data: PlantVariableCostsInput) -> pd.DataFrame:
     """Creates a DataFrame reference of each plant's variable cost.
 
     Args:
