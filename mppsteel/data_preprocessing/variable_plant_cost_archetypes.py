@@ -392,7 +392,7 @@ def plant_variable_costs_vectorized(input_data: PlantVariableCostsInput) -> pd.D
     return dm
 
 
-def plant_variable_costs(input_data: PlantVariableCostsInput) -> pd.DataFrame:
+def plant_variable_costs_choose(input_data: PlantVariableCostsInput) -> pd.DataFrame:
     """
     Creates a DataFrame reference of each plant's variable cost.
 
@@ -403,11 +403,11 @@ def plant_variable_costs(input_data: PlantVariableCostsInput) -> pd.DataFrame:
         pd.DataFrame: A DataFrame containing each plant's variable costs.
 
     """
-    # return plant_variable_costs_legacy(input_data)
     return plant_variable_costs_vectorized(input_data)
+    # return plant_variable_costs_legacy(input_data)
 
 
-def plant_variable_costs_legacy(input_data: PlantVariableCostsInput) -> pd.DataFrame:
+def plant_variable_costs(input_data: PlantVariableCostsInput) -> pd.DataFrame:
     """Creates a DataFrame reference of each plant's variable cost.
 
     Args:
