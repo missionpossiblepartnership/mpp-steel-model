@@ -1,22 +1,7 @@
 import pandas as pd
 import pytest
 
-# from mppsteel.config.model_scenarios import DEFAULT_SCENARIO
-# from mppsteel.config.model_config import USD_TO_EUR_CONVERSION_DEFAULT
 from mppsteel.data_preprocessing.variable_plant_cost_archetypes import PlantVariableCostsInput, plant_variable_costs
-
-
-# @pytest.fixture
-# def input_data():
-#     scenario_dict = DEFAULT_SCENARIO.copy()
-#     scenario_dict["usd_to_eur"] = USD_TO_EUR_CONVERSION_DEFAULT
-#     scenario_dict["eur_to_usd"] = 1.0 / scenario_dict["usd_to_eur"]
-#     return PlantVariableCostsInput.from_filesystem(scenario_dict)
-#
-#
-# def test_plant_variable_costs(input_data):
-#     df = plant_variable_costs(input_data)
-#     assert False
 
 
 @pytest.fixture
