@@ -412,7 +412,7 @@ def plant_variable_costs_legacy(input_data: PlantVariableCostsInput) -> pd.DataF
     """Creates a DataFrame reference of each plant's variable cost.
 
     Args:
-        scenario_dict (dict): Dictionary with Scenarios.
+        input_data (PlantVariableCostsInput): object holding all the input data for calculation..
 
     Returns:
         pd.DataFrame: A DataFrame containing each plant's variable costs.
