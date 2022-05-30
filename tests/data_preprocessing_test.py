@@ -20,6 +20,9 @@ def business_case():
 
 @pytest.fixture
 def make_business_case():
+    """
+    Create a business case with a given material_category and value.
+    """
     business_case_template = {
         "technology": "Avg BF-BOF",
         "material_category": "Electricity",
@@ -38,54 +41,72 @@ def make_business_case():
 
 
 @pytest.fixture
-def make_input_data():
-    def _make_input_data(business_cases, year, country_code):
-        year_country = year, country_code
-        return PlantVariableCostsInput(
-            product_range_year_country=[year_country],
-            business_cases=business_cases,
-            steel_plant_region_ng_dict={"DEU": 0},
+def make_business_cases(make_business_case):
+    """
+    Create a DataFrame from a list of business cases which where created from a
+    list of given material_categories and values.
+    """
+
+    def _make_business_cases(values):
+        return pd.DataFrame(
+            [
+                make_business_case(material_category, value)
+                for material_category, value in values
+            ]
         )
+
+    return _make_business_cases
+
+
+@pytest.fixture
+def make_input_data():
+    """
+    Create the input data for the plant_variable_costs function.
+    """
+
+    def _make_input_data(business_cases, year, country_code, **kwargs):
+        year_country = year, country_code
+        input_kwargs = (
+            dict(
+                product_range_year_country=[year_country],
+                business_cases=business_cases,
+                steel_plant_region_ng_dict={"DEU": 0},
+            )
+            | kwargs
+        )
+        return PlantVariableCostsInput(**input_kwargs)
 
     return _make_input_data
 
 
-def test_plant_variable_costs_emissivity(make_business_case, make_input_data):
+def test_plant_variable_costs_emissivity(make_business_cases, make_input_data):
     """
     Assert that cost is calculated correctly for the emissivity material_category.
     This category is special, because it is not handled by the model
     and should trigger the default price of 0.
     """
-    value, price, = (
-        1.0,
-        0.0,
+    value, price, year, country_code = 1.0, 0.0, 2020, "DEU"
+    input_data = make_input_data(
+        make_business_cases([("Emissivity", value)]), year, country_code
     )
-    expected = value * price
-    business_cases = pd.DataFrame([make_business_case("Emissivity", value)])
-    input_data = make_input_data(business_cases, 2020, "DEU")
     df = plant_variable_costs(input_data)
-    actual = df.cost.values[0]
-    assert actual == expected
+    assert df.cost.values[0] == value * price
 
 
-def test_plant_variable_costs_electricity(business_case):
+def test_plant_variable_costs_electricity(make_business_cases, make_input_data):
     """
     Assert that cost is calculated correctly for the electricity material_category.
     """
-    value, power_grid_price = 1.0, 0.5
-    expected = value * power_grid_price
-    year_country = 2020, "DEU"
-    business_case |= {"value": value, "material_category": "Electricity"}
-    business_cases = pd.DataFrame([business_case])
-    input_data = PlantVariableCostsInput(
-        product_range_year_country=[year_country],
-        business_cases=business_cases,
-        power_grid_prices_ref={year_country: power_grid_price},
-        steel_plant_region_ng_dict={"DEU": 0},
+    value, price, year, country_code = 1.0, 0.5, 2020, "DEU"
+    power_grid_prices_ref = {(year, country_code): price}
+    input_data = make_input_data(
+        make_business_cases([("Electricity", value)]),
+        year,
+        country_code,
+        power_grid_prices_ref=power_grid_prices_ref,
     )
     df = plant_variable_costs(input_data)
-    actual = df.cost.values[0]
-    assert actual == expected
+    assert df.cost.values[0] == value * price
 
 
 def test_plant_variable_costs_hydrogen(business_case):
