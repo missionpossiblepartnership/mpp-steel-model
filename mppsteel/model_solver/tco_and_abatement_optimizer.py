@@ -197,6 +197,7 @@ def record_ranking(
     year: int,
     start_tech: str,
     solver_logic: str,
+    scenario_name: str
 ) -> None:
     """Formats the combined rank dataframe and adds it to a plant choice container class instance.
 
@@ -206,18 +207,21 @@ def record_ranking(
         year (int): The current model cycle year.
         start_tech (str): The base technonlogy for the ranking.
         solver_logic (str): Determines the algorithm used to pick the best technology.
+        scenario_name (str): The current scenario of the model_run.
     """
     if not combined_ranks.empty:
         records = combined_ranks.reset_index().copy()
         records["year"] = year
         records["start_tech"] = start_tech
         records["solver_logic"] = solver_logic
+        records["scenario_name"] = scenario_name
         if solver_logic == "rank":
             records = records[
                 [
                     "year",
                     "start_tech",
                     "solver_logic",
+                    "scenario_name",
                     "switch_tech",
                     "tco_rank_score",
                     "abatement_rank_score",
@@ -230,13 +234,14 @@ def record_ranking(
                     "year",
                     "start_tech",
                     "solver_logic",
+                    "scenario_name",
                     "switch_tech",
                     "tco_scaled",
                     "abatement_scaled",
                     "overall_score",
                 ]
             ]
-        records = records.set_index(["year", "solver_logic", "start_tech"]).sort_index(
+        records = records.set_index(["year", "solver_logic", "scenario_name", "start_tech"]).sort_index(
             ascending=True
         )
         plant_choice_container.update_records("rank", records)
@@ -262,6 +267,7 @@ def get_best_choice(
     year: int,
     start_tech: str,
     solver_logic: str,
+    scenario_name: str,
     weighting_dict: dict,
     technology_list: list,
     transitional_switch_mode: bool,
@@ -276,6 +282,7 @@ def get_best_choice(
         year (int): The year you want to pick the best technology for.
         start_tech (str): The starting technology for the plant in the given year.
         solver_logic (str): Determines the algorithm used to pick the best technology.
+        scenario_name (str): The current scenario of the model_run.
         weighting_dict (dict): A dictionary containing the weighting scenario of lowest cost vs. emission abatement.
         technology_list (list): A list of technologies that represent valid technology switches.
         transitional_switch_mode (bool): determines the column to use for TCO values
@@ -364,7 +371,7 @@ def get_best_choice(
         ) + (combined_scales["abatement_scaled"] * weighting_dict["emissions"])
         combined_scales.sort_values("overall_score", axis=0, inplace=True)
         record_ranking(
-            combined_scales, plant_choice_container, year, start_tech, solver_logic
+            combined_scales, plant_choice_container, year, start_tech, solver_logic, scenario_name
         )
 
         if solver_logic == "scaled":
@@ -405,7 +412,7 @@ def get_best_choice(
         ) + (combined_ranks["abatement_rank_score"] * weighting_dict["emissions"])
         combined_ranks.sort_values("overall_rank", axis=0, inplace=True)
         record_ranking(
-            combined_ranks, plant_choice_container, year, start_tech, solver_logic
+            combined_ranks, plant_choice_container, year, start_tech, solver_logic, scenario_name
         )
         min_value = combined_ranks["overall_rank"].min()
         best_values = combined_ranks[combined_ranks["overall_rank"] == min_value]

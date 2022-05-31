@@ -79,8 +79,13 @@ class PlantChoices:
             return pd.DataFrame(self.choice_records).reset_index(drop=True)
         elif record_type == "rank":
             df = pd.DataFrame(self.rank_records).reset_index(drop=True)
-            return df[~df.index.duplicated(keep="first")]
+            df = df[~df.index.duplicated(keep="first")]
+            return combine_tech_ranks(df)
 
+def combine_tech_ranks(tr_df: pd.DataFrame):
+    container = [pd.concat(tr_df.values[count]) for count in range(len(tr_df.values))]
+    df = pd.concat(container)
+    return df.sort_values(by=['year','start_tech'], ascending=True).reset_index()
 
 class MaterialUsage:
     """Description

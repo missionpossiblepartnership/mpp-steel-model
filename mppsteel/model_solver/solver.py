@@ -121,6 +121,7 @@ def return_best_tech(
     enforce_constraints = scenario_dict["enforce_constraints"]
     green_premium_scenario = scenario_dict["green_premium_scenario"]
     regional_scrap = scenario_dict["regional_scrap_constraint"]
+    scenario_name = scenario_dict["scenario_name"]
 
     tco_ref_data = tco_reference_data.copy()
 
@@ -214,6 +215,7 @@ def return_best_tech(
         year,
         base_tech,
         solver_logic,
+        scenario_name,
         proportions_dict,
         combined_available_list,
         transitional_switch_mode,
