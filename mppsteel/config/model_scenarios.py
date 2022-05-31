@@ -25,7 +25,7 @@ CARBON_TAX_SCENARIOS = {
     "off": (0, 0),
     "low": (0, 30),
     "average": (0, 100),
-    "high": (0, 210),
+    "high": (0, 250),
 }
 
 GRID_DECARBONISATION_SCENARIOS = {
