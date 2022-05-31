@@ -347,6 +347,9 @@ class PlantVariableCostsInput:
 
 
 def build_variable_cost_df(input_data: PlantVariableCostsInput) -> pd.DataFrame:
+    """
+    Builds a dataframe with the variable costs of the plants for all years.
+    """
     dyc = pd.DataFrame(
         input_data.product_range_year_country, columns=("year", "country_code")
     )
@@ -365,6 +368,21 @@ def build_variable_cost_df(input_data: PlantVariableCostsInput) -> pd.DataFrame:
 
 
 def plant_variable_costs_vectorized(input_data: PlantVariableCostsInput) -> pd.DataFrame:
+    """
+    Creates a dataframe with the variable costs of the plants.
+
+    It's building a dataframe with the product range year country for
+    all business cases and merges it with the dataframe holding
+    the prices for all material categories. The resulting costs column
+    is just the product between value and price or 0 if there's no price
+    for the material category.
+
+    Args:
+        input_data (PlantVariableCostsInput): object holding all the input data needed.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing each plant's variable costs.
+    """
     df = build_variable_cost_df(input_data)
     df_prices = input_data.get_price_lookup_df()
     dm = df.merge(
