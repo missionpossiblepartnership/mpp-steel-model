@@ -94,7 +94,6 @@ def make_input_data(feedstock_dict, static_energy_prices):
             dict(
                 product_range_year_country=[year_country],
                 business_cases=business_cases,
-                steel_plant_region_ng_dict={"DEU": 0},
                 resource_category_mapper=RESOURCE_CATEGORY_MAPPER.copy(),
                 static_energy_prices=static_energy_prices,
                 feedstock_dict=feedstock_dict,
@@ -194,31 +193,21 @@ def test_plant_variable_costs_captured_co2(make_business_cases, make_input_data)
     assert df.cost.values[0] == value * (transport_price + storage_price)
 
 
-def test_plant_variable_costs_natural_gas(
-    make_business_cases, make_input_data, static_energy_prices
-):
+def test_plant_variable_costs_natural_gas(make_business_cases, make_input_data):
     """
     Assert that cost is calculated correctly for the natural gas material_category.
     """
     value, price, year, country_code = 1.0, 0.5, 2020, "DEU"
-    energy_price_rows = [
-        ["Natural gas - low", year, price],
-        ["Natural gas - high", year, price],
-    ]
-    test_energy_prices = pd.DataFrame(
-        energy_price_rows, columns=["Metric", "Year", "Value"]
-    ).set_index(["Metric", "Year"])
-    static_energy_prices = pd.concat([test_energy_prices, static_energy_prices])
-    for ng_flag in (0, 1):
-        input_data = make_input_data(
-            make_business_cases([("Natural gas", value)]),
-            year,
-            country_code,
-            static_energy_prices=static_energy_prices,
-            steel_plant_region_ng_dict={country_code: ng_flag},
-        )
-        df = plant_variable_costs(input_data)
-        assert df.cost.values[0] == value * price
+    material_category = "Natural gas"
+    fossil_fuel_ref = {(year, country_code, material_category): price}
+    input_data = make_input_data(
+        make_business_cases([(material_category, value)]),
+        year,
+        country_code,
+        fossil_fuel_ref=fossil_fuel_ref,
+    )
+    df = plant_variable_costs(input_data)
+    assert df.cost.values[0] == value * price
 
 
 def test_plant_variable_costs_plastic_waste(
@@ -238,14 +227,48 @@ def test_plant_variable_costs_plastic_waste(
     assert df.cost.values[0] == value * price
 
 
-def test_plant_variable_costs_thermal_coal(
-    make_business_cases, make_input_data, static_energy_prices
-):
+def test_plant_variable_costs_thermal_coal(make_business_cases, make_input_data):
     """
     Assert that cost is calculated correctly for the thermal coal material_category.
     """
     value, price, year, country_code = 1.0, 0.5, 2020, "DEU"
     material_category = "Thermal coal"
+    fossil_fuel_ref = {(year, country_code, material_category): price}
+    input_data = make_input_data(
+        make_business_cases([(material_category, value)]),
+        year,
+        country_code,
+        fossil_fuel_ref=fossil_fuel_ref,
+    )
+    df = plant_variable_costs(input_data)
+    assert df.cost.values[0] == value * price
+
+
+def test_plant_variable_costs_met_coal(make_business_cases, make_input_data):
+    """
+    Assert that cost is calculated correctly for the met coal material_category.
+    """
+    value, price, year, country_code = 1.0, 0.5, 2020, "DEU"
+    material_category = "Met coal"
+    fossil_fuel_ref = {(year, country_code, material_category): price}
+    input_data = make_input_data(
+        make_business_cases([(material_category, value)]),
+        year,
+        country_code,
+        fossil_fuel_ref=fossil_fuel_ref,
+    )
+    df = plant_variable_costs(input_data)
+    assert df.cost.values[0] == value * price
+
+
+def test_plant_variable_costs_bf_gas(
+    make_business_cases, make_input_data, static_energy_prices
+):
+    """
+    Assert that cost is calculated correctly for the BF gas material_category.
+    """
+    value, price, year, country_code = 1.0, 0.5, 2020, "DEU"
+    material_category = "BF gas"
     energy_price_rows = [
         [material_category, year, price],
     ]
@@ -254,7 +277,7 @@ def test_plant_variable_costs_thermal_coal(
     ).set_index(["Metric", "Year"])
     static_energy_prices = pd.concat([test_energy_prices, static_energy_prices])
     input_data = make_input_data(
-        make_business_cases([("Thermal coal", value)]),
+        make_business_cases([(material_category, value)]),
         year,
         country_code,
         static_energy_prices=static_energy_prices,

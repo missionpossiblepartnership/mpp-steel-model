@@ -415,12 +415,12 @@ def plant_variable_costs(input_data: PlantVariableCostsInput) -> pd.DataFrame:
     Returns:
         pd.DataFrame: A DataFrame containing each plant's variable costs.
     """
-    steel_plant_region_ng_dict = input_data.steel_plant_region_ng_dict
     power_grid_prices_ref = input_data.power_grid_prices_ref
     h2_prices_ref = input_data.h2_prices_ref
     bio_model_prices_ref = input_data.bio_model_prices_ref
     ccs_model_transport_ref = input_data.ccs_model_transport_ref
     ccs_model_storage_ref = input_data.ccs_model_storage_ref
+    fossil_fuel_ref = input_data.fossil_fuel_ref
     business_cases = input_data.business_cases
     static_energy_prices = input_data.static_energy_prices
     feedstock_dict = input_data.feedstock_dict
