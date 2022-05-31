@@ -373,6 +373,9 @@ def plant_variable_costs_vectorized(input_data: PlantVariableCostsInput) -> pd.D
     dm["material_category"] = dm["material_category"].astype("category")
     dm["cost"] = dm.value * dm.price
     dm["cost"] = dm.cost.fillna(0.0)
+    dm["cost_type"] = dm["material_category"].apply(
+        lambda material: input_data.resource_category_mapper[material]
+    )
     return dm
 
 
