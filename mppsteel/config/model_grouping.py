@@ -233,7 +233,7 @@ def data_import_refresh() -> None:
 
 
 def data_preprocessing_refresh(scenario_dict: dict) -> None:
-    data_preprocessing_generic(scenario_dict)
+    data_preprocessing_generic()
     data_preprocessing_scenarios(scenario_dict)
 
 

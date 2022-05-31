@@ -273,7 +273,7 @@ def get_best_choice(
     transitional_switch_mode: bool,
     plant_choice_container: PlantChoices,
 ) -> str:
-    """Returns the best technology choice from a list of potential logic according to the paramter settings provided in the function.
+    """Returns the best technology choice from a list of potential logic according to the parameter settings provided in the function.
 
     Args:
         tco_df (pd.DataFrame): The TCO reference DataFrame.

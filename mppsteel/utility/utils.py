@@ -47,7 +47,7 @@ def create_list_permutations(list1: list, list2: list) -> list:
     return list(itertools.chain(*comb))
 
 
-def stdout_query(question: str, default: str, options: str) -> None:
+def stdout_query(question: str, default: str, options: str) -> str:
     """Ask a yes/no question via raw_input() and return their answer.
 
     "question" is a string that is presented to the user.
