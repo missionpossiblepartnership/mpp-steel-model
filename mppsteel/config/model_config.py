@@ -1,6 +1,9 @@
 """Config file for model parameters"""
 
+from pathlib import Path
+
 # PATH NAMES
+PROJECT_PATH = Path(__file__).parent.parent.parent
 CORE_DATA_PATH = "mppsteel/data"
 LOG_PATH = "logs/"
 TEST_FOLDER = "tests/"
@@ -137,3 +140,5 @@ TRADE_PCT_BOUNDARY_DICT = {
     "India": 0.8,
     "Japan, South Korea, and Taiwan": 0.1
 }
+
+
