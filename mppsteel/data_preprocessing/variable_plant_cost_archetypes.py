@@ -266,25 +266,10 @@ class PlantVariableCostsInput:
         )
 
     def get_gas_prices(self):
-        low_natural_gas_cc = [
-            country_code
-            for country_code, flag in self.steel_plant_region_ng_dict.items()
-            if flag == 1
-        ]
-        high_natural_gas_cc = [
-            country_code
-            for country_code, flag in self.steel_plant_region_ng_dict.items()
-            if flag == 0
-        ]
-        df_gas_low = self.get_gas_prices_per_country_and_year(
-            "Natural gas - low", low_natural_gas_cc
-        )
-        df_gas_low["material_category"] = "Natural gas"
-        df_gas_high = self.get_gas_prices_per_country_and_year(
-            "Natural gas - high", high_natural_gas_cc
-        )
-        df_gas_high["material_category"] = "Natural gas"
-        return df_gas_low, df_gas_high
+        return pd.DataFrame(
+            ((*key, price) for key, price in self.fossil_fuel_ref.items()),
+            columns=["year", "country_code", "material_category", "price"]
+        ),
 
     def get_plastic_waste(self):
         df = self.create_df_from_years_and_country_codes()
@@ -391,7 +376,7 @@ def plant_variable_costs_vectorized(input_data: PlantVariableCostsInput) -> pd.D
     return dm
 
 
-def plant_variable_costs_choose(input_data: PlantVariableCostsInput) -> pd.DataFrame:
+def plant_variable_costs(input_data: PlantVariableCostsInput) -> pd.DataFrame:
     """
     Creates a DataFrame reference of each plant's variable cost.
 
@@ -406,7 +391,7 @@ def plant_variable_costs_choose(input_data: PlantVariableCostsInput) -> pd.DataF
     # return plant_variable_costs_legacy(input_data)
 
 
-def plant_variable_costs(input_data: PlantVariableCostsInput) -> pd.DataFrame:
+def plant_variable_costs_legacy(input_data: PlantVariableCostsInput) -> pd.DataFrame:
     """Creates a DataFrame reference of each plant's variable cost.
 
     Args:
