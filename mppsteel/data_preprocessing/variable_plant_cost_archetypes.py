@@ -345,26 +345,27 @@ class PlantVariableCostsInput:
         ]
         return merge_price_lookup_dfs(price_lookup_dfs)
 
-    def get_base_data_frame(self):
-        dyc = pd.DataFrame(
-            self.product_range_year_country, columns=("year", "country_code")
-        )
-        emissions = set(
-            [k for k, v in self.resource_category_mapper.items() if v == "Emissivity"]
-        )
-        db = self.business_cases.copy()
-        db = db[~db.material_category.isin(emissions)]
-        df = db.merge(dyc, how="cross")
-        not_categorical = set(["value"])
-        categorical_columns = [col for col in df.columns if col not in not_categorical]
-        for col in categorical_columns:
-            df[col] = df[col].astype("category")
-        df["cost"] = 0.0
-        return df
+
+def build_variable_cost_df(input_data: PlantVariableCostsInput) -> pd.DataFrame:
+    dyc = pd.DataFrame(
+        input_data.product_range_year_country, columns=("year", "country_code")
+    )
+    emissions = set(
+        [k for k, v in input_data.resource_category_mapper.items() if v == "Emissivity"]
+    )
+    db = input_data.business_cases.copy()
+    db = db[~db.material_category.isin(emissions)]
+    df = db.merge(dyc, how="cross")
+    not_categorical = set(["value"])
+    categorical_columns = [col for col in df.columns if col not in not_categorical]
+    for col in categorical_columns:
+        df[col] = df[col].astype("category")
+    df["cost"] = 0.0
+    return df
 
 
 def plant_variable_costs_vectorized(input_data: PlantVariableCostsInput) -> pd.DataFrame:
-    df = input_data.get_base_data_frame()
+    df = build_variable_cost_df(input_data)
     df_prices = input_data.get_price_lookup_df()
     dm = df.merge(
         df_prices, on=("material_category", "year", "country_code"), how="left"
