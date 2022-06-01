@@ -5,6 +5,7 @@ import sys
 import multiprocessing as mp
 
 import numpy as np
+import numpy.typing as npt
 
 from collections.abc import Iterable
 from copy import deepcopy
@@ -71,7 +72,7 @@ def stdout_query(question: str, default: str, options: str) -> str:
             sys.stdout.write(f"Please respond with a choice from {options}.\n")
 
 
-def get_currency_rate(base: str, target: str) -> str:
+def get_currency_rate(base: str, target: str) -> None:
     """Gets a currency rate exchange between two currencies using the CurrencyConverter library.
 
     Args:
@@ -79,7 +80,7 @@ def get_currency_rate(base: str, target: str) -> str:
         target (str): [description]
 
     Returns:
-        str: [description]
+        None: A None object
     """
     logger.info(f"Getting currency exchange rate for {base}")
 
@@ -91,6 +92,7 @@ def get_currency_rate(base: str, target: str) -> str:
             raise ValueError(
                 f"You entered an incorrect currency, either {base} or {target}"
             )
+    return None
 
 
 def enumerate_iterable(iterable: it) -> dict:
@@ -105,11 +107,11 @@ def enumerate_iterable(iterable: it) -> dict:
     return dict(zip(iterable, range(len(iterable))))
 
 
-def cast_to_float(val: Union[float, int, Iterable]) -> float:
+def cast_to_float(val: Union[float, int, Iterable[float]]) -> float:
     """Casts a numerical object to a float if not a float already.
 
     Args:
-        val Union[float, int, Iterable]): The numerical value you want to be a float. Can be an iterable containing a numberical value(s), that will be summated as a float.
+        val Union[float, int, Iterable[float]]): The numerical value you want to be a float. Can be an iterable containing a numberical value(s), that will be summated as a float.
 
     Returns:
         float: The float value.

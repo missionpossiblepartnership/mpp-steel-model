@@ -54,7 +54,7 @@ def match_country(country: str) -> str:
         return ""
 
 
-def country_matcher(country_list: list, output_type: str = "all") -> dict:
+def country_matcher(country_list: list, output_type: str = "matches") -> dict:
     """Fuzzy matches a list of countries and creates a mapping of the country to ISO Alpha-3 name.
     The function produces a dictionary of mappings and also a dictionary of all unmapped countries.
 
@@ -63,7 +63,7 @@ def country_matcher(country_list: list, output_type: str = "all") -> dict:
         output_type (str, optional): The output you want - mapped dictionary, unmapped dictionary or both. Defaults to 'all'.
 
     Returns:
-        dict: Dictionary(ies) based on the output_type parameters.
+        dict: Dictionary based on the output_type parameters.
     """
 
     # Generate matched entries
@@ -72,13 +72,11 @@ def country_matcher(country_list: list, output_type: str = "all") -> dict:
     unmatched_dict = {
         item[0]: item[1] for item in countries_dict.items() if not item[1]
     }
-
-    if output_type == "all":
-        return countries_dict, unmatched_dict
     if output_type == "matches":
-        return countries_dict
+        return_dict = countries_dict
     if output_type == "nonmatches":
-        return unmatched_dict
+        return_dict = unmatched_dict
+    return return_dict
 
 
 def get_unique_countries(country_arrays) -> list:

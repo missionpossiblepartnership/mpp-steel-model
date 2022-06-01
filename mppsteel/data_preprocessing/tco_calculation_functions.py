@@ -83,8 +83,8 @@ def get_opex_costs(
     year: int,
     variable_costs_df: pd.DataFrame,
     opex_df: pd.DataFrame,
-    s1_emissions_ref: dict,
-    s2_emissions_ref: float,
+    s1_emissions_ref: pd.DataFrame,
+    s2_emissions_ref: pd.DataFrame,
     carbon_tax_timeseries: pd.DataFrame,
 ) -> pd.DataFrame:
     """Returns the combined Opex costs for each technology in each region.
@@ -94,8 +94,8 @@ def get_opex_costs(
         year (int): The year you want to request opex values for.
         variable_costs_df (pd.DataFrame): DataFrame containing the variable costs data split by technology and region.
         opex_df (pd.DataFrame): The Fixed Opex DataFrame containing opex costs split by technology.
-        s1_emissions_ref (dict): The DataFrame for scope 1 emissions.
-        s2_emissions_value (float): The value for Scope 2 emissions.
+        s1_emissions_ref (pd.DataFrame): The DataFrame for scope 1 emissions.
+        s2_emissions_value (pd.DataFrame): The DataFrame for scope 2 emissions.
         carbon_tax_timeseries (pd.DataFrame): The carbon tax timeseries with the carbon tax amounts on a yearly basis.
 
     Returns:

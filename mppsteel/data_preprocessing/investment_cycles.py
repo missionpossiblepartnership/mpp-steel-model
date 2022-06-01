@@ -108,7 +108,7 @@ def add_off_cycle_investment_years(
         list: An enhanced investment decision cycle list including off-cycle range objects representing potential off-cycle switches.
     """
     inv_cycle_length = len(main_investment_cycle)
-    range_list = []
+    range_list = list() # List[int, range]
 
     def net_zero_year_bring_forward(year: int) -> int:
         """Determines whether an investment year should be brought forward to be within the acceptable range to become net zero.

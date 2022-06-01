@@ -199,7 +199,7 @@ def apply_countries_to_steel_plants(
     logger.info("Applying Country Data to Steel Plants")
     df_c = steel_plant_formatted.copy()
     steel_plant_countries = df_c["country"].unique().tolist()
-    matching_dict, _ = country_matcher(steel_plant_countries)
+    matching_dict = country_matcher(steel_plant_countries, "matches")
     df_c["country_code"] = df_c["country"].apply(lambda x: matching_dict[x])
     country_fixer_dict = {"North Korea": "PRK", "South Korea": "KOR"}
     df_c = country_mapping_fixer(df_c, "country", "country_code", country_fixer_dict)

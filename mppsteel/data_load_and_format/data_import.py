@@ -178,5 +178,4 @@ def load_data(serialize: bool = False) -> dict:
     if serialize:
         # Turn dataframes into pickle files
         serialize_df_dict(PKL_DATA_IMPORTS, df_dict)
-        return
     return df_dict
