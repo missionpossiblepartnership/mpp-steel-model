@@ -5,6 +5,8 @@ from typing import Tuple
 
 import pandas as pd
 import numpy as np
+import numpy.typing as npt
+
 from mppsteel.model_solver.solver_classes import PlantChoices
 
 from mppsteel.utility.log_utility import get_logger
@@ -22,7 +24,7 @@ from mppsteel.config.model_config import (
 logger = get_logger(__name__)
 
 
-def normalise_data(arr: np.array) -> np.array:
+def normalise_data(arr: npt.ArrayLike) -> np.ndarray:
     """Given an array, normalise it by subtracting the minimum value and dividing by the range.
 
     Args:
