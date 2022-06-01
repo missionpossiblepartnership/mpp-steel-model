@@ -19,5 +19,15 @@ def test():
     subprocess.call(["pytest"])
 
 
+@cli.command()
+def coverage():
+    """
+    Run and show coverage.
+    """
+    subprocess.call(["coverage", "run"])
+    subprocess.call(["coverage", "html"])
+    subprocess.call(["open", "htmlcov/index.html"])
+
+
 if __name__ == "__main__":
     cli()
