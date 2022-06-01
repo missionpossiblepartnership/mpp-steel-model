@@ -1,6 +1,6 @@
 """Utility script to manipulate DataFrames"""
 
-from typing import List
+from typing import Sequence
 
 import pandas as pd
 import numpy as np
@@ -58,7 +58,7 @@ def create_line_through_points(
     return combined_df.set_index("year")
 
 
-def move_cols_to_front(df: pd.DataFrame, cols_at_front: List[str]) -> list:
+def move_cols_to_front(df: pd.DataFrame, cols_at_front: list[str]) -> list:
     """Function that changes the order of columns based on a list of columns you
     want at the front of a DataFrame.
 
@@ -73,7 +73,7 @@ def move_cols_to_front(df: pd.DataFrame, cols_at_front: List[str]) -> list:
     return cols_at_front + non_abatement_columns
 
 
-def expand_dataset_years(df: pd.DataFrame, year_pairs: List[tuple]) -> pd.DataFrame:
+def expand_dataset_years(df: pd.DataFrame, year_pairs: Sequence[tuple[int, int]]) -> pd.DataFrame:
     """Expands the number of years contained in a DataFrame where the current timeseries is in intervals.
 
     Args:
@@ -95,7 +95,7 @@ def expand_dataset_years(df: pd.DataFrame, year_pairs: List[tuple]) -> pd.DataFr
 
 
 def column_sorter(
-    df: pd.DataFrame, col_to_sort: List[str], col_order: List[str]
+    df: pd.DataFrame, col_to_sort: list[str], col_order: list[str]
 ) -> pd.DataFrame:
     """Sorts a DataFrames values according to a specified column and the column value order.
 
@@ -207,7 +207,7 @@ def return_furnace_group(furnace_dict: dict, tech: str) -> str:
 
 
 def melt_and_index(
-    df: pd.DataFrame, id_vars: List[str], var_name: str, index: List[str]
+    df: pd.DataFrame, id_vars: list[str], var_name: str, index: list[str]
 ) -> pd.DataFrame:
 
     """Transform a DataFrame by making it tabular and creating a multiindex.
@@ -227,7 +227,7 @@ def melt_and_index(
 
 
 def expand_melt_and_sort_years(
-    df: pd.DataFrame, year_pairs: List[tuple]
+    df: pd.DataFrame, year_pairs: Sequence[tuple[int, int]]
 ) -> pd.DataFrame:
     """Expands a DataFrame's years according to the year pairings passed. Also melts the DataFrame based on all columns that aren't years.
     Finally Sorts the DataFrame in ascending order of the years.
