@@ -17,7 +17,7 @@ def format_times(start_t: float, end_t: float, formatted: bool = True) -> str:
     time_diff = end_t - start_t
     if formatted:
         return f"{time_diff :0.2f} seconds | {time_diff / 60 :0.2f} minutes"
-    return time_diff
+    return str(time_diff)
 
 
 class TimeContainerClass:
@@ -41,11 +41,8 @@ class TimeContainerClass:
         )
         self.raw_times[func_name] = endtime - starttime
 
-    def return_time_container(self, return_object: bool = False) -> Union[None, dict]:
+    def return_time_container(self) -> Union[None, dict]:
         """Returns the contents of the timer dictionary container as a printed statement or object.
-
-        Args:
-            return_object (bool, optional): Flag to return the dictionary object. Defaults to False.
 
         Returns:
             Union[None, dict]: Returns a printed statement to the console and optionally a dictionary object depending on the `return_object` flag.
@@ -56,8 +53,7 @@ class TimeContainerClass:
         print(
             f"The total runtime for the scripts was {total_time_seconds :0.2f} seconds | {total_time_seconds / 60 :0.2f} minutes"
         )
-        if return_object:
-            return self.time_container
+        return self.time_container
 
 
 TIME_CONTAINER = TimeContainerClass()

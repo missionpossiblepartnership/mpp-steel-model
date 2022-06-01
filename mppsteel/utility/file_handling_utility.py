@@ -35,12 +35,12 @@ def read_pickle_folder(
 
     if pkl_file:
         mode = "df"
-
+    
     if mode == "df":
         if log:
             logger.info(f"||| Loading pickle file {pkl_file} from path {data_path}")
         with open(fr"{data_path}/{pkl_file}.pickle", "rb") as f:
-            return pickle.load(f)
+            data = pickle.load(f)
 
     elif mode == "dict":
         if log:
@@ -51,7 +51,8 @@ def read_pickle_folder(
                 logger.info(f"|||| Loading {pkl_file}")
             with open(fr"{data_path}/{pkl_file}", "rb") as f:
                 new_data_dict[pkl_file.split(".")[0]] = pickle.load(f)
-        return new_data_dict
+        data = new_data_dict
+    return data
 
 
 def extract_data(
