@@ -1,7 +1,7 @@
 """Script for the tco and abatament optimisation functions."""
 from functools import lru_cache
 import random
-from typing import Tuple, Literal, Union
+from typing import Tuple, Literal
 
 import pandas as pd
 import numpy as np
@@ -274,7 +274,7 @@ def get_best_choice(
     technology_list: list,
     transitional_switch_mode: bool,
     plant_choice_container: PlantChoices,
-) -> Union[str, None]:
+) -> str:
     """Returns the best technology choice from a list of potential logic according to the parameter settings provided in the function.
 
     Args:
@@ -419,7 +419,7 @@ def get_best_choice(
         min_value = combined_ranks["overall_rank"].min()
         best_values = combined_ranks[combined_ranks["overall_rank"] == min_value]
         return return_best_choice(best_values, start_tech)
-    return None
+    raise ValueError("no best technology found")
 
 
 def subset_presolver_df(df: pd.DataFrame, subset_type: Literal["tco_summary", "abatement"] = "tco_summary") -> pd.DataFrame:
