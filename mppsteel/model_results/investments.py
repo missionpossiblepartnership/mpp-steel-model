@@ -1,6 +1,6 @@
 """Investment Results generator for technology investments"""
 
-from typing import Union
+from typing import Optional, Union
 
 import pandas as pd
 from tqdm import tqdm
@@ -180,7 +180,7 @@ def get_plant_cycle(
     current_year: int,
     model_start_year: int,
     model_end_year: int,
-) -> range:
+) -> Optional[range]:
     """Get a plant's cycle based on the current year.
 
     Args:
