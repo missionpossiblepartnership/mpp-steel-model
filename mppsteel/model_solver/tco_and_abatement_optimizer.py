@@ -1,7 +1,7 @@
 """Script for the tco and abatament optimisation functions."""
 from functools import lru_cache
 import random
-from typing import Tuple
+from typing import Tuple, Literal
 
 import pandas as pd
 import numpy as np
@@ -421,12 +421,12 @@ def get_best_choice(
         return return_best_choice(best_values, start_tech)
 
 
-def subset_presolver_df(df: pd.DataFrame, subset_type: str = False) -> pd.DataFrame:
+def subset_presolver_df(df: pd.DataFrame, subset_type: Literal["tco_summary", "abatement"] = "tco_summary") -> pd.DataFrame:
     """Subsets and formats the TCO or Emissions Abatement DataFrame prior to being used in the solver flow.
 
     Args:
         df (pd.DataFrame): The TCO or Emissions Abatement DataFrame.
-        subset_type (str, optional): Determines the subsetting logic. Either `tco_summary` or `abatement`. Defaults to False.
+        subset_type (str): Determines the subsetting logic. Either `tco_summary` or `abatement`. Defaults to `tco_summary`.
 
     Returns:
         pd.DataFrame: The subsetted DataFrame.
