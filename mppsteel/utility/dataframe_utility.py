@@ -1,6 +1,6 @@
 """Utility script to manipulate DataFrames"""
 
-from typing import Sequence
+from typing import Iterable, Sequence
 
 import pandas as pd
 import numpy as np
@@ -95,7 +95,7 @@ def expand_dataset_years(df: pd.DataFrame, year_pairs: Sequence[tuple[int, int]]
 
 
 def column_sorter(
-    df: pd.DataFrame, col_to_sort: list[str], col_order: list[str]
+    df: pd.DataFrame, col_to_sort: str, col_order: Iterable[str]
 ) -> pd.DataFrame:
     """Sorts a DataFrames values according to a specified column and the column value order.
 

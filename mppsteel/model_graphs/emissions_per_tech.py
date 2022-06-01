@@ -151,7 +151,7 @@ def steel_emissions_line_chart(
     return line_chart(
         data=df_c,
         x="year",
-        y=["s1_s2_emissions_mt"],
+        y="s1_s2_emissions_mt",
         color_discrete_map={"s1_s2_emissions_mt": "#59A270"},
         name=graph_title,
         x_axis="Year",
