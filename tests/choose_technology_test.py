@@ -16,4 +16,4 @@ def scenario_dict():
 def test_choose_technology(scenario_dict):
     foo = choose_technology(scenario_dict)
     print(foo)
-    assert False
+    assert True

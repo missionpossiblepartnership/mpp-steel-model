@@ -3,7 +3,7 @@
 import pandas as pd
 from tqdm import tqdm
 
-from typing import Union
+from typing import Iterable
 
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.plant_container_class import PlantIdContainer
@@ -24,6 +24,7 @@ from mppsteel.config.model_config import (
     MAIN_REGIONAL_SCHEMA,
     INVESTMENT_OFFCYCLE_BUFFER_TOP,
     INVESTMENT_OFFCYCLE_BUFFER_TAIL,
+    PROJECT_PATH,
 )
 
 from mppsteel.config.model_scenarios import TECH_SWITCH_SCENARIOS, SOLVER_LOGICS
@@ -276,7 +277,169 @@ def active_check_results(
         return active_check
 
 
-def choose_technology(scenario_dict: dict) -> dict:
+class ChooseTechnologyInput:
+    def __init__(
+        self,
+        *,
+        original_plant_df: pd.DataFrame = pd.DataFrame(),
+        year_range: Iterable[int] = [],
+        tech_moratorium: bool = False,
+        trade_active: bool = False,
+        enforce_constraints: bool = False,
+        regional_scrap_constraint: bool = False,
+        plant_investment_cycle_container: PlantInvestmentCycle = PlantInvestmentCycle(),
+        variable_costs_regional: pd.DataFrame = pd.DataFrame(),
+        country_ref: pd.DataFrame = pd.DataFrame(),
+        rmi_mapper: dict[str, str] = {},
+        country_ref_f: pd.DataFrame = pd.DataFrame(),
+        bio_constraint_model: pd.DataFrame = pd.DataFrame(),
+        co2_constraint: pd.DataFrame = pd.DataFrame(),
+        ccs_constraint: pd.DataFrame = pd.DataFrame(),
+        steel_demand_df: pd.DataFrame = pd.DataFrame(),
+        tech_availability: pd.DataFrame = pd.DataFrame(),
+        ta_dict: dict[str, int] = {},
+        capex_dict: dict[str, pd.DataFrame] = {},
+        business_case_ref: dict[tuple[str, str], float] = {},
+        green_premium_timeseries: pd.DataFrame = pd.DataFrame(),
+        tco_summary_data: pd.DataFrame = pd.DataFrame(),
+        tco_slim: pd.DataFrame = pd.DataFrame(),
+        levelized_cost: pd.DataFrame = pd.DataFrame(),
+        steel_plant_abatement_switches: pd.DataFrame = pd.DataFrame(),
+        abatement_slim: pd.DataFrame = pd.DataFrame(),
+        scenario_dict: dict[str, any] = {},
+    ):
+        self.original_plant_df = original_plant_df
+        self.year_range = year_range
+        self.tech_moratorium = tech_moratorium
+        self.trade_active = trade_active
+        self.enforce_constraints = enforce_constraints
+        self.regional_scrap_constraint = regional_scrap_constraint
+        self.plant_investment_cycle_container = plant_investment_cycle_container
+        self.variable_costs_regional = variable_costs_regional
+        self.country_ref = country_ref
+        self.rmi_mapper = rmi_mapper
+        self.country_ref_f = country_ref_f
+        self.bio_constraint_model = bio_constraint_model
+        self.co2_constraint = co2_constraint
+        self.ccs_constraint = ccs_constraint
+        self.steel_demand_df = steel_demand_df
+        self.tech_availability = tech_availability
+        self.ta_dict = ta_dict
+        self.capex_dict = capex_dict
+        self.business_case_ref = business_case_ref
+        self.green_premium_timeseries = green_premium_timeseries
+        self.tco_summary_data = tco_summary_data
+        self.tco_slim = tco_slim
+        self.levelized_cost = levelized_cost
+        self.steel_plant_abatement_switches = steel_plant_abatement_switches
+        self.abatement_slim = abatement_slim
+        self.scenario_dict = scenario_dict
+
+    @classmethod
+    def from_filesystem(
+        cls, scenario_dict, project_dir=PROJECT_PATH, year_range=MODEL_YEAR_RANGE
+    ):
+        tech_moratorium = scenario_dict["tech_moratorium"]
+        trade_active = scenario_dict["trade_active"]
+        enforce_constraints = scenario_dict["enforce_constraints"]
+        regional_scrap_constraint = scenario_dict["regional_scrap_constraint"]
+
+        intermediate_path = get_scenario_pkl_path(
+            scenario_dict["scenario_name"], "intermediate"
+        )
+        original_plant_df = read_pickle_folder(
+            PROJECT_PATH / PKL_DATA_FORMATTED, "steel_plants_processed", "df"
+        )
+        plant_investment_cycle_container = read_pickle_folder(
+            PROJECT_PATH / PKL_DATA_FORMATTED, "plant_investment_cycle_container", "df"
+        )
+        variable_costs_regional = read_pickle_folder(
+            PROJECT_PATH / intermediate_path, "variable_costs_regional", "df"
+        )
+        country_ref = read_pickle_folder(
+            PROJECT_PATH / PKL_DATA_IMPORTS, "country_ref", "df"
+        )
+        rmi_mapper = create_country_mapper(path=str(PROJECT_PATH / PKL_DATA_IMPORTS))
+        country_ref_f = country_df_formatter(country_ref)
+
+        bio_constraint_model = read_pickle_folder(
+            PROJECT_PATH / intermediate_path, "bio_constraint_model_formatted", "df"
+        )
+        co2_constraint = read_pickle_folder(
+            PROJECT_PATH / PKL_DATA_IMPORTS, "ccs_co2", "df"
+        )
+        ccs_constraint = read_pickle_folder(
+            PROJECT_PATH / intermediate_path, "ccs_constraints_model_formatted", "df"
+        )
+        steel_demand_df = read_pickle_folder(
+            PROJECT_PATH / intermediate_path, "regional_steel_demand_formatted", "df"
+        )
+        tech_availability_raw = read_pickle_folder(
+            PROJECT_PATH / PKL_DATA_IMPORTS, "tech_availability", "df"
+        )
+        ta_dict = dict(
+            zip(
+                tech_availability_raw["Technology"],
+                tech_availability_raw["Year available from"],
+            )
+        )
+        tech_availability = read_and_format_tech_availability(tech_availability_raw)
+        capex_dict = read_pickle_folder(
+            PROJECT_PATH / PKL_DATA_FORMATTED, "capex_dict", "dict"
+        )
+        business_case_ref = read_pickle_folder(
+            PROJECT_PATH / PKL_DATA_FORMATTED, "business_case_reference", "df"
+        )
+        green_premium_timeseries = read_pickle_folder(
+            PROJECT_PATH / intermediate_path, "green_premium_timeseries", "df"
+        ).set_index("year")
+        tco_summary_data = read_pickle_folder(
+            PROJECT_PATH / intermediate_path, "tco_summary_data", "df"
+        )
+        tco_slim = subset_presolver_df(tco_summary_data, subset_type="tco_summary")
+        levelized_cost = read_pickle_folder(
+            PROJECT_PATH / intermediate_path, "levelized_cost", "df"
+        )
+        levelized_cost["region"] = levelized_cost["country_code"].apply(
+            lambda x: rmi_mapper[x]
+        )
+        steel_plant_abatement_switches = read_pickle_folder(
+            PROJECT_PATH / intermediate_path, "emissivity_abatement_switches", "df"
+        )
+        abatement_slim = subset_presolver_df(
+            steel_plant_abatement_switches, subset_type="abatement"
+        )
+        return cls(
+            original_plant_df=original_plant_df,
+            year_range=year_range,
+            tech_moratorium=tech_moratorium,
+            trade_active=trade_active,
+            enforce_constraints=enforce_constraints,
+            regional_scrap_constraint=regional_scrap_constraint,
+            plant_investment_cycle_container=plant_investment_cycle_container,
+            variable_costs_regional=variable_costs_regional,
+            country_ref=country_ref,
+            rmi_mapper=rmi_mapper,
+            country_ref_f=country_ref_f,
+            bio_constraint_model=bio_constraint_model,
+            co2_constraint=co2_constraint,
+            ccs_constraint=ccs_constraint,
+            steel_demand_df=steel_demand_df,
+            tech_availability=tech_availability,
+            ta_dict=ta_dict,
+            capex_dict=capex_dict,
+            business_case_ref=business_case_ref,
+            green_premium_timeseries=green_premium_timeseries,
+            tco_summary_data=tco_summary_data,
+            tco_slim=tco_slim,
+            levelized_cost=levelized_cost,
+            steel_plant_abatement_switches=steel_plant_abatement_switches,
+            abatement_slim=abatement_slim,
+            scenario_dict=scenario_dict,
+        )
+
+
+def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
     """Function containing the entire solver decision logic flow.
     1) In each year, the solver splits the plants non-switchers and switchers (secondary EAF plants and primary plants).
     2) The solver extracts the prior year technology of the non-switchers and assumes this is the current technology of the switchers.
@@ -292,60 +455,31 @@ def choose_technology(scenario_dict: dict) -> dict:
     """
 
     logger.info("Creating Steel plant df")
-    tech_moratorium = scenario_dict["tech_moratorium"]
-    trade_scenario = scenario_dict["trade_active"]
-    enforce_constraints = scenario_dict["enforce_constraints"]
-    regional_scrap = scenario_dict["regional_scrap_constraint"]
-    intermediate_path = get_scenario_pkl_path(
-        scenario_dict["scenario_name"], "intermediate"
-    )
-
-    original_plant_df = read_pickle_folder(
-        PKL_DATA_FORMATTED, "steel_plants_processed", "df"
-    )
-    PlantInvestmentCycleContainer = read_pickle_folder(
-        PKL_DATA_FORMATTED, "plant_investment_cycle_container", "df"
-    )
-    variable_costs_regional = read_pickle_folder(
-        intermediate_path, "variable_costs_regional", "df"
-    )
-    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
-    rmi_mapper = create_country_mapper()
-    country_ref_f = country_df_formatter(country_ref)
-    bio_constraint_model = read_pickle_folder(
-        intermediate_path, "bio_constraint_model_formatted", "df"
-    )
-    co2_constraint = read_pickle_folder(PKL_DATA_IMPORTS, "ccs_co2", "df")
-    ccs_constraint = read_pickle_folder(
-        intermediate_path, "ccs_constraints_model_formatted", "df"
-    )
-    steel_demand_df = read_pickle_folder(
-        intermediate_path, "regional_steel_demand_formatted", "df"
-    )
-    tech_availability = read_pickle_folder(PKL_DATA_IMPORTS, "tech_availability", "df")
-    ta_dict = dict(
-        zip(tech_availability["Technology"], tech_availability["Year available from"])
-    )
-    tech_availability = read_and_format_tech_availability(tech_availability)
-    capex_dict = read_pickle_folder(PKL_DATA_FORMATTED, "capex_dict", "dict")
-    business_case_ref = read_pickle_folder(
-        PKL_DATA_FORMATTED, "business_case_reference", "df"
-    )
-    green_premium_timeseries = read_pickle_folder(
-        intermediate_path, "green_premium_timeseries", "df"
-    ).set_index("year")
-    tco_summary_data = read_pickle_folder(intermediate_path, "tco_summary_data", "df")
-    tco_slim = subset_presolver_df(tco_summary_data, subset_type="tco_summary")
-    levelized_cost = read_pickle_folder(intermediate_path, "levelized_cost", "df")
-    levelized_cost["region"] = levelized_cost["country_code"].apply(
-        lambda x: rmi_mapper[x]
-    )
-    steel_plant_abatement_switches = read_pickle_folder(
-        intermediate_path, "emissivity_abatement_switches", "df"
-    )
-    abatement_slim = subset_presolver_df(
-        steel_plant_abatement_switches, subset_type="abatement"
-    )
+    scenario_dict = cti.scenario_dict
+    tech_moratorium = cti.tech_moratorium
+    trade_scenario = cti.trade_active
+    enforce_constraints = cti.enforce_constraints
+    regional_scrap = cti.regional_scrap_constraint
+    original_plant_df = cti.original_plant_df
+    PlantInvestmentCycleContainer = cti.plant_investment_cycle_container
+    variable_costs_regional = cti.variable_costs_regional
+    country_ref = cti.country_ref
+    rmi_mapper = cti.rmi_mapper
+    country_ref_f = cti.country_ref_f
+    bio_constraint_model = cti.bio_constraint_model
+    co2_constraint = cti.co2_constraint
+    ccs_constraint = cti.ccs_constraint
+    steel_demand_df = cti.steel_demand_df
+    tech_availability = cti.tech_availability
+    ta_dict = cti.ta_dict
+    capex_dict = cti.capex_dict
+    business_case_ref = cti.business_case_ref
+    green_premium_timeseries = cti.green_premium_timeseries
+    tco_summary_data = cti.tco_summary_data
+    tco_slim = cti.tco_slim
+    levelized_cost = cti.levelized_cost
+    steel_plant_abatement_switches = cti.steel_plant_abatement_switches
+    abatement_slim = cti.abatement_slim
 
     # Initialize plant container
     PlantIDC = PlantIdContainer()
@@ -724,6 +858,23 @@ def choose_technology(scenario_dict: dict) -> dict:
         "material_usage_results": material_usage_results,
         "constraints_summary": constraints_summary,
     }
+
+
+def choose_technology(scenario_dict: dict) -> dict:
+    """Function containing the entire solver decision logic flow.
+    1) In each year, the solver splits the plants non-switchers and switchers (secondary EAF plants and primary plants).
+    2) The solver extracts the prior year technology of the non-switchers and assumes this is the current technology of the switchers.
+    3) The material usage of the non-switching and secondary EAF plants is subtracted from the constraints and the remainder is then left over for the remaining switching plants.
+    4) Plants are opened or closed according to the Demand for that year, the open and closing logic (potentially including trade). Which changes the capacity constraints.
+    5) All switching plants are then sent through the `return_best_tech` function that decides the best technology depending on the switch type (main cycle or transitional switch).
+    6) All results are saved to a dictionary which is outputted at the end of the year loop.
+
+    Args:
+        scenario_dict (int): Model Scenario settings.
+    Returns:
+        dict: A dictionary containing the best technology resuls. Organised as [year][plant][best tech].
+    """
+    return choose_technology_core(ChooseTechnologyInput.from_filesystem(scenario_dict))
 
 
 @timer_func
