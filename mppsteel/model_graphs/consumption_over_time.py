@@ -35,7 +35,7 @@ MATERIAL_RESOURCES_COT = [
 
 
 def format_cot_graph(
-    df: pd.DataFrame, region: list = None, resource_list: list = None
+    df: pd.DataFrame, region: str = None, resource_list: list = None
 ) -> pd.DataFrame:
     """Formats the Consumption over time graph to create a DataFrame ready to be used to create graphs.
     Args:

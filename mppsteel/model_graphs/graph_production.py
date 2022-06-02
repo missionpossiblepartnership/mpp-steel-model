@@ -369,7 +369,7 @@ def create_new_plant_capacity_graph(
     logger.info(f"New Capacity Graph Output: {filename}")
     if filepath:
         filename = f"{filepath}/{filename}"
-    return new_plant_capacity_graph(plant_df, graph_type, save_filepath=filename)
+    new_plant_capacity_graph(plant_df, graph_type, save_filepath=filename)
 
 
 def create_trade_balance_graph(trade_df: pd.DataFrame, filepath: str = None) -> px.line:
