@@ -274,6 +274,7 @@ def get_best_choice(
     technology_list: list,
     transitional_switch_mode: bool,
     plant_choice_container: PlantChoices,
+    plant_name: str,
 ) -> str:
     """Returns the best technology choice from a list of potential logic according to the parameter settings provided in the function.
 
@@ -420,7 +421,7 @@ def get_best_choice(
         best_values = combined_ranks[combined_ranks["overall_rank"] == min_value]
         return return_best_choice(best_values, start_tech)
     raise ValueError(
-        f"Issue with get_best_choice function returning a nan: {plant_name} | {year} | {base_tech} | {combined_available_list}"
+        f"Issue with get_best_choice function returning a nan: {plant_name} | {year} | {start_tech} | {technology_list}"
     )
 
 
