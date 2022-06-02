@@ -419,7 +419,9 @@ def get_best_choice(
         min_value = combined_ranks["overall_rank"].min()
         best_values = combined_ranks[combined_ranks["overall_rank"] == min_value]
         return return_best_choice(best_values, start_tech)
-    raise ValueError("no best technology found")
+    raise ValueError(
+        f"Issue with get_best_choice function returning a nan: {plant_name} | {year} | {base_tech} | {combined_available_list}"
+    )
 
 
 def subset_presolver_df(df: pd.DataFrame, subset_type: Literal["tco_summary", "abatement"] = "tco_summary") -> pd.DataFrame:

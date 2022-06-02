@@ -208,24 +208,20 @@ def return_best_tech(
             regional_scrap=regional_scrap,
         )
 
-    try:
-        best_choice = get_best_choice(
-            tco_ref_data,
-            abatement_reference_data,
-            country_code,
-            year,
-            base_tech,
-            solver_logic,
-            scenario_name,
-            proportions_dict,
-            combined_available_list,
-            transitional_switch_mode,
-            plant_choice_container,
-        )
-    except ValueError:
-        raise ValueError(
-            f"Issue with get_best_choice function returning a nan: {plant_name} | {year} | {base_tech} | {combined_available_list}"
-        )
+    best_choice = get_best_choice(
+        tco_ref_data,
+        abatement_reference_data,
+        country_code,
+        year,
+        base_tech,
+        solver_logic,
+        scenario_name,
+        proportions_dict,
+        combined_available_list,
+        transitional_switch_mode,
+        plant_choice_container,
+        plant_name,
+    )
 
     if enforce_constraints:
         create_material_usage_dict(
