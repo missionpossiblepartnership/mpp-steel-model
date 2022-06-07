@@ -1,9 +1,9 @@
 import pytest
 
 from mppsteel.config.model_scenarios import DEFAULT_SCENARIO
-from mppsteel.config.model_config import USD_TO_EUR_CONVERSION_DEFAULT, PROJECT_PATH
+from mppsteel.config.model_config import USD_TO_EUR_CONVERSION_DEFAULT
 
-from mppsteel.model_solver.solver import choose_technology
+from mppsteel.model_solver.solver import choose_technology_core, ChooseTechnologyInput
 
 @pytest.fixture
 def scenario_dict():
@@ -13,7 +13,8 @@ def scenario_dict():
     return scenario_dict
 
 
-def test_choose_technology(scenario_dict):
-    foo = choose_technology(scenario_dict)
-    print(foo)
-    assert True
+def test_choose_technology_empty():
+    """Make sure core function runs with minimal input as defined in the input class."""
+    cti = ChooseTechnologyInput()
+    result = choose_technology_core(cti)
+    assert "tech_choice_dict" in result

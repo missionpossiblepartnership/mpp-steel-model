@@ -278,10 +278,24 @@ def active_check_results(
 
 
 class ChooseTechnologyInput:
+    @classmethod
+    def get_steel_demand_default(cls) -> pd.DataFrame:
+        """Returns the default steel demand dataframe."""
+        return pd.DataFrame(
+            [["Africa", 0.0, "2020", "Average", "Scrap availability", []]],
+            columns=["region", "value", "year", "scenario", "metric", "country_code"],
+        ).set_index(["year", "scenario", "metric"])
+
+
     def __init__(
         self,
         *,
-        original_plant_df: pd.DataFrame = pd.DataFrame(),
+        original_plant_df: pd.DataFrame = pd.DataFrame(
+            [["STE02421", "Africa", True, 0.0, "status", "name", 2019, "F", 0, "DEU", 2020]],
+            columns=["plant_id", "rmi_region", "active_check", "plant_capacity",
+                     "status", "plant_name", "start_of_operation", "primary_capacity",
+                     "cheap_natural_gas", "country_code", "end_of_operation"]
+        ),
         year_range: Iterable[int] = [],
         tech_moratorium: bool = False,
         trade_active: bool = False,
@@ -291,10 +305,16 @@ class ChooseTechnologyInput:
         variable_costs_regional: pd.DataFrame = pd.DataFrame(),
         country_ref: pd.DataFrame = pd.DataFrame(),
         rmi_mapper: dict[str, str] = {},
-        country_ref_f: pd.DataFrame = pd.DataFrame(),
-        bio_constraint_model: pd.DataFrame = pd.DataFrame(),
-        co2_constraint: pd.DataFrame = pd.DataFrame(),
-        ccs_constraint: pd.DataFrame = pd.DataFrame(),
+        country_ref_f: pd.DataFrame = pd.DataFrame([], columns=["country_code"]),
+        bio_constraint_model: pd.DataFrame = pd.DataFrame(
+            [[2020, 0.0]], columns=["year", "value"]
+        ).set_index("year"),
+        co2_constraint: pd.DataFrame = pd.DataFrame(
+            [[0.0, 2020, "Steel CO2 use market"]], columns=["Value", "Year", "Metric"]
+        ),
+        ccs_constraint: pd.DataFrame = pd.DataFrame(
+            [[2020, "Global", 0.0]], columns=["year", "region", "value"]
+        ).set_index(["year", "region"]),
         steel_demand_df: pd.DataFrame = pd.DataFrame(),
         tech_availability: pd.DataFrame = pd.DataFrame(),
         ta_dict: dict[str, int] = {},
@@ -307,6 +327,8 @@ class ChooseTechnologyInput:
         steel_plant_abatement_switches: pd.DataFrame = pd.DataFrame(),
         abatement_slim: pd.DataFrame = pd.DataFrame(),
         scenario_dict: dict[str, any] = {},
+        wsa_dict: dict[str, float] = {},
+        model_year_range: Iterable[int] = range(2020, 2021),
     ):
         self.original_plant_df = original_plant_df
         self.year_range = year_range
@@ -322,7 +344,10 @@ class ChooseTechnologyInput:
         self.bio_constraint_model = bio_constraint_model
         self.co2_constraint = co2_constraint
         self.ccs_constraint = ccs_constraint
-        self.steel_demand_df = steel_demand_df
+        if steel_demand_df.empty:
+            self.steel_demand_df = ChooseTechnologyInput.get_steel_demand_default()
+        else:
+            self.steel_demand_df = steel_demand_df
         self.tech_availability = tech_availability
         self.ta_dict = ta_dict
         self.capex_dict = capex_dict
@@ -334,6 +359,8 @@ class ChooseTechnologyInput:
         self.steel_plant_abatement_switches = steel_plant_abatement_switches
         self.abatement_slim = abatement_slim
         self.scenario_dict = scenario_dict
+        self.wsa_dict = wsa_dict
+        self.model_year_range = model_year_range
 
     @classmethod
     def from_filesystem(
@@ -409,6 +436,8 @@ class ChooseTechnologyInput:
         abatement_slim = subset_presolver_df(
             steel_plant_abatement_switches, subset_type="abatement"
         )
+        wsa_dict = create_wsa_2020_utilization_dict()
+        model_year_range = MODEL_YEAR_RANGE
         return cls(
             original_plant_df=original_plant_df,
             year_range=year_range,
@@ -436,6 +465,8 @@ class ChooseTechnologyInput:
             steel_plant_abatement_switches=steel_plant_abatement_switches,
             abatement_slim=abatement_slim,
             scenario_dict=scenario_dict,
+            wsa_dict=wsa_dict,
+            model_year_range=model_year_range,
         )
 
 
@@ -480,6 +511,8 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
     levelized_cost = cti.levelized_cost
     steel_plant_abatement_switches = cti.steel_plant_abatement_switches
     abatement_slim = cti.abatement_slim
+    wsa_dict = cti.wsa_dict
+    model_year_range = cti.model_year_range
 
     # Initialize plant container
     PlantIDC = PlantIdContainer()
@@ -489,17 +522,16 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
     # Instantiate Trade Container
     market_container = MarketContainerClass()
     region_list = year_start_df[MAIN_REGIONAL_SCHEMA].unique()
-    market_container.full_instantiation(MODEL_YEAR_RANGE, region_list)
+    market_container.full_instantiation(model_year_range, region_list)
 
     # Utilization & Capacity Containers
     UtilizationContainer = UtilizationContainerClass()
-    wsa_dict = create_wsa_2020_utilization_dict()
     region_list = list(wsa_dict.keys())
     UtilizationContainer.initiate_container(
-        year_range=MODEL_YEAR_RANGE, region_list=region_list
+        year_range=model_year_range, region_list=region_list
     )
     CapacityContainer = CapacityContainerClass()
-    CapacityContainer.instantiate_container(MODEL_YEAR_RANGE)
+    CapacityContainer.instantiate_container(model_year_range)
     CapacityContainer.set_average_plant_capacity(original_plant_df)
 
     # Initialize the Material Usage container
@@ -511,7 +543,7 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
     }
     MaterialUsageContainer = MaterialUsage()
     MaterialUsageContainer.initiate_years_and_regions(
-        MODEL_YEAR_RANGE, resource_list=resource_models.keys(), region_list=region_list
+        model_year_range, resource_list=resource_models.keys(), region_list=region_list
     )
 
     for resource in resource_models:
@@ -519,9 +551,9 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
 
     # Plant Choices
     PlantChoiceContainer = PlantChoices()
-    PlantChoiceContainer.initiate_container(MODEL_YEAR_RANGE)
+    PlantChoiceContainer.initiate_container(model_year_range)
     # Investment Cycles
-    for year in tqdm(MODEL_YEAR_RANGE, total=len(MODEL_YEAR_RANGE), desc="Years"):
+    for year in tqdm(model_year_range, total=len(model_year_range), desc="Years"):
         year_start_df["active_check"] = year_start_df.apply(
             create_active_check_col, year=year, axis=1
         )
@@ -823,7 +855,7 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
 
     final_steel_plant_df = year_start_df.copy()
     active_check_results_dict = active_check_results(
-        final_steel_plant_df, MODEL_YEAR_RANGE
+        final_steel_plant_df, model_year_range
     )
     trade_summary_results = market_container.output_trade_summary_to_df()
     full_trade_calculations = market_container.output_trade_calculations_to_df()
@@ -838,7 +870,7 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
     plant_capacity_results = CapacityContainer.return_plant_capacity()
     utilization_results = UtilizationContainer.get_utilization_values()
     constraints_summary = MaterialUsageContainer.output_constraints_summary(
-        MODEL_YEAR_RANGE
+        model_year_range
     )
 
     return {
