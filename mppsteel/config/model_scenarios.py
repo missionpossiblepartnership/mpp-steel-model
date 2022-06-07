@@ -74,7 +74,7 @@ DEFAULT_SCENARIO = {
     "transitional_switch": True,  #  bool
     "carbon_tax_scenario": "off",  # off / low / average / high
     "green_premium_scenario": "off",  # off / low / average / high
-    "electricity_cost_scenario": "average",  # low / average / high
+    "electricity_cost_scenario": "low",  # low / average / high
     "grid_scenario": "low",  # low / high
     "hydrogen_cost_scenario": "low",  # low / average / high
     "biomass_cost_scenario": "average",  # average
@@ -94,7 +94,7 @@ TECH_MORATORIUM = {
     "transitional_switch": True,
     "carbon_tax_scenario": "off",
     "green_premium_scenario": "off",
-    "electricity_cost_scenario": "average",
+    "electricity_cost_scenario": "low",
     "grid_scenario": "low",
     "hydrogen_cost_scenario": "low",
     "biomass_cost_scenario": "average",
@@ -114,7 +114,7 @@ CARBON_COST = {
     "transitional_switch": True,
     "carbon_tax_scenario": "high",
     "green_premium_scenario": "off",
-    "electricity_cost_scenario": "average",
+    "electricity_cost_scenario": "low",
     "grid_scenario": "low",
     "hydrogen_cost_scenario": "low",
     "biomass_cost_scenario": "average",
@@ -134,7 +134,7 @@ BAU_SCENARIO = {
     "transitional_switch": True,
     "carbon_tax_scenario": "off",
     "green_premium_scenario": "off",
-    "electricity_cost_scenario": "average",
+    "electricity_cost_scenario": "low",
     "grid_scenario": "low",
     "hydrogen_cost_scenario": "low",
     "biomass_cost_scenario": "average",
@@ -154,7 +154,7 @@ BAU_HIGH_CIRC_SCENARIO = {
     "transitional_switch": True,
     "carbon_tax_scenario": "off",
     "green_premium_scenario": "off",
-    "electricity_cost_scenario": "average",
+    "electricity_cost_scenario": "low",
     "grid_scenario": "low",
     "hydrogen_cost_scenario": "low",
     "biomass_cost_scenario": "average",
@@ -174,7 +174,7 @@ ABATEMENT_SCENARIO = {
     "transitional_switch": True,
     "carbon_tax_scenario": "off",
     "green_premium_scenario": "off",
-    "electricity_cost_scenario": "average",
+    "electricity_cost_scenario": "low",
     "grid_scenario": "low",
     "hydrogen_cost_scenario": "low",
     "biomass_cost_scenario": "average",
@@ -194,7 +194,7 @@ ABATEMENT_HIGH_CIRC_SCENARIO = {
     "transitional_switch": True,
     "carbon_tax_scenario": "off",
     "green_premium_scenario": "off",
-    "electricity_cost_scenario": "average",
+    "electricity_cost_scenario": "low",
     "grid_scenario": "low",
     "hydrogen_cost_scenario": "low",
     "biomass_cost_scenario": "average",
