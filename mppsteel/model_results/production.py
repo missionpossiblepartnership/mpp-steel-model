@@ -116,7 +116,6 @@ def generate_production_stats(
     tech_capacity_df["low_carbon_tech"] = tech_capacity_df["technology"].apply(
         lambda tech: "Y" if tech in TECHNOLOGY_PHASES["end_state"] else "N"
     )
-    # print(tech_capacity_df[tech_capacity_df['country_code'].isna()])
     tech_capacity_df["region"] = tech_capacity_df["country_code"].apply(
         lambda x: country_mapper[x]
     )
@@ -381,7 +380,6 @@ def production_results_flow(scenario_dict: dict, serialize: bool = False) -> dic
     )
     carbon_tax_timeseries.set_index("year", inplace=True)
     materials_list = business_cases.index.get_level_values(1).unique()
-    print(plant_result_df[plant_result_df["country_code"].isna()])
     tech_capacity_df = tech_capacity_splits(
         plant_result_df,
         tech_choices_dict,
