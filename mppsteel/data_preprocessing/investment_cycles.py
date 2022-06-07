@@ -196,6 +196,8 @@ def create_investment_cycle_reference(plant_investment_year_dict: dict) -> pd.Da
                     "switch_type": "no switch",
                 }
                 df_list.append(entry)
+    if len(df_list) == 0:
+        return pd.DataFrame(columns=["year", "plant_name"]).set_index(["year", "plant_name"])
     return pd.DataFrame(df_list).set_index(["year", "plant_name"])
 
 

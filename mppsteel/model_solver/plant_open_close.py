@@ -547,17 +547,24 @@ def open_close_plants(
             util_max=open_plant_util_cutoff,
         )
 
-    production_demand_gap_analysis_df = (
-        pd.DataFrame(production_demand_gap_analysis.values())
-        .set_index(["year", "region"])
-        .round(3)
-    )
+    production_demand_gap_analysis_df = pd.DataFrame(production_demand_gap_analysis.values())
+    if production_demand_gap_analysis_df.empty:
+        my_minimal_row = [2020, "DEU", 0, 1, 0, 0, 0]
+        my_df_columns = [
+            "year", "region", "demand", "new_total_capacity", "new_utilized_capacity",
+            "plants_required", "plants_to_close"
+        ]
+        production_demand_gap_analysis_df = pd.DataFrame([my_minimal_row], columns=my_df_columns)
+    production_demand_gap_analysis_df = production_demand_gap_analysis_df.set_index(["year", "region"]).round(3)
 
     market_balance_test(production_demand_gap_analysis_df, year)
     market_container.store_results(year, production_demand_gap_analysis_df)
 
     regions = list(production_demand_gap_analysis.keys())
     random.shuffle(regions)
+
+    if lev_cost_df.empty:
+        lev_cost_df = pd.DataFrame(columns=["year", "region", "technology"])
     levelized_cost_for_regions = (
         lev_cost_df.set_index(["year", "region"]).sort_index(ascending=True).copy()
     )

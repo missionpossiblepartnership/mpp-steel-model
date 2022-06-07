@@ -10,6 +10,7 @@ from mppsteel.config.model_config import (
     PKL_DATA_IMPORTS,
     PKL_DATA_FORMATTED,
     MAIN_REGIONAL_SCHEMA,
+    PROJECT_PATH,
 )
 from mppsteel.config.reference_lists import RESOURCE_CONTAINER_REF
 from mppsteel.utility.file_handling_utility import read_pickle_folder
@@ -84,6 +85,8 @@ class PlantChoices:
 
 def combine_tech_ranks(tr_df: pd.DataFrame):
     container = [pd.concat(tr_df.values[count]) for count in range(len(tr_df.values))]
+    if len(container) == 0:
+        return pd.DataFrame(columns=["year", "start_tech"])
     df = pd.concat(container)
     return df.sort_values(by=['year','start_tech'], ascending=True).reset_index()
 
@@ -795,16 +798,16 @@ def return_utilization(
     return util_dict
 
 
-def create_wsa_2020_utilization_dict() -> dict:
+def create_wsa_2020_utilization_dict(project_dir=PROJECT_PATH) -> dict:
     """Creates the initial utilization dictionary for 2020 based on data from the World Steel Association (WSA).
 
     Returns:
         dict: A dictionary with regions as keys and utilization numbers as values.
     """
     logger.info("Creating the utilization dictionary for 2020.")
-    wsa_production = read_pickle_folder(PKL_DATA_IMPORTS, "wsa_production", "df")
+    wsa_production = read_pickle_folder(project_dir / PKL_DATA_IMPORTS, "wsa_production", "df")
     steel_plants_processed = read_pickle_folder(
-        PKL_DATA_FORMATTED, "steel_plants_processed", "df"
+        project_dir / PKL_DATA_FORMATTED, "steel_plants_processed", "df"
     )
     wsa_2020_production_dict = format_wsa_production_data(wsa_production, as_dict=True)
     capacity_dict = create_regional_capacity_dict(steel_plants_processed, as_mt=True)

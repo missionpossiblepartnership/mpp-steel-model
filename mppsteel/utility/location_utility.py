@@ -121,8 +121,8 @@ def get_countries_from_group(
     return code_list
 
 
-def create_country_mapper(schema: str = "rmi"):
-    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
+def create_country_mapper(schema: str = "rmi", path: str = PKL_DATA_IMPORTS) -> dict:
+    country_ref = read_pickle_folder(path, "country_ref", "df")
     mapper = {
         "Country": "country_name",
         "ISO-alpha3 code": "country_code",
