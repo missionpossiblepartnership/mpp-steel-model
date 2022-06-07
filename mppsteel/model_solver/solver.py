@@ -220,12 +220,8 @@ def return_best_tech(
         combined_available_list,
         transitional_switch_mode,
         plant_choice_container,
+        plant_name,
     )
-
-    if not isinstance(best_choice, str):
-        raise ValueError(
-            f"Issue with get_best_choice function returning a nan: {plant_name} | {year} | {base_tech} | {combined_available_list}"
-        )
 
     if enforce_constraints:
         create_material_usage_dict(

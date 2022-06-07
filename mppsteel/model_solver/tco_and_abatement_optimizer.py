@@ -1,10 +1,12 @@
 """Script for the tco and abatament optimisation functions."""
 from functools import lru_cache
 import random
-from typing import Tuple
+from typing import Tuple, Literal
 
 import pandas as pd
 import numpy as np
+import numpy.typing as npt
+
 from mppsteel.model_solver.solver_classes import PlantChoices
 
 from mppsteel.utility.log_utility import get_logger
@@ -22,7 +24,7 @@ from mppsteel.config.model_config import (
 logger = get_logger(__name__)
 
 
-def normalise_data(arr: np.array) -> np.array:
+def normalise_data(arr: npt.ArrayLike) -> np.ndarray:
     """Given an array, normalise it by subtracting the minimum value and dividing by the range.
 
     Args:
@@ -247,7 +249,7 @@ def record_ranking(
         plant_choice_container.update_records("rank", records)
 
 
-def return_best_choice(best_values: list, start_tech: str):
+def return_best_choice(best_values: pd.DataFrame, start_tech: str):
     # pick random choice if there is more than one option
     if len(best_values) > 1:
         potential_techs = best_values.index.to_list()
@@ -272,6 +274,7 @@ def get_best_choice(
     technology_list: list,
     transitional_switch_mode: bool,
     plant_choice_container: PlantChoices,
+    plant_name: str,
 ) -> str:
     """Returns the best technology choice from a list of potential logic according to the parameter settings provided in the function.
 
@@ -417,14 +420,17 @@ def get_best_choice(
         min_value = combined_ranks["overall_rank"].min()
         best_values = combined_ranks[combined_ranks["overall_rank"] == min_value]
         return return_best_choice(best_values, start_tech)
+    raise ValueError(
+        f"Issue with get_best_choice function returning a nan: {plant_name} | {year} | {start_tech} | {technology_list}"
+    )
 
 
-def subset_presolver_df(df: pd.DataFrame, subset_type: str = False) -> pd.DataFrame:
+def subset_presolver_df(df: pd.DataFrame, subset_type: Literal["tco_summary", "abatement"] = "tco_summary") -> pd.DataFrame:
     """Subsets and formats the TCO or Emissions Abatement DataFrame prior to being used in the solver flow.
 
     Args:
         df (pd.DataFrame): The TCO or Emissions Abatement DataFrame.
-        subset_type (str, optional): Determines the subsetting logic. Either `tco_summary` or `abatement`. Defaults to False.
+        subset_type (str): Determines the subsetting logic. Either `tco_summary` or `abatement`. Defaults to `tco_summary`.
 
     Returns:
         pd.DataFrame: The subsetted DataFrame.

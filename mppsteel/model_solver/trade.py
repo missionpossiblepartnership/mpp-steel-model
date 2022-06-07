@@ -265,7 +265,7 @@ def trade_flow(
         # 'new_total_capacity', 'new_utilized_capacity', 'new_balance', 'new_utilization'
 
         export_contribution = 0
-        data_entry_dict = None
+        data_entry_dict = {}
         if (regional_balance > 0) and relative_cost_below_avg:
             # CHEAP EXCESS SUPPLY -> export
             new_min_utilization_required = utilization

@@ -29,7 +29,7 @@ BAR_CHART_ORDER = {
 
 
 def return_capex_values(
-    capex_dict: dict, year: str, investment_cycle: int, discount_rate: float
+    capex_dict: dict, year: int, investment_cycle: int, discount_rate: float
 ) -> pd.DataFrame:
     """This function takes in a dictionary of capex values, a year, an investment cycle, and a discount
     rate. It returns a dataframe of the capex values for the year, discounted to the investment cycle.
@@ -344,7 +344,7 @@ def add_opex_values_regional(vdf: pd.DataFrame, co_df: pd.DataFrame) -> pd.DataF
 
 
 def return_capex_values_regional(
-    capex_dict: dict, year: str, investment_cycle: int, discount_rate: float
+    capex_dict: dict, year: int, investment_cycle: int, discount_rate: float
 ) -> pd.DataFrame:
     """This function takes in a dictionary of capex values, a year, an investment cycle, and a discount
     rate. It returns a dataframe of the capex values for the year, discounted to the investment cycle.

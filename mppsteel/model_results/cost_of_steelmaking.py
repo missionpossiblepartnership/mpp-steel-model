@@ -1,4 +1,6 @@
 """Calculation Functions used to derive various forms of Cost of Steelmaking."""
+from typing import Iterable
+
 import pandas as pd
 import numpy_financial as npf
 
@@ -78,7 +80,7 @@ def calculate_cc(
     Returns:
         float: The capital charge value.
     """
-    year_range = range(year, year + year_span)
+    year_range: Iterable[int] = range(year, year + year_span)
     year_range = [
         year if (year <= MODEL_YEAR_END) else min(MODEL_YEAR_END, year)
         for year in year_range
@@ -123,7 +125,7 @@ def apply_cos(
     discount_rate = DISCOUNT_RATE
     relining_year_span = relining_span_ref[row.plant_name]
 
-    relining_cost = 0
+    relining_cost = 0.0
 
     if capital_charges and row.technology:
         relining_cost = calculate_cc(

@@ -4,6 +4,7 @@ from typing import Tuple
 
 import pandas as pd
 import numpy as np
+import numpy.typing as npt
 
 from mppsteel.utility.log_utility import get_logger
 
@@ -78,7 +79,7 @@ def create_timeseries_extension_array(
     growth_type: "str",
     value_change: float = 0,
     first_value: bool = False,
-) -> np.array:
+) -> npt.ArrayLike:
     """Creates a numpy array that represents the values in the new portion of the timeseries.
 
     Args:
@@ -161,7 +162,7 @@ def create_dict_mapper(
 def combine_timeseries(
     df: pd.DataFrame,
     added_date_range: pd.DatetimeIndex,
-    values: np.array,
+    values: npt.ArrayLike,
     year_value_col_dict: dict,
     static_col_mapper: dict,
 ) -> pd.DataFrame:
