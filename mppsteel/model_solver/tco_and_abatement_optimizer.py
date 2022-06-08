@@ -62,15 +62,11 @@ def tco_ranker_logic(x: float, ref_value: float) -> int:
     Returns:
         int: A number between 1 and 3.
     """
-
-    if ref_value is None:
-        return 1
     if x > ref_value * TCO_RANK_2_SCALER:
         return 3
     elif x > ref_value * TCO_RANK_1_SCALER:
         return 2
-    else:
-        return 1
+    return 1
 
 
 @lru_cache(maxsize=250000)
@@ -119,40 +115,52 @@ def min_ranker(
     Returns:
         Tuple[pd.DataFrame, str]: A DataFrame containing the sorted list of each technology for a given plant and technology.
     """
+    # subsetting the dataframe
     df_c = df.loc[year, country_code, start_tech].copy()
+    # subset switch_technology based on technology_list
+    if transitional_switch_mode and start_tech not in technology_list:
+        technology_list.append(start_tech)
     df_subset = df_c[df_c["switch_tech"].isin(technology_list)].copy()
+    # set index as switch_tech
     df_subset = df_subset.reset_index().set_index("switch_tech")
+    # sort the dataframe according to the value column
     df_subset.sort_values(value_col, ascending=True, inplace=True)
-    # default ref: cheapest tech
-    tco_reference_tech = df_subset[value_col].idxmin()
+    # default ref: empty string
+    tco_reference_tech = ''
+    data_type_col_mapper = {
+        "tco": "tco_rank_score",
+        "abatement": "abatement_rank_score",
+    }
+    # handle case where there is only one tech option available - most likely the start_tech
     if len(df_subset) == 1:
         if rank:
-            data_type_col_mapper = {
-                "tco": "tco_rank_score",
-                "abatement": "abatement_rank_score",
-            }
+            tco_reference_tech = df_subset[value_col].idxmin()
             df_subset[data_type_col_mapper[data_type]] = 1
+        return df_subset, tco_reference_tech
 
-    elif rank:
+    if rank:
         if data_type == "tco":
-            min_val = df_subset[value_col].min()
-            if len(df_subset) > 1 and "EAF" in list(df_subset.index):
-                df_subset_no_eaf = df_subset.drop("EAF").copy()
-                # eaf ref case: cheapest tech minus eaf
-                tco_reference_tech = df_subset_no_eaf[value_col].idxmin()
-                min_val = df_subset_no_eaf[value_col].min()
             if transitional_switch_mode:
                 # transitionary switch case
                 tco_reference_tech = start_tech
-                min_val = df_c.reset_index().set_index("switch_tech").loc[start_tech, value_col].min()
-            df_subset["tco_rank_score"] = df_subset[value_col].apply(
-                lambda x: tco_ranker_logic(x, min_val)
+                ref_val = df_subset.loc[tco_reference_tech, value_col]
+            elif "EAF" in list(df_subset.index):
+                df_subset_no_eaf = df_subset.drop("EAF").copy()
+                # eaf ref case: cheapest tech minus eaf
+                tco_reference_tech = df_subset_no_eaf[value_col].idxmin()
+                ref_val = df_subset_no_eaf[value_col].min()
+            else:
+                # identify the minimum value
+                tco_reference_tech = df_subset[value_col].idxmin()
+                ref_val = df_subset[value_col].min()
+            df_subset[data_type_col_mapper[data_type]] = df_subset[value_col].apply(
+                lambda x: tco_ranker_logic(x, ref_val)
             )
         elif data_type == "abatement":
-            df_subset["abatement_rank_score"] = df_subset[value_col].apply(
+            df_subset[data_type_col_mapper[data_type]] = df_subset[value_col].apply(
                 lambda x: abatement_ranker_logic(x)
             )
-
+    
     return df_subset, tco_reference_tech
 
 
@@ -195,7 +203,7 @@ def get_tco_and_abatement_values(
         rank=rank,
         transitional_switch_mode=transitional_switch_mode
     )
-    abatement_values, tco_reference_tech = min_ranker(
+    abatement_values, _ = min_ranker(
         df=emissions_df,
         data_type="abatement",
         value_col="abated_combined_emissivity",
@@ -550,7 +558,7 @@ def get_best_choice(
         return return_best_choice(best_values, start_tech)
 
 
-def subset_presolver_df(df: pd.DataFrame, subset_type: str = False) -> pd.DataFrame:
+def subset_presolver_df(df: pd.DataFrame, subset_type: str) -> pd.DataFrame:
     """Subsets and formats the TCO or Emissions Abatement DataFrame prior to being used in the solver flow.
 
     Args:
