@@ -379,6 +379,7 @@ def get_best_choice(
             rank=False,
             transitional_switch_mode=transitional_switch_mode,
         )
+
         if enforce_constraints:
             constraint_excluded_techs = apply_constraints(
                 business_case_ref,
@@ -394,6 +395,9 @@ def get_best_choice(
                 regional_scrap=regional_scrap
             )
             if transitional_switch_mode and start_tech not in constraint_excluded_techs:
+                constraint_excluded_techs.append(start_tech)
+
+            if not transitional_switch_mode and 1 not in tco_values.loc[constraint_excluded_techs]["tco_rank_score"].values:
                 constraint_excluded_techs.append(start_tech)
 
         # Simply return current technology if no other options
@@ -520,6 +524,10 @@ def get_best_choice(
             )
             if transitional_switch_mode and start_tech not in constraint_excluded_techs:
                 constraint_excluded_techs.append(start_tech)
+
+            if not transitional_switch_mode and 1 not in tco_values.loc[constraint_excluded_techs]["tco_rank_score"].values:
+                constraint_excluded_techs.append(start_tech)
+
         tco_values.drop(
             columns=tco_values.columns.difference(["tco_rank_score"]),
             axis=1,
