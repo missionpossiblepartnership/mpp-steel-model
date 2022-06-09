@@ -39,6 +39,7 @@ from mppsteel.model_graphs.combined_scenario_graphs import (
     create_combined_resource_chart,
     create_total_energy_usage_chart,
 )
+from mppsteel.utility.utils import join_list_as_string
 
 logger = get_logger(__name__)
 
@@ -225,7 +226,7 @@ def emissions_area_chart(
         y="value",
         color="technology",
         color_discrete_map=TECHNOLOGY_ARCHETYPE_COLORS,
-        name="Steel production emissions per tech for run scenario",
+        name=f"{join_list_as_string(emission_cols)} per tech for run scenario",
         x_axis="year",
         y_axis="CO2 Emissions [CO2/year]",
         hoverdata=None,
