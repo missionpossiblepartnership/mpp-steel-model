@@ -194,21 +194,6 @@ def return_best_tech(
             )
         )
 
-    if enforce_constraints:
-        combined_available_list = apply_constraints(
-            business_case_ref,
-            plant_capacities,
-            material_usage_dict_container,
-            combined_available_list,
-            year,
-            plant_name,
-            region,
-            base_tech,
-            override_constraint=False,
-            apply_transaction=False,
-            regional_scrap=regional_scrap,
-        )
-
     best_choice = get_best_choice(
         tco_ref_data,
         abatement_reference_data,
@@ -221,8 +206,19 @@ def return_best_tech(
         combined_available_list,
         transitional_switch_mode,
         plant_choice_container,
+        enforce_constraints,
+        regional_scrap,
+        business_case_ref,
+        plant_capacities,
+        material_usage_dict_container,
         plant_name,
+        region,
     )
+
+    if not isinstance(best_choice, str):
+        raise ValueError(
+            f"Issue with get_best_choice function returning a nan: {plant_name} | {year} | {base_tech} | {combined_available_list}"
+        )
 
     if enforce_constraints:
         create_material_usage_dict(

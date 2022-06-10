@@ -233,12 +233,9 @@ class MaterialUsage:
     ):
         if amount == 0:
             return True
-        if (model_type == "scrap") and regional_scrap:
+        if model_type == "scrap":
             current_balance = self.balance[year][model_type][region]
             current_usage = self.usage[year][model_type][region]
-        elif (model_type == "scrap") and not regional_scrap:
-            current_balance = sum(self.balance[year][model_type].values())
-            current_usage = sum(self.usage[year][model_type].values())
         else:
             current_balance = self.balance[year][model_type]
             current_usage = self.usage[year][model_type]

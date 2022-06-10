@@ -204,3 +204,7 @@ def multiprocessing_scenarios(scenario_options: list, func):
     # close and join the pools
     pool.close()
     pool.join()
+
+
+def join_list_as_string(list_object: list) -> str:
+    return ", ".join(list_object)

@@ -19,6 +19,7 @@ from mppsteel.model_solver.solver_classes import (
     MarketContainerClass,
 )
 from mppsteel.utility.log_utility import get_logger
+from mppsteel.utility.utils import join_list_as_string
 
 logger = get_logger(__name__)
 
@@ -468,7 +469,7 @@ def trade_flow(
     ]
 
     logger.info(
-        f"TRADE BALANCING ROUND 1: Importing Regions: {importing_regions} | Exporting Regions: {exporting_regions} | Balanced Regions: {balanced_regions}"
+        f"TRADE BALANCING ROUND 1: Importing Regions: {join_list_as_string(importing_regions)} | Exporting Regions: {join_list_as_string(exporting_regions)} | Balanced Regions: {join_list_as_string(balanced_regions)}"
     )
 
     if global_trade_balance > 0:

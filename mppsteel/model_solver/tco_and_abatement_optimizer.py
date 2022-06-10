@@ -1,13 +1,11 @@
 """Script for the tco and abatament optimisation functions."""
 from functools import lru_cache
 import random
-from typing import Tuple, Literal
+from typing import Tuple
 
 import pandas as pd
 import numpy as np
-import numpy.typing as npt
-
-from mppsteel.model_solver.solver_classes import PlantChoices
+from mppsteel.model_solver.solver_classes import PlantChoices, apply_constraints
 
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.utils import create_bin_rank_dict, return_bin_rank
@@ -24,7 +22,7 @@ from mppsteel.config.model_config import (
 logger = get_logger(__name__)
 
 
-def normalise_data(arr: npt.ArrayLike) -> np.ndarray:
+def normalise_data(arr: np.array) -> np.array:
     """Given an array, normalise it by subtracting the minimum value and dividing by the range.
 
     Args:
@@ -53,26 +51,22 @@ def scale_data(df: pd.DataFrame, reverse: bool = False) -> pd.DataFrame:
 
 
 @lru_cache(maxsize=250000)
-def tco_ranker_logic(x: float, min_value: float) -> int:
+def tco_ranker_logic(x: float, ref_value: float) -> int:
     """If the value is greater than the minimum value times a scaler, return a rank of 3. If the value is
     greater than the minimum value times another scaler, return a rank of 2. Otherwise, return a rank of 1.
 
     Args:
         x (float): The value to be ranked.
-        min_value (float): The minimum value of the metric.
+        ref_value (float): The minimum value of the metric.
 
     Returns:
         int: A number between 1 and 3.
     """
-
-    if min_value is None:
-        return 1
-    if x > min_value * TCO_RANK_2_SCALER:
+    if x > ref_value * TCO_RANK_2_SCALER:
         return 3
-    elif x > min_value * TCO_RANK_1_SCALER:
+    elif x > ref_value * TCO_RANK_1_SCALER:
         return 2
-    else:
-        return 1
+    return 1
 
 
 @lru_cache(maxsize=250000)
@@ -101,8 +95,10 @@ def min_ranker(
     year: int,
     country_code: str,
     start_tech: str,
+    technology_list: list,
     rank: bool = False,
-) -> pd.DataFrame:
+    transitional_switch_mode: bool = False,
+) -> Tuple[pd.DataFrame, str]:
     """Sorts (and optionally ranks) each technology from a given list for the purpose of choosing a best technology.
 
     Args:
@@ -112,36 +108,60 @@ def min_ranker(
         year (int): The year you want to rank the technologies for.
         country_code (str): The country code of the plant you want to rank technologies for.
         start_tech (str): The starting technology for the plant.
+        technology_list (list): A list of technologies that represent valid technology switches.
         rank (bool, optional): Decide whether to assign custom ranking logic to the technologies. Defaults to False.
+        transitional_switch_mode (bool, optional): Boolean flag that determines if transitional switch logic is active. Defaults to False.
 
     Returns:
-        pd.DataFrame: A DataFrame containing the sorted list of each technology for a given plant and technology.
+        Tuple[pd.DataFrame, str]: A DataFrame containing the sorted list of each technology for a given plant and technology.
     """
-    df_subset = df.loc[year, country_code, start_tech].copy()
-    if len(df_subset) == 1:
-        df_subset = df_subset.reset_index().set_index("switch_tech")
-        if rank:
-            data_type_col_mapper = {
-                "tco": "tco_rank_score",
-                "abatement": "abatement_rank_score",
-            }
-            df_subset[data_type_col_mapper[data_type]] = 1
-        return df_subset
+    # subsetting the dataframe
+    df_c = df.loc[year, country_code, start_tech].copy()
+    # subset switch_technology based on technology_list
+    if transitional_switch_mode and start_tech not in technology_list:
+        technology_list.append(start_tech)
+    df_subset = df_c[df_c["switch_tech"].isin(technology_list)].copy()
+    # set index as switch_tech
     df_subset = df_subset.reset_index().set_index("switch_tech")
+    # sort the dataframe according to the value column
     df_subset.sort_values(value_col, ascending=True, inplace=True)
+    # default ref: empty string
+    tco_reference_tech = ''
+    data_type_col_mapper = {
+        "tco": "tco_rank_score",
+        "abatement": "abatement_rank_score",
+    }
+    # handle case where there is only one tech option available - most likely the start_tech
+    if len(df_subset) == 1:
+        if rank:
+            tco_reference_tech = df_subset[value_col].idxmin()
+            df_subset[data_type_col_mapper[data_type]] = 1
+        return df_subset, tco_reference_tech
 
     if rank:
         if data_type == "tco":
-            min_value = df_subset[value_col].min()
-            df_subset["tco_rank_score"] = df_subset[value_col].apply(
-                lambda x: tco_ranker_logic(x, min_value)
+            if transitional_switch_mode:
+                # transitionary switch case
+                tco_reference_tech = start_tech
+                ref_val = df_subset.loc[tco_reference_tech, value_col]
+            elif "EAF" in list(df_subset.index):
+                df_subset_no_eaf = df_subset.drop("EAF").copy()
+                # eaf ref case: cheapest tech minus eaf
+                tco_reference_tech = df_subset_no_eaf[value_col].idxmin()
+                ref_val = df_subset_no_eaf[value_col].min()
+            else:
+                # identify the minimum value
+                tco_reference_tech = df_subset[value_col].idxmin()
+                ref_val = df_subset[value_col].min()
+            df_subset[data_type_col_mapper[data_type]] = df_subset[value_col].apply(
+                lambda x: tco_ranker_logic(x, ref_val)
             )
         elif data_type == "abatement":
-            df_subset["abatement_rank_score"] = df_subset[value_col].apply(
+            df_subset[data_type_col_mapper[data_type]] = df_subset[value_col].apply(
                 lambda x: abatement_ranker_logic(x)
             )
-        return df_subset
-    return df_subset
+    
+    return df_subset, tco_reference_tech
 
 
 def get_tco_and_abatement_values(
@@ -153,7 +173,8 @@ def get_tco_and_abatement_values(
     start_tech: str,
     technology_list: list,
     rank: bool,
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    transitional_switch_mode: bool,
+) -> Tuple[pd.DataFrame, pd.DataFrame, str]:
     """Sends both the TCO DataFrame and the Emissions Abatement DataFrame through a minimum ranking function and filters the list based on the `technology_list`.
 
     Args:
@@ -165,91 +186,127 @@ def get_tco_and_abatement_values(
         start_tech (str): The starting technology that you want to run the calculation for.
         technology_list (list): The technology list that you want to filter the values for.
         rank (bool): A scenario boolean for the ranking logic switch.
+        transitional_switch_mode (bool, optional): Boolean flag that determines if transitional switch logic is active.
 
     Returns:
-        Tuple[pd.DataFrame, pd.DataFrame]: Two DataFrames in a tuple, TCO Values and Abatement Values
+        Tuple[pd.DataFrame, pd.DataFrame, str]: Two DataFrames in a tuple, TCO Values and Abatement Values and a ref point
     """
-    tco_values = min_ranker(
+    # Remove unavailable techs
+    tco_values, tco_reference_tech = min_ranker(
         df=tco_df,
         data_type="tco",
         value_col=cost_value_col,
         year=year,
         country_code=country_code,
         start_tech=start_tech,
+        technology_list=technology_list,
         rank=rank,
+        transitional_switch_mode=transitional_switch_mode
     )
-    abatement_values = min_ranker(
+    abatement_values, _ = min_ranker(
         df=emissions_df,
         data_type="abatement",
         value_col="abated_combined_emissivity",
         year=year,
         country_code=country_code,
         start_tech=start_tech,
+        technology_list=technology_list,
         rank=rank,
+        transitional_switch_mode=transitional_switch_mode
     )
-    # Remove unavailable techs
-    tco_values = tco_values.filter(items=technology_list, axis=0)
-    abatement_values = abatement_values.filter(items=technology_list, axis=0)
-    return tco_values, abatement_values
+    return tco_values, abatement_values, tco_reference_tech
 
 
 def record_ranking(
     combined_ranks: pd.DataFrame,
+    constraint_excluded_techs: list,
     plant_choice_container: PlantChoices,
     year: int,
+    region: str,
+    plant_name: str,
     start_tech: str,
+    tco_reference_tech: str,
     solver_logic: str,
-    scenario_name: str
+    weighting_dict: dict,
+    scenario_name: str,
+    transitional_switch_mode: bool,
 ) -> None:
     """Formats the combined rank dataframe and adds it to a plant choice container class instance.
 
     Args:
         combined_ranks (pd.DataFrame): A DataFrame showing the ranking.
+        constraint_excluded_techs (list): Contains technologies excluded due to resource constraints.
         plant_choice_container (PlantChoices): The PlantChoices Instance containing each plant's choices.
         year (int): The current model cycle year.
+        region (str): The plant's region.
+        plant_name (str): The name of the plant.
         start_tech (str): The base technonlogy for the ranking.
+        tco_reference_tech (str): Reference technology for tco rank logic.
         solver_logic (str): Determines the algorithm used to pick the best technology.
+        weighting_dict (dict): Weighting for tco and abatement data.
         scenario_name (str): The current scenario of the model_run.
+        transitional_switch_mode (bool): Boolean flag that determines if transitional switch logic is active.
     """
     if not combined_ranks.empty:
         records = combined_ranks.reset_index().copy()
         records["year"] = year
+        records["region"] = region
+        records["plant_name"] = plant_name
         records["start_tech"] = start_tech
+        records["tco_reference_tech"] = tco_reference_tech
         records["solver_logic"] = solver_logic
+        records["weighting"] = str(weighting_dict)
         records["scenario_name"] = scenario_name
+        records["switch_type"] = "transitional switch" if transitional_switch_mode else "main cycle switch"
+        records["excluded_due_to_constraints"] = records["switch_tech"].apply(lambda switch_tech: switch_tech not in constraint_excluded_techs)
         if solver_logic == "rank":
             records = records[
                 [
                     "year",
+                    "region",
+                    "plant_name",
                     "start_tech",
+                    "tco_reference_tech",
                     "solver_logic",
+                    "weighting",
+                    "switch_type",
                     "scenario_name",
                     "switch_tech",
                     "tco_rank_score",
                     "abatement_rank_score",
                     "overall_rank",
+                    "excluded_due_to_constraints"
                 ]
             ]
         elif solver_logic in {"scaled", "scaled_bins"}:
             records = records[
                 [
                     "year",
+                    "region",
+                    "plant_name",
                     "start_tech",
+                    "tco_reference_tech",
                     "solver_logic",
+                    "weighting",
+                    "switch_type",
                     "scenario_name",
                     "switch_tech",
                     "tco_scaled",
                     "abatement_scaled",
                     "overall_score",
+                    "excluded_due_to_constraints"
                 ]
             ]
-        records = records.set_index(["year", "solver_logic", "scenario_name", "start_tech"]).sort_index(
-            ascending=True
-        )
+        records = records.set_index(
+            [
+                "year", "region", "plant_name", "solver_logic", 
+                "weighting", "switch_type", "scenario_name", "start_tech"
+            ]
+        ).sort_index(ascending=True)
         plant_choice_container.update_records("rank", records)
 
 
-def return_best_choice(best_values: pd.DataFrame, start_tech: str):
+def return_best_choice(best_values: list, start_tech: str):
     # pick random choice if there is more than one option
     if len(best_values) > 1:
         potential_techs = best_values.index.to_list()
@@ -274,7 +331,13 @@ def get_best_choice(
     technology_list: list,
     transitional_switch_mode: bool,
     plant_choice_container: PlantChoices,
+    enforce_constraints: bool,
+    regional_scrap: bool,
+    business_case_ref: dict,
+    plant_capacities: dict,
+    material_usage_dict_container: dict,
     plant_name: str,
+    region: str,
 ) -> str:
     """Returns the best technology choice from a list of potential logic according to the parameter settings provided in the function.
 
@@ -290,6 +353,13 @@ def get_best_choice(
         technology_list (list): A list of technologies that represent valid technology switches.
         transitional_switch_mode (bool): determines the column to use for TCO values
         plant_choice_container (PlantChoices): The PlantChoices Instance containing each plant's choices.
+        enforce_constraints (bool): Boolen flag to determine if constraints should affect technology availability.
+        regional_scrap (bool): Boolean flag to determine whether scrap constraint is regional or global.
+        business_case_ref (dict): Standardised Business Cases.
+        plant_capacities (dict): A dictionary containing plant: capacity/inital tech key:value pairs.
+        material_usage_dict_container (dict, optional): Dictionary container object that is used to track the material usage within the application. Defaults to None.
+        plant_name (str): The plant name.
+        region (str): The plant's region.
 
     Returns:
         str: The best technology choice for a given year.
@@ -298,7 +368,7 @@ def get_best_choice(
     # Scaling algorithm
     if solver_logic in {"scaled", "scaled_bins"}:
         # Calculate minimum scaled values
-        tco_values, abatement_values = get_tco_and_abatement_values(
+        tco_values, abatement_values, tco_reference_tech = get_tco_and_abatement_values(
             tco_df,
             emissions_df,
             cost_value_col,
@@ -307,7 +377,29 @@ def get_best_choice(
             start_tech,
             technology_list,
             rank=False,
+            transitional_switch_mode=transitional_switch_mode,
         )
+
+        if enforce_constraints:
+            constraint_excluded_techs = apply_constraints(
+                business_case_ref,
+                plant_capacities,
+                material_usage_dict_container,
+                technology_list,
+                year,
+                plant_name,
+                region,
+                start_tech,
+                override_constraint=False,
+                apply_transaction=False,
+                regional_scrap=regional_scrap
+            )
+            if transitional_switch_mode and start_tech not in constraint_excluded_techs:
+                constraint_excluded_techs.append(start_tech)
+
+            if not transitional_switch_mode and 1 not in tco_values.loc[constraint_excluded_techs]["tco_rank_score"].values:
+                constraint_excluded_techs.append(start_tech)
+
         # Simply return current technology if no other options
         if len(tco_values) < 2:
             return start_tech
@@ -372,10 +464,25 @@ def get_best_choice(
         combined_scales["overall_score"] = (
             combined_scales["tco_scaled"] * weighting_dict["tco"]
         ) + (combined_scales["abatement_scaled"] * weighting_dict["emissions"])
-        combined_scales.sort_values("overall_score", axis=0, inplace=True)
         record_ranking(
-            combined_scales, plant_choice_container, year, start_tech, solver_logic, scenario_name
+            combined_scales,
+            constraint_excluded_techs,
+            plant_choice_container,
+            year,
+            region,
+            plant_name,
+            start_tech,
+            tco_reference_tech,
+            solver_logic,
+            weighting_dict,
+            scenario_name,
+            transitional_switch_mode
         )
+        combined_scales.drop(
+            labels=combined_scales.index.difference(constraint_excluded_techs),
+            inplace=True,
+        )
+        combined_scales.sort_values("overall_score", axis=0, inplace=True)
 
         if solver_logic == "scaled":
             return combined_scales.idxmin()["overall_score"]
@@ -389,7 +496,7 @@ def get_best_choice(
     # Ranking algorithm
     if solver_logic == "ranked":
 
-        tco_values, abatement_values = get_tco_and_abatement_values(
+        tco_values, abatement_values, tco_reference_tech = get_tco_and_abatement_values(
             tco_df,
             emissions_df,
             cost_value_col,
@@ -398,7 +505,29 @@ def get_best_choice(
             start_tech,
             technology_list,
             rank=True,
+            transitional_switch_mode=transitional_switch_mode
         )
+
+        if enforce_constraints:
+            constraint_excluded_techs = apply_constraints(
+                business_case_ref,
+                plant_capacities,
+                material_usage_dict_container,
+                technology_list,
+                year,
+                plant_name,
+                region,
+                start_tech,
+                override_constraint=False,
+                apply_transaction=False,
+                regional_scrap=regional_scrap
+            )
+            if transitional_switch_mode and start_tech not in constraint_excluded_techs:
+                constraint_excluded_techs.append(start_tech)
+
+            if not transitional_switch_mode and 1 not in tco_values.loc[constraint_excluded_techs]["tco_rank_score"].values:
+                constraint_excluded_techs.append(start_tech)
+
         tco_values.drop(
             columns=tco_values.columns.difference(["tco_rank_score"]),
             axis=1,
@@ -413,24 +542,36 @@ def get_best_choice(
         combined_ranks["overall_rank"] = (
             combined_ranks["tco_rank_score"] * weighting_dict["tco"]
         ) + (combined_ranks["abatement_rank_score"] * weighting_dict["emissions"])
-        combined_ranks.sort_values("overall_rank", axis=0, inplace=True)
         record_ranking(
-            combined_ranks, plant_choice_container, year, start_tech, solver_logic, scenario_name
+            combined_ranks,
+            constraint_excluded_techs,
+            plant_choice_container,
+            year,
+            region,
+            plant_name,
+            start_tech,
+            tco_reference_tech,
+            solver_logic,
+            weighting_dict,
+            scenario_name,
+            transitional_switch_mode
         )
+        combined_ranks.drop(
+            labels=combined_ranks.index.difference(constraint_excluded_techs),
+            inplace=True,
+        )
+        combined_ranks.sort_values("overall_rank", axis=0, inplace=True)
         min_value = combined_ranks["overall_rank"].min()
         best_values = combined_ranks[combined_ranks["overall_rank"] == min_value]
         return return_best_choice(best_values, start_tech)
-    raise ValueError(
-        f"Issue with get_best_choice function returning a nan: {plant_name} | {year} | {start_tech} | {technology_list}"
-    )
 
 
-def subset_presolver_df(df: pd.DataFrame, subset_type: Literal["tco_summary", "abatement"] = "tco_summary") -> pd.DataFrame:
+def subset_presolver_df(df: pd.DataFrame, subset_type: str) -> pd.DataFrame:
     """Subsets and formats the TCO or Emissions Abatement DataFrame prior to being used in the solver flow.
 
     Args:
         df (pd.DataFrame): The TCO or Emissions Abatement DataFrame.
-        subset_type (str): Determines the subsetting logic. Either `tco_summary` or `abatement`. Defaults to `tco_summary`.
+        subset_type (str, optional): Determines the subsetting logic. Either `tco_summary` or `abatement`. Defaults to False.
 
     Returns:
         pd.DataFrame: The subsetted DataFrame.

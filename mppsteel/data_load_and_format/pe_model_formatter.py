@@ -1,6 +1,7 @@
 """Formats Price & Emissions Model Data and defines getter functions"""
 
-import itertools
+
+import contextlib
 import pandas as pd
 from tqdm import tqdm
 
@@ -74,13 +75,26 @@ def power_hydrogen_region_reference_generator(country_ref: pd.DataFrame) -> dict
     Returns:
         dict: A dictionary containing a mapping key of [country_code] to CCS value.
     """
-    return {
-        "RoW": get_countries_from_group(
+    row_countries = get_countries_from_group(
             country_ref, "RMI Model Region", "RoW"
-        ),
-        "Asia": get_countries_from_group(
+        )
+    oceania_countries = get_countries_from_group(
+            country_ref, "Continent", "Oceania"
+        )
+    row_countries = set(row_countries).difference(
+        oceania_countries
+    )
+    asia_countries = get_countries_from_group(
             country_ref, "Continent", "Asia"
-        ),
+        )
+    asia_countries.append("TWN")
+    separate_asia_countries = JAPAN_SOUTHKOREA_TAIWAN + ["CHN", "IND"]
+    for country in separate_asia_countries:
+        with contextlib.suppress(Exception):
+            asia_countries.remove(country)
+    return {
+        "RoW": row_countries,
+        "Asia": asia_countries,
         "South_BAU_Americas": get_countries_from_group(
             country_ref, "RMI Model Region", "South and Central America"
         ),
@@ -105,8 +119,7 @@ def power_hydrogen_region_reference_generator(country_ref: pd.DataFrame) -> dict
         "US": NAFTA_COUNTRIES,
         "Japan_SthKorea_Taiwan": JAPAN_SOUTHKOREA_TAIWAN,
         "China": ["CHN"],
-        "India": ["IND"],
-        "DE": ["GER"],
+        "India": ["IND"]
     }
 
 
