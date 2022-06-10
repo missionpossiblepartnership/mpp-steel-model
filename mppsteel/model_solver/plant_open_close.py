@@ -549,6 +549,7 @@ def open_close_plants(
 
     production_demand_gap_analysis_df = pd.DataFrame(production_demand_gap_analysis.values())
     if production_demand_gap_analysis_df.empty:
+        # just a minimal dataframe to make the empty test pass FIXME
         my_minimal_row = [2020, "DEU", 0, 1, 0, 0, 0]
         my_df_columns = [
             "year", "region", "demand", "new_total_capacity", "new_utilized_capacity",
