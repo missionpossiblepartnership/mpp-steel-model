@@ -25,6 +25,7 @@ def transform_units(val: float, unit_ref: str, base: str) -> float:
     """
     factor = UNIT_FACTORS_COMBINED[unit_ref]
     if base == "smaller":
-        return val / factor
-    if base == "larger":
-        return val * factor
+        return_value = val / factor
+    elif base == "larger":
+        return_value = val * factor
+    return return_value

@@ -5,6 +5,7 @@ import sys
 import multiprocessing as mp
 
 import numpy as np
+import numpy.typing as npt
 
 from collections.abc import Iterable
 from copy import deepcopy
@@ -47,7 +48,7 @@ def create_list_permutations(list1: list, list2: list) -> list:
     return list(itertools.chain(*comb))
 
 
-def stdout_query(question: str, default: str, options: str) -> None:
+def stdout_query(question: str, default: str, options: str) -> str:
     """Ask a yes/no question via raw_input() and return their answer.
 
     "question" is a string that is presented to the user.
@@ -71,7 +72,7 @@ def stdout_query(question: str, default: str, options: str) -> None:
             sys.stdout.write(f"Please respond with a choice from {options}.\n")
 
 
-def get_currency_rate(base: str, target: str) -> str:
+def get_currency_rate(base: str, target: str) -> None:
     """Gets a currency rate exchange between two currencies using the CurrencyConverter library.
 
     Args:
@@ -79,7 +80,7 @@ def get_currency_rate(base: str, target: str) -> str:
         target (str): [description]
 
     Returns:
-        str: [description]
+        None: A None object
     """
     logger.info(f"Getting currency exchange rate for {base}")
 
@@ -91,6 +92,7 @@ def get_currency_rate(base: str, target: str) -> str:
             raise ValueError(
                 f"You entered an incorrect currency, either {base} or {target}"
             )
+    return None
 
 
 def enumerate_iterable(iterable: it) -> dict:
@@ -105,11 +107,11 @@ def enumerate_iterable(iterable: it) -> dict:
     return dict(zip(iterable, range(len(iterable))))
 
 
-def cast_to_float(val: Union[float, int, Iterable]) -> float:
+def cast_to_float(val: Union[float, int, Iterable[float]]) -> float:
     """Casts a numerical object to a float if not a float already.
 
     Args:
-        val Union[float, int, Iterable]): The numerical value you want to be a float. Can be an iterable containing a numberical value(s), that will be summated as a float.
+        val Union[float, int, Iterable[float]]): The numerical value you want to be a float. Can be an iterable containing a numberical value(s), that will be summated as a float.
 
     Returns:
         float: The float value.
@@ -121,19 +123,22 @@ def cast_to_float(val: Union[float, int, Iterable]) -> float:
 
 
 def create_bin_rank_dict(
-    data: np.array, bins: int = 10, reverse: bool = False, rounding: int = 3
+    data: np.array, number_of_items: int, max_bin_size: int = 3, reverse: bool = False, rounding: int = 3
 ) -> dict:
     """Create a dictionary of bin value: bin rank key: value pairs.
 
     Args:
         data (np.array): The data that you want to create bins for.
-        bins (int, optional): The number of bins you want to create. Defaults to 10.
+        number_of_items: The number of items that determines the minium number of bins you want to create.
+        max_bin_size (int, optional): The max number of bins you want to create. Defaults to 3.
         reverse (bool, optional): Reverse the enumeration of the bins (descending rather than ascending order). Defaults to False.
         rounding (int, optional): Optionally round the numbers for the bin groups. Defaults to 3.
 
     Returns:
         dict: A dictionary of bin value: bin rank.
     """
+
+    bins = min(number_of_items, max_bin_size)
     bins = np.linspace(data.min(), data.max(), bins)
     digitized = np.digitize(data, bins)
     new_data_list = [data[digitized == i].mean() for i in range(1, len(bins))]
@@ -199,3 +204,7 @@ def multiprocessing_scenarios(scenario_options: list, func):
     # close and join the pools
     pool.close()
     pool.join()
+
+
+def join_list_as_string(list_object: list) -> str:
+    return ", ".join(list_object)

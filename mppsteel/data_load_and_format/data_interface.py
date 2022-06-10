@@ -4,6 +4,7 @@
 import pandas as pd
 import pandera as pa
 import numpy as np
+import numpy.typing as npt
 
 from typing import Tuple, Union
 
@@ -68,7 +69,7 @@ def format_scope3_ef_2(df: pd.DataFrame, emissions_factor_slag: float) -> pd.Dat
 
 @pa.check_input(SCOPE3_EF_SCHEMA_1)
 def modify_scope3_ef_1(
-    df: pd.DataFrame, slag_values: np.array, met_coal_density: float
+    df: pd.DataFrame, slag_values: npt.ArrayLike, met_coal_density: float
 ) -> pd.DataFrame:
     """Formatting steps for the Scope 3 Emissions Factors.
 

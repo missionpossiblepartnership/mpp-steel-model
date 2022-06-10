@@ -321,7 +321,7 @@ WESTERN_EUROPE_COUNTRIES = [
     "DNK",
     "FRO",
     "FRA",
-    "GER",
+    "DEU",
     "ISL",
     "IRL",
     "IMN",

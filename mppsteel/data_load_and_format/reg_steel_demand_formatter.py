@@ -197,6 +197,12 @@ def steel_demand_getter(
     # Scenario: BAU, High Circ, Average
     # Metric: crude, scrap
 
+    if df_c.empty:
+        df_c = pd.DataFrame(
+            [["2020", "Africa", 0, "DEU", "Crude steel demand"]],
+            columns=["year", "region", "value", "country_code", "metric"],
+        ).set_index(["year", "metric"])
+
     metric_mapper = {
         "crude": "Crude steel demand",
         "scrap": "Scrap availability",

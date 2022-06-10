@@ -84,7 +84,7 @@ def global_metaresults_calculator(
         )
         .round(rounding)
     )  # Mt
-    df["scrap_availability_with_tolerance"] = df["scrap_availability"] * (
+    df["scrap_availability"] = df["scrap_availability"] * (
         1 + SCRAP_CONSTRAINT_TOLERANCE_FACTOR
     )
     df["scrap_consumption"] = (
@@ -93,7 +93,7 @@ def global_metaresults_calculator(
         .round(rounding)
     )  # Mt
     df["scrap_avail_above_cons"] = (
-        df["scrap_availability_with_tolerance"] - df["scrap_consumption"]
+        df["scrap_availability"] - df["scrap_consumption"]
     ).round(rounding)
     return df[
         [

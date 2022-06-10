@@ -108,7 +108,7 @@ def add_off_cycle_investment_years(
         list: An enhanced investment decision cycle list including off-cycle range objects representing potential off-cycle switches.
     """
     inv_cycle_length = len(main_investment_cycle)
-    range_list = []
+    range_list = list() # List[int, range]
 
     def net_zero_year_bring_forward(year: int) -> int:
         """Determines whether an investment year should be brought forward to be within the acceptable range to become net zero.
@@ -196,6 +196,8 @@ def create_investment_cycle_reference(plant_investment_year_dict: dict) -> pd.Da
                     "switch_type": "no switch",
                 }
                 df_list.append(entry)
+    if len(df_list) == 0:
+        return pd.DataFrame(columns=["year", "plant_name"]).set_index(["year", "plant_name"])
     return pd.DataFrame(df_list).set_index(["year", "plant_name"])
 
 

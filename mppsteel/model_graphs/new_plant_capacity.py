@@ -84,7 +84,7 @@ def new_plant_capacity_graph(
     graph_type: str,
     save_filepath: str = None,
     ext: str = "png",
-) -> Union[px.area, px.bar]:
+) -> None:
     """Creates a graph showing the new capacity across each region.
 
     Args:
@@ -92,9 +92,6 @@ def new_plant_capacity_graph(
         graph_type (str): Specify the type of graph to return, either 'area' or 'bar'.
         save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
         ext (str, optional): The extension of the image you are creating. Defaults to "png".
-
-    Returns:
-        Union[px.area, px.bar]: Returns either a bar chart or an area chart.
     """
     regions = plant_df["rmi_region"].unique()
     color_mapper = dict(zip_longest(regions, MPP_COLOR_LIST))
@@ -126,6 +123,7 @@ def new_plant_capacity_graph(
         )
 
     if save_filepath:
+        assert fig_
         fig_.write_image(f"{save_filepath}.{ext}")
 
 

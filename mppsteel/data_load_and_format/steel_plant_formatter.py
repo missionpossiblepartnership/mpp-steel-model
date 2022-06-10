@@ -199,7 +199,7 @@ def apply_countries_to_steel_plants(
     logger.info("Applying Country Data to Steel Plants")
     df_c = steel_plant_formatted.copy()
     steel_plant_countries = df_c["country"].unique().tolist()
-    matching_dict, _ = country_matcher(steel_plant_countries)
+    matching_dict = country_matcher(steel_plant_countries, "matches")
     df_c["country_code"] = df_c["country"].apply(lambda x: matching_dict[x])
     country_fixer_dict = {"North Korea": "PRK", "South Korea": "KOR"}
     df_c = country_mapping_fixer(df_c, "country", "country_code", country_fixer_dict)
@@ -231,14 +231,14 @@ def convert_start_year(year_value: str) -> int:
 
 
 def create_active_check_col(row: pd.Series, year: int) -> bool:
-    """Checks whether a plant should be considered active or not based on its status attribute or whether the current year if before its start of operation.
+    """Checks whether a plant should be considered active or not based on its status attribute or whether the current year is before its start of operation.
 
     Args:
         row (pd.Series): The row containing the metadata for the plant.
         year (int): The current year to check against the start_of_operation attribute in `row`.
 
     Returns:
-        bool: A boolean value depedning on the logic check.
+        bool: A boolean value depending on the logic check.
     """
     return (
         row.status in ["operating", "new model plant"]

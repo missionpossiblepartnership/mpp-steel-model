@@ -67,7 +67,7 @@ def calculate_lcox_cost(
     year: int,
     country_code: str,
     technology: str,
-    year_span: range,
+    year_span: int,
     discount_rate: float,
 ) -> float:
     """Calculates the levelised cost component from a capex ref and variable costs ref and inputted function arguments.
@@ -78,7 +78,7 @@ def calculate_lcox_cost(
         year (int): The year you want to calculate the capital charge for.
         country_code (str): The country_code to calculate the variable costs for.
         technology (str): The technology you want to capex and variable costs for.
-        year_span (range): The year span for the levelised cost.
+        year_span (int): The year span for the levelised cost.
         discount_rate (float): The discount rate to apply to the capital charge amounts.
 
     Returns:
@@ -138,7 +138,7 @@ def get_lcost_capacity(plant_df: pd.DataFrame) -> dict:
     Returns:
         dict: A dictoinary reference for each plant containing [plant_id][year] keys.
     """
-    ref_container = {}
+    ref_container = dict()
     for row in tqdm(
         plant_df.itertuples(), total=len(plant_df), desc="LCOX Capacity Ref"
     ):
