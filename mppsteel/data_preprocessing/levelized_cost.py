@@ -170,8 +170,7 @@ def create_levelized_cost(
         plant_df_c = plant_df.set_index(["year", "country_code", "technology"]).copy()
         lev_cost_reference = plant_df_c.join(lev_cost_reference)
         lev_cost_reference["levelized_cost"] = lev_cost_reference.progress_apply(levelized_cost_calculation, acc=acc, axis=1)
-        lev_cost_reference = lev_cost_reference.reset_index().groupby(["year", "country_code", "technology"]).agg("mean")
-    
+
     return lev_cost_reference.reset_index()
 
 
