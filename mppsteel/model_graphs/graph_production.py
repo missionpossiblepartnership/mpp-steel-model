@@ -422,7 +422,7 @@ def create_cot_graph(
 
 
 def create_lcost_graph(
-    lcost_df: pd.DataFrame, chosen_year: int, filepath: str = None
+    lcost_df: pd.DataFrame, chosen_year: int, filename: str, filepath: str = None
 ) -> px.bar:
     """Handler function for the Levelized Cost graph.
 
@@ -434,7 +434,6 @@ def create_lcost_graph(
     Returns:
         px.bar: A plotly express bar graph.
     """
-    filename = "levelized_cost"
     logger.info(f"Levelized Cost Output: {filename}")
     if filepath:
         filename = f"{filepath}/{filename}"
@@ -518,12 +517,13 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
     calculated_emissivity_combined_df = read_pickle_folder(
         intermediate_path, "calculated_emissivity_combined", "df"
     )
-    lcost_data = read_pickle_folder(intermediate_path, "levelized_cost_updated", "df")
+    levelized_cost_standardized = read_pickle_folder(intermediate_path, "levelized_cost_standardized", "df")
     investment_results = read_pickle_folder(final_path, "investment_results", "df")
     capex_dict = read_pickle_folder(PKL_DATA_FORMATTED, "capex_dict", "df")
     variable_cost_df = read_pickle_folder(
         intermediate_path, "variable_costs_regional_material_breakdown", "df"
     )
+    variable_cost_df.sort_index(ascending=True, inplace=True)
     plant_result_df = read_pickle_folder(intermediate_path, "plant_result_df", "df")
     trade_summary_results = read_pickle_folder(
         intermediate_path, "trade_summary_results", "df"
@@ -533,7 +533,6 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
         intermediate_path, "carbon_tax_timeseries"
     )
     rmi_mapper = create_country_mapper()
-
     steel_production_area_chart(
         production_emissions,
         filepath=filepath,
@@ -566,7 +565,6 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
         resource_line_charts(
             df=production_resource_usage, resource=resource, filepath=filepath
         )
-
     for resource, region in list(
         itertools.product(RESOURCE_COLS, ["Europe", "China", "India", "NAFTA"])
     ):
@@ -576,7 +574,6 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
             region=region,
             filepath=filepath,
         )
-
     create_opex_capex_graph(
         variable_cost_df,
         carbon_tax_timeseries,
@@ -622,7 +619,12 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
             filepath=filepath,
         )
 
-    create_lcost_graph(lcost_data, 2030, filepath=filepath)
+    create_lcost_graph(
+        lcost_df=levelized_cost_standardized,
+        chosen_year=2030,
+        filename="levelized_cost_standardized",
+        filepath=filepath
+    )
 
     for year, region in list(
         itertools.product(

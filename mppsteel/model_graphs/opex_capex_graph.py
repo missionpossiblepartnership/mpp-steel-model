@@ -67,6 +67,16 @@ def return_capex_values(
     )
     return combined_values
 
+def add_new_index_to_df(vdf: pd.DataFrame, value_columns: list) -> pd.DataFrame:
+    vdf_c = vdf.copy()
+    country_values = vdf_c.index.get_level_values(2).unique()
+    new_index = pd.MultiIndex.from_product(
+        [TECH_REFERENCE_LIST, value_columns, country_values], 
+        names=["technology", "cost_type", "country_code"]
+    )
+    new_df = pd.DataFrame(index=new_index, columns=vdf_c.columns)
+    return pd.concat([vdf_c, new_df]).sort_index(ascending=True)
+
 
 def add_opex_values(vdf: pd.DataFrame, co_df: pd.DataFrame) -> pd.DataFrame:
     """Adds opex values to the variable costs DataFrame as an additional column.
@@ -97,14 +107,12 @@ def add_capex_values(vdf: pd.DataFrame, co_df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: The updated variable costs dataframe with the capex valuess.
     """
-    vdf_c = vdf.copy()
-    country_values = vdf_c.index.get_level_values(2).unique()
+    vdf_c = add_new_index_to_df(vdf, ["BF Capex", "GF Capex"])
     for technology in TECH_REFERENCE_LIST:
         bf_value = co_df["brownfield_capex"][technology]
         gf_value = co_df["greenfield_capex"][technology]
-        for country in country_values:
-            vdf_c.loc[(technology, "BF Capex", country), "cost"] = bf_value
-            vdf_c.loc[(technology, "GF Capex", country), "cost"] = gf_value
+        vdf_c.loc[technology, "BF Capex"]["cost"] = bf_value
+        vdf_c.loc[technology, "GF Capex"]["cost"] = gf_value
     return vdf_c
 
 
@@ -179,9 +187,9 @@ def add_carbon_cost_to_vc(
     Returns:
         pd.DataFrame: The modified DataFrame with Carbon Cost included.
     """
-    vc_df_c = vc_df.copy()
-    technologies = vc_df_c.index.get_level_values(0).unique()
-    country_codes = vc_df_c.index.get_level_values(2).unique()
+    vdf_c = add_new_index_to_df(vc_df, ["Carbon Cost"])
+    technologies = vdf_c.index.get_level_values(0).unique()
+    country_codes = vdf_c.index.get_level_values(2).unique()
     for technology, country_code in list(
         itertools.product(technologies, country_codes)
     ):
@@ -189,10 +197,10 @@ def add_carbon_cost_to_vc(
             emissivity_dict["s1_emissivity"][(year, country_code, technology)]
             + emissivity_dict["s2_emissivity"][(year, country_code, technology)]
         )
-        vc_df_c.loc[technology, "Carbon Cost", country_code]["cost"] = (
+        vdf_c.loc[(technology, "Carbon Cost", country_code), "cost"] = (
             min(s1_s2_emissivity, 0) * carbon_tax_dict[year]
         )
-    return vc_df_c
+    return vdf_c
 
 
 def create_capex_opex_split_data(
@@ -317,7 +325,7 @@ def add_capex_values_regional(vdf: pd.DataFrame, co_df: pd.DataFrame) -> pd.Data
     Returns:
         pd.DataFrame: The updated variable costs dataframe with the capex valuess.
     """
-    vdf_c = vdf.copy()
+    vdf_c = add_new_index_to_df(vdf, ["BF Capex"])
     country_values = vdf_c.index.get_level_values(2).unique()
     for technology in TECH_REFERENCE_LIST:
         bf_value = co_df["brownfield_capex"][technology]
@@ -334,7 +342,7 @@ def add_opex_values_regional(vdf: pd.DataFrame, co_df: pd.DataFrame) -> pd.DataF
     Returns:
         pd.DataFrame: The updated variable costs dataframe with the other opex values.
     """
-    vdf_c = vdf.copy()
+    vdf_c = add_new_index_to_df(vdf, ["Other_Opex"])
     country_values = vdf_c.index.get_level_values(2).unique()
     for technology in TECH_REFERENCE_LIST:
         other_opex = co_df["other_opex"][technology]
