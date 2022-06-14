@@ -102,6 +102,11 @@ TCO_RANK_1_SCALER = 1.1
 ABATEMENT_RANK_2 = 2.37656461606311  # Switching from Avg BF-BOF to BAT BF-BOF+CCUS
 ABATEMENT_RANK_3 = 0.932690243851946  # Switching from Avg BF-BOF to BAT BF-BOF_bio PCI
 
+# LEVELIZED COST PARAMETERS
+AVERAGE_CAPACITY_MT = 2.5
+AVERAGE_CUF = 0.8
+
+
 # REGIONAL PARAMETERS
 MAIN_REGIONAL_SCHEMA = "rmi_region"
 RESULTS_REGIONS_TO_MAP = ["continent", "wsa", "rmi"]
@@ -110,7 +115,7 @@ RESULTS_REGIONS_TO_MAP = ["continent", "wsa", "rmi"]
 INTERMEDIATE_RESULT_PKL_FILES = [
     "plant_result_df",
     "calculated_emissivity_combined",
-    "levelized_cost",
+    "levelized_cost_standardized",
     "emissivity_abatement_switches",
     "tco_summary_data",
     "trade_summary_results",
@@ -125,6 +130,7 @@ FINAL_RESULT_PKL_FILES = [
     "investment_results",
     "green_capacity_ratio",
     "cost_of_steelmaking",
+    "levelized_cost_results",
 ]
 
 TRADE_PCT_BOUNDARY_DICT = {

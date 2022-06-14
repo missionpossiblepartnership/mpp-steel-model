@@ -120,7 +120,7 @@ def data_preprocessing_scenarios(scenario_dict: dict) -> None:
     generate_preprocessed_emissions_data(serialize=True)
     generate_emissions_flow(scenario_dict=scenario_dict, serialize=True)
     generate_variable_plant_summary(scenario_dict, serialize=True)
-    generate_levelized_cost_results(scenario_dict=scenario_dict, serialize=True)
+    generate_levelized_cost_results(scenario_dict=scenario_dict, serialize=True, standard_plant_ref=True)
     tco_presolver_reference(scenario_dict, serialize=True)
     abatement_presolver_reference(scenario_dict, serialize=True)
 
@@ -332,7 +332,7 @@ def get_emissivity(scenario_dict: dict) -> None:
 
 
 def lcost_flow(scenario_dict: dict) -> None:
-    generate_levelized_cost_results(scenario_dict=scenario_dict, serialize=True)
+    generate_levelized_cost_results(scenario_dict=scenario_dict, serialize=True, standard_plant_ref=True)
 
 
 def gcr_flow(scenario_dict: dict) -> None:

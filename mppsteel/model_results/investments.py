@@ -20,7 +20,7 @@ from mppsteel.utility.file_handling_utility import (
     serialize_file,
     get_scenario_pkl_path,
 )
-from mppsteel.model_results.production import get_tech_choice
+from mppsteel.model_solver.solver_summary import get_tech_choice
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.data_load_and_format.steel_plant_formatter import map_plant_id_to_df
 from mppsteel.utility.location_utility import create_country_mapper

@@ -5,6 +5,7 @@ from tqdm import tqdm
 
 from typing import Iterable
 
+from mppsteel.model_solver.solver_summary import tech_capacity_splits, utilization_mapper
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.plant_container_class import PlantIdContainer
 from mppsteel.data_preprocessing.investment_cycles import PlantInvestmentCycle
@@ -28,7 +29,6 @@ from mppsteel.config.model_config import (
 )
 
 from mppsteel.config.model_scenarios import TECH_SWITCH_SCENARIOS, SOLVER_LOGICS
-
 from mppsteel.config.reference_lists import (
     SWITCH_DICT,
     TECH_REFERENCE_LIST,
@@ -57,8 +57,7 @@ from mppsteel.model_solver.solver_classes import (
     MarketContainerClass,
     MaterialUsage,
     create_material_usage_dict,
-    create_wsa_2020_utilization_dict,
-    apply_constraints,
+    create_wsa_2020_utilization_dict
 )
 from mppsteel.model_solver.plant_open_close import open_close_plants
 from mppsteel.data_preprocessing.levelized_cost import generate_levelized_cost_results
@@ -272,7 +271,6 @@ def active_check_results(
                 active_check[row.plant_name][year] = final_active_checker(row, year)
         return active_check
 
-
 class ChooseTechnologyInput:
     @classmethod
     def get_steel_demand_default(cls) -> pd.DataFrame:
@@ -421,7 +419,7 @@ class ChooseTechnologyInput:
         )
         tco_slim = subset_presolver_df(tco_summary_data, subset_type="tco_summary")
         levelized_cost = read_pickle_folder(
-            PROJECT_PATH / intermediate_path, "levelized_cost", "df"
+            PROJECT_PATH / intermediate_path, "levelized_cost_standardized", "df"
         )
         levelized_cost["region"] = levelized_cost["country_code"].apply(
             lambda x: rmi_mapper[x]
@@ -904,6 +902,28 @@ def choose_technology(scenario_dict: dict) -> dict:
     """
     return choose_technology_core(ChooseTechnologyInput.from_filesystem(scenario_dict))
 
+def create_levelized_cost_actuals(results_dict: dict, scenario_dict: dict):
+    # Create Levelized cost results
+    rmi_mapper = create_country_mapper(path=str(PROJECT_PATH / PKL_DATA_IMPORTS))
+    tech_capacity_df = tech_capacity_splits(
+        steel_plants = results_dict["plant_result_df"],
+        tech_choices = results_dict["tech_choice_dict"],
+        capacity_dict = results_dict["plant_capacity_results"],
+        active_check_results_dict = results_dict["active_check_results_dict"]
+    )
+    tech_capacity_df["region"] = tech_capacity_df["country_code"].apply(
+        lambda x: rmi_mapper[x]
+    )
+    tech_capacity_df["cuf"] = tech_capacity_df.apply(
+        utilization_mapper, utilization_results=results_dict["utilization_results"], axis=1
+    )
+    levelized_cost_results = generate_levelized_cost_results(
+        scenario_dict=scenario_dict,
+        steel_plant_df=tech_capacity_df,
+        standard_plant_ref=False
+    )
+    return levelized_cost_results
+
 
 @timer_func
 def solver_flow(scenario_dict: dict, serialize: bool = False) -> dict:
@@ -919,10 +939,12 @@ def solver_flow(scenario_dict: dict, serialize: bool = False) -> dict:
     intermediate_path = get_scenario_pkl_path(
         scenario_dict["scenario_name"], "intermediate"
     )
-    results_dict = choose_technology(scenario_dict=scenario_dict)
-    levelized_cost_updated = generate_levelized_cost_results(
-        scenario_dict=scenario_dict, steel_plant_df=results_dict["plant_result_df"]
+    final_path = get_scenario_pkl_path(
+        scenario_dict["scenario_name"], "final"
     )
+    results_dict = choose_technology(scenario_dict=scenario_dict)
+
+    levelized_cost_results = create_levelized_cost_actuals(results_dict=results_dict, scenario_dict=scenario_dict)
 
     if serialize:
         logger.info("-- Serializing dataframes")
@@ -998,6 +1020,6 @@ def solver_flow(scenario_dict: dict, serialize: bool = False) -> dict:
             "constraints_summary",
         )
         serialize_file(
-            levelized_cost_updated, intermediate_path, "levelized_cost_updated"
+            levelized_cost_results, final_path, "levelized_cost_results"
         )
     return results_dict
