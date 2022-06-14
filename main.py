@@ -6,7 +6,7 @@ from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.file_handling_utility import create_folders_if_nonexistant
 from mppsteel.utility.function_timer_utility import TIME_CONTAINER
 
-from mppsteel.config.model_config import FOLDERS_TO_CHECK_IN_ORDER
+from mppsteel.config.model_config import DATETIME_FORMAT, FOLDERS_TO_CHECK_IN_ORDER
 
 from mppsteel.config.model_scenarios import (
     MAIN_SCENARIO_RUNS,
@@ -48,7 +48,7 @@ if __name__ == "__main__":
     # SCENARIO CUSTOMIZATION
     scenario_args = add_currency_rates_to_scenarios(scenario_args)
 
-    timestamp = datetime.today().strftime("%d-%m-%y %H-%M")
+    timestamp = datetime.today().strftime(DATETIME_FORMAT)
     logger.info(f"Model running at {timestamp}")
     model_output_folder = f"{scenario_args['scenario_name']} {timestamp}"
 

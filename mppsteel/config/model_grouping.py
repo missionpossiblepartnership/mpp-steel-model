@@ -54,6 +54,7 @@ from mppsteel.model_graphs.graph_production import (
 )
 
 from mppsteel.config.model_config import (
+    DATETIME_FORMAT,
     PKL_DATA_FORMATTED,
     PKL_FOLDER,
     USD_TO_EUR_CONVERSION_DEFAULT,
@@ -254,7 +255,7 @@ def scenario_batch_run(scenario: str, dated_output_folder: bool) -> None:
     # Set up scenario and metadata
     scenario_args = SCENARIO_OPTIONS[scenario]
     scenario_args = add_currency_rates_to_scenarios(scenario_args)
-    timestamp = datetime.today().strftime("%d-%m-%y %H-%M")
+    timestamp = datetime.today().strftime(DATETIME_FORMAT)
     model_output_folder = f"{scenario} {timestamp}"
 
     # Model run

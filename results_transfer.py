@@ -4,7 +4,7 @@ import datetime
 
 import git
 from tqdm import tqdm
-from mppsteel.config.model_config import OUTPUT_FOLDER
+from mppsteel.config.model_config import DATETIME_FORMAT, OUTPUT_FOLDER
 from mppsteel.config.model_scenarios import MAIN_SCENARIO_RUNS
 
 from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient, __version__
@@ -14,7 +14,7 @@ from mppsteel.utility.log_utility import get_logger
 logger = get_logger(__name__)
 
 
-DATE_REGEX_PATTERN = r"[0-9]{2}-[0-9]{2}-[0-9]{2}"
+DATE_REGEX_PATTERN = r"[0-9]{4}-[0-9]{2}-[0-9]{2}"
 TIME_REGEX_PATTERN = r"[0-9]{2}-[0-9]{2}"
 
 def list_all_folders_in_directory(path_to_dir: str, subset_string: str = None) -> list:
@@ -52,7 +52,7 @@ def clean_container_string(str_to_clean: str) -> str:
 
 
 def get_date_and_time(path_to_dir: str, use_current_date: bool = False, include_sha: bool = False, scenario: str = ''):
-    date_and_time = datetime.datetime.now().strftime("%d-%m-%y %H-%M")
+    date_and_time = datetime.datetime.now().strftime(DATETIME_FORMAT)
     if not use_current_date: 
         date_match = re.findall(DATE_REGEX_PATTERN, path_to_dir)
         time_match = re.findall(TIME_REGEX_PATTERN, path_to_dir)
