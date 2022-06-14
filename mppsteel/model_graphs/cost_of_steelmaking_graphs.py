@@ -65,9 +65,14 @@ def assign_country_deltas(df: pd.DataFrame, delta_dict: dict) -> pd.DataFrame:
     tech_values = df_c.index.get_level_values(0).unique()
     for technology in tech_values:
         df_c.loc[technology, "LCOS delta"] = delta_dict[technology]
-    return df_c.reset_index().melt(
-        id_vars=["technology"], var_name="cost_type", value_name="cost"
+    return df_c
+
+def melt_and_subset(df: pd.DataFrame, cost_types: list):
+    df_c = df.copy()
+    df_c = df_c.reset_index().melt(
+        id_vars=["technology"], var_name="cost_type", value_name="cost",
     )
+    return df_c[df_c["cost_type"].isin(cost_types)].copy()
 
 
 def lcost_graph(
@@ -92,6 +97,8 @@ def lcost_graph(
     lcost_c = assign_country_deltas(lcost_c, country_deltas)
 
     bar_chart_order = {"LCOS": "#E76B67", "LCOS delta": "#1E3B63"}
+
+    lcost_c = melt_and_subset(lcost_c, bar_chart_order.keys())
 
     fig_ = bar_chart(
         data=lcost_c,

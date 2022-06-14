@@ -54,6 +54,7 @@ from mppsteel.model_graphs.graph_production import (
 )
 
 from mppsteel.config.model_config import (
+    DATETIME_FORMAT,
     PKL_DATA_FORMATTED,
     PKL_FOLDER,
     USD_TO_EUR_CONVERSION_DEFAULT,
@@ -120,7 +121,7 @@ def data_preprocessing_scenarios(scenario_dict: dict) -> None:
     generate_preprocessed_emissions_data(serialize=True)
     generate_emissions_flow(scenario_dict=scenario_dict, serialize=True)
     generate_variable_plant_summary(scenario_dict, serialize=True)
-    generate_levelized_cost_results(scenario_dict=scenario_dict, serialize=True)
+    generate_levelized_cost_results(scenario_dict=scenario_dict, serialize=True, standard_plant_ref=True)
     tco_presolver_reference(scenario_dict, serialize=True)
     abatement_presolver_reference(scenario_dict, serialize=True)
 
@@ -254,7 +255,7 @@ def scenario_batch_run(scenario: str, dated_output_folder: bool) -> None:
     # Set up scenario and metadata
     scenario_args = SCENARIO_OPTIONS[scenario]
     scenario_args = add_currency_rates_to_scenarios(scenario_args)
-    timestamp = datetime.today().strftime("%d-%m-%y %H-%M")
+    timestamp = datetime.today().strftime(DATETIME_FORMAT)
     model_output_folder = f"{scenario} {timestamp}"
 
     # Model run
@@ -332,7 +333,7 @@ def get_emissivity(scenario_dict: dict) -> None:
 
 
 def lcost_flow(scenario_dict: dict) -> None:
-    generate_levelized_cost_results(scenario_dict=scenario_dict, serialize=True)
+    generate_levelized_cost_results(scenario_dict=scenario_dict, serialize=True, standard_plant_ref=True)
 
 
 def gcr_flow(scenario_dict: dict) -> None:

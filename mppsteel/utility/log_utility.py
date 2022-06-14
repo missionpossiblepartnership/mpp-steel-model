@@ -9,7 +9,7 @@ from pathlib import Path
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 
-from mppsteel.config.model_config import LOG_PATH
+from mppsteel.config.model_config import DATETIME_FORMAT, LOG_PATH
 
 LOG_FORMATTER = logging.Formatter(
     "%(asctime)s — %(name)s — %(levelname)s — %(message)s"
@@ -33,7 +33,7 @@ def get_file_handler() -> TimedRotatingFileHandler:
     Returns:
         [type]: A formatted file handler.
     """
-    today_time = datetime.today().strftime("%y%m%d_%H%M%S")
+    today_time = datetime.today().strftime(DATETIME_FORMAT)
     if not Path(LOG_PATH).is_dir():
         try:
             os.mkdir(LOG_PATH)
