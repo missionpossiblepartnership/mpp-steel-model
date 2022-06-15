@@ -52,9 +52,11 @@ from mppsteel.model_graphs.graph_production import (
     create_graphs,
     create_combined_scenario_graphs,
 )
+from mppsteel.model_results.resource_demand_summary import create_resource_demand_summary
 
 from mppsteel.config.model_config import (
     DATETIME_FORMAT,
+    PKL_DATA_COMBINED,
     PKL_DATA_FORMATTED,
     PKL_FOLDER,
     USD_TO_EUR_CONVERSION_DEFAULT,
@@ -185,6 +187,7 @@ def join_scenario_data(
     output_save_path = OUTPUT_FOLDER
     output_folder_graphs = f"{output_save_path}/graphs"
     output_folder_name = f"combined_output {timestamp}"
+    output_folder_filepath = "/"
     if new_folder:
         output_folder_filepath = f"{OUTPUT_FOLDER}/{output_folder_name}"
         output_folder_graphs = f"{output_folder_filepath}/graphs"
@@ -213,6 +216,12 @@ def join_scenario_data(
         combined_output = pd.concat(output_container).reset_index(drop=True)
         serialize_file(combined_output, combined_ouptut_pkl_folder, output_file)
         combined_output.to_csv(f"{output_save_path}/{output_file}.csv", index=False)
+
+    resource_demand_summary = create_resource_demand_summary(
+        output_folder_path=PKL_DATA_COMBINED,
+        serialize=True
+    )
+    resource_demand_summary.to_csv(f"{output_save_path}/resource_demand_summary.csv", index=False)
 
     create_combined_scenario_graphs(filepath=output_save_path_graphs)
 

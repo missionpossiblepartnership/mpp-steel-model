@@ -27,7 +27,7 @@ logger = get_logger(__name__)
 
 
 def acc_calculator(discount_rate: float, plant_lifetime: int) -> float:
-    exp_discount_factor = (1 + discount_rate)** plant_lifetime
+    exp_discount_factor = pow(1 + discount_rate, plant_lifetime)
     return (discount_rate * exp_discount_factor) / (exp_discount_factor - 1)
 
 
@@ -158,7 +158,7 @@ def create_levelized_cost(
     lev_cost_reference = lev_cost_reference.set_index(["year", "country_code", "technology"]).sort_index()
 
     def levelized_cost_calculation(row: pd.DataFrame, acc: float):
-        return ((row.greenfield_capex * acc) + (row.total_opex * row.capacity * row.cuf)) / (row.capacity * row.cuf)
+        return ((row.greenfield_capex * row.capacity * acc) + (row.total_opex * row.capacity * row.cuf)) / (row.capacity * row.cuf)
 
     tqdma.pandas(desc="Creating Levelized cost values")
     if standard_plant_ref:
