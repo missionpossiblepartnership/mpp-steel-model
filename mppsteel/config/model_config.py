@@ -14,6 +14,7 @@ PKL_DATA_IMPORTS = f"{PKL_FOLDER}/imported_data"
 PKL_DATA_FORMATTED = f"{PKL_FOLDER}/formatted_import_data"
 PKL_DATA_INTERMEDIATE = f"{PKL_FOLDER}/intermediate_data"
 PKL_DATA_FINAL = f"{PKL_FOLDER}/final_data"
+PKL_DATA_COMBINED = f"{PKL_FOLDER}/combined_output"
 
 FOLDERS_TO_CHECK_IN_ORDER = [
     # Top level folders
