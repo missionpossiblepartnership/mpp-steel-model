@@ -21,7 +21,7 @@ The model assesses the technological, economic and ecological implications of 70
 
 The model is intended to be a flexible tool for interested parties to determine the milestones necessary in order to be on the right trajectory for the steel sector to decarbonize sufficiently and initiate concrete action, considering different net-zero scenarios.
 
-The model is parameterized according to predefined scenarios, but can be further customized at a more granular level via custom parameter settings (outlined in the [steel model documentation](https://app.gitbook.com/o/vfc6mmxMh4Zr7LjKZ5yL/s/ZgShyrOk78V0ixbxKFrP/)).
+The model is parameterized according to predefined scenarios, but can be further customized at a more granular level via custom parameter settings (outlined in the [steel model documentation](https://mpp.gitbook.io/mpp-steel-model/)).
 
 ## Installation
 
@@ -35,14 +35,14 @@ Change the `Your_GITHUB_TOKEN` to your personal access token. You can create one
 
 ## Useful resources
 
-- [Steel Model Documentation](https://app.gitbook.com/o/vfc6mmxMh4Zr7LjKZ5yL/s/ZgShyrOk78V0ixbxKFrP/)
+- [Steel Model Documentation](https://mpp.gitbook.io/mpp-steel-model/)
 - [Official MPP Website](https://missionpossiblepartnership.org/)
 - [Net-Zero Steel Sector Transition Strategy](https://missionpossiblepartnership.org/wp-content/uploads/2021/10/MPP-Steel-Transition-Strategy-Oct-2021.pdf)
 - [Energy Transistions Commission](https://www.energy-transitions.org/)
 
 ## Setting up and running the model
 
-See the model setup guide in the [official documentation](https://app.gitbook.com/o/vfc6mmxMh4Zr7LjKZ5yL/s/ZgShyrOk78V0ixbxKFrP/model-set-up).
+See the model setup guide in the [official documentation](https://mpp.gitbook.io/mpp-steel-model/).
 
 ## Contacts
 

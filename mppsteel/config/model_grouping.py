@@ -16,6 +16,7 @@ from mppsteel.utility.file_handling_utility import (
 )
 
 from mppsteel.utility.log_utility import get_logger
+from mppsteel.data_transfer.azure_transfer import full_transfer_flow
 
 from mppsteel.data_load_and_format.data_import import load_data
 from mppsteel.data_load_and_format.reg_steel_demand_formatter import get_steel_demand
@@ -63,6 +64,7 @@ from mppsteel.config.model_config import (
     OUTPUT_FOLDER,
     INTERMEDIATE_RESULT_PKL_FILES,
     FINAL_RESULT_PKL_FILES,
+    COMBINED_OUTPUT_FOLDER_NAME,
 )
 from mppsteel.config.model_scenarios import SCENARIO_OPTIONS
 
@@ -182,11 +184,11 @@ def join_scenario_data(
     final_outputs_only: bool = True,
 ):
     logger.info(f"Joining the Following Scenario Data {scenario_options}")
-    combined_ouptut_pkl_folder = f"{PKL_FOLDER}/combined_output"
+    combined_ouptut_pkl_folder = f"{PKL_FOLDER}/{COMBINED_OUTPUT_FOLDER_NAME}"
     create_folder_if_nonexist(combined_ouptut_pkl_folder)
     output_save_path = OUTPUT_FOLDER
     output_folder_graphs = f"{output_save_path}/graphs"
-    output_folder_name = f"combined_output {timestamp}"
+    output_folder_name = f"{COMBINED_OUTPUT_FOLDER_NAME} {timestamp}"
     output_folder_filepath = "/"
     if new_folder:
         output_folder_filepath = f"{OUTPUT_FOLDER}/{output_folder_name}"
@@ -348,6 +350,13 @@ def lcost_flow(scenario_dict: dict) -> None:
 def gcr_flow(scenario_dict: dict) -> None:
     generate_gcr_df(scenario_dict, serialize=True)
 
+def transfer_results_to_azure(connect_str: str):
+    full_transfer_flow(
+        connect_str=connect_str,
+        include_combined_data=True,
+        zipped=True
+    )
+
 
 parser = argparse.ArgumentParser(
     description="The MPP Python Steel Model Command Line Interface", add_help=False
@@ -488,7 +497,7 @@ parser.add_argument(
 )  # get_emissivity
 parser.add_argument(
     "-m",
-    "--green_replacement_ratio",
+    "--data_transfer",
     action="store_true",
-    help="Runs the gcr_flow script only",
-)  # gcr_flow
+    help="Runs script to transfer data to blob storage",
+)  # transfer_results_to_azure

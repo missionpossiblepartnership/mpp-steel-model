@@ -141,9 +141,12 @@ class MaterialUsage:
         else:
             self.balance[year][model_type] = self.constraint[model_type][year]
 
-    def get_current_balance(self, year: int, model_type: str):
+    def get_current_balance(self, year: int, model_type: str, region: str = ""):
         if model_type == "scrap":
-            return sum(self.balance[year][model_type].values())
+            if region:
+                return self.balance[year][model_type][region]
+            else:
+                return sum(self.balance[year][model_type].values())
         return self.balance[year][model_type]
 
     def get_current_usage(self, year: int, model_type: str):
@@ -227,29 +230,71 @@ class MaterialUsage:
         model_type: str,
         amount: float,
         region: str = None,
-        regional_scrap: bool = False,
         override_constraint: bool = False,
         apply_transaction: bool = True,
+        regional_scrap: bool = False
     ):
-        if amount == 0:
-            return True
-        if model_type == "scrap":
-            current_balance = self.balance[year][model_type][region]
-            current_usage = self.usage[year][model_type][region]
-        else:
-            current_balance = self.balance[year][model_type]
-            current_usage = self.usage[year][model_type]
-        if (current_balance < amount) and not override_constraint:
-            return False
-        if apply_transaction:
-            if model_type == "scrap":
+
+        def function_to_apply_transaction(
+            self,
+            current_balance: float,
+            current_usage: float,
+            current_balance_regional: float,
+            current_usage_regional: float
+        ) -> None:
+            if model_type == "scrap" and regional_scrap:
                 self.balance[year][model_type][region] = current_balance - amount
                 self.usage[year][model_type][region] = current_usage + amount
+            elif model_type == "scrap" and not regional_scrap:
+                self.balance[year][model_type][region] = current_balance_regional - amount
+                self.usage[year][model_type][region] = current_usage_regional + amount
             else:
                 self.balance[year][model_type] = current_balance - amount
                 self.usage[year][model_type] = current_usage + amount
-        return True
+            return None
 
+        # set up balance and usage
+        current_balance_regional = 0
+        current_usage_regional = 0
+        if model_type == "scrap" and regional_scrap:
+            current_balance = self.balance[year][model_type][region]
+            current_usage = self.usage[year][model_type][region]
+
+        elif model_type == "scrap" and not regional_scrap:
+            current_balance_regional = self.balance[year][model_type][region]
+            current_usage_regional = self.usage[year][model_type][region]
+            current_balance = sum(self.balance[year][model_type].values())
+            current_usage = sum(self.usage[year][model_type].values())
+
+        else:
+            current_balance = self.balance[year][model_type]
+            current_usage = self.usage[year][model_type]
+
+        # CASE 1: Apply and override
+        if apply_transaction and override_constraint:
+            function_to_apply_transaction(
+                self, current_balance, current_usage, current_balance_regional, current_usage_regional)
+            return True
+
+        # CASE 2: Apply, but don't override
+        elif apply_transaction and not override_constraint:
+            # check that an amount is required but the constraint is insufficient
+            if (amount > 0) and (current_balance < amount):
+                return False
+            else:
+                function_to_apply_transaction(
+                    self, current_balance, current_usage, current_balance_regional, current_usage_regional)
+                return True
+
+        # CASE 3: Don't apply, but and override
+        elif not apply_transaction and override_constraint:
+            return True
+
+        # CASE 4: Don't apply or override
+        elif not apply_transaction and not override_constraint:
+            if (amount > 0) and (current_balance < amount):
+                return False
+            return True
 
 class CapacityContainerClass:
     """Description
@@ -457,7 +502,8 @@ class MarketContainerClass:
         return self.market_results[year]
 
     def output_trade_calculations_to_df(self):
-        return pd.concat(self.market_results.values(), axis=1)
+        dfs = [df for df in self.market_results.values() if isinstance(df, pd.DataFrame)]
+        return pd.concat(dfs, axis=1)
 
 
 def create_material_usage_dict(
@@ -468,10 +514,11 @@ def create_material_usage_dict(
     region: str,
     year: int,
     switch_technology: str,
+    regional_scrap: bool,
     capacity_value: float = None,
     override_constraint: bool = False,
     apply_transaction: bool = False,
-    regional_scrap: bool = False,
+    negative_amount: bool = False
 ) -> dict:
     """Creates a material checking dictionary that contains checks on every resource that has a constraint.
     The function will assign True if the resource passes the constraint check and False if the resource doesn't pass this constraint.
@@ -488,8 +535,7 @@ def create_material_usage_dict(
         capacity_value (float, optional): The capacity of the plant (if the value is availabile, otherwise to be found in `plant_capacities`). Defaults to None.
         override_constraint (bool, optional): Boolean flag to determine whether the current constraint should be overwritten. Defaults to False.
         apply_transaction (bool, optional): Boolean flag to determine whether the transaction against the constraint should be fulfilled. If false, the constraint will be left unmodified. Defaults to False.
-        regional_scrap (bool, optional): Boolean flag to determine if scrap constraints should be treated as regional or global. Defaults to False.
-
+        negative_amount (bool, optional): Boolean flag to determine if tthe transaction amount should be multiplied by -1. Defaults to False.
     Returns:
         dict: A dictionary that has the resource as a key and a boolean check as the value.
     """
@@ -503,7 +549,8 @@ def create_material_usage_dict(
             RESOURCE_CONTAINER_REF[resource],
             capacity_value=capacity_value,
         )
-
+        if negative_amount:
+            projected_usage = projected_usage * -1
         material_check_container[
             resource
         ] = material_usage_dict_container.constraint_transaction(
@@ -513,7 +560,7 @@ def create_material_usage_dict(
             region=region,
             override_constraint=override_constraint,
             apply_transaction=apply_transaction,
-            regional_scrap=regional_scrap,
+            regional_scrap=regional_scrap
         )
     return material_check_container
 
@@ -527,9 +574,9 @@ def apply_constraints(
     plant_name: str,
     region: str,
     base_tech: str,
-    override_constraint: bool,
-    apply_transaction: bool,
     regional_scrap: bool,
+    override_constraint: bool,
+    apply_transaction: bool
 ):
     # Constraints checks
     new_availability_list = []
@@ -542,9 +589,9 @@ def apply_constraints(
             region,
             year,
             switch_technology,
+            regional_scrap,
             override_constraint=override_constraint,
-            apply_transaction=apply_transaction,
-            regional_scrap=regional_scrap,
+            apply_transaction=apply_transaction
         )
         if all(material_check_container.values()):
             new_availability_list.append(switch_technology)
@@ -594,7 +641,6 @@ def apply_constraints_for_min_cost_tech(
         combined_available_list (list): The initial technology availabilty list.
         plant_capacity (float): A capacity of the plant
         tech_moratorium (bool): Scenario boolean flag that determines if there is a tehcnology moratorium.
-        regional_scrap (bool): Scenario boolean flag that determines if scrap is treated regionally or globally.
         year (int): The current model cycle year
         plant_name (str): The name of the plant.
         region (str): The region of the plant.
@@ -620,10 +666,10 @@ def apply_constraints_for_min_cost_tech(
             region,
             year,
             technology,
+            regional_scrap,
             plant_capacity,
             override_constraint=False,
-            apply_transaction=False,
-            regional_scrap=regional_scrap,
+            apply_transaction=False
         )
 
         if all(material_check_container.values()):
