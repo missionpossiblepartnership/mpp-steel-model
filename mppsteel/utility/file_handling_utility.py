@@ -8,6 +8,9 @@ from typing import Union
 
 import pandas as pd
 from mppsteel.config.model_config import (
+    COMBINED_OUTPUT_FOLDER_NAME,
+    FINAL_DATA_OUTPUT_NAME,
+    INTERMEDIATE_DATA_OUTPUT_NAME,
     PKL_DATA_FINAL,
     PKL_DATA_INTERMEDIATE,
     PKL_FOLDER,
@@ -156,10 +159,10 @@ def get_scenario_pkl_path(
     if pkl_folder_type == "intermediate":
         if default_path:
             return PKL_DATA_INTERMEDIATE
-        return f"{PKL_FOLDER}/{scenario}/intermediate_data"
+        return f"{PKL_FOLDER}/{scenario}/{INTERMEDIATE_DATA_OUTPUT_NAME}"
     if pkl_folder_type == "final":
         if default_path:
             return PKL_DATA_FINAL
-        return f"{PKL_FOLDER}/{scenario}/final_data"
+        return f"{PKL_FOLDER}/{scenario}/{FINAL_DATA_OUTPUT_NAME}"
     if pkl_folder_type == "combined":
-        return f"{PKL_FOLDER}/combined_output"
+        return f"{PKL_FOLDER}/{COMBINED_OUTPUT_FOLDER_NAME}"
