@@ -1,14 +1,13 @@
 import os
 import re
 import datetime
-
 import git
+
+from zipfile import ZipFile
 from tqdm import tqdm
+
 from mppsteel.config.model_config import DATETIME_FORMAT, OUTPUT_FOLDER
 from mppsteel.config.model_scenarios import MAIN_SCENARIO_RUNS
-
-from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient, __version__
-
 from mppsteel.utility.log_utility import get_logger
 
 logger = get_logger(__name__)
@@ -93,33 +92,9 @@ def upload_to_container(blob_service_client, container_name, local_file_name) ->
         blob_client.upload_blob(data)
     return None
 
-
-def create_and_load(scenario_file_container, scenario):
-    scenario_metadata = scenario_file_container[scenario]
-    container_name = scenario_metadata["container_name"]
-    files_to_upload = scenario_metadata["files_to_upload"]
-    try:
-        blob_service_client.create_container(container_name)
-    except:
-        raise ValueError(f"Failed on {container_name}")
-
-    for filename in tqdm(files_to_upload, total=len(files_to_upload), desc=f"File upload for {scenario}"):
-        upload_to_container(blob_service_client, container_name, filename)
-    logger.info(f"{scenario} Scenario: Successfully uploaded all {len(files_to_upload)} file(s) to {container_name} container")
-
-
-def create_container_and_load_data(scenario_file_container: dict, chosen_scenario: str = '') -> None:
-    if chosen_scenario:
-        create_and_load(scenario_file_container, chosen_scenario)
-    else:
-        for scenario in tqdm(scenario_file_container, total=len(scenario_file_container), desc="Scenario container and upload"):
-            create_and_load(scenario_file_container, scenario)
-    return None
-
-
-if __name__ == "__main__":
-    connect_str = "" # should obviously be stored somewhere secret
-    blob_service_client = BlobServiceClient.from_connection_string(connect_str)
-
-    scenario_metadata = create_scenario_metadata(MAIN_SCENARIO_RUNS)
-    create_container_and_load_data(scenario_metadata)
+def create_zipped_file(list_of_files: list, zipped_file_name: str):
+    # Create a ZipFile Object
+    with ZipFile(f"{zipped_file_name}.zip", "w") as zip_object:
+        # Add multiple files to the zip
+        for file in list_of_files:
+            zip_object.write(file)
