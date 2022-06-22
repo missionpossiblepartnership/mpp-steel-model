@@ -5,8 +5,10 @@ import math
 import pandas as pd
 
 import random
+
 from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
 from mppsteel.data_preprocessing.investment_cycles import PlantInvestmentCycle
+from mppsteel.model_solver.solver_constraints import tech_availability_check
 
 from mppsteel.utility.location_utility import pick_random_country_from_region_subset
 from mppsteel.utility.utils import replace_dict_items, get_dict_keys_by_value
@@ -28,6 +30,7 @@ from mppsteel.model_solver.solver_classes import (
     PlantChoices,
     MaterialUsage,
     apply_constraints_for_min_cost_tech,
+    create_material_usage_dict,
 )
 from mppsteel.model_solver.trade import trade_flow
 
@@ -49,6 +52,26 @@ def create_new_plant(plant_row_dict: dict, plant_columns: list) -> dict:
     """
     base_dict = {col: "" for col in plant_columns}
     return replace_dict_items(base_dict, plant_row_dict)
+
+
+def least_consuming_tech(
+    business_case_ref: dict,
+    tech_availability: pd.DataFrame,
+    resource_to_optimize: str,
+    year: int,
+    max: bool = False,
+    tech_moratorium: bool = False
+):
+    keys = [key for key in business_case_ref if f"{resource_to_optimize}" in key]
+    combined_available_list = [
+        tech
+        for tech in TECH_REFERENCE_LIST
+        if tech_availability_check(
+            tech_availability, tech, year, tech_moratorium=tech_moratorium
+        )
+    ]
+    resource_value_dict = {k[0]: business_case_ref[k] for k in keys if k[0] in combined_available_list}
+    return min(resource_value_dict, key=resource_value_dict.get)
 
 
 def get_min_cost_tech_for_region(
@@ -74,7 +97,6 @@ def get_min_cost_tech_for_region(
         tech_availability (pd.DataFrame): DataFrame of technology availability metadata
         material_container (MaterialUsage): A material usage class containing information on constraints and current usage.
         tech_moratorium (bool): Scenario boolean flag for whether there is a technology moratorium in effect.
-        regional_scrap (bool): Scenario boolean flag for whether there is a regional scrap or global scrap constraint.
         year (int): The current model year.
         region (str): The region for consideration.
         plant_capacity (float): The average capacity for plants in the specified `region` and/or `plant_name`.
@@ -100,9 +122,33 @@ def get_min_cost_tech_for_region(
             plant_name,
             region,
         )
+        scrap_balance = material_container.get_current_balance(year, "scrap")
+        # print(f"Region: {region} | Regional Scrap: {regional_scrap} | Scrap balance: {scrap_balance}")
+        # print(f"potential technologies: {potential_technologies}")
+        if regional_scrap:
+            scrap_balance = (material_container.get_current_balance(year, "scrap", region))
+        # handle case if potential technologies is empty due to resource constraints
+        if not potential_technologies:
+            # if no scrap, append least scrap consuming technology
+            if scrap_balance <= 0:
+                lowest_scrap_resource = least_consuming_tech(
+                    business_case_ref,
+                    tech_availability,
+                    "Scrap",
+                    year,
+                    max=False,
+                    tech_moratorium=tech_moratorium
+                )
+                potential_technologies.append(lowest_scrap_resource)
+            # if scrap, append least cost technology regardless of other non-scrap constraints
+            else:
+                lowest_cost_tech = lcost_df_c["levelized_cost"].idxmin()
+                potential_technologies.append(lowest_cost_tech)
         lcost_df_c = lcost_df_c[lcost_df_c.index.isin(potential_technologies)]
+        lowest_cost_tech = lcost_df_c["levelized_cost"].idxmin()
+        # print(f"lowest cost technologies: {lowest_cost_tech}")
 
-    return lcost_df_c["levelized_cost"].idxmin()
+    return lowest_cost_tech
 
 
 def get_min_cost_region(lcost_df: pd.DataFrame, year: int) -> str:
@@ -616,6 +662,21 @@ def open_close_plants(
                 dict_entry["initial_technology"] = xcost_tech
                 metadata_container.append(dict_entry)
                 tech_choices_container.update_choice(year, new_plant_name, xcost_tech)
+                # include usage for plant
+                create_material_usage_dict(
+                    material_usage_dict_container=material_container,
+                    plant_capacities=capacity_container.return_plant_capacity(year=year),
+                    business_case_ref=business_case_ref,
+                    plant_name=new_plant_name,
+                    region=region,
+                    year=year,
+                    switch_technology=xcost_tech,
+                    regional_scrap=regional_scrap,
+                    capacity_value=new_plant_capacity,
+                    override_constraint=True,
+                    apply_transaction=True,
+                )
+
             prior_active_plants = pd.concat(
                 [prior_active_plants, pd.DataFrame(metadata_container)]
             ).reset_index(drop=True)
@@ -641,6 +702,23 @@ def open_close_plants(
                 tech_choices_container.update_choice(
                     year, plant_to_close, "Close plant"
                 )
+                current_tech = tech_choices_container.get_choice(year, plant_to_close)
+                current_capacity = capacity_container.return_plant_capacity(year, plant_to_close)
+                # remove usage for plant
+                create_material_usage_dict(
+                    material_usage_dict_container=material_container,
+                    plant_capacities=capacity_container.return_plant_capacity(year=year),
+                    business_case_ref=business_case_ref,
+                    plant_name=plant_to_close,
+                    region=region,
+                    year=year,
+                    switch_technology=current_tech,
+                    regional_scrap=regional_scrap,
+                    capacity_value=current_capacity,
+                    override_constraint=True,
+                    apply_transaction=True,
+                    negative_amount=True,
+                )
 
     # dataframe_modification_test(prior_active_plants, production_demand_gap_analysis_df, year)
     new_active_plants = prior_active_plants[prior_active_plants["active_check"] == True]
@@ -654,7 +732,6 @@ def open_close_plants(
     )
 
     # Standardize utilization rates across each region to ensure global production = global demand
-    world_utilization = utilization_container.get_utilization_values(year, "World")
     production_container = []
     for region in regions:
         trade_balance = market_container.trade_container_getter(year, region)

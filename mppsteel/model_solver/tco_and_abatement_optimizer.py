@@ -219,7 +219,8 @@ def get_tco_and_abatement_values(
 
 def record_ranking(
     combined_ranks: pd.DataFrame,
-    constraint_excluded_techs: list,
+    availability_included_techs: list,
+    constraint_included_techs: list,
     plant_choice_container: PlantChoices,
     year: int,
     region: str,
@@ -235,7 +236,7 @@ def record_ranking(
 
     Args:
         combined_ranks (pd.DataFrame): A DataFrame showing the ranking.
-        constraint_excluded_techs (list): Contains technologies excluded due to resource constraints.
+        constraint_included_techs (list): Contains technologies excluded due to resource constraints.
         plant_choice_container (PlantChoices): The PlantChoices Instance containing each plant's choices.
         year (int): The current model cycle year.
         region (str): The plant's region.
@@ -247,6 +248,9 @@ def record_ranking(
         scenario_name (str): The current scenario of the model_run.
         transitional_switch_mode (bool): Boolean flag that determines if transitional switch logic is active.
     """
+    def boolean_check(row) -> bool:
+        return not row.excluded_due_to_availability and row.excluded_due_to_constraints
+
     if not combined_ranks.empty:
         records = combined_ranks.reset_index().copy()
         records["year"] = year
@@ -258,7 +262,10 @@ def record_ranking(
         records["weighting"] = str(weighting_dict)
         records["scenario_name"] = scenario_name
         records["switch_type"] = "transitional switch" if transitional_switch_mode else "main cycle switch"
-        records["excluded_due_to_constraints"] = records["switch_tech"].apply(lambda switch_tech: switch_tech not in constraint_excluded_techs)
+        records["excluded_due_to_availability"] = records["switch_tech"].apply(lambda switch_tech: switch_tech not in availability_included_techs)
+        records["excluded_due_to_constraints"] = records["switch_tech"].apply(lambda switch_tech: switch_tech not in constraint_included_techs)
+        records["excluded_for_any_reason"] = records.apply(boolean_check, axis=1)
+
         if solver_logic == "rank":
             records = records[
                 [
@@ -306,7 +313,7 @@ def record_ranking(
         plant_choice_container.update_records("rank", records)
 
 
-def return_best_choice(best_values: list, start_tech: str):
+def return_best_choice(best_values: list, start_tech: str, potential_techs: list):
     # pick random choice if there is more than one option
     if len(best_values) > 1:
         potential_techs = best_values.index.to_list()
@@ -316,6 +323,8 @@ def return_best_choice(best_values: list, start_tech: str):
         return best_values.index.values[0]
     # pick initial tech if there are no options
     elif len(best_values) == 0:
+        # print(F"**** NO BEST CHOICES!!! REVERTING TO {start_tech} *****")
+        # print(f"' '.join(potential_techs)")
         return start_tech
 
 
@@ -330,9 +339,9 @@ def get_best_choice(
     weighting_dict: dict,
     technology_list: list,
     transitional_switch_mode: bool,
+    regional_scrap: bool,
     plant_choice_container: PlantChoices,
     enforce_constraints: bool,
-    regional_scrap: bool,
     business_case_ref: dict,
     plant_capacities: dict,
     material_usage_dict_container: dict,
@@ -352,9 +361,9 @@ def get_best_choice(
         weighting_dict (dict): A dictionary containing the weighting scenario of lowest cost vs. emission abatement.
         technology_list (list): A list of technologies that represent valid technology switches.
         transitional_switch_mode (bool): determines the column to use for TCO values
+        regional_scrap (bool, optional): The scenario boolean value that determines whether there is a regional or global scrap constraints. Defaults to False.
         plant_choice_container (PlantChoices): The PlantChoices Instance containing each plant's choices.
         enforce_constraints (bool): Boolen flag to determine if constraints should affect technology availability.
-        regional_scrap (bool): Boolean flag to determine whether scrap constraint is regional or global.
         business_case_ref (dict): Standardised Business Cases.
         plant_capacities (dict): A dictionary containing plant: capacity/inital tech key:value pairs.
         material_usage_dict_container (dict, optional): Dictionary container object that is used to track the material usage within the application. Defaults to None.
@@ -381,7 +390,7 @@ def get_best_choice(
         )
 
         if enforce_constraints:
-            constraint_excluded_techs = apply_constraints(
+            constraint_included_techs = apply_constraints(
                 business_case_ref,
                 plant_capacities,
                 material_usage_dict_container,
@@ -390,15 +399,15 @@ def get_best_choice(
                 plant_name,
                 region,
                 start_tech,
+                regional_scrap=regional_scrap,
                 override_constraint=False,
-                apply_transaction=False,
-                regional_scrap=regional_scrap
+                apply_transaction=False
             )
-            if transitional_switch_mode and start_tech not in constraint_excluded_techs:
-                constraint_excluded_techs.append(start_tech)
+            if transitional_switch_mode and start_tech not in constraint_included_techs:
+                constraint_included_techs.append(start_tech)
 
-            if not transitional_switch_mode and 1 not in tco_values.loc[constraint_excluded_techs]["tco_rank_score"].values:
-                constraint_excluded_techs.append(start_tech)
+            if not transitional_switch_mode and 1 not in tco_values.loc[constraint_included_techs]["tco_rank_score"].values:
+                constraint_included_techs.append(start_tech)
 
         # Simply return current technology if no other options
         if len(tco_values) < 2:
@@ -466,7 +475,8 @@ def get_best_choice(
         ) + (combined_scales["abatement_scaled"] * weighting_dict["emissions"])
         record_ranking(
             combined_scales,
-            constraint_excluded_techs,
+            technology_list,
+            constraint_included_techs,
             plant_choice_container,
             year,
             region,
@@ -479,7 +489,7 @@ def get_best_choice(
             transitional_switch_mode
         )
         combined_scales.drop(
-            labels=combined_scales.index.difference(constraint_excluded_techs),
+            labels=combined_scales.index.difference(constraint_included_techs),
             inplace=True,
         )
         combined_scales.sort_values("overall_score", axis=0, inplace=True)
@@ -491,7 +501,7 @@ def get_best_choice(
             min_value = combined_scales["overall_score"].min()
             best_values = combined_scales[combined_scales["overall_rank"] == min_value]
 
-            return return_best_choice(best_values, start_tech)
+            return return_best_choice(best_values, start_tech, constraint_included_techs)
 
     # Ranking algorithm
     if solver_logic == "ranked":
@@ -509,7 +519,7 @@ def get_best_choice(
         )
 
         if enforce_constraints:
-            constraint_excluded_techs = apply_constraints(
+            constraint_included_techs = apply_constraints(
                 business_case_ref,
                 plant_capacities,
                 material_usage_dict_container,
@@ -518,15 +528,15 @@ def get_best_choice(
                 plant_name,
                 region,
                 start_tech,
+                regional_scrap=regional_scrap,
                 override_constraint=False,
-                apply_transaction=False,
-                regional_scrap=regional_scrap
+                apply_transaction=False
             )
-            if transitional_switch_mode and start_tech not in constraint_excluded_techs:
-                constraint_excluded_techs.append(start_tech)
+            if transitional_switch_mode and start_tech not in constraint_included_techs:
+                constraint_included_techs.append(start_tech)
 
-            if not transitional_switch_mode and 1 not in tco_values.loc[constraint_excluded_techs]["tco_rank_score"].values:
-                constraint_excluded_techs.append(start_tech)
+            if not transitional_switch_mode and 1 not in tco_values.loc[constraint_included_techs]["tco_rank_score"].values:
+                constraint_included_techs.append(start_tech)
 
         tco_values.drop(
             columns=tco_values.columns.difference(["tco_rank_score"]),
@@ -544,7 +554,8 @@ def get_best_choice(
         ) + (combined_ranks["abatement_rank_score"] * weighting_dict["emissions"])
         record_ranking(
             combined_ranks,
-            constraint_excluded_techs,
+            technology_list,
+            constraint_included_techs,
             plant_choice_container,
             year,
             region,
@@ -557,13 +568,13 @@ def get_best_choice(
             transitional_switch_mode
         )
         combined_ranks.drop(
-            labels=combined_ranks.index.difference(constraint_excluded_techs),
+            labels=combined_ranks.index.difference(constraint_included_techs),
             inplace=True,
         )
         combined_ranks.sort_values("overall_rank", axis=0, inplace=True)
         min_value = combined_ranks["overall_rank"].min()
         best_values = combined_ranks[combined_ranks["overall_rank"] == min_value]
-        return return_best_choice(best_values, start_tech)
+        return return_best_choice(best_values, start_tech, constraint_included_techs)
 
 
 def subset_presolver_df(df: pd.DataFrame, subset_type: str) -> pd.DataFrame:
