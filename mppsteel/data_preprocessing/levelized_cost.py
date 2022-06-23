@@ -34,14 +34,14 @@ def acc_calculator(discount_rate: float, plant_lifetime: int) -> float:
 def create_lcox_cost_reference(
     row: pd.DataFrame,
     capex_ref: dict,
-    variable_cost_ref: dict
+    total_opex_reference: dict,
 ) -> float:
     """Calculates the levelised cost component from a capex ref and variable costs ref and inputted function arguments.
 
     Args:
         row (pd.DataFrame): A row of a DataFrame reference.
         capex_ref (dict): A dictionary containing the Capex values for Greenfield, Brownfield and Other Opex values.
-        variable_cost_ref (dict): The dictionary of the variable costs.
+        total_opex_reference (dict): A dictionary containing total opex DataFrame with the (year, country_code) as keys
     Returns:
         float: The levelised cost capital charge.
     """
@@ -49,10 +49,9 @@ def create_lcox_cost_reference(
     country_code = row.country_code
     technology = row.technology
     greenfield_value = capex_ref["greenfield"][(year, technology)]
-    fixed_opex_value = capex_ref["other_opex"][(year, technology)]
-    variable_opex_value = variable_cost_ref[(year, country_code, technology)]
+    total_opex_value = total_opex_reference[(year, country_code)].loc[technology]
     row.greenfield_capex = greenfield_value
-    row.total_opex = fixed_opex_value + variable_opex_value
+    row.total_opex = total_opex_value
     return row
 
 
@@ -99,7 +98,7 @@ def summarise_levelized_cost(plant_lev_cost_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def create_levelized_cost(
-    variable_costs: pd.DataFrame, capex_ref: dict,
+    total_opex_reference: dict, capex_ref: dict,
     plant_df: pd.DataFrame, standard_plant_ref: bool = True
 ) -> pd.DataFrame:
     """Generate a DataFrame with Levelized Cost values.
@@ -125,22 +124,9 @@ def create_levelized_cost(
         .set_index(["Year", "Technology"])
         .to_dict()["value"]
     )
-    other_opex_ref = (
-        capex_ref["other_opex"]
-        .reset_index()
-        .set_index(["Year", "Technology"])
-        .to_dict()["value"]
-    )
-    variable_cost_ref = (
-        variable_costs.reset_index()
-        .set_index(["year", "country_code", "technology"])
-        .to_dict()["cost"]
-    )
-
     combined_capex_ref = {
         "brownfield": brownfield_capex_ref,
-        "greenfield": greenfield_capex_ref,
-        "other_opex": other_opex_ref,
+        "greenfield": greenfield_capex_ref
     }
 
     country_codes = list(plant_df["country_code"].unique())
@@ -148,10 +134,10 @@ def create_levelized_cost(
     df_reference = create_df_reference(country_codes, ["greenfield_capex", "total_opex"])
     acc = acc_calculator(DISCOUNT_RATE, STEEL_PLANT_LIFETIME_YEARS)
 
-    tqdma.pandas(desc="Filling Cost Columns")
+    tqdma.pandas(desc="LCOS Cost Columns population")
     lev_cost_reference = df_reference.progress_apply(
         create_lcox_cost_reference,
-        variable_cost_ref=variable_cost_ref,
+        total_opex_reference=total_opex_reference,
         capex_ref=combined_capex_ref,
         axis=1,
     )
@@ -193,8 +179,8 @@ def generate_levelized_cost_results(
     intermediate_path = get_scenario_pkl_path(
         scenario_dict["scenario_name"], "intermediate"
     )
-    variable_costs_regional = read_pickle_folder(
-        intermediate_path, "variable_costs_regional", "df"
+    total_opex_reference = read_pickle_folder(
+        intermediate_path, "total_opex_reference", "df"
     )
     capex_dict = read_pickle_folder(PKL_DATA_FORMATTED, "capex_dict", "df")
     if not isinstance(steel_plant_df, pd.DataFrame):
@@ -202,7 +188,7 @@ def generate_levelized_cost_results(
             PKL_DATA_FORMATTED, "steel_plants_processed", "df"
         )
     lcos_data = create_levelized_cost(
-        variable_costs_regional, 
+        total_opex_reference, 
         capex_dict, 
         steel_plant_df,
         standard_plant_ref=standard_plant_ref

@@ -609,6 +609,7 @@ def format_variable_costs(
 
     df_c = variable_cost_df.copy()
     df_c.reset_index(drop=True, inplace=True)
+    df_c.drop(["price"], axis=1, inplace=True)
     if group_data:
         df_c.drop(
             ["material_category", "unit", "cost_type", "value"], axis=1, inplace=True
