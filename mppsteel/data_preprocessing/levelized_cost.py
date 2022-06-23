@@ -12,6 +12,7 @@ from mppsteel.utility.file_handling_utility import (
     serialize_file,
     get_scenario_pkl_path,
 )
+from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.config.model_config import (
     AVERAGE_CAPACITY_MT,
@@ -130,7 +131,7 @@ def create_levelized_cost(
     }
 
     country_codes = list(plant_df["country_code"].unique())
-
+    rmi_mapper = create_country_mapper()
     df_reference = create_df_reference(country_codes, ["greenfield_capex", "total_opex"])
     acc = acc_calculator(DISCOUNT_RATE, STEEL_PLANT_LIFETIME_YEARS)
 
@@ -141,6 +142,7 @@ def create_levelized_cost(
         capex_ref=combined_capex_ref,
         axis=1,
     )
+    lev_cost_reference["region"] = lev_cost_reference["country_code"].apply(lambda x: rmi_mapper[x])
     lev_cost_reference = lev_cost_reference.set_index(["year", "country_code", "technology"]).sort_index()
 
     def levelized_cost_calculation(row: pd.DataFrame, acc: float):
