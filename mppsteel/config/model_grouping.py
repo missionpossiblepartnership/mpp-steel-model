@@ -36,6 +36,8 @@ from mppsteel.data_preprocessing.investment_cycles import investment_cycle_flow
 from mppsteel.data_preprocessing.variable_plant_cost_archetypes import (
     generate_variable_plant_summary,
 )
+from mppsteel.data_preprocessing.carbon_tax_reference import generate_carbon_tax_reference
+from mppsteel.data_preprocessing.total_opex_reference import generate_total_opex_cost_reference
 from mppsteel.data_preprocessing.levelized_cost import generate_levelized_cost_results
 from mppsteel.model_solver.solver import solver_flow
 from mppsteel.data_preprocessing.tco_abatement_switch import (
@@ -125,9 +127,18 @@ def data_preprocessing_scenarios(scenario_dict: dict) -> None:
     generate_preprocessed_emissions_data(serialize=True)
     generate_emissions_flow(scenario_dict=scenario_dict, serialize=True)
     generate_variable_plant_summary(scenario_dict, serialize=True)
+    generate_carbon_tax_reference(scenario_dict, serialize=True)
+    generate_total_opex_cost_reference(scenario_dict, serialize=True)
     generate_levelized_cost_results(scenario_dict=scenario_dict, serialize=True, standard_plant_ref=True)
     tco_presolver_reference(scenario_dict, serialize=True)
     abatement_presolver_reference(scenario_dict, serialize=True)
+
+def total_opex_calculations(scenario_dict: dict) -> None:
+    generate_variable_plant_summary(scenario_dict, serialize=True)
+    generate_carbon_tax_reference(scenario_dict, serialize=True)
+    generate_total_opex_cost_reference(scenario_dict, serialize=True)
+    generate_levelized_cost_results(scenario_dict=scenario_dict, serialize=True, standard_plant_ref=True)
+    tco_presolver_reference(scenario_dict, serialize=True)
 
 
 def investment_cycles() -> None:
@@ -452,9 +463,9 @@ parser.add_argument(
 )  # graphs_only
 parser.add_argument(
     "-n",
-    "--minimodels",
+    "--total_opex",
     action="store_true",
-    help="Runs the minimodels script directly",
+    help="Runs the total_opex_calculations script grouping",
 )  # generate_minimodels
 parser.add_argument(
     "-w",

@@ -220,6 +220,8 @@ TECHNOLOGY_PHASES = {
     ],
 }
 
+TECHNOLOGIES_TO_DROP = ["Charcoal mini furnace", "Close plant"]
+
 # GRAPH REFRENCE LISTS
 
 MPP_COLOR_LIST = [

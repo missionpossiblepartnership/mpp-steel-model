@@ -90,9 +90,6 @@ if __name__ == "__main__":
     if args.solver:
         solver_flow(scenario_dict=scenario_args, serialize=True)
 
-    if args.minimodels:
-        model_results_phase(scenario_dict=scenario_args)
-
     if args.output:
         outputs_only(
             scenario_dict=scenario_args,
@@ -142,8 +139,8 @@ if __name__ == "__main__":
             dated_output_folder=True,
         )
 
-    if args.minimodels:
-        generate_minimodels(scenario_dict=scenario_args)
+    if args.total_opex:
+        total_opex_calculations(scenario_dict=scenario_args)
 
     if args.production:
         production_flow(scenario_dict=scenario_args)
