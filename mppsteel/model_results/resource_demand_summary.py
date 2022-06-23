@@ -123,7 +123,6 @@ def model_primary_secondary_materials(
     column_mapper = {"production": "crude_steel_mt", "scrap_mt": "scrap_steel_mt"}
     
     # DataFrame manipulation
-    print(production_df.columns)
     df_c = production_df[all_columns].copy()
     df_c.rename(
         mapper=column_mapper, 
