@@ -106,7 +106,7 @@ def add_currency_rates_to_scenarios(scenario_dict: dict, live: bool = False) -> 
 
     return scenario_dict
 
-
+#Hello
 # Model phasing
 def data_import_stage() -> None:
     load_data(serialize=True)
