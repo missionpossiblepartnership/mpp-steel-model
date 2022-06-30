@@ -50,7 +50,7 @@ def create_lcox_cost_reference(
     country_code = row.country_code
     technology = row.technology
     greenfield_value = capex_ref["greenfield"][(year, technology)]
-    total_opex_value = total_opex_reference[(year, country_code)].loc[technology]
+    total_opex_value = total_opex_reference[(year, country_code)].loc[technology].values[0]
     row.greenfield_capex = greenfield_value
     row.total_opex = total_opex_value
     return row

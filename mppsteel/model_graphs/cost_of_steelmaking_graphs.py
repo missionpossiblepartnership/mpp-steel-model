@@ -32,7 +32,7 @@ def get_lcost_lowest_vals(
     df_s = df_c.set_index(["year", "technology", "country_code"]).loc[chosen_year]
     for technology in TECH_REFERENCE_LIST:
         df_t = df_s.loc[technology]
-        min_region = df_t.idxmin().values[0]
+        min_region = df_t[value_col].idxmin()
         min_val = df_t[value_col].min()
         max_val = df_t[value_col].max()
         tech_delta_dict[technology] = max_val - min_val
