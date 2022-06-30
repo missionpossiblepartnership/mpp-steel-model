@@ -1,5 +1,6 @@
 """Classes to manage Capacity & Utilization"""
 
+from copy import deepcopy
 import itertools
 from typing import Tuple
 import pandas as pd
@@ -23,6 +24,7 @@ from mppsteel.model_solver.solver_constraints import (
     tech_availability_check,
 )
 from mppsteel.utility.log_utility import get_logger
+from mppsteel.utility.utils import join_list_as_string
 
 logger = get_logger(__name__)
 
@@ -436,7 +438,6 @@ class UtilizationContainerClass:
         # return all years and regions
         return self.utilization_container
 
-
 class MarketContainerClass:
     """Description
     Class for managing all aspects of the trade functionality.
@@ -453,6 +454,12 @@ class MarketContainerClass:
     def __init__(self):
         self.trade_container = {}
         self.market_results = {}
+        self.account_dictionary = {
+            "all": [ "regional_demand_minus_imports", "exports", "imports"],
+            "trade": ["exports", "imports"],
+            "consumption": ["regional_demand_minus_imports", "imports"],
+            "production": ["regional_demand_minus_imports", "exports"]
+        }
 
     def __repr__(self):
         return "Trade Container"
@@ -465,8 +472,11 @@ class MarketContainerClass:
         self.market_results = {year: {} for year in year_range}
 
     def initiate_regions(self, region_list: list):
+        production_account = {
+            key: 0 for key in self.account_dictionary["all"]
+        }
         for year in self.trade_container:
-            self.trade_container[year] = {region: 0 for region in region_list}
+            self.trade_container[year] = {region: deepcopy(production_account) for region in region_list}
 
     def return_container(self):
         return self.trade_container
@@ -475,25 +485,83 @@ class MarketContainerClass:
         self.initiate_years(year_range)
         self.initiate_regions(region_list)
 
-    def trade_container_getter(self, year: int, region: str = None, agg: bool = False):
-        if year and not region:
-            if agg:
-                return self.trade_container[year]
-            return sum(list(self.trade_container[year].values()))
-        if year and region:
-            return self.trade_container[year][region]
+    def return_market_entry(self, regional_demand_minus_imports: float, import_value: float, export_value: float) -> dict:
+        return {
+            "regional_demand_minus_imports": regional_demand_minus_imports,
+            "import_value": import_value,
+            "export_value": export_value
+        }
 
-    def assign_trade_balance(self, year: int, region: str, value: float):
-        self.trade_container[year][region] = value
+    def assign_market_tuple(
+        self,
+        year: int,
+        region: str,
+        market_entry: dict
+    ) -> None:
+        self.assign_trade_balance(year, region, "regional_demand_minus_imports", market_entry["regional_demand_minus_imports"])
+        self.assign_trade_balance(year, region, "imports", market_entry["import_value"])
+        self.assign_trade_balance(year, region, "exports", market_entry["export_value"])
+        return None
+
+    def trade_container_getter(self, year: int, region: str = None, account_type: str = None):
+        if account_type:
+            return self.trade_container[year][region][account_type]
+        if region:
+            return self.trade_container[year][region]
+        return self.trade_container[year]
+
+    def return_trade_balance(self, year: int, region: str, account_type: str) -> float:
+        imports = self.trade_container[year][region]["imports"]
+        exports = self.trade_container[year][region]["exports"]
+        regional_demand_minus_imports = self.trade_container[year][region]["regional_demand_minus_imports"]
+        if account_type == "trade":
+            return exports - imports
+        elif account_type == "all":
+            return regional_demand_minus_imports + exports + imports
+        elif account_type == "consumption":
+            return regional_demand_minus_imports + imports
+        elif account_type == "production":
+            return regional_demand_minus_imports + exports
+
+
+    def trade_container_aggregator(self, year: int, agg_type: bool, region: str = None) -> float:
+        if region:
+            return self.return_trade_balance(year, region, agg_type)
+        container = [self.return_trade_balance(year, region, agg_type) for region in self.trade_container[year].keys()]
+        return sum(container)
+
+    def list_regional_types(self, year: int, account_type: bool) -> list:
+        return [region for region in self.trade_container[year] if self.trade_container[year][region][account_type] > 0]
+
+    def check_if_trade_balance(self, year: int, rounding_factor: int = 3) -> list:
+        balance_list = []
+        for region in self.trade_container[year]:
+            imports = self.trade_container[year][region]["imports"]
+            exports = self.trade_container[year][region]["exports"]
+            if round(exports, rounding_factor) - round(imports, rounding_factor) == 0:
+                balance_list.append(region)
+        return balance_list
+    
+    def return_current_account_balance(self, year: int, region: str, account_type: str):
+        return self.trade_container[year][region][account_type]
+
+    def assign_trade_balance(self, year: int, region: str, account_type: str, value: float) -> None:
+        current_value = self.return_current_account_balance(year, region, account_type)
+        self.trade_container[year][region][account_type] = current_value + value
+        return None
 
     def output_trade_summary_to_df(self):
+        dict_colname = "full_dict"
         df = (
             pd.DataFrame(self.trade_container)
             .reset_index()
-            .melt(id_vars=["index"], var_name="year", value_name="trade_balance")
+            .melt(id_vars=["index"], var_name="year", value_name=dict_colname)
         )
-        df.rename({"index": "region"}, axis=1, inplace=True)
-        return df
+        for col in df.loc[0][dict_colname]:
+            df[col] = df[dict_colname].apply(lambda dict_entry: dict_entry[col])
+        df.drop(dict_colname, axis=1, inplace=True)
+        df["trade_balance"] = df["exports"] - df["imports"]
+        return df.rename({"index": "region"}, axis=1)
 
     def store_results(self, year: int, results_df: pd.DataFrame):
         self.market_results[year] = results_df
