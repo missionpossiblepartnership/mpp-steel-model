@@ -155,7 +155,9 @@ def create_levelized_cost(
         lev_cost_reference["levelized_cost"] = lev_cost_reference.progress_apply(levelized_cost_calculation, acc=acc, axis=1)
 
     else:
-        plant_df_c = plant_df.set_index(["year", "country_code", "technology"]).copy()
+        index_cols = ["year", "region", "country_code", "technology"]
+        plant_df_c = plant_df.set_index(index_cols).copy()
+        lev_cost_reference = lev_cost_reference.reset_index().set_index(index_cols)
         lev_cost_reference = plant_df_c.join(lev_cost_reference)
         lev_cost_reference["levelized_cost"] = lev_cost_reference.progress_apply(levelized_cost_calculation, acc=acc, axis=1)
 

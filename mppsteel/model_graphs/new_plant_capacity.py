@@ -151,7 +151,7 @@ def trade_balance_graph(
         y="trade_balance",
         color="region",
         color_discrete_map=color_mapper,
-        name=f"Global Crude Steel Trade Balance",
+        name="Global Crude Steel Trade Balance",
         x_axis="Year",
         y_axis="Crude Steel Trade Balance [Mt]",
     )

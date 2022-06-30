@@ -8,7 +8,7 @@ import numpy as np
 from mppsteel.model_solver.solver_classes import PlantChoices, apply_constraints
 
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.utility.utils import create_bin_rank_dict, return_bin_rank
+from mppsteel.utility.utils import create_bin_rank_dict, join_list_as_string, return_bin_rank
 from mppsteel.utility.dataframe_utility import change_cols_to_numeric
 
 from mppsteel.config.model_config import (
@@ -324,7 +324,7 @@ def return_best_choice(best_values: list, start_tech: str, potential_techs: list
     # pick initial tech if there are no options
     elif len(best_values) == 0:
         # print(F"**** NO BEST CHOICES!!! REVERTING TO {start_tech} *****")
-        # print(f"' '.join(potential_techs)")
+        # print(join_list_as_string(potential_techs))
         return start_tech
 
 
