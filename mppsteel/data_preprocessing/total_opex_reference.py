@@ -19,6 +19,7 @@ from mppsteel.utility.file_handling_utility import (
     serialize_file,
     get_scenario_pkl_path,
 )
+from mppsteel.utility.function_timer_utility import timer_func
 
 from mppsteel.utility.log_utility import get_logger
 
@@ -75,7 +76,7 @@ def total_opex_cost_ref_loop(
         opex_cost_ref[(year, country_code)] = technology_opex_values
     return opex_cost_ref
 
-
+@timer_func
 def generate_total_opex_cost_reference(
     scenario_dict: dict, serialize: bool = False
 ) -> pd.DataFrame:

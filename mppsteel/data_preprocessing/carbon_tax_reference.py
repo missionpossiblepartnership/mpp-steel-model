@@ -18,6 +18,7 @@ from mppsteel.utility.file_handling_utility import (
     serialize_file,
     get_scenario_pkl_path,
 )
+from mppsteel.utility.function_timer_utility import timer_func
 
 from mppsteel.utility.log_utility import get_logger
 
@@ -77,7 +78,7 @@ def create_carbon_tax_reference(
     full_df = pd.concat(df_list).rename(mapper={"emissions": "value"}, axis=1)
     return full_df.reset_index().set_index(["year", "country_code", "technology"]).sort_index()
 
-
+@timer_func
 def generate_carbon_tax_reference(
     scenario_dict: dict, serialize: bool = False
 ) -> pd.DataFrame:
