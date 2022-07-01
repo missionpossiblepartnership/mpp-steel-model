@@ -17,6 +17,7 @@ from mppsteel.utility.log_utility import get_logger
 from mppsteel.config.model_config import (
     AVERAGE_CAPACITY_MT,
     AVERAGE_CUF,
+    INVESTMENT_CYCLE_DURATION_YEARS,
     MODEL_YEAR_RANGE,
     PKL_DATA_FORMATTED,
     DISCOUNT_RATE,
@@ -133,7 +134,7 @@ def create_levelized_cost(
     country_codes = list(plant_df["country_code"].unique())
     rmi_mapper = create_country_mapper()
     df_reference = create_df_reference(country_codes, ["greenfield_capex", "total_opex"])
-    acc = acc_calculator(DISCOUNT_RATE, STEEL_PLANT_LIFETIME_YEARS)
+    acc = acc_calculator(DISCOUNT_RATE, INVESTMENT_CYCLE_DURATION_YEARS)
 
     tqdma.pandas(desc="LCOS Cost Columns population")
     lev_cost_reference = df_reference.progress_apply(
