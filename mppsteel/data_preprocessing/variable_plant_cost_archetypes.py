@@ -11,6 +11,7 @@ from mppsteel.config.model_config import (
     MODEL_YEAR_RANGE,
     PKL_DATA_IMPORTS,
     PROJECT_PATH,
+    USD_TO_EUR_CONVERSION_DEFAULT,
 )
 from mppsteel.config.reference_lists import RESOURCE_CATEGORY_MAPPER
 from mppsteel.utility.utils import cast_to_float
@@ -574,6 +575,9 @@ def generate_variable_costs(
     """
     df_c = business_cases_df.copy()
     static_year = min(2026, year)
+    static_energy_df = convert_currency_col(
+        static_energy_df, "Value", 1 / USD_TO_EUR_CONVERSION_DEFAULT
+    )
     df_c["year"] = year
     df_c["country_code"] = country_code
     df_c["cost"] = df_c.apply(
