@@ -297,7 +297,7 @@ class PlantVariableCostsInput:
         fossil_categories = [
             k
             for k, v in self.resource_category_mapper.items()
-            if v == "Fossil Fuels" and k not in ("Natural gas", "Plastic waste")
+            if v == "Fossil Fuels" and k not in ("Natural gas", "Plastic waste", "Met coal", "Thermal coal")
         ]
         fossil_price_dfs = []
         for category in fossil_categories:
