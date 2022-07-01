@@ -86,11 +86,10 @@ def expand_dataset_years(df: pd.DataFrame, year_pairs: Sequence[tuple[int, int]]
     df_c = df.copy()
     for year_pair in year_pairs:
         start_year, end_year = year_pair
-        year_range = range(start_year + 1, end_year)
-        for ticker, year in enumerate(year_range, start=1):
-            df_c[year] = df_c[year - 1] + (
-                (df_c[end_year] / len(year_range)) * (ticker / len(year_range))
-            )
+        year_range = range(start_year + 1, end_year + 1)
+        interval = (df_c[end_year] - df_c[start_year]) / len(year_range)
+        for year in year_range:
+            df_c[year] = df_c[year - 1] + interval
     return df_c
 
 
