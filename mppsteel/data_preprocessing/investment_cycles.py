@@ -46,7 +46,7 @@ def calculate_investment_years(
     """
     x = op_start_year
     decision_years = []
-    while x < cutoff_end_year:
+    while x <= cutoff_end_year:
         if x >= cutoff_start_year:
             decision_years.append(x)
         x += cycle_length
@@ -120,11 +120,9 @@ def add_off_cycle_investment_years(
             int: The adjusted year that is within the net zero target range.
         """
         if year in range(
-            NET_ZERO_TARGET + 1, NET_ZERO_TARGET + NET_ZERO_VARIANCE_YEARS + 1
+            NET_ZERO_TARGET, NET_ZERO_TARGET + NET_ZERO_VARIANCE_YEARS + 1
         ):
-            bring_forward_date = NET_ZERO_TARGET - 1
-            logger.info(f"Investment Cycle Brought Forward to {bring_forward_date}")
-            return bring_forward_date
+            return NET_ZERO_TARGET - 1
         return year
 
     # For inv_cycle_length = 0
@@ -377,6 +375,13 @@ class PlantInvestmentCycle:
             else self.plant_investment_cycle_length
         )
 
+    def test_cycle_lengths(self):
+        for plant_name in self.plant_cycles_with_off_cycle:
+            entry = self.plant_cycles_with_off_cycle[plant_name]
+            cycle_length = self.plant_investment_cycle_length[plant_name]
+            if len(entry) == 1:
+                assert entry[0] + cycle_length > MODEL_YEAR_END, f"Only one entry for {plant_name}. Initial year: {entry[0]} | Cycle length {cycle_length} | Next investment cycle {entry[0] + cycle_length}"
+
     def return_plant_switchers(self, active_plants: list, year: int, value_type: str):
         (
             main_cycle_switchers,
@@ -414,6 +419,7 @@ def investment_cycle_flow(serialize: bool = False) -> pd.DataFrame:
     steel_plant_names = steel_plant_df["plant_name"].to_list()
     start_plant_years = steel_plant_df["start_of_operation"].to_list()
     PlantInvestmentCycles.instantiate_plants(steel_plant_names, start_plant_years)
+    PlantInvestmentCycles.test_cycle_lengths()
 
     if serialize:
         logger.info("-- Serializing Investment Cycle Reference")
