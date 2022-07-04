@@ -9,9 +9,11 @@ from mppsteel.config.model_config import (
     MAIN_REGIONAL_SCHEMA,
     CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
     CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
-    TRADE_PCT_BOUNDARY_DICT,
+    TRADE_PCT_BOUNDARY_FACTOR_DICT,
     MODEL_YEAR_END,
     MODEL_YEAR_START,
+    TRADE_ROUNDING_NUMBER,
+    PRINT_ROUNDING_NUMBER
 )
 from mppsteel.model_solver.solver_classes import (
     CapacityContainerClass,
@@ -51,7 +53,7 @@ def check_relative_production_cost(
         pd.DataFrame: The COS DataFrame with new columns `relative_cost_below_avg` and `relative_cost_close_to_mean`
     """
     def apply_upper_boundary(row: pd.DataFrame, mean_value: float, value_range: float, pct_boundary_dict: dict):
-        return mean_value + (value_range * pct_boundary_dict[row['rmi_region']])
+        return mean_value + (value_range * (1 + pct_boundary_dict[row['rmi_region']]))
 
     def close_to_mean_test(row: pd.DataFrame):
         return row['cost_of_steelmaking'] < row['upper_boundary']
@@ -250,7 +252,7 @@ def trade_flow(
         capacity_dict,
     )
     relative_production_cost_df = check_relative_production_cost(
-        cos_df, "cost_of_steelmaking", TRADE_PCT_BOUNDARY_DICT
+        cos_df, "cost_of_steelmaking", TRADE_PCT_BOUNDARY_FACTOR_DICT
     )
 
     region_list = list(plant_df[MAIN_REGIONAL_SCHEMA].unique())
@@ -355,6 +357,7 @@ def trade_flow(
             elif (imports > 0) and relative_cost_below_avg:
                 case_type = "CHEAP REGION -> open plant"
                 new_capacity_required = demand - (capacity * util_max)
+                print(f"region: {region} | new_capacity_required {new_capacity_required} | regional_balance: {regional_balance}")
                 new_plants_required = math.ceil(
                     new_capacity_required / avg_plant_capacity_at_max_production
                 )
@@ -454,47 +457,52 @@ def trade_flow(
         f"TRADE BALANCING ROUND 1: Importing Regions: {join_list_as_string(importing_regions)} | Exporting Regions: {join_list_as_string(exporting_regions)} | Balanced Regions: {join_list_as_string(balanced_regions)}"
     )
 
-    if round(global_trade_balance, 5) == 0:
+    if round(global_trade_balance, TRADE_ROUNDING_NUMBER) == 0:
         logger.info(
             f"Trade Balance is completely balanced at {global_trade_balance: 4f} Mt in year {year}"
         )
         pass
 
-    elif round(global_trade_balance, 5) > 0:
+    elif round(global_trade_balance, TRADE_ROUNDING_NUMBER) > 0:
         logger.info(
-            f"TRADE BALANCING ROUND 1: Trade Balance Surplus of {global_trade_balance} Mt in year {year}. Balancing to zero."
+            f"TRADE BALANCING ROUND 1: Trade Balance Surplus of {global_trade_balance: 2f} Mt in year {year}. Balancing to zero."
         )
         for region in exporting_regions:
-            if global_trade_balance > 0:
-                current_utilization = utilization_container.get_utilization_values(year, region)
-                capacity = regional_capacity_dict[region]
-                if current_utilization > util_min:
-                    case_type = "R1: Reducing excess capacity via lowering utilization"
-                    current_balance = market_container.trade_container_aggregator(year, "trade", region)
-                    value_to_subtract_from_global = min(current_balance, global_trade_balance)
-                    max_removable_value = (capacity * util_max) - demand
-                    value_to_subtract_from_global = min(value_to_subtract_from_global, max_removable_value)
-                    market_tuple = market_container.return_market_entry(0, 0, -value_to_subtract_from_global)
-                    market_container.assign_market_tuple(year, region, market_tuple)
-                    new_balance = market_container.trade_container_aggregator(year, "trade", region)
-                    total_production = market_container.trade_container_aggregator(year, "production", region)
-                    new_utilization = total_production / capacity
-                    regional_capacity_dict[region] = capacity
-                    data_entry_dict = {
-                        "new_balance": new_balance,
-                        "new_utilized_capacity": capacity * new_utilization,
-                        "new_utilization": new_utilization
-                    }
-                    results_container = modify_production_demand_dict(
-                        results_container, data_entry_dict, region
-                    )
-                    utilization_container.update_region(
-                            year, region, new_utilization
-                    )
-                    global_trade_balance -= value_to_subtract_from_global
-                    cases[region].append(case_type)
+            current_utilization = utilization_container.get_utilization_values(year, region)
+            capacity = regional_capacity_dict[region]
+            demand = steel_demand_getter(
+                steel_demand_df, year=year, metric="crude", region=region
+            )
+            current_balance = market_container.trade_container_aggregator(year, "trade", region)
+            # print(f"region: {region} | util {current_utilization} | trade_balance: {current_balance}")
+            if (round(global_trade_balance, TRADE_ROUNDING_NUMBER) > 0) and (current_utilization > util_min) and (current_balance > 0):
+                case_type = "R1: Reducing excess capacity via lowering utilization"
+                
+                value_to_subtract_from_global = min(current_balance, global_trade_balance) # can't go below this else importer
+                max_removable_value = (current_utilization - util_min) * capacity
+                value_to_subtract_from_global = min(value_to_subtract_from_global, max_removable_value)
+                # print(f"region: {region} | max_removable_value: {max_removable_value} | value_to_subtract_from_global {value_to_subtract_from_global}")
+                market_tuple = market_container.return_market_entry(0, 0, -value_to_subtract_from_global)
+                market_container.assign_market_tuple(year, region, market_tuple)
+                new_balance = market_container.trade_container_aggregator(year, "trade", region)
+                total_production = market_container.trade_container_aggregator(year, "production", region)
+                new_utilization = total_production / capacity
+                regional_capacity_dict[region] = capacity
+                data_entry_dict = {
+                    "new_balance": new_balance,
+                    "new_utilized_capacity": capacity * new_utilization,
+                    "new_utilization": new_utilization
+                }
+                results_container = modify_production_demand_dict(
+                    results_container, data_entry_dict, region
+                )
+                utilization_container.update_region(
+                        year, region, new_utilization
+                )
+                global_trade_balance -= value_to_subtract_from_global
+                cases[region].append(case_type)
 
-    elif round(global_trade_balance, 5) < 0:
+    elif round(global_trade_balance, TRADE_ROUNDING_NUMBER) < 0:
         logger.info(
             f"TRADE BALANCING ROUND 2: Trade Balance Deficit of {global_trade_balance} Mt in year {year}, balancing to zero via utilization optimization."
         )
@@ -509,7 +517,7 @@ def trade_flow(
             potential_extra_production = (total_capacity * util_max) - current_utilized_capacity
             if potential_extra_production <= 0:
                 pass
-            elif potential_extra_production >= abs(global_trade_balance):
+            elif potential_extra_production >= abs(global_trade_balance) and round(global_trade_balance, TRADE_ROUNDING_NUMBER) < 0:
                 logger.info(
                     f"TRADE BALANCING ROUND 2 - A: {region} can supply all of the import demand."
                 )
@@ -619,13 +627,13 @@ def trade_flow(
     # final trade balance
     global_trade_balance = market_container.trade_container_aggregator(year, "trade")
 
-    if round(global_trade_balance, 5) == 0:
+    if round(global_trade_balance, TRADE_ROUNDING_NUMBER) == 0:
         logger.info(
             f"Trade Balance is completely balanced at {global_trade_balance: 4f} Mt in year {year}"
         )
         pass
 
-    elif round(global_trade_balance, 5) > 0:
+    elif round(global_trade_balance, TRADE_ROUNDING_NUMBER) > 0:
         logger.info(
             f"TRADE BALANCING ROUND 4-A: Reducing excess trade balance of {global_trade_balance :0.2f} via lower utilization"
         )
@@ -668,7 +676,7 @@ def trade_flow(
     # final trade balance
     global_trade_balance = market_container.trade_container_aggregator(year, "trade")
 
-    if round(global_trade_balance, 5) == 0:
+    if round(global_trade_balance, TRADE_ROUNDING_NUMBER) == 0:
         logger.info(
             f"Trade Balance is completely balanced at {global_trade_balance: 4f} Mt in year {year}"
         )
@@ -727,13 +735,10 @@ def trade_flow(
                 global_trade_balance -= trade_prodution_to_close
                 cases[region].append(case_type)
 
-    global_capacity = sum(regional_capacity_dict.values())
     global_production = market_container.trade_container_aggregator(year, "production")
     global_demand = steel_demand_getter(
         steel_demand_df, year=year, metric="crude", region="World"
     )
-    utilization_values = utilization_container.get_utilization_values(year)
-    utilization_values = {region: round(utilization_values[region], 2) for region in utilization_values}
 
     test_open_close_plants(results_container, cases)
     test_production_values(results_container, market_container, cases, year)
@@ -748,24 +753,24 @@ def test_capacity_values(results_container: dict, capacity_dict: dict, cases: di
     for region in results_container:
         results_container_value = results_container[region]["new_total_capacity"]
         capacity_dict_value = capacity_dict[region]
-        if round(results_container_value, 2) != round(capacity_dict_value, 2):
+        if round(results_container_value, PRINT_ROUNDING_NUMBER) != round(capacity_dict_value, PRINT_ROUNDING_NUMBER):
             raise AssertionError(f"Capacity Value Test | Region: {region} - container_result (capacity_dict_result): {results_container_value} ({capacity_dict_value}) Cases: {cases[region]}")
 
 def test_production_equals_demand(global_production: float, global_demand: float):
-    assert round(global_production, 2) == round(global_demand, 2)
+    assert round(global_production, PRINT_ROUNDING_NUMBER) == round(global_demand, PRINT_ROUNDING_NUMBER)
 
 
 def test_production_values(results_container: dict, market_container: MarketContainerClass, cases: dict, year: int):
     for region in results_container:
         dict_result = results_container[region]["new_utilized_capacity"]
         container_result = market_container.return_trade_balance(year, region, account_type="production")
-        if round(dict_result, 2) != round(container_result, 2):
+        if round(dict_result, PRINT_ROUNDING_NUMBER) != round(container_result, PRINT_ROUNDING_NUMBER):
             raise AssertionError(f"Production Value Test | Year: {year} - Region: {region} - Dict Value (Container Value): {dict_result} ({container_result}) Cases: {cases[region]}")
 
 def test_utilization_values(utilization_container: UtilizationContainerClass, year, util_min: float, util_max: float, cases: dict = None):
     container = utilization_container.get_utilization_values(year)
-    overcapacity_regions = [key for key in container if round(container[key], 5) > util_max]
-    undercapacity_regions = [key for key in container if round(container[key], 5) < util_min]
+    overcapacity_regions = [key for key in container if round(container[key], TRADE_ROUNDING_NUMBER) > util_max]
+    undercapacity_regions = [key for key in container if round(container[key], TRADE_ROUNDING_NUMBER) < util_min]
     cases = cases if cases else {region: "" for region in container}
     if overcapacity_regions:
         string_container = [f"{region}: {container[region]: 2f} - {cases[region]}" for region in overcapacity_regions]

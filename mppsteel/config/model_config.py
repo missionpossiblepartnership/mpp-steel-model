@@ -121,6 +121,10 @@ AVERAGE_CUF = 0.8
 MAIN_REGIONAL_SCHEMA = "rmi_region"
 RESULTS_REGIONS_TO_MAP = ["continent", "wsa", "rmi"]
 
+# ROUNDING PARAMETERS
+TRADE_ROUNDING_NUMBER = 3
+PRINT_ROUNDING_NUMBER = 2
+
 # OUTPUT FILE NAMES
 INTERMEDIATE_RESULT_PKL_FILES = [
     "plant_result_df",
@@ -143,7 +147,7 @@ FINAL_RESULT_PKL_FILES = [
     "levelized_cost_results",
 ]
 
-TRADE_PCT_BOUNDARY_DICT = {
+TRADE_PCT_BOUNDARY_FACTOR_DICT = {
     "Middle East": 0.1,
     "Europe": 0.1,
     "Africa": 0.1,

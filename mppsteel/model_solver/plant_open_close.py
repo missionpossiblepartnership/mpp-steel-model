@@ -22,6 +22,7 @@ from mppsteel.config.model_config import (
     CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
     MEGATON_TO_KILOTON_FACTOR,
     MODEL_YEAR_START,
+    TRADE_ROUNDING_NUMBER,
 )
 
 from mppsteel.model_solver.solver_classes import (
@@ -724,11 +725,11 @@ def open_close_plants(
             new_utilization = production_container_value / new_total_capacity
             utilization_container.update_region(year, region, new_utilization)
 
-            assert round(production_dict_value, 5) == round(production_container_value, 5), f"{region}: Production dict {production_dict_value} does not equal Production Container {production_container_value}"
-            assert round(capacity_removed, 5) >= round(indicative_capacity_to_remove, 5), f"{region}: Capacity Removed {capacity_removed} is less than Indicative Capacity Removed {indicative_capacity_to_remove}"
-            assert round(current_total_capacity, 5) >= round(new_total_capacity, 5), f"{region}: New Capacity {new_total_capacity} is greater than Old Capacity {current_total_capacity}"
-            assert round(initial_utilization, 5) <= round(new_utilization, 5), f"{region}: Initial Utilization {initial_utilization} is smaller than the New Utilization {new_utilization}"
-            assert close_plant_util_cutoff <= new_utilization <= open_plant_util_cutoff, f"{region}: utilization {new_utilization :2f} is out of bounds"
+            assert round(production_dict_value, TRADE_ROUNDING_NUMBER) == round(production_container_value, TRADE_ROUNDING_NUMBER), f"{region}: Production dict {production_dict_value} does not equal Production Container {production_container_value}"
+            assert round(capacity_removed, TRADE_ROUNDING_NUMBER) >= round(indicative_capacity_to_remove, TRADE_ROUNDING_NUMBER), f"{region}: Capacity Removed {capacity_removed} is less than Indicative Capacity Removed {indicative_capacity_to_remove}"
+            assert round(current_total_capacity, TRADE_ROUNDING_NUMBER) >= round(new_total_capacity, TRADE_ROUNDING_NUMBER), f"{region}: New Capacity {new_total_capacity} is greater than Old Capacity {current_total_capacity}"
+            assert round(initial_utilization, TRADE_ROUNDING_NUMBER) <= round(new_utilization, TRADE_ROUNDING_NUMBER), f"{region}: Initial Utilization {initial_utilization} is smaller than the New Utilization {new_utilization}"
+            assert round(close_plant_util_cutoff, TRADE_ROUNDING_NUMBER) <= round(new_utilization, TRADE_ROUNDING_NUMBER) <= round(open_plant_util_cutoff, TRADE_ROUNDING_NUMBER), f"{region}: utilization {new_utilization :2f} is out of bounds"
 
             production_demand_gap_analysis[region]["plants_to_close"] = actual_closed_plants
             production_demand_gap_analysis[region]["new_total_capacity"] = new_total_capacity
