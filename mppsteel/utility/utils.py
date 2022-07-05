@@ -208,3 +208,10 @@ def multiprocessing_scenarios(scenario_options: list, func):
 
 def join_list_as_string(list_object: list) -> str:
     return ", ".join(list_object)
+
+
+def decades_between_dates(year_range: range, include_final_year: bool = False) -> set:
+    decades_set = [year - (year%10) for year in list(year_range)]
+    if include_final_year:
+        decades_set.append(year_range[-1])
+    return set(decades_set)
