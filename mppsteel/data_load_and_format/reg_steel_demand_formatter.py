@@ -3,9 +3,9 @@
 import pandas as pd
 import pandera as pa
 
-from mppsteel.config.model_config import PKL_DATA_IMPORTS
+from mppsteel.config.model_config import MODEL_YEAR_END, PKL_DATA_IMPORTS
 from mppsteel.config.model_scenarios import STEEL_DEMAND_SCENARIO_MAPPER
-from mppsteel.utility.dataframe_utility import melt_and_index
+from mppsteel.utility.dataframe_utility import extend_df_years
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.location_utility import (
     get_unique_countries,
@@ -47,7 +47,7 @@ def steel_demand_region_assignor(
 
 
 @pa.check_input(REGIONAL_STEEL_DEMAND_SCHEMA)
-def steel_demand_creator(df: pd.DataFrame, rmi_matcher: dict) -> pd.DataFrame:
+def steel_demand_creator(df: pd.DataFrame, rmi_matcher: dict, index_cols: list) -> pd.DataFrame:
     """Formats the Steel Demand data. Assigns country codes to the regions, and melt and indexes them.
 
     Args:
@@ -65,13 +65,13 @@ def steel_demand_creator(df: pd.DataFrame, rmi_matcher: dict) -> pd.DataFrame:
     )
 
     df_c.columns = [col.lower() for col in df_c.columns]
-
-    return melt_and_index(
-        df_c,
+    df_c = pd.melt(
+        frame=df_c,
         id_vars=["metric", "region", "scenario", "country_code"],
-        var_name=["year"],
-        index=["year", "scenario", "metric"],
+        var_name=["year"]
     )
+    df_c["year"] = df_c["year"].astype(int)
+    return df_c.set_index(index_cols)
 
 
 def add_average_values(df: pd.DataFrame) -> pd.DataFrame:
@@ -107,8 +107,10 @@ def get_steel_demand(scenario_dict: dict, serialize: bool = False) -> pd.DataFra
     intermediate_path = get_scenario_pkl_path(
         scenario_dict["scenario_name"], "intermediate"
     )
+    index_cols = ["year", "scenario", "metric"]
     steel_demand = read_pickle_folder(PKL_DATA_IMPORTS, "regional_steel_demand", "df")
-    steel_demand_f = steel_demand_creator(steel_demand, RMI_MATCHER)
+    steel_demand_f = steel_demand_creator(steel_demand, RMI_MATCHER, index_cols)
+    steel_demand_f = extend_df_years(steel_demand_f, "year", MODEL_YEAR_END, index_cols)
     steel_demand_f = add_average_values(steel_demand_f)
     scenario_entry = STEEL_DEMAND_SCENARIO_MAPPER[
         scenario_dict["steel_demand_scenario"]
@@ -189,10 +191,6 @@ def steel_demand_getter(
             AttributeError(
                 f"You entered an incorrect country_code. Valid entries here: {country_list}."
             )
-
-    # Cap year at 2050
-    MODEL_YEAR_END = 2050
-    year = min(MODEL_YEAR_END, year)
     # Apply subsets
     # Scenario: BAU, High Circ, Average
     # Metric: crude, scrap
@@ -208,7 +206,7 @@ def steel_demand_getter(
         "scrap": "Scrap availability",
     }
     df_c = df_c.xs(
-        (str(year), metric_mapper[metric]),
+        (year, metric_mapper[metric]),
         level=["year", "metric"],
     )
     df_c.reset_index(drop=True, inplace=True)

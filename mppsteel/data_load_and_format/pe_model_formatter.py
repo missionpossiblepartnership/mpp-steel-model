@@ -12,6 +12,7 @@ from mppsteel.config.model_config import (
     INITIAL_MET_COAL_PRICE_USD_PER_GJ,
     MEGATON_TO_TON,
     MMBTU_TO_GJ,
+    MODEL_YEAR_END,
     THERMAL_COAL_ENERGY_DENSITY,
     TON_TO_KILOGRAM_FACTOR,
     MEGAWATT_HOURS_TO_GIGAJOULES,
@@ -40,6 +41,7 @@ from mppsteel.config.reference_lists import (
     SOUTHEAST_ASIA_COUNTRIES,
     WESTERN_EUROPE_COUNTRIES
 )
+from mppsteel.utility.dataframe_utility import extend_df_years
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import (
     expand_melt_and_sort_years,
@@ -419,6 +421,7 @@ def subset_power(
         pdf_c = convert_currency_col(pdf_c, "value", currency_conversion_factor)
     if per_gj:
         pdf_c["value"] = pdf_c["value"] / MEGAWATT_HOURS_TO_GIGAJOULES
+    pdf_c = extend_df_years(pdf_c, "year", MODEL_YEAR_END)
     return pdf_c[["year", "region", "unit", "value"]].set_index(["year", "region"])
 
 
@@ -476,6 +479,7 @@ def subset_hydrogen(
         h2df_c["value"] = (h2df_c["value"] / HYDROGEN_ENERGY_DENSITY_MJ_PER_KG) * (
             GIGAJOULE_TO_MEGAJOULE_FACTOR / TON_TO_KILOGRAM_FACTOR
         )
+    h2df_c = extend_df_years(h2df_c, "year", MODEL_YEAR_END)
     return h2df_c[["year", "region", "unit", "value"]].set_index(["year", "region"])
 
 
@@ -535,6 +539,7 @@ def subset_fossil_fuel_prices(
         thermal_coal = format_prices(df_c, "Thermal coal", THERMAL_COAL_ENERGY_DENSITY)
         met_coal = format_prices(df_c, "Met coal", 1)
         final_df = pd.concat([natural_gas, thermal_coal, met_coal])
+    final_df = extend_df_years(final_df, "year", MODEL_YEAR_END)
     return final_df[["year", "region", "variable", "unit", "value"]].set_index(["year", "region"])
 
 
@@ -571,6 +576,7 @@ def subset_bio_prices(
     bdf_c.columns = [col.lower().strip() for col in bdf_c.columns]
     if currency_conversion_factor:
         bdf_c = convert_currency_col(bdf_c, "value", currency_conversion_factor)
+    bdf_c = extend_df_years(bdf_c, "year", MODEL_YEAR_END)
     return bdf_c[["year", "region", "unit", "value"]].set_index(["year", "region"])
 
 
@@ -597,6 +603,7 @@ def subset_bio_constraints(
     bdf_c.columns = [col.lower().strip() for col in bdf_c.columns]
     if as_gj:
         bdf_c["value"] = bdf_c["value"] * EXAJOULE_TO_GIGAJOULE
+    bdf_c = extend_df_years(bdf_c, "year", MODEL_YEAR_END)
     return bdf_c[["year", "unit", "value"]].set_index(["year"])
 
 
@@ -729,6 +736,7 @@ def subset_ccs_constraint(
         df["value"] = df["value"] / GIGATON_TO_MEGATON_FACTOR
         df["unit"] = "Gton"
     df.columns = [col.lower() for col in df.columns]
+    df = extend_df_years(df, "year", MODEL_YEAR_END)
     return df.set_index(["year", "region"])
 
 

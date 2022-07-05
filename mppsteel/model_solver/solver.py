@@ -4,6 +4,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from typing import Iterable
+from mppsteel.utility.dataframe_utility import extend_df_years
 
 from mppsteel.model_solver.solver_summary import tech_capacity_splits, utilization_mapper
 from mppsteel.utility.function_timer_utility import timer_func
@@ -19,6 +20,7 @@ from mppsteel.utility.file_handling_utility import (
 from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.config.model_config import (
     MEGATON_TO_KILOTON_FACTOR,
+    MODEL_YEAR_END,
     MODEL_YEAR_RANGE,
     MODEL_YEAR_START,
     YEARS_TO_SKIP_FOR_SOLVER,
@@ -391,6 +393,7 @@ class ChooseTechnologyInput:
         co2_constraint = read_pickle_folder(
             PROJECT_PATH / PKL_DATA_IMPORTS, "ccs_co2", "df"
         )
+        co2_constraint = extend_df_years(co2_constraint, "Year", MODEL_YEAR_END)
         ccs_constraint = read_pickle_folder(
             PROJECT_PATH / intermediate_path, "ccs_constraints_model_formatted", "df"
         )
