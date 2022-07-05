@@ -11,7 +11,7 @@ from mppsteel.config.model_config import (
     MODEL_YEAR_END,
     MODEL_YEAR_RANGE,
     PKL_DATA_FORMATTED,
-    NET_ZERO_TARGET,
+    NET_ZERO_TARGET_YEAR,
     NET_ZERO_VARIANCE_YEARS,
     INVESTMENT_CYCLE_DURATION_YEARS,
     INVESTMENT_CYCLE_VARIANCE_YEARS,
@@ -120,9 +120,9 @@ def add_off_cycle_investment_years(
             int: The adjusted year that is within the net zero target range.
         """
         if year in range(
-            NET_ZERO_TARGET, NET_ZERO_TARGET + NET_ZERO_VARIANCE_YEARS + 1
+            NET_ZERO_TARGET_YEAR, NET_ZERO_TARGET_YEAR + NET_ZERO_VARIANCE_YEARS + 1
         ):
-            return NET_ZERO_TARGET - 1
+            return NET_ZERO_TARGET_YEAR - 1
         return year
 
     # For inv_cycle_length = 0

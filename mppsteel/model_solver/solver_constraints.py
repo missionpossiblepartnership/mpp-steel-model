@@ -155,7 +155,7 @@ def create_scrap_constraints(model: pd.DataFrame) -> dict:
     )
     rsd["value"] = rsd["value"] * (1 + SCRAP_CONSTRAINT_TOLERANCE_FACTOR)
     return {
-        int(year): rsd.loc[str(year)].to_dict()["value"]
+        year: rsd.loc[year].to_dict()["value"]
         for year in rsd.index.get_level_values(0)
     }
 
