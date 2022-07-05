@@ -3,6 +3,7 @@ from typing import Union
 
 import pandas as pd
 import plotly.express as px
+from mppsteel.config.model_config import MID_MODEL_CHECKPOINT_YEAR_FOR_GRAPHS
 
 from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
 from mppsteel.utility.log_utility import get_logger
@@ -77,7 +78,7 @@ def melt_and_subset(df: pd.DataFrame, cost_types: list):
 
 def lcost_graph(
     lcost_data: pd.DataFrame,
-    chosen_year: int = 2030,
+    chosen_year: int = MID_MODEL_CHECKPOINT_YEAR_FOR_GRAPHS,
     save_filepath: str = None,
     ext: str = "png",
 ) -> px.bar:
@@ -85,8 +86,7 @@ def lcost_graph(
 
     Args:
         lcost_data (pd.DataFrame): The levelized cost DataFrame.
-        chosen_year (int, optional): The year you want to calculate the Lcost for. Defaults to 2030.
-        save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
+        save_filepath (str, optional): The filepath that you save the graph to. Defaults to MID_MODEL_CHECKPOINT_YEAR_FOR_GRAPHS.
         ext (str, optional): The extension of the image you are creating. Defaults to "png".
 
     Returns:
