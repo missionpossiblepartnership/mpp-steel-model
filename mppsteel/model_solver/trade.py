@@ -53,7 +53,7 @@ def check_relative_production_cost(
         pd.DataFrame: The COS DataFrame with new columns `relative_cost_below_avg` and `relative_cost_close_to_mean`
     """
     def apply_upper_boundary(row: pd.DataFrame, mean_value: float, value_range: float, pct_boundary_dict: dict):
-        return mean_value + (value_range * (1 + pct_boundary_dict[row['rmi_region']]))
+        return mean_value + (value_range * (pct_boundary_dict[row['rmi_region']]))
 
     def close_to_mean_test(row: pd.DataFrame):
         return row['cost_of_steelmaking'] < row['upper_boundary']
@@ -91,7 +91,7 @@ def single_year_cos(
     return (
         0
         if utilization_rate == 0
-        else (plant_capacity * utilization_rate * variable_cost) + other_opex_cost
+        else (plant_capacity * utilization_rate * (variable_cost + other_opex_cost)) 
     )
 
 
@@ -118,14 +118,9 @@ def cos_value_generator(
     Returns:
         float: The COS value for the plant
     """
-    technology = (
-        tech_choices[year][row.plant_name]
-        if year == MODEL_YEAR_START
-        else tech_choices[year - 1][row.plant_name]
-    )
+    technology = tech_choices[year][row.plant_name]
     plant_capacity = capacity_dict[row.plant_name]
-    reference_year = year if year == 2020 else year - 1
-    utilization_rate = utilization_container.get_utilization_values(reference_year, row.rmi_region)
+    utilization_rate = utilization_container.get_utilization_values(year, row.rmi_region)
     variable_cost = v_costs.loc[row.country_code, year, technology]["cost"]
     other_opex_cost = capex_costs["other_opex"].loc[technology, year]["value"]
     return single_year_cos(
@@ -140,7 +135,7 @@ def calculate_cos(
     v_costs: pd.DataFrame,
     tech_choices: dict,
     capex_costs: dict,
-    capacity_dict: dict,
+    capacity_container: CapacityContainerClass,
 ) -> pd.DataFrame:
     """Calculates the COS as a column in a steel plant DataFrame.
 
@@ -158,9 +153,11 @@ def calculate_cos(
     """
 
     plant_df_c = plant_df.copy()
+    capacity_dict = capacity_container.return_plant_capacity(year)
+    reference_year = year if year == MODEL_YEAR_START else year - 1
     plant_df_c["cost_of_steelmaking"] = plant_df_c.apply(
         cos_value_generator,
-        year=year,
+        year=reference_year,
         utilization_container=utilization_container,
         v_costs=v_costs,
         capacity_dict=capacity_dict,
@@ -168,13 +165,20 @@ def calculate_cos(
         capex_costs=capex_costs,
         axis=1,
     )
-    return (
+    regional_capacity_dict = capacity_container.return_regional_capacity(reference_year)
+    regional_utilization_dict = utilization_container.get_utilization_values(reference_year)
+    cos_df = (
         plant_df_c[[MAIN_REGIONAL_SCHEMA, "cost_of_steelmaking"]]
         .groupby([MAIN_REGIONAL_SCHEMA])
-        .mean()
+        .sum()
         .sort_values(by="cost_of_steelmaking", ascending=True)
+        .reset_index()
         .copy()
     )
+    def final_cos_adjustment(row):
+        return row.cost_of_steelmaking / (regional_capacity_dict[row.rmi_region] * regional_utilization_dict[row.rmi_region])
+    cos_df["cost_of_steelmaking"] = cos_df.apply(final_cos_adjustment, axis=1)
+    return cos_df.set_index(MAIN_REGIONAL_SCHEMA)
 
 def get_initial_utilization(utilization_container: UtilizationContainerClass, year: int, region: str):
     return utilization_container.get_utilization_values(year, region) if year == MODEL_YEAR_START else utilization_container.get_utilization_values(year - 1, region)
@@ -198,7 +202,6 @@ def modify_production_demand_dict(
     for dict_key in data_entry_dict:
         production_demand_dict_c[region][dict_key] = data_entry_dict[dict_key]
     return production_demand_dict_c
-
 
 def utilization_boundary(utilization_figure: float, util_min: float, util_max: float):
     return max(min(utilization_figure, util_max), util_min)
@@ -241,7 +244,6 @@ def trade_flow(
     Returns:
         dict: A dictionary of open close metadata for each region.
     """
-    capacity_dict = capacity_container.return_plant_capacity(year)
     cos_df = calculate_cos(
         plant_df,
         year,
@@ -249,7 +251,7 @@ def trade_flow(
         variable_cost_df,
         tech_choices_ref,
         capex_dict,
-        capacity_dict,
+        capacity_container,
     )
     relative_production_cost_df = check_relative_production_cost(
         cos_df, "cost_of_steelmaking", TRADE_PCT_BOUNDARY_FACTOR_DICT
@@ -281,17 +283,14 @@ def trade_flow(
         utilization = utilization_container.get_utilization_values(year, region)
         avg_plant_capacity = capacity_container.return_avg_capacity_value()
         avg_plant_capacity_at_max_production = avg_plant_capacity * util_max
-        relative_cost_below_avg = relative_production_cost_df.loc[region][
-            "relative_cost_below_avg"
-        ]
-        relative_cost_below_mean = relative_production_cost_df.loc[region][
+        relative_cost_close_to_mean = relative_production_cost_df.loc[region][
             "relative_cost_close_to_mean"
         ]
         if regional_balance == 0:
             case_type = "BALANCED -> do nothing"
             market_tuple = market_container.return_market_entry(demand, 0, 0) # nothing
             regional_capacity_dict[region] = capacity
-        elif (regional_balance > 0) and relative_cost_below_avg:
+        elif (regional_balance > 0) and relative_cost_close_to_mean:
             case_type = "CHEAP EXCESS SUPPLY -> export"
             new_min_utilization_required = utilization_boundary(
                 utilization, util_min, util_max
@@ -304,7 +303,7 @@ def trade_flow(
             regional_capacity_dict[region] = capacity
         elif (
             (regional_balance > 0)
-            and not relative_cost_below_avg
+            and not relative_cost_close_to_mean
             and (utilization > util_min) # could lead to excess demand
         ):
             case_type = "EXPENSIVE EXCESS SUPPLY -> reduce utilization if possible"
@@ -320,7 +319,7 @@ def trade_flow(
             regional_capacity_dict[region] = capacity
         elif (
             (regional_balance > 0)
-            and not relative_cost_below_avg
+            and not relative_cost_close_to_mean
             and (utilization <= util_min)
         ):
             case_type = "EXPENSIVE EXCESS SUPPLY -> close plant"
@@ -347,17 +346,17 @@ def trade_flow(
             )
             new_utilized_capacity = new_min_utilization_required * capacity
             imports = demand - new_utilized_capacity
-            if (imports > 0) and not relative_cost_below_avg:
+            if (imports > 0) and not relative_cost_close_to_mean:
                 # STILL INSUFFICIENT SUPPLY
                 # EXPENSIVE REGION -> import
                 plant_change_dict[region]["plants_required"] = 0
                 plant_change_dict[region]["plants_to_close"] = 0
                 market_tuple = market_container.return_market_entry(demand - imports, imports, 0) # should import
                 regional_capacity_dict[region] = capacity
-            elif (imports > 0) and relative_cost_below_avg:
+            elif (imports > 0) and relative_cost_close_to_mean:
                 case_type = "CHEAP REGION -> open plant"
                 new_capacity_required = demand - (capacity * util_max)
-                print(f"region: {region} | new_capacity_required {new_capacity_required} | regional_balance: {regional_balance}")
+                print(f"region: {region} | new_capacity_required {new_capacity_required: 2f} | regional_balance: {regional_balance: 2f}")
                 new_plants_required = math.ceil(
                     new_capacity_required / avg_plant_capacity_at_max_production
                 )
@@ -385,7 +384,7 @@ def trade_flow(
         elif (
             (regional_balance < 0)
             and (utilization >= util_max)
-            and relative_cost_below_mean
+            and relative_cost_close_to_mean
         ):
             case_type = "INSUFFICIENT SUPPLY, CHEAP REGION, MAX UTILIZATION -> open plants"
             new_capacity_required = demand - (capacity * util_max)
@@ -406,7 +405,7 @@ def trade_flow(
         elif (
             (regional_balance < 0)
             and (utilization >= util_max)
-            and not relative_cost_below_mean
+            and not relative_cost_close_to_mean
         ):
             case_type = "INSUFFICIENT SUPPLY, EXPENSIVE REGION, MAX UTILIZATION -> import"
             new_min_utilization_required = utilization_boundary(
@@ -459,7 +458,7 @@ def trade_flow(
 
     if round(global_trade_balance, TRADE_ROUNDING_NUMBER) == 0:
         logger.info(
-            f"Trade Balance is completely balanced at {global_trade_balance: 4f} Mt in year {year}"
+            f"Trade Balance is completely balanced at {global_trade_balance: 2f} Mt in year {year}"
         )
         pass
 
@@ -474,14 +473,14 @@ def trade_flow(
                 steel_demand_df, year=year, metric="crude", region=region
             )
             current_balance = market_container.trade_container_aggregator(year, "trade", region)
-            # print(f"region: {region} | util {current_utilization} | trade_balance: {current_balance}")
+            # print(f"region: {region} | util {current_utilization: 2f} | trade_balance: {current_balance: 2f}")
             if (round(global_trade_balance, TRADE_ROUNDING_NUMBER) > 0) and (current_utilization > util_min) and (current_balance > 0):
                 case_type = "R1: Reducing excess capacity via lowering utilization"
                 
                 value_to_subtract_from_global = min(current_balance, global_trade_balance) # can't go below this else importer
                 max_removable_value = (current_utilization - util_min) * capacity
                 value_to_subtract_from_global = min(value_to_subtract_from_global, max_removable_value)
-                # print(f"region: {region} | max_removable_value: {max_removable_value} | value_to_subtract_from_global {value_to_subtract_from_global}")
+                # print(f"region: {region} | max_removable_value: {max_removable_value: 2f} | value_to_subtract_from_global {value_to_subtract_from_global: 2f}")
                 market_tuple = market_container.return_market_entry(0, 0, -value_to_subtract_from_global)
                 market_container.assign_market_tuple(year, region, market_tuple)
                 new_balance = market_container.trade_container_aggregator(year, "trade", region)
@@ -504,7 +503,7 @@ def trade_flow(
 
     elif round(global_trade_balance, TRADE_ROUNDING_NUMBER) < 0:
         logger.info(
-            f"TRADE BALANCING ROUND 2: Trade Balance Deficit of {global_trade_balance} Mt in year {year}, balancing to zero via utilization optimization."
+            f"TRADE BALANCING ROUND 2: Trade Balance Deficit of {global_trade_balance: 2f} Mt in year {year}, balancing to zero via utilization optimization."
         )
         rpc_df = relative_production_cost_df[
             relative_production_cost_df["relative_cost_close_to_mean"] == True
@@ -579,7 +578,7 @@ def trade_flow(
         if global_trade_balance < 0:
             cheapest_region = rpc_df["cost_of_steelmaking"].idxmin()
             logger.info(
-                f"TRADE BALANCING ROUND 3: Assigning trade balance of {global_trade_balance :0.2f} Mt to cheapest region: {cheapest_region}"
+                f"TRADE BALANCING ROUND 3: Assigning trade balance of {global_trade_balance :2f} Mt to cheapest region: {cheapest_region}"
             )
             case_type = "R3: moving remaining import demand to cheapest region"
             current_utilization = utilization_container.get_utilization_values(year, region)
@@ -754,7 +753,7 @@ def test_capacity_values(results_container: dict, capacity_dict: dict, cases: di
         results_container_value = results_container[region]["new_total_capacity"]
         capacity_dict_value = capacity_dict[region]
         if round(results_container_value, PRINT_ROUNDING_NUMBER) != round(capacity_dict_value, PRINT_ROUNDING_NUMBER):
-            raise AssertionError(f"Capacity Value Test | Region: {region} - container_result (capacity_dict_result): {results_container_value} ({capacity_dict_value}) Cases: {cases[region]}")
+            raise AssertionError(f"Capacity Value Test | Region: {region} - container_result (capacity_dict_result): {results_container_value: 2f} ({capacity_dict_value: 2f}) Cases: {cases[region]}")
 
 def test_production_equals_demand(global_production: float, global_demand: float):
     assert round(global_production, PRINT_ROUNDING_NUMBER) == round(global_demand, PRINT_ROUNDING_NUMBER)
@@ -765,7 +764,7 @@ def test_production_values(results_container: dict, market_container: MarketCont
         dict_result = results_container[region]["new_utilized_capacity"]
         container_result = market_container.return_trade_balance(year, region, account_type="production")
         if round(dict_result, PRINT_ROUNDING_NUMBER) != round(container_result, PRINT_ROUNDING_NUMBER):
-            raise AssertionError(f"Production Value Test | Year: {year} - Region: {region} - Dict Value (Container Value): {dict_result} ({container_result}) Cases: {cases[region]}")
+            raise AssertionError(f"Production Value Test | Year: {year} - Region: {region} - Dict Value (Container Value): {dict_result} ({container_result: 2f}) Cases: {cases[region]}")
 
 def test_utilization_values(utilization_container: UtilizationContainerClass, year, util_min: float, util_max: float, cases: dict = None):
     container = utilization_container.get_utilization_values(year)
