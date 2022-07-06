@@ -277,10 +277,10 @@ def trade_flow(
             steel_demand_df, year=year, metric="crude", region=region
         )
         initial_utilization = get_initial_utilization(utilization_container, year, region)
-        utilization_cutoff = utilization_boundary(
+        utilization = utilization_boundary(
             initial_utilization, util_min, util_max)
-        regional_balance = (capacity * utilization_cutoff) - demand
-        utilization = utilization_container.get_utilization_values(year, region)
+        regional_balance = (capacity * utilization) - demand
+        # utilization = utilization_container.get_utilization_values(year, region)
         avg_plant_capacity = capacity_container.return_avg_capacity_value()
         avg_plant_capacity_at_max_production = avg_plant_capacity * util_max
         relative_cost_close_to_mean = relative_production_cost_df.loc[region][
@@ -344,16 +344,16 @@ def trade_flow(
             new_min_utilization_required = utilization_boundary(
                 new_min_utilization_required, util_min, util_max
             )
-            new_utilized_capacity = new_min_utilization_required * capacity
-            imports = demand - new_utilized_capacity
-            if (imports > 0) and not relative_cost_close_to_mean:
+            if (new_min_utilization_required > util_max) and not relative_cost_close_to_mean:
                 # STILL INSUFFICIENT SUPPLY
                 # EXPENSIVE REGION -> import
+                new_utilized_capacity = new_min_utilization_required * capacity
+                imports = demand - new_utilized_capacity
                 plant_change_dict[region]["plants_required"] = 0
                 plant_change_dict[region]["plants_to_close"] = 0
                 market_tuple = market_container.return_market_entry(demand - imports, imports, 0) # should import
                 regional_capacity_dict[region] = capacity
-            elif (imports > 0) and relative_cost_close_to_mean:
+            elif (new_min_utilization_required > util_max) and relative_cost_close_to_mean:
                 case_type = "CHEAP REGION -> open plant"
                 new_capacity_required = demand - (capacity * util_max)
                 print(f"region: {region} | new_capacity_required {new_capacity_required: 2f} | regional_balance: {regional_balance: 2f}")
