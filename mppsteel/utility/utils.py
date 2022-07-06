@@ -215,3 +215,7 @@ def decades_between_dates(year_range: range, include_final_year: bool = False) -
     if include_final_year:
         decades_set.append(year_range[-1])
     return set(decades_set)
+
+
+def get_closest_number_in_list(my_list: list, my_number: int):
+    return min(my_list, key = lambda x: abs(x - my_number)) if my_list else None
