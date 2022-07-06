@@ -11,7 +11,7 @@ from mppsteel.data_preprocessing.investment_cycles import PlantInvestmentCycle
 from mppsteel.model_solver.solver_constraints import tech_availability_check
 
 from mppsteel.utility.location_utility import pick_random_country_from_region_subset
-from mppsteel.utility.utils import replace_dict_items, get_dict_keys_by_value
+from mppsteel.utility.utils import replace_dict_items, get_dict_keys_by_value, get_closest_number_in_list
 from mppsteel.utility.plant_container_class import PlantIdContainer
 from mppsteel.data_load_and_format.reg_steel_demand_formatter import steel_demand_getter
 
@@ -61,7 +61,6 @@ def least_consuming_tech(
     tech_availability: pd.DataFrame,
     resource_to_optimize: str,
     year: int,
-    max: bool = False,
     tech_moratorium: bool = False
 ):
     keys = [key for key in business_case_ref if f"{resource_to_optimize}" in key]
@@ -137,7 +136,6 @@ def get_min_cost_tech_for_region(
                     tech_availability,
                     "Scrap",
                     year,
-                    max=False,
                     tech_moratorium=tech_moratorium
                 )
                 potential_technologies.append(lowest_scrap_resource)
@@ -166,11 +164,49 @@ def get_min_cost_region(lcost_df: pd.DataFrame, year: int) -> str:
     return lcost_df_c["levelized_cost"].idxmin()
 
 
+def check_year_range_for_switch_type(results_df: pd.DataFrame, plant_name: str, list_with_years: list, switch_type: str):
+    df_c = results_df[results_df["plant_name"] == plant_name].copy()
+    if list_with_years:
+        check_df = df_c[df_c["year"].isin(list_with_years)].copy()
+        if switch_type in check_df.switch_type.unique():
+            return check_df[check_df["switch_type"] == switch_type]["year"]
+    return None
+
+def get_trans_switch_range(list_of_ranges: list, number_to_check: int) -> list:
+    for year_range in list_of_ranges:
+        if number_to_check in year_range:
+            return list(range(year_range[0], number_to_check + 1))
+    return []
+
+
+def get_closest_year_main_switch(list_with_years: list, year_to_check: int):
+    my_list = [year for year in list_with_years if year <= year_to_check]
+    if my_list:
+        return get_closest_number_in_list(my_list, year_to_check)
+    else:
+        return None
+
+
+def get_closest_year_trans_switch(list_of_ranges, results_df, year_to_check, plant_name):
+    list_with_years = get_trans_switch_range(
+        list_of_ranges,
+        year_to_check
+    )
+    return check_year_range_for_switch_type(
+        results_df,
+        plant_name,
+        list_with_years,
+        "Transitional switch in off-cycle investment year"
+    )
+
+
 def current_plant_year(
     investment_dict: pd.DataFrame,
+    results_df: pd.DataFrame,
+    plant_start_years: dict,
+    plant_cycle_lengths: dict,
     plant_name: str,
     current_year: int,
-    cycle_length: int = 20,
 ) -> int:
     """Returns the age of a plant since its last main investment cycle year.
 
@@ -178,44 +214,22 @@ def current_plant_year(
         investment_dict (pd.DataFrame): Dictionary with plant names as keys and main investment cycles as values.
         plant_name (str): The name of the plant.
         current_year (int): The current model cycle year.
-        cycle_length (int, optional): The length of the plants investment cycle. Defaults to 20.
 
     Returns:
         int: The age (in years) of the plant.
     """
+    plant_start_year = plant_start_years[plant_name]
+    if current_year <=  plant_start_year:
+        return 0
     main_cycle_years = [yr for yr in investment_dict[plant_name] if isinstance(yr, int)]
-    first_inv_year = main_cycle_years[0]
-    if len(main_cycle_years) == 2:
-        second_inv_year = main_cycle_years[1]
-        cycle_length = second_inv_year - first_inv_year
-
     trans_years = [yr for yr in investment_dict[plant_name] if isinstance(yr, range)]
-    if trans_years:
-        first_trans_years = list(trans_years[0])
-        if first_trans_years:
-            potential_start_date = first_trans_years[0]
-            if current_year in first_trans_years:
-                return current_year - potential_start_date
-
-    if current_year < first_inv_year:
-        potential_start_date = first_inv_year - cycle_length
-        return current_year - potential_start_date
-
-    if len(main_cycle_years) == 1:
-        if current_year >= first_inv_year:
-            return current_year - first_inv_year
-
-    if len(main_cycle_years) == 2:
-        if current_year >= first_inv_year <= second_inv_year:
-            if not trans_years:
-                return current_year - first_inv_year
-            else:
-                if current_year in first_trans_years:
-                    return current_year - potential_start_date
-                else:
-                    return current_year - second_inv_year
-        elif current_year > second_inv_year:
-            return current_year - second_inv_year
+    main_switch_year = get_closest_year_main_switch(main_cycle_years, current_year)
+    trans_switch_year = get_closest_year_trans_switch(trans_years, results_df, current_year, plant_name)
+    potential_investment_years = [num for num in [main_switch_year, trans_switch_year] if isinstance(num, int)]
+    # print(f"plant_name: {plant_name} | plant_start_year: {plant_start_year} | main_cycle_years: {main_cycle_years} | main_switch_year: {main_switch_year} | trans_switch_years: {trans_years} | trans_switch_year: {trans_switch_year} | potential_investment_years: {potential_investment_years}")
+    closest_investment_year = get_closest_number_in_list(potential_investment_years, current_year)
+    year_remainder = (current_year - plant_start_year) % plant_cycle_lengths[plant_name]
+    return current_year - closest_investment_year if closest_investment_year else year_remainder
 
 
 def new_plant_metadata(
@@ -275,7 +289,7 @@ def new_plant_metadata(
 
 
 def return_oldest_plant(
-    investment_dict: dict, current_year: int, plant_list: list = None
+    investment_dict: dict, results_df: pd.DataFrame, plant_start_years: dict, plant_cycle_lengths: dict, current_year: int, plant_list: list = None
 ) -> str:
     """Gets the oldest plant from `plant_list` based on their respective investment cycles in `investment dict` and the `current_year`.
     If multiple plants have the same oldest age, then a plant is chosen at random.
@@ -291,8 +305,14 @@ def return_oldest_plant(
     if not plant_list:
         plant_list = investment_dict.keys()
     plant_age_dict = {
-        plant: current_plant_year(investment_dict, plant, current_year)
-        for plant in plant_list
+        plant_name: current_plant_year(
+            investment_dict, 
+            results_df,
+            plant_start_years,
+            plant_cycle_lengths,
+            plant_name, current_year
+        )
+        for plant_name in plant_list
     }
     max_value = max(plant_age_dict.values())
     return random.choice(get_dict_keys_by_value(plant_age_dict, max_value))
@@ -563,8 +583,11 @@ def open_close_plants(
     initial_plant_df = steel_plant_df.copy()
     steel_plant_cols = initial_plant_df.columns
     investment_dict = investment_container.return_investment_dict()
+    plant_start_years = investment_container.plant_start_years
+    plant_cycle_lengths = investment_container.return_cycle_lengths()
     capacity_mapping_plants = initial_plant_df[initial_plant_df["active_check"] == True].copy()
     capacity_container.map_capacities(capacity_mapping_plants, year)
+    results_df = tech_choices_container.output_records_to_df("choice")
     production_demand_gap_analysis = production_demand_gap(
         steel_demand_df=steel_demand_df,
         capacity_container=capacity_container,
@@ -573,7 +596,6 @@ def open_close_plants(
         capacity_util_max=open_plant_util_cutoff,
         capacity_util_min=close_plant_util_cutoff,
     )
-
     if trade_scenario:
         logger.info(f"Starting the trade flow for {year}")
         production_demand_gap_analysis = trade_flow(
@@ -684,8 +706,12 @@ def open_close_plants(
             while capacity_removed <= indicative_capacity_to_remove:
                 plant_to_close = return_oldest_plant(
                     investment_dict,
+                    results_df,
+                    plant_start_years,
+                    plant_cycle_lengths,
                     year,
                     potential_plants_to_close,
+
                 )
                 potential_plants_to_close.remove(plant_to_close)
                 plant_capacity = capacity_container.return_plant_capacity(year, plant_to_close)
