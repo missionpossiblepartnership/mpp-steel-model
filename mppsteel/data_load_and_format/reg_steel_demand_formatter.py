@@ -107,16 +107,16 @@ def get_steel_demand(scenario_dict: dict, serialize: bool = False) -> pd.DataFra
     intermediate_path = get_scenario_pkl_path(
         scenario_dict["scenario_name"], "intermediate"
     )
-    index_cols = ["year", "scenario", "metric"]
     steel_demand = read_pickle_folder(PKL_DATA_IMPORTS, "regional_steel_demand", "df")
-    steel_demand_f = steel_demand_creator(steel_demand, RMI_MATCHER, index_cols)
-    steel_demand_f = extend_df_years(steel_demand_f, "year", MODEL_YEAR_END, index_cols)
+    steel_demand_f = steel_demand_creator(steel_demand, RMI_MATCHER, ["year", "scenario", "metric"])
     steel_demand_f = add_average_values(steel_demand_f)
     scenario_entry = STEEL_DEMAND_SCENARIO_MAPPER[
         scenario_dict["steel_demand_scenario"]
     ]
     steel_demand_f = steel_demand_f.loc[:, scenario_entry, :].copy()
-    steel_demand_f.reset_index().set_index(["year", "metric"])
+    index_cols = ["year", "metric"]
+    steel_demand_f.reset_index().set_index(index_cols)
+    steel_demand_f = extend_df_years(steel_demand_f, "year", MODEL_YEAR_END, index_cols)
     if serialize:
         serialize_file(
             steel_demand_f, intermediate_path, "regional_steel_demand_formatted"
