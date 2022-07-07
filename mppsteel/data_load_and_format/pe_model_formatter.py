@@ -4,6 +4,7 @@
 import contextlib
 import pandas as pd
 from tqdm import tqdm
+from typing import Iterable
 
 from mppsteel.config.model_config import (
     EXAJOULE_TO_GIGAJOULE,
@@ -269,6 +270,9 @@ def fossil_fuel_region_reference_generator(country_ref: pd.DataFrame) -> dict:
         )
 }
 
+def get_intersection_of_ordered_list(ordered_list: Iterable, mapping_list: Iterable) -> list:
+    return [x for x in mapping_list if x in frozenset(ordered_list)] 
+
 
 def final_mapper(
     model: pd.DataFrame, reference_mapper: dict, year_range: range = None
@@ -290,13 +294,21 @@ def final_mapper(
             total=len(year_range),
             desc="Generating PE Model Reference Dictionary",
         ):
-            for model_region in set.intersection(set(reference_mapper.keys()), set(model.index.get_level_values(1).unique())):
+            ordered_region_list = get_intersection_of_ordered_list(
+                reference_mapper.keys(), 
+                model.index.get_level_values(1).unique()
+            )
+            for model_region in ordered_region_list:
                 for country_code in reference_mapper[model_region]:
                     final_mapper[(year, country_code)] = model.loc[
                         (year, model_region), "value"
                     ]
     else:
-        for model_region in set.intersection(set(reference_mapper.keys()), set(model.index)):
+        ordered_region_list = get_intersection_of_ordered_list(
+            reference_mapper.keys(),
+            model.index
+        )
+        for model_region in ordered_region_list:
             for country_code in reference_mapper[model_region]:
                 final_mapper[country_code] = model.loc[model_region, "value"]
     return final_mapper
