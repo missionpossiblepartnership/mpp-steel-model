@@ -1,5 +1,6 @@
 """Module that determines functionality for opening and closing plants"""
 
+from copy import deepcopy
 import math
 
 import pandas as pd
@@ -404,74 +405,76 @@ def production_demand_gap(
     avg_plant_global_capacity = capacity_container.return_avg_capacity_value()
 
     results_container = {}
+    region_list = capacity_container.regional_capacities_agg[year]
+    cases = {region: [] for region in region_list}
 
-    for region in capacity_container.regional_capacities_agg[year]:
+    for region in region_list:
 
         demand = steel_demand_getter(
             steel_demand_df, year=year, metric="crude", region=region
         )
-        current_capacity = capacity_container.return_regional_capacity(year, region)
+        capacity = capacity_container.return_regional_capacity(year, region)
         initial_utilization = get_initial_utilization(utilization_container, year, region)
-        avg_plant_capacity_value = avg_plant_global_capacity
+        bounded_utilization = utilization_boundary(initial_utilization, capacity_util_min, capacity_util_max)
+        avg_plant_capacity_value = deepcopy(avg_plant_global_capacity)
 
         avg_plant_capacity_at_max_production = (
             avg_plant_capacity_value * capacity_util_max
         )
 
+        initial_min_utilization_reqiured = round(demand / capacity, TRADE_ROUNDING_NUMBER)
+
         new_capacity_required = 0
         excess_capacity = 0
         new_plants_required = 0
         plants_to_close = 0
-        new_total_capacity = 0
-
-        initial_min_utilization_reqiured = demand / current_capacity
-        new_min_utilization_required = 0
 
         if capacity_util_min <= initial_min_utilization_reqiured <= capacity_util_max:
-            # INCREASE CAPACITY: Capacity can be adjusted to meet demand
-            new_total_capacity = current_capacity
-            new_min_utilization_required = initial_min_utilization_reqiured
+            cases[region].append("INCREASE CAPACITY: Capacity can be adjusted to meet demand")
+            new_total_capacity = deepcopy(capacity)
+            new_min_utilization_required = demand / capacity
 
         elif initial_min_utilization_reqiured < capacity_util_min:
-            # CLOSE PLANT: Excess capacity even in lowest utilization option
-            excess_capacity = (current_capacity * capacity_util_min) - demand
+            cases[region].append("CLOSE PLANT: Excess capacity even in lowest utilization option")
+            required_capacity = demand / capacity_util_min
+            excess_capacity = capacity - required_capacity
             plants_to_close = math.ceil(
-                excess_capacity / avg_plant_capacity_at_max_production
+                excess_capacity / avg_plant_capacity_value
             )
-            new_total_capacity = current_capacity - (
+            new_total_capacity = capacity - (
                 plants_to_close * avg_plant_capacity_value
             )
             new_min_utilization_required = demand / new_total_capacity
-            new_min_utilization_required = max(
-                new_min_utilization_required, capacity_util_min
+            new_min_utilization_required = utilization_boundary(
+                new_min_utilization_required, capacity_util_min, capacity_util_max
             )
 
         elif initial_min_utilization_reqiured > capacity_util_max:
-            # OPEN PLANT: Capacity adjustment not enough to meet demand
-            new_capacity_required = demand - (current_capacity * capacity_util_max)
+            cases[region].append("OPEN PLANT: Capacity adjustment not enough to meet demand")
+            new_capacity_required = demand - (capacity * capacity_util_max)
             new_plants_required = math.ceil(
                 new_capacity_required / avg_plant_capacity_at_max_production
             )
-            new_total_capacity = current_capacity + (
+            new_total_capacity = capacity + (
                 new_plants_required * avg_plant_capacity_value
             )
-            new_min_utilization_required = demand / new_total_capacity
-            new_min_utilization_required = min(
-                new_min_utilization_required, capacity_util_max
+            new_min_utilization_required = utilization_boundary(
+                demand / new_total_capacity, capacity_util_min, capacity_util_max
             )
 
         utilization_container.update_region(year, region, new_min_utilization_required)
 
-        initial_utilized_capacity = current_capacity * initial_utilization
+        initial_utilized_capacity = capacity * initial_utilization
+        initial_utilized_capacity_bounded = capacity * bounded_utilization
         new_utilized_capacity = new_total_capacity * new_min_utilization_required
-        initial_balance_value = initial_utilized_capacity - demand
+        initial_balance_value = initial_utilized_capacity_bounded - demand
         new_balance_value = new_utilized_capacity - demand
 
         # RETURN RESULTS
         region_result = {
             "year": year,
             "region": region,
-            "capacity": current_capacity,
+            "capacity": capacity,
             "initial_utilized_capacity": initial_utilized_capacity,
             "demand": demand,
             "initial_balance": initial_balance_value,
@@ -488,6 +491,8 @@ def production_demand_gap(
         }
 
         results_container[region] = region_result
+
+        assert round(demand, TRADE_ROUNDING_NUMBER) == round(new_utilized_capacity, TRADE_ROUNDING_NUMBER), f"Demand - Production Imbalance for {region} -> Demand: {demand : 2f} Production: {new_utilized_capacity: 2f} Case: {cases[region]}"
 
     return results_container
 
@@ -514,11 +519,18 @@ def market_balance_test(
     plants_required = production_supply_df["plants_required"].sum()
     plants_to_close = production_supply_df["plants_to_close"].sum()
     logger.info(
-        f"Trade Results for {year}: Capacity: {capacity_sum :0.2f} | Production: {production_sum :0.2f} | Demand: {demand_sum :0.2f} | New Plants: {plants_required} | Closed Plants {plants_to_close}"
+        f"Market Balance Results for {year}: Capacity: {capacity_sum :0.2f} | Production: {production_sum :0.2f} | Demand: {demand_sum :0.2f} | New Plants: {plants_required} | Closed Plants {plants_to_close}"
     )
     assert capacity_sum > demand_sum
     assert capacity_sum > production_sum
     assert production_sum >= demand_sum
+
+def create_and_test_market_df(market_dict: dict, year: int, test_df: bool = False) -> pd.DataFrame:
+    df = pd.DataFrame(market_dict.values()).set_index(["year", "region"]).round(3)
+    if test_df:
+        market_balance_test(df, year)
+    return df
+
 
 
 def open_close_plants(
@@ -626,9 +638,7 @@ def open_close_plants(
         .copy()
     )
 
-    production_demand_gap_analysis_df = pd.DataFrame(production_demand_gap_analysis.values())
-    production_demand_gap_analysis_df = production_demand_gap_analysis_df.set_index(["year", "region"]).round(3)
-    market_balance_test(production_demand_gap_analysis_df, year)
+    production_demand_gap_analysis_df = create_and_test_market_df(production_demand_gap_analysis, year, True)
 
     # REGION LOOP
     for region in regions:
@@ -691,12 +701,11 @@ def open_close_plants(
     # REGION LOOP
     for region in regions:
         plants_to_close = production_demand_gap_analysis[region]["plants_to_close"]
-
+        # CLOSE PLANTS
         if plants_to_close > 0:
             current_total_capacity = production_demand_gap_analysis[region]["new_total_capacity"]
             production_dict_value = production_demand_gap_analysis[region]["new_utilized_capacity"]
-            production_container_value = market_container.trade_container_aggregator(year, "production", region)
-            indicative_capacity_to_remove = (current_total_capacity * close_plant_util_cutoff) - production_container_value
+            indicative_capacity_to_remove = (current_total_capacity * close_plant_util_cutoff) - production_dict_value
             potential_plants_to_close = return_plants_from_region(capacity_mapping_plants, region)
             initial_utilization = production_demand_gap_analysis[region]["new_utilization"]
             actual_plants_to_close = []
@@ -748,25 +757,20 @@ def open_close_plants(
                 )
 
             new_total_capacity = current_total_capacity - capacity_removed
-            new_utilization = production_container_value / new_total_capacity
+            new_utilization = production_dict_value / new_total_capacity
             utilization_container.update_region(year, region, new_utilization)
 
-            assert round(production_dict_value, TRADE_ROUNDING_NUMBER) == round(production_container_value, TRADE_ROUNDING_NUMBER), f"{region}: Production dict {production_dict_value} does not equal Production Container {production_container_value}"
             assert round(capacity_removed, TRADE_ROUNDING_NUMBER) >= round(indicative_capacity_to_remove, TRADE_ROUNDING_NUMBER), f"{region}: Capacity Removed {capacity_removed} is less than Indicative Capacity Removed {indicative_capacity_to_remove}"
             assert round(current_total_capacity, TRADE_ROUNDING_NUMBER) >= round(new_total_capacity, TRADE_ROUNDING_NUMBER), f"{region}: New Capacity {new_total_capacity} is greater than Old Capacity {current_total_capacity}"
             assert round(initial_utilization, TRADE_ROUNDING_NUMBER) <= round(new_utilization, TRADE_ROUNDING_NUMBER), f"{region}: Initial Utilization {initial_utilization} is smaller than the New Utilization {new_utilization}"
             assert round(close_plant_util_cutoff, TRADE_ROUNDING_NUMBER) <= round(new_utilization, TRADE_ROUNDING_NUMBER) <= round(open_plant_util_cutoff, TRADE_ROUNDING_NUMBER), f"{region}: utilization {new_utilization :2f} is out of bounds"
 
-            production_demand_gap_analysis[region]["plants_to_close"] = actual_closed_plants
+            production_demand_gap_analysis[region]["plants_to_close"] = len(actual_plants_to_close)
             production_demand_gap_analysis[region]["new_total_capacity"] = new_total_capacity
             production_demand_gap_analysis[region]["new_utilization"] = new_utilization
 
     test_utilization_values(utilization_container, year, close_plant_util_cutoff, open_plant_util_cutoff)
-    production_demand_gap_analysis_df = pd.DataFrame(production_demand_gap_analysis.values())
-    if production_demand_gap_analysis_df.empty:
-        production_demand_gap_analysis_df = create_test_production_df()
-    production_demand_gap_analysis_df = production_demand_gap_analysis_df.set_index(["year", "region"]).round(3)
-    market_balance_test(production_demand_gap_analysis_df, year)
+    production_demand_gap_analysis_df = create_and_test_market_df(production_demand_gap_analysis, year, test_df=True)
     market_container.store_results(year, production_demand_gap_analysis_df)
 
     new_active_plants = initial_plant_df[initial_plant_df["active_check"] == True].copy()
@@ -775,7 +779,6 @@ def open_close_plants(
     global_demand = steel_demand_getter(
         steel_demand_df, year=year, metric="crude", region="World"
     )
-
     utilization_container.calculate_world_utilization(
         year, regional_capacities, global_demand
     )
