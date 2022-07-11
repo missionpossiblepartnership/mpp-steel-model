@@ -613,10 +613,9 @@ def format_variable_costs(
 
     df_c = variable_cost_df.copy()
     df_c.reset_index(drop=True, inplace=True)
-    df_c.drop(["price"], axis=1, inplace=True)
     if group_data:
         df_c.drop(
-            ["material_category", "unit", "cost_type", "value"], axis=1, inplace=True
+            ["material_category", "unit", "cost_type", "value", "price"], axis=1, inplace=True
         )
         df_c = (
             df_c.groupby(by=["country_code", "year", "technology"])
@@ -624,9 +623,7 @@ def format_variable_costs(
             .sort_values(by=["country_code", "year", "technology"])
         )
         df_c["cost"] = df_c["cost"].apply(lambda x: cast_to_float(x))
-        return df_c
     return df_c
-
 
 @timer_func
 def generate_variable_plant_summary(
@@ -650,6 +647,7 @@ def generate_variable_plant_summary(
     variable_costs_summary_material_breakdown = format_variable_costs(
         variable_costs, group_data=False
     )
+    print(variable_costs_summary_material_breakdown)
 
     if serialize:
         logger.info("-- Serializing dataframes")
