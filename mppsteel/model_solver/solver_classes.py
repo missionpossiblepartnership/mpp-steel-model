@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 
 from mppsteel.config.model_config import (
+    IMPORT_DATA_PATH,
     MEGATON_TO_KILOTON_FACTOR,
     PKL_DATA_IMPORTS,
     PKL_DATA_FORMATTED,
@@ -14,7 +15,7 @@ from mppsteel.config.model_config import (
     PROJECT_PATH,
 )
 from mppsteel.config.reference_lists import RESOURCE_CONTAINER_REF
-from mppsteel.utility.file_handling_utility import read_pickle_folder
+from mppsteel.utility.file_handling_utility import extract_data, read_pickle_folder
 from mppsteel.model_solver.solver_constraints import (
     create_biomass_constraint,
     create_ccs_constraint,
@@ -909,14 +910,17 @@ def return_utilization(
     return util_dict
 
 
-def create_wsa_2020_utilization_dict(project_dir=PROJECT_PATH) -> dict:
+def create_wsa_2020_utilization_dict(project_dir=PROJECT_PATH, from_csv: bool = False) -> dict:
     """Creates the initial utilization dictionary for 2020 based on data from the World Steel Association (WSA).
 
     Returns:
         dict: A dictionary with regions as keys and utilization numbers as values.
     """
     logger.info("Creating the utilization dictionary for 2020.")
-    wsa_production = read_pickle_folder(project_dir / PKL_DATA_IMPORTS, "wsa_production", "df")
+    if from_csv:
+        wsa_production = extract_data(IMPORT_DATA_PATH, "WSA World Steel in Figures 2021", "xlsx", 1)
+    else:
+        wsa_production = read_pickle_folder(project_dir / PKL_DATA_IMPORTS, "wsa_production", "df")
     steel_plants_processed = read_pickle_folder(
         project_dir / PKL_DATA_FORMATTED, "steel_plants_processed", "df"
     )
