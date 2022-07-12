@@ -20,8 +20,7 @@ from mppsteel.config.model_config import (
     INVESTMENT_CYCLE_DURATION_YEARS,
     MODEL_YEAR_RANGE,
     PKL_DATA_FORMATTED,
-    DISCOUNT_RATE,
-    STEEL_PLANT_LIFETIME_YEARS,
+    DISCOUNT_RATE
 )
 from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
 
