@@ -4,6 +4,7 @@ from copy import deepcopy
 import math
 
 import pandas as pd
+import numpy as np
 
 import random
 
@@ -109,6 +110,8 @@ def get_min_cost_tech_for_region(
         str: The name of the lowest cost technology archetype.
     """
     lcost_df_c = lcost_df.loc[year, region].groupby("technology").mean().copy()
+    assert lcost_df_c.isnull().values.any() == False, f"DF entry has nans: {lcost_df_c}"
+    lowest_cost_tech = lcost_df_c["levelized_cost"].idxmin()
 
     if enforce_constraints:
         potential_technologies = apply_constraints_for_min_cost_tech(
