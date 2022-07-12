@@ -73,6 +73,7 @@ def total_opex_cost_ref_loop(
             other_opex_df,
             carbon_tax_full_ref
         )
+        assert technology_opex_values.isnull().values.any() == False, f"DF entry has nans: {technology_opex_values}"
         opex_cost_ref[(year, country_code)] = technology_opex_values
     return opex_cost_ref
 
@@ -117,7 +118,6 @@ def generate_total_opex_cost_reference(
         other_opex_df,
         carbon_tax_reference
     )
-    # print(total_opex_reference)
     if serialize:
         logger.info("-- Serializing dataframe")
         serialize_file(
