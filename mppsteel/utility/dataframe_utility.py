@@ -263,7 +263,9 @@ def extend_df_years(df: pd.DataFrame, year_column: str, year_end: int, index: li
     df_c = df.reset_index().copy() if index else df.copy()    
     max_year = df_c[year_column].max()
     new_rows_full_df = pd.DataFrame().reindex_like(df_c)
-    if max_year >= year_end:
+    if max_year == year_end:
+        return df
+    if max_year > year_end:
         logger.warn(f"You entered {year_end}, but it is smaller than the max year of the model {max_year}. Returning original DataFrame")
         return df
     if max_year != year_end:
