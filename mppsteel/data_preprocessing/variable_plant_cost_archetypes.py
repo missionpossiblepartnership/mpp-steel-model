@@ -397,6 +397,7 @@ def plant_variable_costs_vectorized(input_data: PlantVariableCostsInput) -> pd.D
         lambda material: input_data.resource_category_mapper[material]
     )
     dm["cost_type"] = dm["cost_type"].astype("category")
+    
     return dm
 
 
@@ -429,9 +430,12 @@ def format_variable_costs(
 
     df_c = variable_cost_df.copy()
     df_c.reset_index(drop=True, inplace=True)
+    prices_columns = [col for col in df_c.columns if 'price' in col]
+    non_price_columns_to_drop = ["material_category", "unit", "cost_type", "value"]
+
     if group_data:
         df_c.drop(
-            ["material_category", "unit", "cost_type", "value", "price"], axis=1, inplace=True
+            prices_columns + non_price_columns_to_drop, axis=1, inplace=True
         )
         df_c = (
             df_c.groupby(by=["country_code", "year", "technology"])
