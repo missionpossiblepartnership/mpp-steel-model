@@ -603,14 +603,7 @@ def open_close_plants(
     capacity_mapping_plants = initial_plant_df[initial_plant_df["active_check"] == True].copy()
     capacity_container.map_capacities(capacity_mapping_plants, year)
     results_df = tech_choices_container.output_records_to_df("choice")
-    production_demand_gap_analysis = production_demand_gap(
-        steel_demand_df=steel_demand_df,
-        capacity_container=capacity_container,
-        utilization_container=utilization_container,
-        year=year,
-        capacity_util_max=open_plant_util_cutoff,
-        capacity_util_min=close_plant_util_cutoff,
-    )
+
     if trade_scenario:
         logger.info(f"Starting the trade flow for {year}")
         production_demand_gap_analysis = trade_flow(
@@ -625,6 +618,16 @@ def open_close_plants(
             year=year,
             util_min=close_plant_util_cutoff,
             util_max=open_plant_util_cutoff,
+        )
+    else:
+        logger.info(f"Starting the non-trade flow for {year}")
+        production_demand_gap_analysis = production_demand_gap(
+        steel_demand_df=steel_demand_df,
+        capacity_container=capacity_container,
+        utilization_container=utilization_container,
+        year=year,
+        capacity_util_max=open_plant_util_cutoff,
+        capacity_util_min=close_plant_util_cutoff,
         )
 
     regions = list(production_demand_gap_analysis.keys())
