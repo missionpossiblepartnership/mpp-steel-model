@@ -624,7 +624,6 @@ def subset_ccs_transport(
     scenario_dict: dict,
     cost_scenario: str = "low",
     currency_conversion_factor: float = None,
-    price_per_ton: bool = False,
 ) -> pd.DataFrame:
     """Subsets the CCS transport model according to scenario parameters passed from the scenario dict.
 
@@ -633,8 +632,6 @@ def subset_ccs_transport(
         scenario_dict (dict): The scenario_dict containing the full scenario setting for the current model run. Defaults to None.
         cost_scenario (str, optional): The parameter setting for the cost_scenario column. Defaults to 'low'.
         currency_conversion_factor (float, optional): The currency conversion factor that converts one currency to another. Defaults to None.
-        price_per_ton (bool, optional): Converts the transport price from per ton to megaton. Defaults to False.
-
     Returns:
         pd.DataFrame: A DataFrame containing the subset of the model.
     """
@@ -668,8 +665,6 @@ def subset_ccs_transport(
     )
     if currency_conversion_factor:
         cdf_c = convert_currency_col(cdf_c, "value", currency_conversion_factor)
-    if price_per_ton:
-        cdf_c["value"] = cdf_c["value"] / MEGATON_TO_TON
     return cdf_c[["region", "unit", "value"]].set_index(["region"])
 
 
@@ -813,7 +808,7 @@ def format_pe_data(
         bio_model_constraints, as_gj=standardize_units
     )  # ej to gj
     ccs_model_transport_f = subset_ccs_transport(
-        ccs_model_transport, scenario_dict, price_per_ton=standardize_units
+        ccs_model_transport, scenario_dict
     )  # from USD/Mt to USD/t
     ccs_model_storage_f = subset_ccs_storage(
         ccs_model_storage, scenario_dict
