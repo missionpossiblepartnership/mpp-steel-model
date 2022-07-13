@@ -23,7 +23,9 @@ from mppsteel.trade_module.trade_helpers import (
     test_open_close_plants,
     test_production_equals_demand,
     test_production_values,
+    test_regional_production,
     test_utilization_values,
+    print_demand_production_balance
 )
 from mppsteel.trade_module.trade_logic import (
     assign_all_import_demand, 
@@ -115,6 +117,9 @@ def trade_flow(
         capacity = plant_change_dict["capacity"]
         demand = plant_change_dict["demand"]
         new_min_utilization_required = round(demand / capacity, TRADE_ROUNDING_NUMBER)
+
+        if region == "NAFTA":
+            print(f"NAFTA {year} -> Capacity: {capacity} | Demand: {demand} | utilization: {utilization_container.get_utilization_values(year, region)}")
 
         # BALANCED
         if initial_balance == 0:
@@ -256,7 +261,10 @@ def trade_flow(
 
     global_production = market_container.trade_container_aggregator(year, "production")
     global_demand = sum(demand_dict.values())
-    assert round(global_production, TRADE_ROUNDING_NUMBER) == round(global_demand, TRADE_ROUNDING_NUMBER), f"production: {global_production: 2f} | demand: {global_demand: 2f} --- {market_container.trade_container_getter(year)} --- {demand_dict}"
+    test_regional_production(results_container, cases)
+
+
+    assert round(global_production, TRADE_ROUNDING_NUMBER) == round(global_demand, TRADE_ROUNDING_NUMBER), print_demand_production_balance(market_container, demand_dict, year)
 
     test_open_close_plants(results_container, cases)
     test_production_values(results_container, market_container, cases, year)
@@ -266,3 +274,10 @@ def trade_flow(
 
     logger.info(f"Final Trade Balance is {global_trade_balance: 2f} Mt in year {year}")
     return results_container
+
+# boundary checks
+# use demand figures for WSA
+# domestic, expoerer, importer
+# domesticd demand - domesticd prodiction + imports - exports
+# you can consider non-exporting plants to manage utilization
+# 

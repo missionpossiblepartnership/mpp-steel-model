@@ -263,3 +263,12 @@ def test_open_close_plants(results_container: dict, cases: dict):
     if incorrect_close_plants:
         string_container = [f"{region}: {results_container[region]['plants_to_close']} - {cases[region]}" for region in incorrect_close_plants]
         raise AssertionError(f"Incorrect number of plants_to_close in: {join_list_as_string(string_container)}")
+
+def print_demand_production_balance(market_container: MarketContainerClass, demand_dict: dict, year):
+    for region, demand in demand_dict.items():
+        production = market_container.return_trade_balance(year, region, "production")
+        print(f"region: {region} | demand: {demand} | production: {production} | trade_balance: {production - demand}")
+
+def test_regional_production(results_container, cases):
+    for region in results_container:
+        assert round(results_container[region]["new_utilized_capacity"], TRADE_ROUNDING_NUMBER) > 0, f"Production > 0 test failed for {region} -> cases: {cases[region]}"
