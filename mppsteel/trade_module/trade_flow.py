@@ -9,6 +9,7 @@ from mppsteel.config.model_config import (
     TRADE_PCT_BOUNDARY_FACTOR_DICT,
     TRADE_ROUNDING_NUMBER
 )
+from mppsteel.config.reference_lists import REGION_LIST
 from mppsteel.model_solver.solver_classes import (
     CapacityContainerClass,
     UtilizationContainerClass,
@@ -34,7 +35,6 @@ from mppsteel.trade_module.trade_logic import (
     create_plant_change_dict, 
     excess_production_lower_utilization, 
     expensive_excess_supply_lower_utilization, 
-    lower_utilization_for_exporters, 
     open_plants, 
     open_plants_cheapest_region, 
     supply_deficit_import, 
@@ -92,8 +92,8 @@ def trade_flow(
     relative_production_cost_df = check_relative_production_cost(
         cos_df, "cost_of_steelmaking", TRADE_PCT_BOUNDARY_FACTOR_DICT
     )
-    region_list = list(plant_df[MAIN_REGIONAL_SCHEMA].unique())
     results_container = {}
+    region_list = REGION_LIST
     regional_capacity_dict = {region: 0 for region in region_list}
     cases = {region: [] for region in region_list}
     demand_dict = {
@@ -256,7 +256,7 @@ def trade_flow(
 
     global_production = market_container.trade_container_aggregator(year, "production")
     global_demand = sum(demand_dict.values())
-    assert round(global_production, TRADE_ROUNDING_NUMBER) == round(global_demand, TRADE_ROUNDING_NUMBER), f"production: {global_production: 2f} | demand: {global_demand: 2f} --- {market_container.trade_container_getter(year)}"
+    assert round(global_production, TRADE_ROUNDING_NUMBER) == round(global_demand, TRADE_ROUNDING_NUMBER), f"production: {global_production: 2f} | demand: {global_demand: 2f} --- {market_container.trade_container_getter(year)} --- {demand_dict}"
 
     test_open_close_plants(results_container, cases)
     test_production_values(results_container, market_container, cases, year)
