@@ -340,7 +340,7 @@ def bc_unit_adjustments(row: pd.Series) -> pd.Series:
 
 
 @timer_func
-def create_business_case_reference(serialize: bool = True) -> dict:
+def create_business_case_reference(serialize: bool = True, from_csv: bool = False) -> dict:
     """Turns the business cases into a reference dictionary for fast access. But saves a dataframe version and dict as pickle file depending on the `serialize` boolean flag.
 
     Args:
@@ -349,7 +349,12 @@ def create_business_case_reference(serialize: bool = True) -> dict:
     Returns:
         dict: The dictionary reference of the standardised business cases.
     """
-    business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "technology_business_cases")
+    if from_csv:
+        business_cases = extract_data(
+            IMPORT_DATA_PATH, "Technology Business Cases", "csv"
+        )
+    else:
+        business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "technology_business_cases")
     business_cases = format_business_cases(business_cases)
     business_cases.reset_index(inplace=True)
     business_cases["value"] = business_cases.apply(bc_unit_adjustments, axis=1)
@@ -362,4 +367,4 @@ def create_business_case_reference(serialize: bool = True) -> dict:
         serialize_file(
             business_case_reference, PKL_DATA_FORMATTED, "business_case_reference"
         )
-    return business_case_reference
+    return business_cases, business_case_reference
