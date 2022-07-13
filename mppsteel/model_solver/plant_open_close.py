@@ -4,7 +4,6 @@ from copy import deepcopy
 import math
 
 import pandas as pd
-import numpy as np
 
 import random
 
@@ -18,13 +17,11 @@ from mppsteel.utility.plant_container_class import PlantIdContainer
 from mppsteel.data_load_and_format.reg_steel_demand_formatter import steel_demand_getter
 
 from mppsteel.config.model_config import (
-    AVERAGE_CAPACITY_MT,
     MAIN_REGIONAL_SCHEMA,
     CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
     CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
     MEGATON_TO_KILOTON_FACTOR,
-    MODEL_YEAR_START,
-    TRADE_ROUNDING_NUMBER,
+    TRADE_ROUNDING_NUMBER
 )
 
 from mppsteel.model_solver.solver_classes import (
@@ -36,7 +33,8 @@ from mppsteel.model_solver.solver_classes import (
     apply_constraints_for_min_cost_tech,
     create_material_usage_dict,
 )
-from mppsteel.model_solver.trade import test_utilization_values, trade_flow, utilization_boundary, get_initial_utilization
+from mppsteel.trade_module.trade_helpers import test_utilization_values, utilization_boundary, get_initial_utilization
+from mppsteel.trade_module.trade_flow import trade_flow
 
 from mppsteel.utility.log_utility import get_logger
 
