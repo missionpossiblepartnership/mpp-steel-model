@@ -642,8 +642,6 @@ def open_close_plants(
         .copy()
     )
 
-    production_demand_gap_analysis_df = create_and_test_market_df(production_demand_gap_analysis, year, True)
-
     # REGION LOOP
     for region in regions:
         plants_required = production_demand_gap_analysis[region]["plants_required"]
@@ -769,13 +767,12 @@ def open_close_plants(
             assert round(initial_utilization, TRADE_ROUNDING_NUMBER) <= round(new_utilization, TRADE_ROUNDING_NUMBER), f"{region}: Initial Utilization {initial_utilization} is smaller than the New Utilization {new_utilization}"
             assert round(close_plant_util_cutoff, TRADE_ROUNDING_NUMBER) <= round(new_utilization, TRADE_ROUNDING_NUMBER) <= round(open_plant_util_cutoff, TRADE_ROUNDING_NUMBER), f"{region}: utilization {new_utilization :2f} is out of bounds"
 
-            production_demand_gap_analysis[region]["plants_to_close"] = len(actual_plants_to_close)
             production_demand_gap_analysis[region]["new_total_capacity"] = new_total_capacity
             production_demand_gap_analysis[region]["new_utilization"] = new_utilization
 
-    test_utilization_values(utilization_container, year, close_plant_util_cutoff, open_plant_util_cutoff)
+    test_utilization_values(utilization_container, production_demand_gap_analysis, year, close_plant_util_cutoff, open_plant_util_cutoff)
     production_demand_gap_analysis_df = create_and_test_market_df(production_demand_gap_analysis, year, test_df=True)
-    market_container.store_results(year, production_demand_gap_analysis_df)
+    market_container.store_results(year, production_demand_gap_analysis_df, "market_results")
 
     new_active_plants = initial_plant_df[initial_plant_df["active_check"] == True].copy()
     capacity_container.map_capacities(new_active_plants, year)

@@ -3,7 +3,6 @@
 import pandas as pd
 
 from mppsteel.config.model_config import (
-    MAIN_REGIONAL_SCHEMA,
     CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
     CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
     TRADE_PCT_BOUNDARY_FACTOR_DICT,
@@ -19,6 +18,7 @@ from mppsteel.data_load_and_format.reg_steel_demand_formatter import steel_deman
 from mppsteel.trade_module.trade_helpers import (
     calculate_cos,
     check_relative_production_cost,
+    get_initial_utilization,
     test_capacity_values,
     test_open_close_plants,
     test_production_equals_demand,
@@ -92,8 +92,9 @@ def trade_flow(
         capacity_container,
     )
     relative_production_cost_df = check_relative_production_cost(
-        cos_df, "cost_of_steelmaking", TRADE_PCT_BOUNDARY_FACTOR_DICT
+        cos_df, "cost_of_steelmaking", TRADE_PCT_BOUNDARY_FACTOR_DICT, year
     )
+    market_container.store_results(year, relative_production_cost_df.reset_index(), "competitiveness")
     results_container = {}
     region_list = REGION_LIST
     regional_capacity_dict = {region: 0 for region in region_list}
@@ -102,6 +103,8 @@ def trade_flow(
         region: steel_demand_getter(steel_demand_df, year=year, metric="crude", region=region) for region in region_list
     }
     avg_plant_capacity_value = capacity_container.return_avg_capacity_value()
+    initial_utilization = utilization_container.get_utilization_values(year - 1)
+    assert all(v != 0 for v in initial_utilization.values()), f"Utilization values are zero {initial_utilization}"
 
     for region in region_list:
         avg_plant_capacity_at_max_production = avg_plant_capacity_value * util_max
@@ -118,13 +121,10 @@ def trade_flow(
         demand = plant_change_dict["demand"]
         new_min_utilization_required = round(demand / capacity, TRADE_ROUNDING_NUMBER)
 
-        if region == "NAFTA":
-            print(f"NAFTA {year} -> Capacity: {capacity} | Demand: {demand} | utilization: {utilization_container.get_utilization_values(year, region)}")
-
         # BALANCED
         if initial_balance == 0:
             plant_change_dict, regional_capacity_dict, cases = balanced_regional_balance(
-                plant_change_dict, market_container, regional_capacity_dict, cases, year, region, util_min, util_max
+                plant_change_dict, market_container, utilization_container, regional_capacity_dict, cases, year, region, util_min, util_max
             )
 
         # EXPORTERS
@@ -152,7 +152,7 @@ def trade_flow(
                     plant_change_dict, market_container, utilization_container, regional_capacity_dict, cases, year, region,
                     util_min, util_max,
                 )
-            elif new_min_utilization_required > util_max:
+            elif new_min_utilization_required >= util_max:
                 plant_change_dict, regional_capacity_dict, cases = open_plants(
                     plant_change_dict, market_container, utilization_container, regional_capacity_dict, cases, year, region,
                     util_min, util_max, avg_plant_capacity_value, avg_plant_capacity_at_max_production
@@ -261,7 +261,7 @@ def trade_flow(
 
     global_production = market_container.trade_container_aggregator(year, "production")
     global_demand = sum(demand_dict.values())
-    test_regional_production(results_container, cases)
+    test_regional_production(results_container, relative_production_cost_df, cases)
 
 
     assert round(global_production, TRADE_ROUNDING_NUMBER) == round(global_demand, TRADE_ROUNDING_NUMBER), print_demand_production_balance(market_container, demand_dict, year)
@@ -270,7 +270,7 @@ def trade_flow(
     test_production_values(results_container, market_container, cases, year)
     test_capacity_values(results_container, regional_capacity_dict, cases)
     test_production_equals_demand(global_demand, global_production)
-    test_utilization_values(utilization_container, year, util_min, util_max, cases)
+    test_utilization_values(utilization_container, results_container, year, util_min, util_max, cases)
 
     logger.info(f"Final Trade Balance is {global_trade_balance: 2f} Mt in year {year}")
     return results_container
@@ -278,6 +278,5 @@ def trade_flow(
 # boundary checks
 # use demand figures for WSA
 # domestic, expoerer, importer
-# domesticd demand - domesticd prodiction + imports - exports
+# domesticd demand - domestic prodiction + imports - exports
 # you can consider non-exporting plants to manage utilization
-# 

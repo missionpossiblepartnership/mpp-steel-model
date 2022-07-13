@@ -525,8 +525,8 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
     )
     variable_cost_df.sort_index(ascending=True, inplace=True)
     plant_result_df = read_pickle_folder(intermediate_path, "plant_result_df", "df")
-    trade_summary_results = read_pickle_folder(
-        intermediate_path, "trade_summary_results", "df"
+    full_trade_summary = read_pickle_folder(
+        intermediate_path, "full_trade_summary", "df"
     )
     model_decades = decades_between_dates(MODEL_YEAR_RANGE)
 
@@ -608,7 +608,7 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
     create_new_plant_capacity_graph(plant_result_df, "area", filepath=filepath)
     create_new_plant_capacity_graph(plant_result_df, "bar", filepath=filepath)
 
-    create_trade_balance_graph(trade_summary_results, filepath=filepath)
+    create_trade_balance_graph(full_trade_summary, filepath=filepath)
 
     for resource_type, region in list(
         itertools.product({"energy", "material"}, {"China", "India", "Europe", "NAFTA"})

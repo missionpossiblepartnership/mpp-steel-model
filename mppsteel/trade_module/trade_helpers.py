@@ -20,7 +20,7 @@ from mppsteel.utility.utils import join_list_as_string
 logger = get_logger(__name__)
 
 def check_relative_production_cost(
-    cos_df: pd.DataFrame, value_col: str, pct_boundary_dict: dict
+    cos_df: pd.DataFrame, value_col: str, pct_boundary_dict: dict, year: int
 ) -> pd.DataFrame:
     """Adds new columns to a dataframe that groups regional cost of steelmaking dataframe around whether the region's COS are above or below the average.
 
@@ -46,6 +46,7 @@ def check_relative_production_cost(
         apply_upper_boundary, mean_value=mean_val, value_range=value_range, pct_boundary_dict=pct_boundary_dict, axis=1)
     df_c["relative_cost_below_avg"] = df_c[value_col].apply(lambda x: x <= mean_val)
     df_c["relative_cost_close_to_mean"] = df_c.apply(close_to_mean_test, axis=1)
+    df_c["year"] = year
     return df_c.set_index('rmi_region')
 
 
@@ -242,17 +243,17 @@ def test_production_values(results_container: dict, market_container: MarketCont
         if round(dict_result, TRADE_ROUNDING_NUMBER) != round(container_result, TRADE_ROUNDING_NUMBER):
             raise AssertionError(f"Production Value Test | Year: {year} | Region: {region} | Dict Value (Container Value): {dict_result} ({container_result: 2f}) | Cases: {cases[region]}")
 
-def test_utilization_values(utilization_container: UtilizationContainerClass, year, util_min: float, util_max: float, cases: dict = None):
-    container = utilization_container.get_utilization_values(year)
-    overcapacity_regions = [key for key in container if round(container[key], TRADE_ROUNDING_NUMBER) > util_max]
-    undercapacity_regions = [key for key in container if round(container[key], TRADE_ROUNDING_NUMBER) < util_min]
-    cases = cases or {region: "" for region in container}
-    if overcapacity_regions:
-        string_container = [f"{region}: {container[region]: 2f} - {cases[region]}" for region in overcapacity_regions]
-        raise AssertionError(f"Regions Over Capacity in {year}: {join_list_as_string(string_container)}")
-    if undercapacity_regions:
-        string_container = [f"{region}: {container[region]: 2f} - {cases[region]}" for region in undercapacity_regions]
-        raise AssertionError(f"Regions Under Capacity in {year}: {join_list_as_string(string_container)}")
+def test_utilization_values(utilization_container: UtilizationContainerClass, results_container: dict, year: int, util_min: float, util_max: float, cases: dict = None):
+    util_container = utilization_container.get_utilization_values(year)
+    overutilized_regions = [key for key in util_container if round(util_container[key], TRADE_ROUNDING_NUMBER) > util_max]
+    underutilized_regions = [key for key in util_container if round(util_container[key], TRADE_ROUNDING_NUMBER) < util_min]
+    cases = cases or {region: "" for region in util_container}
+    if overutilized_regions:
+        string_container = [f"{region}: {util_container[region]: 2f} - {cases[region]}" for region in overutilized_regions]
+        raise AssertionError(f"Regional utilization rates: {util_container} | Regions Overutilized in {year}: {util_container} {join_list_as_string(string_container)}")
+    if underutilized_regions:
+        string_container = [f"{region}: {util_container[region]: 2f} - {cases[region]}" for region in underutilized_regions]
+        raise AssertionError(f"Regional utilization rates: {util_container} | Regions Underutilized in {year}: {join_list_as_string(string_container)}")
 
 def test_open_close_plants(results_container: dict, cases: dict):
     incorrect_open_plants = [region for region in results_container if results_container[region]["plants_required"] < 0]
@@ -269,6 +270,7 @@ def print_demand_production_balance(market_container: MarketContainerClass, dema
         production = market_container.return_trade_balance(year, region, "production")
         print(f"region: {region} | demand: {demand} | production: {production} | trade_balance: {production - demand}")
 
-def test_regional_production(results_container, cases):
+def test_regional_production(results_container: dict, rpc_df: pd.DataFrame, cases: dict):
     for region in results_container:
-        assert round(results_container[region]["new_utilized_capacity"], TRADE_ROUNDING_NUMBER) > 0, f"Production > 0 test failed for {region} -> cases: {cases[region]}"
+        summary_dict = results_container[region]
+        assert round(summary_dict["new_utilized_capacity"], TRADE_ROUNDING_NUMBER) > 0, f"Production > 0 test failed for {region} -> cases: {cases[region]} -> summary dictionary: {summary_dict}, rpc: {rpc_df.loc[region]}"

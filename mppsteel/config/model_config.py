@@ -135,7 +135,7 @@ INTERMEDIATE_RESULT_PKL_FILES = [
     "levelized_cost_standardized",
     "emissivity_abatement_switches",
     "tco_summary_data",
-    "trade_summary_results",
+    "full_trade_summary",
     "tech_choice_records",
     "tech_rank_records",
 ]

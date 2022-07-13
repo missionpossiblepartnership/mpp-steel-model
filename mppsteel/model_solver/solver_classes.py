@@ -471,6 +471,7 @@ class MarketContainerClass:
     def initiate_years(self, year_range: range):
         self.trade_container = {year: {} for year in year_range}
         self.market_results = {year: {} for year in year_range}
+        self.regional_competitiveness = {year: {} for year in year_range}
 
     def initiate_regions(self, region_list: list):
         production_account = {
@@ -524,7 +525,6 @@ class MarketContainerClass:
         elif account_type == "production":
             return regional_demand_minus_imports + exports
 
-
     def trade_container_aggregator(self, year: int, agg_type: bool, region: str = None) -> float:
         if region:
             return self.return_trade_balance(year, region, agg_type)
@@ -551,29 +551,45 @@ class MarketContainerClass:
         self.trade_container[year][region][account_type] = current_value + value
         return None
 
-    def output_trade_summary_to_df(self):
-        dict_colname = "full_dict"
-        df = (
-            pd.DataFrame(self.trade_container)
-            .reset_index()
-            .melt(id_vars=["index"], var_name="year", value_name=dict_colname)
-        )
-        for col in df.loc[0][dict_colname]:
-            df[col] = df[dict_colname].apply(lambda dict_entry: dict_entry[col])
-        df.drop(dict_colname, axis=1, inplace=True)
+    def store_results(self, year: int, results_df: pd.DataFrame, store_type: str):
+        if store_type == "market_results":
+            self.market_results[year] = results_df
+        elif store_type == "competitiveness":
+            self.regional_competitiveness[year] = results_df
+
+    def return_results(self, year: int, store_type: str):
+        if store_type == "market_results":
+            return self.market_results[year]
+        elif store_type == "competitiveness":
+            return self.regional_competitiveness[year]
+
+    def create_trade_balance_summary(self):
+        market_dict = self.trade_container
+        df = pd.DataFrame.from_dict(
+            {(i,j): market_dict[i][j] for i in market_dict.keys() for j in market_dict[i].keys()},
+            orient='index'
+        ).rename_axis(index=['year', 'region'])
+        df["demand"] = df["regional_demand_minus_imports"] + df["imports"]
         df["trade_balance"] = df["exports"] - df["imports"]
-        return df.rename({"index": "region"}, axis=1)
+        return df[["demand", "imports", "exports", "regional_demand_minus_imports", "trade_balance"]].reset_index()
 
-    def store_results(self, year: int, results_df: pd.DataFrame):
-        self.market_results[year] = results_df
-
-    def return_results(self, year: int):
-        return self.market_results[year]
-
-    def output_trade_calculations_to_df(self):
-        dfs = [df for df in self.market_results.values() if isinstance(df, pd.DataFrame)]
-        return pd.concat(dfs, axis=1)
-
+    def output_trade_calculations_to_df(self, store_type: str):
+        market_result_list = [df for df in self.market_results.values() if isinstance(df, pd.DataFrame)]
+        competitiveness_list = [df for df in self.regional_competitiveness.values() if isinstance(df, pd.DataFrame)]
+        trade_account_df = self.create_trade_balance_summary()
+        if store_type == "market_results":
+            return pd.concat(market_result_list, axis=1)
+        if store_type == "competitiveness":
+            return pd.concat(competitiveness_list, axis=1)
+        if store_type == "trade_account":
+            return trade_account_df
+        if store_type == "merge_trade_summary":
+            competitiveness_df = pd.concat(competitiveness_list, axis=0)
+            competitiveness_df.rename({"rmi_region": "region"}, axis=1, inplace=True)
+            competitiveness_df.set_index(["year", "region"], inplace=True)
+            trade_account_df.set_index(["year", "region"], inplace=True)
+            final_df = competitiveness_df.join(trade_account_df)
+            return final_df.reset_index()
 
 def create_material_usage_dict(
     material_usage_dict_container: MaterialUsage,

@@ -871,8 +871,8 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
     active_check_results_dict = active_check_results(
         final_steel_plant_df, model_year_range
     )
-    trade_summary_results = market_container.output_trade_summary_to_df()
-    full_trade_calculations = market_container.output_trade_calculations_to_df()
+    production_demand_analysis = market_container.output_trade_calculations_to_df("market_results")
+    full_trade_summary = market_container.output_trade_calculations_to_df("merge_trade_summary")
     material_usage_results = MaterialUsageContainer.output_results_to_df()
     investment_dict = PlantInvestmentCycleContainer.return_investment_dict()
     plant_cycle_length_mapper = PlantInvestmentCycleContainer.return_cycle_lengths()
@@ -899,8 +899,8 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
         "regional_capacity_results": regional_capacity_results,
         "plant_capacity_results": plant_capacity_results,
         "utilization_results": utilization_results,
-        "trade_summary_results": trade_summary_results,
-        "full_trade_calculations": full_trade_calculations,
+        "production_demand_analysis": production_demand_analysis,
+        "full_trade_summary": full_trade_summary,
         "material_usage_results": material_usage_results,
         "constraints_summary": constraints_summary,
     }
@@ -1020,14 +1020,14 @@ def solver_flow(scenario_dict: dict, serialize: bool = False) -> dict:
             "utilization_results",
         )
         serialize_file(
-            results_dict["trade_summary_results"],
+            results_dict["production_demand_analysis"],
             intermediate_path,
-            "trade_summary_results",
+            "production_demand_analysis",
         )
         serialize_file(
-            results_dict["full_trade_calculations"],
+            results_dict["full_trade_summary"],
             intermediate_path,
-            "full_trade_calculations",
+            "full_trade_summary",
         )
         serialize_file(
             results_dict["material_usage_results"],
