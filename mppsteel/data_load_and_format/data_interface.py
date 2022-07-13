@@ -19,12 +19,13 @@ from mppsteel.data_validation.data_import_tests import (
 )
 
 # For logger and units dict
-from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
+from mppsteel.utility.file_handling_utility import extract_data, read_pickle_folder, serialize_file
 from mppsteel.utility.dataframe_utility import melt_and_index, convert_currency_col
 
 # Get model parameters
 from mppsteel.config.model_config import (
     GIGAJOULE_TO_MEGAJOULE_FACTOR,
+    IMPORT_DATA_PATH,
     MEGATON_TO_TON,
     MODEL_YEAR_END,
     PETAJOULE_TO_GIGAJOULE,
@@ -251,7 +252,7 @@ def format_business_cases(bc_df: pd.DataFrame) -> pd.DataFrame:
 
 
 @timer_func
-def create_capex_opex_dict(serialize: bool = False) -> dict:
+def create_capex_opex_dict(serialize: bool = False, from_csv: bool = False) -> dict:
     """Creates a Dictionary containing Greenfield, Brownfield and Opex values.
 
     Args:
@@ -260,9 +261,19 @@ def create_capex_opex_dict(serialize: bool = False) -> dict:
     Returns:
         dict: A dictionary containing the capex/opex values.
     """
-    greenfield_capex_df = read_pickle_folder(PKL_DATA_IMPORTS, "greenfield_capex")
-    brownfield_capex_df = read_pickle_folder(PKL_DATA_IMPORTS, "brownfield_capex")
-    other_opex_df = read_pickle_folder(PKL_DATA_IMPORTS, "other_opex")
+    if from_csv:
+        greenfield_capex_df = extract_data(
+            IMPORT_DATA_PATH, "CAPEX OPEX Per Technology", "xlsx", 0
+        )
+        brownfield_capex_df = extract_data(
+            IMPORT_DATA_PATH, "CAPEX OPEX Per Technology", "xlsx", 1
+        )
+        other_opex_df = extract_data(
+            IMPORT_DATA_PATH, "CAPEX OPEX Per Technology", "xlsx", 2)
+    else:
+        greenfield_capex_df = read_pickle_folder(PKL_DATA_IMPORTS, "greenfield_capex")
+        brownfield_capex_df = read_pickle_folder(PKL_DATA_IMPORTS, "brownfield_capex")
+        other_opex_df = read_pickle_folder(PKL_DATA_IMPORTS, "other_opex")
     capex_dict = capex_dictionary_generator(
         greenfield_capex_df,
         brownfield_capex_df,

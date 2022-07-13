@@ -457,3 +457,17 @@ JAPAN_SOUTHKOREA_TAIWAN = ["JPN", "PRK", "TWN"]
 ALL_ASIA_COUNTRIES = CENTRAL_ASIA_COUNTRIES + SOUTH_ASIA_COUNTRIES + NORTH_ASIA_COUNTRIES + JAPAN_SOUTHKOREA_TAIWAN
 
 ALL_EUROPE_COUNTRIES = WESTERN_EUROPE_COUNTRIES + EASTERN_EUROPE_COUNTRIES
+
+REGION_LIST = [
+    "Africa",
+    "China",
+    "CIS",
+    "Europe",
+    "India",
+    "Japan, South Korea, and Taiwan",
+    "Middle East",
+    "NAFTA",
+    "RoW",
+    "South and Central America",
+    "Southeast Asia",
+]

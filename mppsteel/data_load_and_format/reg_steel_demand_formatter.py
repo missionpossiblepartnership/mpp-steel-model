@@ -3,7 +3,7 @@
 import pandas as pd
 import pandera as pa
 
-from mppsteel.config.model_config import MODEL_YEAR_END, PKL_DATA_IMPORTS
+from mppsteel.config.model_config import IMPORT_DATA_PATH, MODEL_YEAR_END, PKL_DATA_IMPORTS
 from mppsteel.config.model_scenarios import STEEL_DEMAND_SCENARIO_MAPPER
 from mppsteel.utility.dataframe_utility import extend_df_years
 from mppsteel.utility.function_timer_utility import timer_func
@@ -12,6 +12,7 @@ from mppsteel.utility.location_utility import (
     get_countries_from_group,
 )
 from mppsteel.utility.file_handling_utility import (
+    extract_data,
     read_pickle_folder,
     serialize_file,
     get_scenario_pkl_path,
@@ -94,7 +95,7 @@ def add_average_values(df: pd.DataFrame) -> pd.DataFrame:
 
 
 @timer_func
-def get_steel_demand(scenario_dict: dict, serialize: bool = False) -> pd.DataFrame:
+def get_steel_demand(scenario_dict: dict, serialize: bool = False, from_csv: bool = False) -> pd.DataFrame:
     """Complete preprocessing flow for the regional steel demand data.
 
     Args:
@@ -107,16 +108,21 @@ def get_steel_demand(scenario_dict: dict, serialize: bool = False) -> pd.DataFra
     intermediate_path = get_scenario_pkl_path(
         scenario_dict["scenario_name"], "intermediate"
     )
-    index_cols = ["year", "scenario", "metric"]
-    steel_demand = read_pickle_folder(PKL_DATA_IMPORTS, "regional_steel_demand", "df")
-    steel_demand_f = steel_demand_creator(steel_demand, RMI_MATCHER, index_cols)
-    steel_demand_f = extend_df_years(steel_demand_f, "year", MODEL_YEAR_END, index_cols)
+    if from_csv:
+        steel_demand = extract_data(
+            IMPORT_DATA_PATH, "Regional Steel Demand", "csv"
+        )
+    else:
+        steel_demand = read_pickle_folder(PKL_DATA_IMPORTS, "regional_steel_demand", "df")
+    steel_demand_f = steel_demand_creator(steel_demand, RMI_MATCHER, ["year", "scenario", "metric"])
     steel_demand_f = add_average_values(steel_demand_f)
     scenario_entry = STEEL_DEMAND_SCENARIO_MAPPER[
         scenario_dict["steel_demand_scenario"]
     ]
     steel_demand_f = steel_demand_f.loc[:, scenario_entry, :].copy()
-    steel_demand_f.reset_index().set_index(["year", "metric"])
+    index_cols = ["year", "metric"]
+    steel_demand_f.reset_index().set_index(index_cols)
+    steel_demand_f = extend_df_years(steel_demand_f, "year", MODEL_YEAR_END, index_cols)
     if serialize:
         serialize_file(
             steel_demand_f, intermediate_path, "regional_steel_demand_formatted"

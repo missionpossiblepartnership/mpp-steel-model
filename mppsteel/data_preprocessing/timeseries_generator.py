@@ -55,8 +55,8 @@ def timeseries_generator(
     df_schema = {"value": float, "units": str}
     # Define the year range for the df
     year_range = pd.RangeIndex(start_year, end_year + 1)
-    zero_range = range(int(start_year), int(series_start_year))
-    value_range = range(int(series_start_year), int(end_year + 1))
+    zero_range = range(int(start_year), int(series_start_year + 1))
+    value_range = range(int(series_start_year + 1), int(end_year + 1))
     # Create the DataFrame
     df = pd.DataFrame(
         index=pd.RangeIndex(0, len(year_range)),
@@ -85,7 +85,7 @@ def timeseries_generator(
             elif row.Index < end_year:
                 # logic for remaining years except last year
                 df_c.loc[row.Index, "value"] = (end_value / len(value_range)) * (
-                    (row.Index + 1) - series_start_year
+                    (row.Index) - series_start_year
                 )
             else:
                 df_c.loc[row.Index, "value"] = end_value  # logic for last year
