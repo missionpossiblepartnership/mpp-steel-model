@@ -512,3 +512,8 @@ parser.add_argument(
     action="store_true",
     help="Runs script to transfer data to blob storage",
 )  # transfer_results_to_azure
+parser.add_argument(
+    "--investment_cycles",
+    action="store_true",
+    help="Runs script to create investment cycles",
+)  # investment_cycles

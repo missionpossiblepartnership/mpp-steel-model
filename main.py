@@ -174,4 +174,7 @@ if __name__ == "__main__":
     if args.data_transfer:
         transfer_results_to_azure(blob_storage_connect_str)
 
+    if args.investment_cycles:
+        investment_cycles()
+
     TIME_CONTAINER.return_time_container()
