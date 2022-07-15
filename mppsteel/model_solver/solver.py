@@ -435,7 +435,7 @@ class ChooseTechnologyInput:
         abatement_slim = subset_presolver_df(
             steel_plant_abatement_switches, subset_type="abatement"
         )
-        wsa_dict = create_wsa_2020_utilization_dict()
+        wsa_dict = create_wsa_2020_utilization_dict(utilization_cap=1)
         model_year_range = MODEL_YEAR_RANGE
         return cls(
             original_plant_df=original_plant_df,

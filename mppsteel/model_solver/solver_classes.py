@@ -931,7 +931,7 @@ def return_utilization(
     return util_dict
 
 
-def create_wsa_2020_utilization_dict(project_dir=PROJECT_PATH, from_csv: bool = False) -> dict:
+def create_wsa_2020_utilization_dict(project_dir=PROJECT_PATH, from_csv: bool = False, utilization_cap: int = 1) -> dict:
     """Creates the initial utilization dictionary for 2020 based on data from the World Steel Association (WSA).
 
     Returns:
@@ -947,4 +947,4 @@ def create_wsa_2020_utilization_dict(project_dir=PROJECT_PATH, from_csv: bool = 
     )
     wsa_2020_production_dict = format_wsa_production_data(wsa_production, as_dict=True)
     capacity_dict = create_regional_capacity_dict(steel_plants_processed, as_mt=True)
-    return return_utilization(wsa_2020_production_dict, capacity_dict, utilization_cap=1)
+    return return_utilization(wsa_2020_production_dict, capacity_dict, utilization_cap=utilization_cap)
