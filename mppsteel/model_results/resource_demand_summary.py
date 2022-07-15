@@ -43,12 +43,12 @@ RESULTS_METADATA = {
     "biofuel_biomass": {
         "old_value_column": "biomass_gj",
         "new_value_column": "biomass_mt",
-        "conversion_factor": BIOMASS_ENERGY_DENSITY_GJ_PER_TON / MEGATON_TO_TON,
+        "conversion_factor": 1 / (BIOMASS_ENERGY_DENSITY_GJ_PER_TON * MEGATON_TO_TON),
     },
     "biofuel_biomethane": {
         "old_value_column": "biomethane_gj",
         "new_value_column": "biomethane_mt",
-        "conversion_factor": BIOMASS_ENERGY_DENSITY_GJ_PER_TON / MEGATON_TO_TON,
+        "conversion_factor": 1 / (BIOMASS_ENERGY_DENSITY_GJ_PER_TON * MEGATON_TO_TON),
     },
     "natural_gas": {
         "old_value_column": "natural_gas_gj",
