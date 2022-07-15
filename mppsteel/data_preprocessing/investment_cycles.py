@@ -31,7 +31,7 @@ def calculate_investment_years(
     op_start_year: int,
     cycle_length: int,
     cutoff_start_year: int = MODEL_YEAR_START,
-    cutoff_end_year: int = MODEL_YEAR_END,
+    cutoff_end_year: int = MODEL_YEAR_END
 ) -> list:
     """Creates a list of investment decision years for a plant based on inputted parameters that determine the decision years.
 
@@ -46,7 +46,8 @@ def calculate_investment_years(
     """
     x = op_start_year
     decision_years = []
-    while x <= cutoff_end_year:
+    while net_zero_year_bring_forward(x) <= cutoff_end_year:
+        x = net_zero_year_bring_forward(x)
         if x >= cutoff_start_year:
             decision_years.append(x)
         x += cycle_length
@@ -92,6 +93,22 @@ def return_switch_type(investment_cycle: list, year: int) -> str:
     return "no switch"
 
 
+def net_zero_year_bring_forward(year: int) -> int:
+    """Determines whether an investment year should be brought forward to be within the acceptable range to become net zero.
+
+    Args:
+        year (int): The year to be considered for a readjustment.
+
+    Returns:
+        int: The adjusted year that is within the net zero target range.
+    """
+    if year in range(
+        NET_ZERO_TARGET_YEAR, NET_ZERO_TARGET_YEAR + NET_ZERO_VARIANCE_YEARS + 1
+    ):
+        return NET_ZERO_TARGET_YEAR - 1
+    return year
+
+
 def add_off_cycle_investment_years(
     main_investment_cycle: list,
     start_buff: int = INVESTMENT_OFFCYCLE_BUFFER_TOP,
@@ -110,27 +127,12 @@ def add_off_cycle_investment_years(
     inv_cycle_length = len(main_investment_cycle)
     range_list = list() # List[int, range]
 
-    def net_zero_year_bring_forward(year: int) -> int:
-        """Determines whether an investment year should be brought forward to be within the acceptable range to become net zero.
-
-        Args:
-            year (int): The year to be considered for a readjustment.
-
-        Returns:
-            int: The adjusted year that is within the net zero target range.
-        """
-        if year in range(
-            NET_ZERO_TARGET_YEAR, NET_ZERO_TARGET_YEAR + NET_ZERO_VARIANCE_YEARS + 1
-        ):
-            return NET_ZERO_TARGET_YEAR - 1
-        return year
-
     # For inv_cycle_length = 0
     if inv_cycle_length == 0:
         return range_list
 
     # For inv_cycle_length >= 1
-    first_year = net_zero_year_bring_forward(main_investment_cycle[0])
+    first_year = main_investment_cycle[0]
 
     # Add initial transitional switch window
     if first_year - end_buff > MODEL_YEAR_START:
@@ -141,7 +143,7 @@ def add_off_cycle_investment_years(
 
     if inv_cycle_length > 1:
         for index in range(1, inv_cycle_length):
-            inv_year = net_zero_year_bring_forward(main_investment_cycle[index])
+            inv_year = main_investment_cycle[index]
             range_object = range(
                 main_investment_cycle[index - 1] + start_buff, inv_year - end_buff
             )
@@ -420,6 +422,7 @@ def investment_cycle_flow(serialize: bool = False) -> pd.DataFrame:
     start_plant_years = steel_plant_df["start_of_operation"].to_list()
     PlantInvestmentCycles.instantiate_plants(steel_plant_names, start_plant_years)
     PlantInvestmentCycles.test_cycle_lengths()
+    print(PlantInvestmentCycles.plant_cycles_with_off_cycle)
 
     if serialize:
         logger.info("-- Serializing Investment Cycle Reference")
