@@ -26,7 +26,7 @@ MarketBalanceContainer = namedtuple(
 )
 ClosePlantsContainer = namedtuple(
     'ClosePlants', 
-    [ 'plants_to_close', 'new_total_capacity', 'new_min_utilization_required', 'new_utilized_capacity']
+    [ 'plants_to_close', 'new_total_capacity', 'new_min_utilization_required', 'new_utilized_capacity', 'new_capacity_required']
 )
 OpenPlantsContainer = namedtuple(
     'OpenPlants', 
@@ -74,27 +74,53 @@ def assign_mkt_balance_to_mkt_container(market_container: MarketContainerClass, 
         )
     )
 
+def post_logic_updates(
+    utilization_container: UtilizationContainerClass,
+    capacity_container: CapacityContainerClass,
+    plant_change_dict: dict,
+    cases: dict,
+    year: int,
+    region: str,
+    capacity: float,
+    utilization: float,
+    util_min: float,
+    util_max: float
+):
+    test_market_dict_output(plant_change_dict, util_min, util_max)
+    utilization_container.update_region(year, region, utilization)
+    capacity_container[region] = capacity
+    plant_change_dict["cases"] = cases[region]
+    return capacity_container, cases
+
+
 def calculate_plants_to_close(
-    initial_capacity: float, excess_capacity: float, 
-    avg_plant_capacity_value: float, production: float, 
+    region: str, initial_capacity: float, production: float,
+    avg_plant_capacity_value: float, 
     util_min: float, util_max: float
 ):
+    capacity_required = production / util_min
+    would_be_utilization = production / initial_capacity
+    assert would_be_utilization < util_min, f"Region: {region} | Initial Capacity {initial_capacity} is able to cover production requirements because min utilization would be {would_be_utilization}"
+    excess_capacity = capacity_required - initial_capacity
     plants_to_close = math.ceil(
-        excess_capacity / avg_plant_capacity_value
+        -excess_capacity / avg_plant_capacity_value
     )
+    capacity_to_close = (plants_to_close * avg_plant_capacity_value)
+    print(capacity_to_close)
+    assert capacity_to_close > 0
     new_total_capacity = initial_capacity - (plants_to_close * avg_plant_capacity_value)
     new_min_utilization_required = production / new_total_capacity
-    assert new_min_utilization_required >= util_min, f"{new_min_utilization_required}"
-    new_min_utilization_required = utilization_boundary(
-        new_min_utilization_required, util_min, util_max
-    )
-    new_utilized_capacity = new_min_utilization_required * new_total_capacity
+    assert new_min_utilization_required >= util_min, f"Region: {region} | {new_min_utilization_required} is less than min utilization {util_min}"
+    new_utilized_capacity = new_total_capacity * new_min_utilization_required
+    new_capacity_required = new_total_capacity - initial_capacity
+    assert new_capacity_required < 0, f"Region: {region} | new capacity required {new_capacity_required} is not less than 0"
 
     return ClosePlantsContainer(
         plants_to_close,
         new_total_capacity,
         new_min_utilization_required,
-        new_utilized_capacity
+        new_utilized_capacity,
+        -capacity_to_close
     )
 
 def calculate_plants_to_open(
@@ -150,22 +176,6 @@ def balanced_regional_balance(
     utilization_container.update_region(year, region, initial_utilization)
     return plant_change_dict, capacity_container, cases
 
-def post_logic_updates(
-    utilization_container: UtilizationContainerClass,
-    capacity_container: CapacityContainerClass,
-    plant_change_dict: dict,
-    year: int,
-    region: str,
-    capacity: float,
-    utilization: float,
-    util_min: float,
-    util_max: float
-):
-    test_market_dict_output(plant_change_dict, util_min, util_max)
-    utilization_container.update_region(year, region, utilization)
-    capacity_container[region] = capacity
-    return capacity_container
-
 
 def cheap_excess_supply_export(
     plant_change_dict: dict,
@@ -189,53 +199,10 @@ def cheap_excess_supply_export(
     plant_change_dict["new_utilized_capacity"] = initial_production
     plant_change_dict["new_balance"] = mkt_balance.mkt_balance
     plant_change_dict["new_utilization"] = initial_utilization
-    capacity_container = post_logic_updates(
+    capacity_container, cases = post_logic_updates(
         utilization_container, capacity_container, 
-        plant_change_dict, year, region, 
+        plant_change_dict, cases, year, region, 
         capacity, initial_utilization, 
-        util_min, util_max
-    )
-    return plant_change_dict, capacity_container, cases
-
-
-
-def expensive_excess_supply_lower_utilization(
-    plant_change_dict: dict,
-    market_container: MarketContainerClass,
-    utilization_container: UtilizationContainerClass,
-    capacity_container: dict,
-    cases: dict,
-    year: int,
-    region: str,
-    util_min: float,
-    util_max = float
-):
-    cases[region].append("R0: EXPENSIVE EXCESS SUPPLY -> reduce utilization if possible")
-    capacity = plant_change_dict["capacity"]
-    demand = plant_change_dict["demand"]
-    new_min_utilization_required = demand / capacity
-    new_min_utilization_required = utilization_boundary(
-        new_min_utilization_required, util_min, util_max
-    )
-    new_utilized_capacity = capacity * new_min_utilization_required
-    mkt_balance = calculate_mkt_balance(new_utilized_capacity, demand)
-    market_container.assign_market_tuple(
-        year, 
-        region, 
-        market_container.return_market_entry(
-            mkt_balance.import_adjusted_demand,
-            mkt_balance.imports,
-            mkt_balance.exports
-        )
-    )
-    plant_change_dict["new_total_capacity"] = capacity
-    plant_change_dict["new_utilized_capacity"] = new_utilized_capacity
-    plant_change_dict["new_balance"] = mkt_balance.mkt_balance
-    plant_change_dict["new_utilization"] = new_min_utilization_required
-    capacity_container = post_logic_updates(
-        utilization_container, capacity_container, 
-        plant_change_dict, year, region, 
-        capacity, new_min_utilization_required, 
         util_min, util_max
     )
     return plant_change_dict, capacity_container, cases
@@ -256,31 +223,30 @@ def close_plants(
     cases[region].append("R0: EXPENSIVE EXCESS SUPPLY -> close plant")
     capacity = plant_change_dict["capacity"]
     demand = plant_change_dict["demand"]
-    required_capacity = demand / util_min
-    excess_capacity = capacity - required_capacity
     closed_plant_metadata = calculate_plants_to_close(
-        capacity, excess_capacity, avg_plant_capacity, 
-        demand, util_min, util_max
+        region, capacity, demand, avg_plant_capacity, 
+        util_min, util_max
     )
+    assert closed_plant_metadata.new_capacity_required < 0
     mkt_balance = calculate_mkt_balance(closed_plant_metadata.new_utilized_capacity, demand)
     assign_mkt_balance_to_mkt_container(market_container, mkt_balance, year, region)
     plant_change_dict["plants_to_close"] = closed_plant_metadata.plants_to_close
-    plant_change_dict["new_capacity_required"] = -excess_capacity
+    plant_change_dict["new_capacity_required"] = closed_plant_metadata.new_capacity_required
     plant_change_dict["new_total_capacity"] = closed_plant_metadata.new_total_capacity
     plant_change_dict["new_utilized_capacity"] = closed_plant_metadata.new_utilized_capacity
     plant_change_dict["new_balance"] = closed_plant_metadata.new_utilized_capacity - demand
     plant_change_dict["new_utilization"] = closed_plant_metadata.new_min_utilization_required
-    capacity_container = post_logic_updates(
+    capacity_container, cases = post_logic_updates(
         utilization_container, capacity_container, 
-        plant_change_dict, year, region, 
+        plant_change_dict, cases, year, region, 
         closed_plant_metadata.new_total_capacity, 
         closed_plant_metadata.new_min_utilization_required, 
-        util_min, util_max
+        util_min, util_max,
     )
     return plant_change_dict, capacity_container, cases
 
 
-def supply_deficit_increase_utilization(
+def adjust_utilization(
     plant_change_dict: dict,
     market_container: MarketContainerClass,
     utilization_container: UtilizationContainerClass,
@@ -289,25 +255,25 @@ def supply_deficit_increase_utilization(
     year: int,
     region: str,
     util_min: float,
-    util_max: float
+    util_max = float
 ):
-    cases[region].append("R0: INSUFFICIENT SUPPLY -> increase utilization (test)")
+    cases[region].append("R0: EXPENSIVE EXCESS SUPPLY -> reduce utilization if possible")
     capacity = plant_change_dict["capacity"]
     demand = plant_change_dict["demand"]
     new_min_utilization_required = demand / capacity
     new_min_utilization_required = utilization_boundary(
         new_min_utilization_required, util_min, util_max
     )
-    new_utilized_capacity = new_min_utilization_required * capacity
+    new_utilized_capacity = capacity * new_min_utilization_required
     mkt_balance = calculate_mkt_balance(new_utilized_capacity, demand)
     assign_mkt_balance_to_mkt_container(market_container, mkt_balance, year, region)
     plant_change_dict["new_total_capacity"] = capacity
     plant_change_dict["new_utilized_capacity"] = new_utilized_capacity
     plant_change_dict["new_balance"] = mkt_balance.mkt_balance
     plant_change_dict["new_utilization"] = new_min_utilization_required
-    capacity_container = post_logic_updates(
+    capacity_container, cases = post_logic_updates(
         utilization_container, capacity_container, 
-        plant_change_dict, year, region, 
+        plant_change_dict, cases, year, region, 
         capacity, new_min_utilization_required, 
         util_min, util_max
     )
@@ -343,9 +309,9 @@ def open_plants(
     plant_change_dict["new_utilized_capacity"] = open_plants_metadata.new_utilized_capacity
     plant_change_dict["new_balance"] = mkt_balance.mkt_balance
     plant_change_dict["new_utilization"] = open_plants_metadata.new_min_utilization_required
-    capacity_container = post_logic_updates(
+    capacity_container, cases = post_logic_updates(
         utilization_container, capacity_container, 
-        plant_change_dict, year, region, 
+        plant_change_dict, cases, year, region, 
         open_plants_metadata.new_total_capacity, 
         open_plants_metadata.new_min_utilization_required, 
         util_min, util_max
@@ -378,9 +344,9 @@ def supply_deficit_import(
     plant_change_dict["new_utilized_capacity"] = new_utilized_capacity
     plant_change_dict["new_balance"] = mkt_balance.mkt_balance
     plant_change_dict["new_utilization"] = new_min_utilization_required
-    capacity_container = post_logic_updates(
+    capacity_container, cases = post_logic_updates(
         utilization_container, capacity_container, 
-        plant_change_dict, year, region, 
+        plant_change_dict, cases, year, region, 
         capacity, new_min_utilization_required, 
         util_min, util_max
     )
@@ -416,16 +382,16 @@ def excess_production_lower_utilization(
         )
     )
     new_balance = market_container.trade_container_aggregator(year, "trade", region)
-    total_production = market_container.trade_container_aggregator(year, "production", region)
-    new_min_utilization_required = total_production / capacity
+    production = market_container.trade_container_aggregator(year, "production", region)
+    new_min_utilization_required = production / capacity
     assert round(new_min_utilization_required, TRADE_ROUNDING_NUMBER) >= util_min
     plant_change_dict[region]["new_total_capacity"] = capacity
     plant_change_dict[region]["new_utilization"] = new_min_utilization_required
-    plant_change_dict[region]["new_utilized_capacity"] = total_production
+    plant_change_dict[region]["new_utilized_capacity"] = production
     plant_change_dict[region]["new_balance"] = new_balance
-    capacity_container = post_logic_updates(
+    capacity_container, cases = post_logic_updates(
         utilization_container, capacity_container, 
-        plant_change_dict[region], year, region, 
+        plant_change_dict[region], cases, year, region, 
         capacity, new_min_utilization_required, 
         util_min, util_max
     )
@@ -477,9 +443,9 @@ def assign_all_import_demand(
     plant_change_dict[region]["new_utilized_capacity"] = new_utilized_capacity
     plant_change_dict[region]["new_balance"] = new_balance
     plant_change_dict[region]["new_utilization"] = new_min_utilization_required
-    capacity_container = post_logic_updates(
+    capacity_container, cases = post_logic_updates(
         utilization_container, capacity_container, 
-        plant_change_dict[region], year, region, 
+        plant_change_dict[region], cases, year, region, 
         capacity, new_min_utilization_required, 
         util_min, util_max
     )
@@ -517,9 +483,9 @@ def assign_partial_import_demand(
     plant_change_dict[region]["new_utilized_capacity"] = total_production
     plant_change_dict[region]["new_balance"] = trade_balance
     plant_change_dict[region]["new_utilization"] = new_min_utilization_required
-    capacity_container = post_logic_updates(
+    capacity_container, cases = post_logic_updates(
         utilization_container, capacity_container, 
-        plant_change_dict[region], year, region, 
+        plant_change_dict[region], cases, year, region, 
         capacity, new_min_utilization_required, 
         util_min, util_max
     )
@@ -567,9 +533,9 @@ def open_plants_cheapest_region(
     plant_change_dict[region]["new_utilized_capacity"] = open_plants_metadata.new_utilized_capacity
     plant_change_dict[region]["new_balance"] = mkt_balance.mkt_balance
     plant_change_dict[region]["new_utilization"] = open_plants_metadata.new_min_utilization_required
-    capacity_container = post_logic_updates(
+    capacity_container, cases = post_logic_updates(
         utilization_container, capacity_container, 
-        plant_change_dict[region], year, region, 
+        plant_change_dict[region], cases, year, region, 
         open_plants_metadata.new_total_capacity, 
         open_plants_metadata.new_min_utilization_required, 
         util_min, util_max
@@ -606,23 +572,24 @@ def close_plants_for_exporters(
         )
     )
     total_required_production = market_container.return_trade_balance(year, region, "production")
-    excess_capacity = capacity - (total_required_production / util_min)
-    close_plant_metadata = calculate_plants_to_close(
-        capacity, excess_capacity, avg_plant_capacity_value, 
-        total_required_production, util_min, util_max
+    closed_plant_metadata = calculate_plants_to_close(
+        region, capacity, total_required_production, 
+        avg_plant_capacity_value, util_min, util_max
     )
-    mkt_balance = calculate_mkt_balance(close_plant_metadata.new_utilized_capacity, demand)
-    assert round(total_required_production, TRADE_ROUNDING_NUMBER) == round(close_plant_metadata.new_utilized_capacity, TRADE_ROUNDING_NUMBER), f"Production Stats || region: {region} | container: {total_required_production} | dict: {close_plant_metadata.new_utilized_capacity}"
-    plant_change_dict[region]["plants_to_close"] = close_plant_metadata.plants_to_close
-    plant_change_dict[region]["new_total_capacity"] = close_plant_metadata.new_total_capacity
-    plant_change_dict[region]["new_utilized_capacity"] = close_plant_metadata.new_utilized_capacity
+    assert closed_plant_metadata.new_capacity_required < 0
+    mkt_balance = calculate_mkt_balance(closed_plant_metadata.new_utilized_capacity, demand)
+    assert round(total_required_production, TRADE_ROUNDING_NUMBER) == round(closed_plant_metadata.new_utilized_capacity, TRADE_ROUNDING_NUMBER), f"Production Stats || region: {region} | container: {total_required_production} | dict: {closed_plant_metadata.new_utilized_capacity}"
+    plant_change_dict[region]["plants_to_close"] = closed_plant_metadata.plants_to_close
+    plant_change_dict[region]["new_capacity_required"] = closed_plant_metadata.new_capacity_required
+    plant_change_dict[region]["new_total_capacity"] = closed_plant_metadata.new_total_capacity
+    plant_change_dict[region]["new_utilized_capacity"] = closed_plant_metadata.new_utilized_capacity
     plant_change_dict[region]["new_balance"] = mkt_balance.mkt_balance
-    plant_change_dict[region]["new_utilization"] = close_plant_metadata.new_min_utilization_required
-    capacity_container = post_logic_updates(
+    plant_change_dict[region]["new_utilization"] = closed_plant_metadata.new_min_utilization_required
+    capacity_container, cases = post_logic_updates(
         utilization_container, capacity_container, 
-        plant_change_dict[region], year, region, 
-        close_plant_metadata.new_total_capacity,
-        close_plant_metadata.new_min_utilization_required, 
+        plant_change_dict[region], cases, year, region, 
+        closed_plant_metadata.new_total_capacity,
+        closed_plant_metadata.new_min_utilization_required, 
         util_min, util_max
     )
     global_trade_balance -= trade_prodution_to_close

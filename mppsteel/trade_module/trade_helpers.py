@@ -1,6 +1,7 @@
 """Module that contains the trade helper functions"""
 
 from copy import deepcopy
+from enum import Enum
 
 import pandas as pd
 
@@ -18,6 +19,24 @@ from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.utils import join_list_as_string
 
 logger = get_logger(__name__)
+
+
+class TradeStatus(Enum):
+    DOMESTIC = "Domestic"
+    EXPORTER = "Exporter"
+    IMPORTER = "Importer"
+
+
+def return_trade_status(cos_close_to_mean: bool, trade_balance: float):
+    has_overproduction = trade_balance > 0
+    if not cos_close_to_mean and has_overproduction:
+        return TradeStatus.DOMESTIC
+    elif cos_close_to_mean and has_overproduction:
+        return TradeStatus.EXPORTER
+    elif not cos_close_to_mean and not has_overproduction:
+        return TradeStatus.IMPORTER
+    return TradeStatus.DOMESTIC
+
 
 def check_relative_production_cost(
     cos_df: pd.DataFrame, value_col: str, pct_boundary_dict: dict, year: int
@@ -213,6 +232,7 @@ def create_empty_market_dict(
         "new_balance": 0,
         "new_utilization": 0,
         "unit": "Mt",
+        "cases": []
     }
 
 def test_market_dict_output(plant_change_dict: dict, util_min: float, util_max: float):
