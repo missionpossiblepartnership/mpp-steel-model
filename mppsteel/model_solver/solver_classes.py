@@ -13,8 +13,10 @@ from mppsteel.config.model_config import (
     PKL_DATA_FORMATTED,
     MAIN_REGIONAL_SCHEMA,
     PROJECT_PATH,
+    TRADE_ROUNDING_NUMBER,
 )
 from mppsteel.config.reference_lists import RESOURCE_CONTAINER_REF
+from mppsteel.data_load_and_format.reg_steel_demand_formatter import steel_demand_getter
 from mppsteel.utility.file_handling_utility import extract_data, read_pickle_folder
 from mppsteel.model_solver.solver_constraints import (
     create_biomass_constraint,
@@ -563,33 +565,42 @@ class MarketContainerClass:
         elif store_type == "competitiveness":
             return self.regional_competitiveness[year]
 
-    def create_trade_balance_summary(self):
+    def create_trade_balance_summary(self, demand_df: pd.DataFrame):
+        def map_demand(row, demand_df: pd.DataFrame):
+            return steel_demand_getter(demand_df, row.year, "crude", region=row.region)
         market_dict = self.trade_container
         df = pd.DataFrame.from_dict(
             {(i,j): market_dict[i][j] for i in market_dict.keys() for j in market_dict[i].keys()},
             orient='index'
         ).rename_axis(index=['year', 'region'])
-        df["demand"] = df["regional_demand_minus_imports"] + df["imports"]
+        df.reset_index(inplace=True)
+        df["demand"] = df.apply(map_demand, demand_df=demand_df, axis=1)
         df["trade_balance"] = df["exports"] - df["imports"]
-        return df[["demand", "imports", "exports", "regional_demand_minus_imports", "trade_balance"]].reset_index()
+        df["result_validity_check"] = round(df["demand"] - df["regional_demand_minus_imports"] - df["exports"] + df["exports"] - df["imports"], TRADE_ROUNDING_NUMBER) == 0
+        column_order = ["year", "region", "demand", "imports", "exports", "regional_demand_minus_imports", "trade_balance"]
+        return df[column_order]
 
-    def output_trade_calculations_to_df(self, store_type: str):
+    def output_trade_calculations_to_df(self, store_type: str, demand_df: pd.DataFrame = pd.DataFrame()):
         market_result_list = [df for df in self.market_results.values() if isinstance(df, pd.DataFrame)]
         competitiveness_list = [df for df in self.regional_competitiveness.values() if isinstance(df, pd.DataFrame)]
-        trade_account_df = self.create_trade_balance_summary()
+        if not demand_df.empty:
+            trade_account_df = self.create_trade_balance_summary(demand_df)
         if store_type == "market_results":
             return pd.concat(market_result_list, axis=1)
         if store_type == "competitiveness":
             return pd.concat(competitiveness_list, axis=1)
         if store_type == "trade_account":
             return trade_account_df
-        if store_type == "merge_trade_summary":
+        if store_type == "merge_trade_summary" and not demand_df.empty:
             competitiveness_df = pd.concat(competitiveness_list, axis=0)
-            competitiveness_df.rename({"rmi_region": "region"}, axis=1, inplace=True)
-            competitiveness_df.set_index(["year", "region"], inplace=True)
-            trade_account_df.set_index(["year", "region"], inplace=True)
-            final_df = competitiveness_df.join(trade_account_df)
-            return final_df.reset_index()
+            return merge_competitiveness_with_trade_account(competitiveness_df, trade_account_df)
+
+
+def merge_competitiveness_with_trade_account(competitiveness_df: pd.DataFrame, trade_account_df: pd.DataFrame) -> pd.DataFrame:
+    competitiveness_df.rename({"rmi_region": "region"}, axis=1, inplace=True)
+    competitiveness_df.set_index(["year", "region"], inplace=True)
+    trade_account_df.set_index(["year", "region"], inplace=True)
+    return competitiveness_df.join(trade_account_df).reset_index()
 
 def create_material_usage_dict(
     material_usage_dict_container: MaterialUsage,
@@ -891,20 +902,14 @@ def format_wsa_production_data(df: pd.DataFrame, as_dict: bool = False) -> pd.Da
     """
     logger.info("Formatting WSA production data for 2020")
     df_c = df.copy()
-    df_c = df_c.melt(
-        id_vars=["WSA_Region", "RMI_Region", "Country", "Metric", "Unit"],
-        var_name="year",
-    )
-    df_c = df_c[df_c["year"] == 2020]
     df_c.columns = [col.lower() for col in df_c.columns]
-    df_c = df_c.groupby([MAIN_REGIONAL_SCHEMA, "year"]).sum().reset_index()
     if as_dict:
-        return dict(zip(df_c[MAIN_REGIONAL_SCHEMA], df_c["value"]))
+        return dict(zip(df_c["region"], df_c["value"]))
     return df_c
 
 
 def return_utilization(
-    prod_dict: dict, cap_dict: dict, value_cap: float = None
+    prod_dict: dict, cap_dict: dict, utilization_cap: float = None
 ) -> dict:
     """Creates a utilization dictionary based on production reference dictionary and capacity reference dictionary.
     Takes the minimum of the calculated capacity and the utilization `value cap`.
@@ -920,8 +925,8 @@ def return_utilization(
     util_dict = {}
     for region in prod_dict:
         val = round(prod_dict[region] / cap_dict[region], 2)
-        if value_cap:
-            val = min(val, value_cap)
+        if utilization_cap:
+            val = min(val, utilization_cap)
         util_dict[region] = val
     return util_dict
 
@@ -942,4 +947,4 @@ def create_wsa_2020_utilization_dict(project_dir=PROJECT_PATH, from_csv: bool = 
     )
     wsa_2020_production_dict = format_wsa_production_data(wsa_production, as_dict=True)
     capacity_dict = create_regional_capacity_dict(steel_plants_processed, as_mt=True)
-    return return_utilization(wsa_2020_production_dict, capacity_dict, value_cap=1)
+    return return_utilization(wsa_2020_production_dict, capacity_dict, utilization_cap=1)

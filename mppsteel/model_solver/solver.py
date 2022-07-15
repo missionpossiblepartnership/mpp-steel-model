@@ -63,7 +63,7 @@ from mppsteel.model_solver.solver_classes import (
     create_material_usage_dict,
     create_wsa_2020_utilization_dict
 )
-from mppsteel.model_solver.plant_open_close import open_close_plants
+from mppsteel.model_solver.plant_open_close_flow import open_close_plants
 from mppsteel.data_preprocessing.levelized_cost import generate_levelized_cost_results
 from mppsteel.utility.log_utility import get_logger
 
@@ -872,7 +872,7 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
         final_steel_plant_df, model_year_range
     )
     production_demand_analysis = market_container.output_trade_calculations_to_df("market_results")
-    full_trade_summary = market_container.output_trade_calculations_to_df("merge_trade_summary")
+    full_trade_summary = market_container.output_trade_calculations_to_df("merge_trade_summary", steel_demand_df)
     material_usage_results = MaterialUsageContainer.output_results_to_df()
     investment_dict = PlantInvestmentCycleContainer.return_investment_dict()
     plant_cycle_length_mapper = PlantInvestmentCycleContainer.return_cycle_lengths()
