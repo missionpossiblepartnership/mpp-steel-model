@@ -1,9 +1,10 @@
 """Formats Regional Steel Demand and defines getter function"""
 
+import itertools
 import pandas as pd
 import pandera as pa
 
-from mppsteel.config.model_config import IMPORT_DATA_PATH, MODEL_YEAR_END, PKL_DATA_IMPORTS
+from mppsteel.config.model_config import IMPORT_DATA_PATH, MODEL_YEAR_END, PKL_DATA_IMPORTS, PROJECT_PATH
 from mppsteel.config.model_scenarios import STEEL_DEMAND_SCENARIO_MAPPER
 from mppsteel.utility.dataframe_utility import extend_df_years
 from mppsteel.utility.function_timer_utility import timer_func
@@ -93,6 +94,24 @@ def add_average_values(df: pd.DataFrame) -> pd.DataFrame:
     average_base["value"] = average_values
     return pd.concat([df_c, average_base])
 
+def replace_2020_steel_demand_values_with_wsa_production(
+    demand_df: pd.DataFrame, 
+    index_cols: list, 
+    year_to_replace: int = 2020, 
+    project_dir=PROJECT_PATH
+) -> pd.DataFrame:
+
+    wsa_production = read_pickle_folder(project_dir / PKL_DATA_IMPORTS, "wsa_production", "df")
+    wsa_production.set_index("Region", inplace=True)
+    demand_df_c = demand_df.copy()
+    demand_df_c.reset_index(inplace=True)
+    scenarios = demand_df_c["scenario"].unique()
+    demand_df_c.set_index(["year", "metric", "scenario", "region"], inplace=True)
+    for region, scenario in list(itertools.product(wsa_production.index, scenarios)):
+        demand_df_c.loc[(year_to_replace, "Crude steel demand", scenario, region), "value"] = wsa_production.loc[region, "Value"]
+    demand_df_c.reset_index().set_index(index_cols, inplace=True)
+    assert not demand_df.equals(demand_df_c)
+    return demand_df_c
 
 @timer_func
 def get_steel_demand(scenario_dict: dict, serialize: bool = False, from_csv: bool = False) -> pd.DataFrame:
@@ -114,7 +133,9 @@ def get_steel_demand(scenario_dict: dict, serialize: bool = False, from_csv: boo
         )
     else:
         steel_demand = read_pickle_folder(PKL_DATA_IMPORTS, "regional_steel_demand", "df")
-    steel_demand_f = steel_demand_creator(steel_demand, RMI_MATCHER, ["year", "scenario", "metric"])
+    index_cols = ["year", "scenario", "metric"]
+    steel_demand_f = steel_demand_creator(steel_demand, RMI_MATCHER, index_cols)
+    replace_2020_steel_demand_values_with_wsa_production(steel_demand_f, index_cols)
     steel_demand_f = add_average_values(steel_demand_f)
     scenario_entry = STEEL_DEMAND_SCENARIO_MAPPER[
         scenario_dict["steel_demand_scenario"]
