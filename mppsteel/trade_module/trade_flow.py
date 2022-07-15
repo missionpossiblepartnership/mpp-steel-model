@@ -119,7 +119,7 @@ def trade_flow(
         initial_balance = round(plant_change_dict["initial_balance"], TRADE_ROUNDING_NUMBER)
 
         trade_status = return_trade_status(relative_cost_close_to_mean, initial_balance)
-        trade_status_container[region] = trade_status
+        trade_status_container[region] = trade_status.value
 
         capacity = plant_change_dict["capacity"]
         demand = plant_change_dict["demand"]

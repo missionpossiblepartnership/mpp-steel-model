@@ -106,7 +106,6 @@ def calculate_plants_to_close(
         -excess_capacity / avg_plant_capacity_value
     )
     capacity_to_close = (plants_to_close * avg_plant_capacity_value)
-    print(capacity_to_close)
     assert capacity_to_close > 0
     new_total_capacity = initial_capacity - (plants_to_close * avg_plant_capacity_value)
     new_min_utilization_required = production / new_total_capacity
@@ -435,7 +434,7 @@ def assign_all_import_demand(
     new_min_utilization_required = (
         new_utilized_capacity / capacity
     )
-    assert new_min_utilization_required <= util_max
+    assert round(new_min_utilization_required, TRADE_ROUNDING_NUMBER) <= util_max, f"Utilization Prosed {new_min_utilization_required} is higher than max {util_max}"
     new_min_utilization_required = utilization_boundary(
         new_min_utilization_required, util_min, util_max
     )

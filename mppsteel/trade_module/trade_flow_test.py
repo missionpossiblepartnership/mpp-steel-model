@@ -96,7 +96,7 @@ def test_trade_flow():
     capacity_container = CapacityContainerClass()
     capacity_container.instantiate_container(MODEL_YEAR_RANGE)
     plant_df = steel_plant_processor(from_csv=True)
-    business_case_df, business_case_dict = create_business_case_reference(from_csv=True)
+    business_case_df, _ = create_business_case_reference(from_csv=True)
     business_case_df.reset_index(inplace=True)
     
     country_codes = plant_df["country_code"].unique()
