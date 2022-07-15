@@ -109,7 +109,9 @@ def replace_2020_steel_demand_values_with_wsa_production(
     demand_df_c.set_index(["year", "metric", "scenario", "region"], inplace=True)
     for region, scenario in list(itertools.product(wsa_production.index, scenarios)):
         demand_df_c.loc[(year_to_replace, "Crude steel demand", scenario, region), "value"] = wsa_production.loc[region, "Value"]
-    demand_df_c.reset_index().set_index(index_cols, inplace=True)
+    for scenario in scenarios:
+        demand_df_c.loc[(year_to_replace, "Crude steel demand", scenario, "World"), "value"] = wsa_production["Value"].sum()
+    demand_df_c = demand_df_c.reset_index().set_index(index_cols)
     assert not demand_df.equals(demand_df_c)
     return demand_df_c
 
@@ -135,7 +137,7 @@ def get_steel_demand(scenario_dict: dict, serialize: bool = False, from_csv: boo
         steel_demand = read_pickle_folder(PKL_DATA_IMPORTS, "regional_steel_demand", "df")
     index_cols = ["year", "scenario", "metric"]
     steel_demand_f = steel_demand_creator(steel_demand, RMI_MATCHER, index_cols)
-    replace_2020_steel_demand_values_with_wsa_production(steel_demand_f, index_cols)
+    steel_demand_f = replace_2020_steel_demand_values_with_wsa_production(steel_demand_f, index_cols)
     steel_demand_f = add_average_values(steel_demand_f)
     scenario_entry = STEEL_DEMAND_SCENARIO_MAPPER[
         scenario_dict["steel_demand_scenario"]
