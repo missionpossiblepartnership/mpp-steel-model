@@ -1,4 +1,4 @@
-"""Module that determines functionality for opening and closing plants"""
+"""Module with functions used in the plant open close flow"""
 
 from copy import deepcopy
 import math
@@ -8,7 +8,6 @@ import pandas as pd
 import random
 
 from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
-from mppsteel.data_preprocessing.investment_cycles import PlantInvestmentCycle
 from mppsteel.model_solver.solver_constraints import tech_availability_check
 
 from mppsteel.utility.location_utility import pick_random_country_from_region_subset
@@ -20,21 +19,16 @@ from mppsteel.config.model_config import (
     MAIN_REGIONAL_SCHEMA,
     CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
     CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
-    MEGATON_TO_KILOTON_FACTOR,
     TRADE_ROUNDING_NUMBER
 )
 
 from mppsteel.model_solver.solver_classes import (
     CapacityContainerClass,
     UtilizationContainerClass,
-    MarketContainerClass,
-    PlantChoices,
     MaterialUsage,
     apply_constraints_for_min_cost_tech,
-    create_material_usage_dict,
 )
-from mppsteel.trade_module.trade_helpers import test_utilization_values, utilization_boundary, get_initial_utilization
-from mppsteel.trade_module.trade_flow import trade_flow
+from mppsteel.trade_module.trade_helpers import utilization_boundary, get_initial_utilization
 
 from mppsteel.utility.log_utility import get_logger
 
@@ -166,8 +160,8 @@ def get_min_cost_region(lcost_df: pd.DataFrame, year: int) -> str:
     return lcost_df_c["levelized_cost"].idxmin()
 
 
-def check_year_range_for_switch_type(results_df: pd.DataFrame, plant_name: str, list_with_years: list, switch_type: str):
-    df_c = results_df[results_df["plant_name"] == plant_name].copy()
+def check_year_range_for_switch_type(tech_choices_dict: pd.DataFrame, plant_name: str, list_with_years: list, switch_type: str):
+    df_c = tech_choices_dict[tech_choices_dict["plant_name"] == plant_name].copy()
     if list_with_years:
         check_df = df_c[df_c["year"].isin(list_with_years)].copy()
         if switch_type in check_df.switch_type.unique():
@@ -189,13 +183,13 @@ def get_closest_year_main_switch(list_with_years: list, year_to_check: int):
         return None
 
 
-def get_closest_year_trans_switch(list_of_ranges, results_df, year_to_check, plant_name):
+def get_closest_year_trans_switch(list_of_ranges, tech_choices_dict, year_to_check, plant_name):
     list_with_years = get_trans_switch_range(
         list_of_ranges,
         year_to_check
     )
     return check_year_range_for_switch_type(
-        results_df,
+        tech_choices_dict,
         plant_name,
         list_with_years,
         "Transitional switch in off-cycle investment year"
@@ -204,7 +198,7 @@ def get_closest_year_trans_switch(list_of_ranges, results_df, year_to_check, pla
 
 def current_plant_year(
     investment_dict: pd.DataFrame,
-    results_df: pd.DataFrame,
+    tech_choices_dict: pd.DataFrame,
     plant_start_years: dict,
     plant_cycle_lengths: dict,
     plant_name: str,
@@ -226,7 +220,7 @@ def current_plant_year(
     main_cycle_years = [yr for yr in investment_dict[plant_name] if isinstance(yr, int)]
     trans_years = [yr for yr in investment_dict[plant_name] if isinstance(yr, range)]
     main_switch_year = get_closest_year_main_switch(main_cycle_years, current_year)
-    trans_switch_year = get_closest_year_trans_switch(trans_years, results_df, current_year, plant_name)
+    trans_switch_year = get_closest_year_trans_switch(trans_years, tech_choices_dict, current_year, plant_name)
     potential_investment_years = [num for num in [main_switch_year, trans_switch_year] if isinstance(num, int)]
     # print(f"plant_name: {plant_name} | plant_start_year: {plant_start_year} | main_cycle_years: {main_cycle_years} | main_switch_year: {main_switch_year} | trans_switch_years: {trans_years} | trans_switch_year: {trans_switch_year} | potential_investment_years: {potential_investment_years}")
     closest_investment_year = get_closest_number_in_list(potential_investment_years, current_year)
@@ -291,7 +285,7 @@ def new_plant_metadata(
 
 
 def return_oldest_plant(
-    investment_dict: dict, results_df: pd.DataFrame, plant_start_years: dict, plant_cycle_lengths: dict, current_year: int, plant_list: list = None
+    investment_dict: dict, tech_choices_dict: pd.DataFrame, plant_start_years: dict, plant_cycle_lengths: dict, current_year: int, plant_list: list = None
 ) -> str:
     """Gets the oldest plant from `plant_list` based on their respective investment cycles in `investment dict` and the `current_year`.
     If multiple plants have the same oldest age, then a plant is chosen at random.
@@ -309,7 +303,7 @@ def return_oldest_plant(
     plant_age_dict = {
         plant_name: current_plant_year(
             investment_dict, 
-            results_df,
+            tech_choices_dict,
             plant_start_years,
             plant_cycle_lengths,
             plant_name, current_year
@@ -449,6 +443,7 @@ def production_demand_gap(
             new_min_utilization_required = utilization_boundary(
                 new_min_utilization_required, capacity_util_min, capacity_util_max
             )
+            new_capacity_required = -(capacity - new_total_capacity)
 
         elif initial_min_utilization_reqiured > capacity_util_max:
             cases[region].append("OPEN PLANT: Capacity adjustment not enough to meet demand")
@@ -489,6 +484,7 @@ def production_demand_gap(
             "new_balance": new_balance_value,
             "new_utilization": new_min_utilization_required,
             "unit": "Mt",
+            "cases": []
         }
 
         results_container[region] = region_result
@@ -531,267 +527,6 @@ def create_and_test_market_df(market_dict: dict, year: int, test_df: bool = Fals
     if test_df:
         market_balance_test(df, year)
     return df
-
-
-
-def open_close_plants(
-    steel_demand_df: pd.DataFrame,
-    steel_plant_df: pd.DataFrame,
-    country_df: pd.DataFrame,
-    lev_cost_df: pd.DataFrame,
-    business_case_ref: pd.DataFrame,
-    tech_availability: pd.DataFrame,
-    variable_costs_df: pd.DataFrame,
-    capex_dict: dict,
-    capacity_container: CapacityContainerClass,
-    utilization_container: UtilizationContainerClass,
-    material_container: MaterialUsage,
-    tech_choices_container: PlantChoices,
-    plant_id_container: PlantIdContainer,
-    market_container: MarketContainerClass,
-    investment_container: PlantInvestmentCycle,
-    year: int,
-    trade_scenario: bool = False,
-    tech_moratorium: bool = False,
-    regional_scrap: bool = False,
-    enforce_constraints: bool = False,
-    open_plant_util_cutoff: float = CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
-    close_plant_util_cutoff: float = CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
-) -> pd.DataFrame:
-    """Adjusts a Plant Dataframe by determining how each region should achieve its demand for the year.
-    The function works by either
-    1) Ensuring that each region can only fulfill its own demand (if `trade_scenario` is set to `False`)
-    2) Using Trade rules to allow demand to be partially filled by other region's production capacity (if `trade_scenario` is set to `True`)
-    3) Opens and/or closes plants based on steps 1 & 2.
-
-    Args:
-        steel_demand_df (pd.DataFrame): The steel demand DataFrame.
-        steel_plant_df (pd.DataFrame): The steel plant DataFrame.
-        lev_cost_df (pd.DataFrame): A levelized cost reference DataFrame.
-        business_case_ref (dict): The business cases reference dictionary.
-        tech_availability (pd.DataFrame): The technology availability reference.
-        variable_costs_df (pd.DataFrame): The variable costs reference DataFrame.
-        capex_dict (dict): The capex reference dictionary.
-        capacity_container (CapacityContainerClass): The CapacityContainerClass Instance containing the capacity state.
-        utilization_container (UtilizationContainerClass): The UtilizationContainerClass Instance containing the utilization state.
-        material_container (MaterialUsage): The MaterialUsage Instance containing the material usage state.
-        tech_choices_container (PlantChoices): The PlantChoices Instance containing the Technology Choices state.
-        plant_id_container (PlantIdContainer): plant_container (PlantIdContainer): Plant Container class containing a track of plants and their unique IDs.
-        market_container (MarketContainerClass): The MarketContainerClass Instance containing the Trade state.
-        investment_container (PlantInvestmentCycle): The PlantInvestmentCycle Instance containing the investment cycle state.
-        year (int): The current model year.
-        trade_scenario (bool, optional): The scenario boolean value that determines whether there is a trade scenario. Defaults to False.
-        tech_moratorium (bool, optional): The scenario boolean value that determines whether there is a technology moratorium. Defaults to False.
-        regional_scrap (bool, optional): The scenario boolean value that determines whether there is a regional or global scrap constraints. Defaults to False.
-        enforce_constraints (bool, optional): The scenario boolean value that determines if all constraints are enforced. Defaults to False.
-        open_plant_util_cutoff (float, optional): The maximum capacity utilization that plants are allowed to reach before having to open new plants. Defaults to CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION.
-        close_plant_util_cutoff (float, optional): The minimum capacity utilization that plants are allowed to reach before having to close existing plants. Defaults to CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION.
-
-    Returns:
-        pd.DataFrame: The initial DataFrame passed to the function with the plants that have been opened and close updated.
-    """
-
-    logger.info(f"Running open and close decisions for {year}")
-    ng_mapper = ng_flag_mapper(steel_plant_df, country_df)
-    initial_plant_df = steel_plant_df.copy()
-    steel_plant_cols = initial_plant_df.columns
-    investment_dict = investment_container.return_investment_dict()
-    plant_start_years = investment_container.plant_start_years
-    plant_cycle_lengths = investment_container.return_cycle_lengths()
-    capacity_mapping_plants = initial_plant_df[initial_plant_df["active_check"] == True].copy()
-    capacity_container.map_capacities(capacity_mapping_plants, year)
-    results_df = tech_choices_container.output_records_to_df("choice")
-
-    if trade_scenario:
-        logger.info(f"Starting the trade flow for {year}")
-        production_demand_gap_analysis = trade_flow(
-            market_container=market_container,
-            utilization_container=utilization_container,
-            capacity_container=capacity_container,
-            steel_demand_df=steel_demand_df,
-            variable_cost_df=variable_costs_df,
-            plant_df=capacity_mapping_plants,
-            capex_dict=capex_dict,
-            tech_choices_ref=tech_choices_container.return_choices(),
-            year=year,
-            util_min=close_plant_util_cutoff,
-            util_max=open_plant_util_cutoff,
-        )
-    else:
-        logger.info(f"Starting the non-trade flow for {year}")
-        production_demand_gap_analysis = production_demand_gap(
-        steel_demand_df=steel_demand_df,
-        capacity_container=capacity_container,
-        utilization_container=utilization_container,
-        year=year,
-        capacity_util_max=open_plant_util_cutoff,
-        capacity_util_min=close_plant_util_cutoff,
-        )
-
-    regions = list(production_demand_gap_analysis.keys())
-    random.shuffle(regions)
-
-    if lev_cost_df.empty:
-        lev_cost_df = pd.DataFrame(columns=["year", "region", "technology"])
-    levelized_cost_for_regions = (
-        lev_cost_df.set_index(["year", "region"]).sort_index(ascending=True).copy()
-    )
-    levelized_cost_for_tech = (
-        lev_cost_df.set_index(["year", "region", "technology"])
-        .sort_index(ascending=True)
-        .copy()
-    )
-
-    # REGION LOOP
-    for region in regions:
-        plants_required = production_demand_gap_analysis[region]["plants_required"]
-        # OPEN PLANT
-        if plants_required > 0:
-            metadata_container = []
-            for _ in range(plants_required):
-                new_plant_meta = new_plant_metadata(
-                    plant_id_container,
-                    production_demand_gap_analysis,
-                    levelized_cost_for_regions,
-                    capacity_mapping_plants,
-                    ng_mapper,
-                    year=year,
-                    region=region,
-                )
-                new_plant_capacity = new_plant_meta["plant_capacity"]
-                new_plant_name = new_plant_meta["plant_name"]
-                dict_entry = create_new_plant(new_plant_meta, steel_plant_cols)
-                xcost_tech = get_min_cost_tech_for_region(
-                    levelized_cost_for_tech,
-                    business_case_ref,
-                    capacity_container.return_plant_capacity(year=year),
-                    tech_availability,
-                    material_container,
-                    tech_moratorium,
-                    regional_scrap,
-                    year,
-                    region,
-                    new_plant_capacity,
-                    new_plant_name,
-                    enforce_constraints=enforce_constraints,
-                )
-                dict_entry["plant_capacity"] = (
-                    new_plant_capacity * MEGATON_TO_KILOTON_FACTOR
-                )
-                dict_entry["initial_technology"] = xcost_tech
-                metadata_container.append(dict_entry)
-                tech_choices_container.update_choice(year, new_plant_name, xcost_tech)
-                # include usage for plant
-                create_material_usage_dict(
-                    material_usage_dict_container=material_container,
-                    plant_capacities=capacity_container.return_plant_capacity(year=year),
-                    business_case_ref=business_case_ref,
-                    plant_name=new_plant_name,
-                    region=region,
-                    year=year,
-                    switch_technology=xcost_tech,
-                    regional_scrap=regional_scrap,
-                    capacity_value=new_plant_capacity,
-                    override_constraint=True,
-                    apply_transaction=True,
-                )
-
-            initial_plant_df = pd.concat(
-                [initial_plant_df, pd.DataFrame(metadata_container)]
-            ).reset_index(drop=True)
-
-    # REGION LOOP
-    for region in regions:
-        plants_to_close = production_demand_gap_analysis[region]["plants_to_close"]
-        # CLOSE PLANTS
-        if plants_to_close > 0:
-            current_total_capacity = production_demand_gap_analysis[region]["new_total_capacity"]
-            production_dict_value = production_demand_gap_analysis[region]["new_utilized_capacity"]
-            indicative_capacity_to_remove = (current_total_capacity * close_plant_util_cutoff) - production_dict_value
-            potential_plants_to_close = return_plants_from_region(capacity_mapping_plants, region)
-            initial_utilization = production_demand_gap_analysis[region]["new_utilization"]
-            actual_plants_to_close = []
-            actual_closed_plants = 0
-            capacity_removed = 0
-
-            while capacity_removed <= indicative_capacity_to_remove:
-                plant_to_close = return_oldest_plant(
-                    investment_dict,
-                    results_df,
-                    plant_start_years,
-                    plant_cycle_lengths,
-                    year,
-                    potential_plants_to_close,
-
-                )
-                potential_plants_to_close.remove(plant_to_close)
-                plant_capacity = capacity_container.return_plant_capacity(year, plant_to_close)
-                actual_closed_plants  += 1
-                capacity_removed += plant_capacity
-                actual_plants_to_close.append(plant_to_close)
-
-            for plant_to_close in actual_plants_to_close:
-                idx_close = initial_plant_df.index[
-                    initial_plant_df["plant_name"] == plant_to_close
-                ].tolist()[0]
-                initial_plant_df.loc[idx_close, "status"] = "decomissioned"
-                initial_plant_df.loc[idx_close, "end_of_operation"] = year
-                initial_plant_df.loc[idx_close, "active_check"] = False
-                tech_choices_container.update_choice(
-                    year, plant_to_close, "Close plant"
-                )
-                plant_tech = tech_choices_container.get_choice(year, plant_to_close)
-                plant_capacity = capacity_container.return_plant_capacity(year, plant_to_close)
-                # remove usage for plant
-                create_material_usage_dict(
-                    material_usage_dict_container=material_container,
-                    plant_capacities=capacity_container.return_plant_capacity(year=year),
-                    business_case_ref=business_case_ref,
-                    plant_name=plant_to_close,
-                    region=region,
-                    year=year,
-                    switch_technology=plant_tech,
-                    regional_scrap=regional_scrap,
-                    capacity_value=plant_capacity,
-                    override_constraint=True,
-                    apply_transaction=True,
-                    negative_amount=True,
-                )
-
-            new_total_capacity = current_total_capacity - capacity_removed
-            new_utilization = production_dict_value / new_total_capacity
-            utilization_container.update_region(year, region, new_utilization)
-
-            assert round(capacity_removed, TRADE_ROUNDING_NUMBER) >= round(indicative_capacity_to_remove, TRADE_ROUNDING_NUMBER), f"{region}: Capacity Removed {capacity_removed} is less than Indicative Capacity Removed {indicative_capacity_to_remove}"
-            assert round(current_total_capacity, TRADE_ROUNDING_NUMBER) >= round(new_total_capacity, TRADE_ROUNDING_NUMBER), f"{region}: New Capacity {new_total_capacity} is greater than Old Capacity {current_total_capacity}"
-            assert round(initial_utilization, TRADE_ROUNDING_NUMBER) <= round(new_utilization, TRADE_ROUNDING_NUMBER), f"{region}: Initial Utilization {initial_utilization} is smaller than the New Utilization {new_utilization}"
-            assert round(close_plant_util_cutoff, TRADE_ROUNDING_NUMBER) <= round(new_utilization, TRADE_ROUNDING_NUMBER) <= round(open_plant_util_cutoff, TRADE_ROUNDING_NUMBER), f"{region}: utilization {new_utilization :2f} is out of bounds"
-
-            production_demand_gap_analysis[region]["new_total_capacity"] = new_total_capacity
-            production_demand_gap_analysis[region]["new_utilization"] = new_utilization
-
-    test_utilization_values(utilization_container, production_demand_gap_analysis, year, close_plant_util_cutoff, open_plant_util_cutoff)
-    production_demand_gap_analysis_df = create_and_test_market_df(production_demand_gap_analysis, year, test_df=True)
-    market_container.store_results(year, production_demand_gap_analysis_df, "market_results")
-
-    new_active_plants = initial_plant_df[initial_plant_df["active_check"] == True].copy()
-    capacity_container.map_capacities(new_active_plants, year)
-    regional_capacities = capacity_container.return_regional_capacity(year)
-    global_demand = steel_demand_getter(
-        steel_demand_df, year=year, metric="crude", region="World"
-    )
-    utilization_container.calculate_world_utilization(
-        year, regional_capacities, global_demand
-    )
-    global_production = sum(regional_capacities.values()) * utilization_container.get_utilization_values(year, region="World")
-    logger.info(
-        f"Balanced Supply Demand results for {year}: Demand: {global_demand :0.2f}  | Production: {global_production :0.2f}"
-    )
-    new_open_plants = return_modified_plants(new_active_plants, year, "open")
-    investment_container.add_new_plants(
-        new_open_plants["plant_name"], new_open_plants["start_of_operation"]
-    )
-    return initial_plant_df
 
 def create_test_production_df():
         # just a minimal dataframe to make the empty test pass FIXME
