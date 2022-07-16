@@ -1,4 +1,4 @@
-"""Script to determine when investments will take place."""
+"""Script for the PlantInvestmentCycle class."""
 
 from mppsteel.config.model_config import (
     MODEL_YEAR_END,
@@ -13,6 +13,7 @@ from mppsteel.plant_classes.plant_investment_cycle_helpers import (
     calculate_investment_years,
     create_investment_cycle_reference,
     extract_tech_plant_switchers,
+    increment_investment_cycle_year,
     return_cycle_length,
     return_switch_type,
 )
@@ -68,6 +69,12 @@ class PlantInvestmentCycle:
 
     def adjust_cycle_for_transitional_switch(self, plant_name: str, rebase_year: int):
         new_cycle = adjust_transitional_switch_in_investment_cycle(
+            self.plant_cycles_with_off_cycle[plant_name], rebase_year
+        )
+        self.plant_cycles_with_off_cycle[plant_name] = new_cycle
+
+    def adjust_cycle_for_deferred_investment(self, plant_name: str, rebase_year: int):
+        new_cycle = increment_investment_cycle_year(
             self.plant_cycles_with_off_cycle[plant_name], rebase_year
         )
         self.plant_cycles_with_off_cycle[plant_name] = new_cycle

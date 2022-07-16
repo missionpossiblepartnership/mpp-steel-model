@@ -1,4 +1,4 @@
-"""Script to determine when investments will take place."""
+"""Script with function to manipulate the PlantInvestmentCycle Class."""
 
 import random
 from typing import Tuple, Union
@@ -306,3 +306,46 @@ def adjust_cycles_for_first_year(plant_cycles: dict) -> dict:
                     new_cycle.append(obj)
         new_plant_cycles[plant_name] = new_cycle
     return new_plant_cycles
+
+
+def increment_investment_cycle_year(cycle_years: list, rebase_year: int, increment_amount: int = 1) -> list:
+    """Adjusts the investment cycle when a plant has to postpone its investment year. Every year in the cycle is incremented by `increment_amount`.
+
+    Args:
+        cycle_years (list): The initial investment cycle years
+        rebase_year (int): The year to rebase the investment cycle to.
+        increment_amount (int): The amount to increment the investment_years by
+
+    Returns:
+        list: The rebased investment cycle.
+    """
+    years = [
+        year_obj for year_obj in cycle_years if isinstance(year_obj, int) 
+    ]
+    years = [
+        year + increment_amount if year >= rebase_year else year for year in years 
+    ]
+    ranges = [
+        year_obj for year_obj in cycle_years if isinstance(year_obj, range)
+    ]
+    if not ranges:
+        return years
+    
+    new_range_list = []
+    for range_obj in ranges:
+        if range_obj[-1] < rebase_year:
+            new_range_list.append(range_obj)
+        elif range_obj[0] <= rebase_year <= range_obj[-1]:
+            new_range_list.append(range_obj) # consider changing
+        elif range_obj[0] > rebase_year:
+            new_range_obj = range(range_obj[0] + increment_amount, range_obj[-1] + increment_amount)
+            new_range_list.append(range_obj)
+            
+    return combine_two_lists_maintain_order(years, new_range_list)
+
+def combine_two_lists_maintain_order(years: list, range_list: list):
+    year_dict = {year: year for year in years}
+    range_dict = {range_obj[0]: range_obj for range_obj in range_list}
+    combined_dict = {**year_dict, **range_dict}
+    sorted_list = sorted(list(combined_dict.keys()))
+    return [combined_dict[elem] for elem in sorted_list]
