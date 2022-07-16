@@ -144,9 +144,11 @@ def add_off_cycle_investment_years(
     if inv_cycle_length > 1:
         for index in range(1, inv_cycle_length):
             inv_year = main_investment_cycle[index]
-            range_object = range(
-                main_investment_cycle[index - 1] + start_buff, inv_year - end_buff
-            )
+            start_year = main_investment_cycle[index - 1] + start_buff
+            end_year = inv_year - end_buff
+            if start_year < NET_ZERO_TARGET_YEAR < end_year:
+                end_year = NET_ZERO_TARGET_YEAR
+            range_object = range(start_year, end_year)
             range_list.append(range_object)
             range_list.append(inv_year)
     return range_list
@@ -249,7 +251,7 @@ def extract_tech_plant_switchers(
     )
 
 
-def adjust_investment_cycle_dict(cycle_years: list, rebase_year: int) -> list:
+def adjust_transitional_switch_in_investment_cycle(cycle_years: list, rebase_year: int) -> list:
     """Adjusts the investment cycle when a plan decides to undertake a transitional switch away from its base technology.
     The adjustment removes the possibility of an additional transitional switch before its next main investment cycle.
 
@@ -356,7 +358,7 @@ class PlantInvestmentCycle:
             ] = add_off_cycle_investment_years(self.plant_cycles[plant_name])
 
     def adjust_cycle_for_transitional_switch(self, plant_name: str, rebase_year: int):
-        new_cycle = adjust_investment_cycle_dict(
+        new_cycle = adjust_transitional_switch_in_investment_cycle(
             self.plant_cycles_with_off_cycle[plant_name], rebase_year
         )
         self.plant_cycles_with_off_cycle[plant_name] = new_cycle
