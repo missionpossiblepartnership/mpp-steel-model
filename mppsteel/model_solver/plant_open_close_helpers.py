@@ -12,7 +12,7 @@ from mppsteel.model_solver.solver_constraints import tech_availability_check
 
 from mppsteel.utility.location_utility import pick_random_country_from_region_subset
 from mppsteel.utility.utils import replace_dict_items, get_dict_keys_by_value, get_closest_number_in_list
-from mppsteel.utility.plant_container_class import PlantIdContainer
+from mppsteel.plant_classes.plant_container_class import PlantIdContainer
 from mppsteel.data_load_and_format.reg_steel_demand_formatter import steel_demand_getter
 
 from mppsteel.config.model_config import (

@@ -8,8 +8,8 @@ from mppsteel.utility.dataframe_utility import extend_df_years
 
 from mppsteel.model_solver.solver_summary import tech_capacity_splits, utilization_mapper
 from mppsteel.utility.function_timer_utility import timer_func
-from mppsteel.utility.plant_container_class import PlantIdContainer
-from mppsteel.data_preprocessing.investment_cycles import PlantInvestmentCycle
+from mppsteel.plant_classes.plant_container_class import PlantIdContainer
+from mppsteel.plant_classes.plant_investment_cycle_class import PlantInvestmentCycle
 from mppsteel.data_load_and_format.reg_steel_demand_formatter import steel_demand_getter
 from mppsteel.utility.dataframe_utility import return_furnace_group
 from mppsteel.utility.file_handling_utility import (

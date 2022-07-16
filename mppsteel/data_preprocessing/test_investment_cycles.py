@@ -1,4 +1,4 @@
-from mppsteel.data_preprocessing.investment_cycles import (
+from mppsteel.plant_classes.plant_investment_cycle_helpers import (
     calculate_investment_years,
     net_zero_year_bring_forward
 )

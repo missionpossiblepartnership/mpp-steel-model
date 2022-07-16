@@ -4,9 +4,9 @@ import pandas as pd
 
 import random
 
-from mppsteel.data_preprocessing.investment_cycles import PlantInvestmentCycle
+from mppsteel.plant_classes.plant_investment_cycle_class import PlantInvestmentCycle
 from mppsteel.utility.utils import join_list_as_string
-from mppsteel.utility.plant_container_class import PlantIdContainer
+from mppsteel.plant_classes.plant_container_class import PlantIdContainer
 from mppsteel.data_load_and_format.reg_steel_demand_formatter import steel_demand_getter
 from mppsteel.model_solver.plant_open_close_helpers import (
     create_and_test_market_df, 
