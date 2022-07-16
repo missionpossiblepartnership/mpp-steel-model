@@ -10,6 +10,7 @@ from mppsteel.model_solver.solver_summary import tech_capacity_splits, utilizati
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.plant_classes.plant_container_class import PlantIdContainer
 from mppsteel.plant_classes.plant_investment_cycle_class import PlantInvestmentCycle
+from mppsteel.plant_classes.capacity_constraint_class import PlantCapacityConstraint
 from mppsteel.data_load_and_format.reg_steel_demand_formatter import steel_demand_getter
 from mppsteel.utility.dataframe_utility import return_furnace_group
 from mppsteel.utility.file_handling_utility import (
@@ -83,6 +84,7 @@ def return_best_tech(
     scenario_dict: dict,
     investment_container: PlantInvestmentCycle,
     plant_choice_container: PlantChoices,
+    capacity_constraint_container: PlantCapacityConstraint,
     year: int,
     plant_name: str,
     region: str,
@@ -222,6 +224,18 @@ def return_best_tech(
         raise ValueError(
             f"Issue with get_best_choice function returning a nan: {plant_name} | {year} | {base_tech} | {combined_available_list}"
         )
+
+    switch_type = "Trans Switch" if transitional_switch_mode else "Main Switch"
+
+    capacity_constraint_container.update_potential_plant_switcher(
+        year, plant_name, plant_capacities[plant_name], switch_type
+    )
+    capacity_transaction_result = capacity_constraint_container.subtract_capacity_from_balance(
+        investment_container, year, plant_name
+    )
+
+    if not capacity_transaction_result:
+        best_choice = base_tech
 
     if enforce_constraints:
         create_material_usage_dict(
@@ -386,7 +400,6 @@ class ChooseTechnologyInput:
         )
         rmi_mapper = create_country_mapper(path=str(PROJECT_PATH / PKL_DATA_IMPORTS))
         country_ref_f = country_df_formatter(country_ref)
-
         bio_constraint_model = read_pickle_folder(
             PROJECT_PATH / intermediate_path, "bio_constraint_model_formatted", "df"
         )
@@ -467,6 +480,12 @@ class ChooseTechnologyInput:
             wsa_dict=wsa_dict,
             model_year_range=model_year_range,
         )
+
+def resort_primary_switchers(primary_switchers_df: pd.DataFrame, waiting_list_dict: dict) -> pd.DataFrame:
+    waiting_list_plants = waiting_list_dict.keys()
+    just_waiting_list_plant_df = primary_switchers_df[primary_switchers_df["plant_name"].isin(waiting_list_plants)]
+    not_waiting_list_plant_df = primary_switchers_df[~primary_switchers_df["plant_name"].isin(waiting_list_plants)]
+    return pd.concat([just_waiting_list_plant_df, not_waiting_list_plant_df]).reset_index(drop=True)
 
 
 def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
@@ -551,6 +570,9 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
     # Plant Choices
     PlantChoiceContainer = PlantChoices()
     PlantChoiceContainer.initiate_container(model_year_range)
+    # Plant Constraint
+    PlantCapacityConstraintContainer = PlantCapacityConstraint()
+    PlantCapacityConstraintContainer.instantiate_container(model_year_range)
     # Investment Cycles
     for year in tqdm(model_year_range, total=len(model_year_range), desc="Years"):
         year_start_df["active_check"] = year_start_df.apply(
@@ -561,6 +583,9 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
             year_start_df["active_check"] == False
         ].copy()
         CapacityContainer.map_capacities(active_plant_df, year)
+        world_capacity = CapacityContainer.get_world_capacity_sum(year)
+        PlantCapacityConstraintContainer.update_capacity_turnover_limit(year, world_capacity)
+        PlantCapacityConstraintContainer.update_capacity_balance(year)
         logger.info(
             f"Number of active (inactive) plants in {year}: {len(active_plant_df)} ({len(inactive_year_start_df)})"
         )
@@ -722,6 +747,7 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
                 variable_costs_df=variable_costs_regional,
                 capex_dict=capex_dict,
                 capacity_container=CapacityContainer,
+                capacity_constraint_container=PlantCapacityConstraintContainer,
                 utilization_container=UtilizationContainer,
                 material_container=MaterialUsageContainer,
                 tech_choices_container=PlantChoiceContainer,
@@ -756,6 +782,13 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
                 switchers_df["primary_capacity"] == "Y"
             ].copy()
 
+            # Shuffle rows
+            primary_switchers_df = primary_switchers_df.sample(frac=1)
+            waiting_list_dict = PlantCapacityConstraintContainer.potential_plant_switchers[year]
+            if len(waiting_list_dict) > 0:
+                primary_switchers_df = resort_primary_switchers(primary_switchers_df, waiting_list_dict)
+
+            # Start Iteration
             for row in primary_switchers_df.itertuples():
                 # set initial metadata
                 plant_name = row.plant_name
@@ -803,6 +836,7 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
                             scenario_dict=scenario_dict,
                             investment_container=PlantInvestmentCycleContainer,
                             plant_choice_container=PlantChoiceContainer,
+                            capacity_constraint_container=PlantCapacityConstraintContainer,
                             year=year,
                             plant_name=plant_name,
                             region=region,
@@ -835,6 +869,7 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
                                 scenario_dict=scenario_dict,
                                 investment_container=PlantInvestmentCycleContainer,
                                 plant_choice_container=PlantChoiceContainer,
+                                capacity_constraint_container=PlantCapacityConstraintContainer,
                                 year=year,
                                 plant_name=plant_name,
                                 region=region,
@@ -865,6 +900,7 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
         year_start_df = pd.concat(
             [capacity_adjusted_df, inactive_year_start_df]
         ).reset_index(drop=True)
+        PlantCapacityConstraintContainer.move_waiting_list_plants_to_next_year(year)
         MaterialUsageContainer.print_year_summary(year, regional_scrap=regional_scrap)
 
     final_steel_plant_df = year_start_df.copy()

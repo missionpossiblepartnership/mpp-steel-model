@@ -7,6 +7,7 @@ import random
 from mppsteel.plant_classes.plant_investment_cycle_class import PlantInvestmentCycle
 from mppsteel.utility.utils import join_list_as_string
 from mppsteel.plant_classes.plant_container_class import PlantIdContainer
+from mppsteel.plant_classes.capacity_constraint_class import PlantCapacityConstraint
 from mppsteel.data_load_and_format.reg_steel_demand_formatter import steel_demand_getter
 from mppsteel.model_solver.plant_open_close_helpers import (
     create_and_test_market_df, 
@@ -49,6 +50,8 @@ def open_real_plants(
     plant_id_container: PlantIdContainer,
     material_container: MarketContainerClass,
     capacity_container: CapacityContainerClass,
+    capacity_constraint_container: PlantCapacityConstraint,
+    investment_container: PlantInvestmentCycle,
     tech_choices_container: PlantChoices,
     lev_cost_df: pd.DataFrame,
     steel_plant_df: pd.DataFrame,
@@ -134,6 +137,13 @@ def open_real_plants(
             updated_steel_plant_df = pd.concat(
                 [updated_steel_plant_df, pd.DataFrame(metadata_container)]
             ).reset_index(drop=True)
+
+            capacity_constraint_container.update_potential_plant_switcher(
+                year, new_plant_name, new_plant_capacity, "New Plant"
+            )
+            capacity_constraint_container.subtract_capacity_from_balance(
+                investment_container, year, new_plant_name
+            )
 
     return updated_steel_plant_df
 
@@ -253,6 +263,7 @@ def open_close_plants(
     variable_costs_df: pd.DataFrame,
     capex_dict: dict,
     capacity_container: CapacityContainerClass,
+    capacity_constraint_container: CapacityContainerClass,
     utilization_container: UtilizationContainerClass,
     material_container: MaterialUsage,
     tech_choices_container: PlantChoices,
@@ -336,9 +347,9 @@ def open_close_plants(
 
     updated_steel_plant_df = open_real_plants(
         production_demand_gap_analysis, plant_id_container, material_container,
-        capacity_container, tech_choices_container, lev_cost_df,
-        updated_steel_plant_df, tech_availability, country_df,
-        business_case_ref, year, regional_scrap, tech_moratorium, enforce_constraints
+        capacity_container, capacity_constraint_container, investment_container, 
+        tech_choices_container, lev_cost_df, updated_steel_plant_df, tech_availability, 
+        country_df, business_case_ref, year, regional_scrap, tech_moratorium, enforce_constraints
     )
 
     updated_steel_plant_df = close_real_plants(

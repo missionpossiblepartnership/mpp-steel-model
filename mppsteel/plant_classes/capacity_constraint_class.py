@@ -27,12 +27,11 @@ class PlantCapacityConstraint:
         self.potential_plant_switchers = {}
         self.waiting_list = {}
 
-    def initiate_capacity_limit_and_balance(self, year_range: range):
+    def instantiate_container(self, year_range: range):
         self.annual_capacity_turnover_limit = {year: 0 for year in year_range}
         self.capacity_balance = {year: 0 for year in year_range}
         self.potential_plant_switchers = {year: {} for year in year_range}
-        
-        
+
     def update_capacity_turnover_limit(self, year: int, prior_year_total_capacity: float = 0):
         if year in CAPACITY_CONSTRAINT_FIXED_RATE_YEAR_RANGE:
             self.annual_capacity_turnover_limit[year] = CAPACITY_CONSTRAINT_FIXED_RATE_MTPA
@@ -43,7 +42,7 @@ class PlantCapacityConstraint:
         self.capacity_balance[year] = self.annual_capacity_turnover_limit[year]
         
     def update_potential_plant_switcher(self, year: int, plant_name: str, plant_capacity: float, switch_type: str):
-        if not isinstance(self.potential_plant_switchers[year][plant_name], SwitchingPlant):
+        if plant_name not in self.potential_plant_switchers[year].keys():
             self.potential_plant_switchers[year][plant_name] = SwitchingPlant(plant_name, plant_capacity, switch_type, False, True)
         
     def subtract_capacity_from_balance(self, plant_investment_cycle_container: PlantInvestmentCycle, year: int, plant_name: str):
@@ -51,16 +50,15 @@ class PlantCapacityConstraint:
         current_plant_capacity = self.capacity_balance[year]
         if plant_capacity > current_plant_capacity:
             plant_investment_cycle_container.adjust_cycle_for_deferred_investment(plant_name, year)
+            return False
         else:
             # else condition
             self.capacity_balance[year] = current_plant_capacity - plant_capacity
-            self.potential_plant_switchers[year][plant_name].within_constraint = True
-            self.potential_plant_switchers[year][plant_name].waiting_list = False
-        
+            self.potential_plant_switchers[year][plant_name]._replace(within_constraint = True)
+            self.potential_plant_switchers[year][plant_name]._replace(waiting_list = False)
+            return True
+
     def move_waiting_list_plants_to_next_year(self, year):
         for plant_name in self.potential_plant_switchers[year]:
             if self.potential_plant_switchers[year][plant_name].waiting_list == True and year < MODEL_YEAR_END:
                 self.potential_plant_switchers[year + 1][plant_name] = self.potential_plant_switchers[year][plant_name]
-
-    # Also update cases in solver
-    # Need priority ranking -> 1) New plants 2) Main switchers 3) Transitional switchers.
