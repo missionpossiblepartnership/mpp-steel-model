@@ -242,7 +242,6 @@ class PlantVariableCostsInput:
         df_store_trans["price"] = (
             df_store_trans.price_storage + df_store_trans.price_transport
         )
-        print(df_store_trans[df_store_trans["country_code"] == "USA"])
         df_store_trans = df_store_trans.drop(
             ["price_storage", "price_transport"], axis=1
         )

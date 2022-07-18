@@ -639,15 +639,15 @@ def subset_ccs_transport(
         cost_scenario = CCS_SCENARIOS[scenario_dict["ccs_cost_scenario"]]
     cdf_c = cdf.copy()
     if cost_scenario == "low":
-        cost_scenario_input = "BaseCase"
-        transport_type_input = "Onshore Pipeline"
-        capacity_input = 5
-        t_cost_number = 1
+        cost_scenario_input = "Low"
+        transport_type_input = "Shipping"
+        capacity_input = 6
+        t_cost_number = 2
 
     elif cost_scenario == "high":
         cost_scenario_input = "BaseCase"
         transport_type_input = "Shipping"
-        capacity_input = 5
+        capacity_input = 6
         t_cost_number = 2
 
     cdf_c = cdf_c[
