@@ -35,7 +35,6 @@ def investment_cycle_flow(serialize: bool = False) -> pd.DataFrame:
     start_plant_years = steel_plant_df["start_of_operation"].to_list()
     PlantInvestmentCycles.instantiate_plants(steel_plant_names, start_plant_years)
     PlantInvestmentCycles.test_cycle_lengths()
-    print(PlantInvestmentCycles.plant_cycles_with_off_cycle)
 
     if serialize:
         logger.info("-- Serializing Investment Cycle Reference")

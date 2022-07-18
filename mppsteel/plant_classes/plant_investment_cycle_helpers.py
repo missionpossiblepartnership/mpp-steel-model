@@ -322,25 +322,29 @@ def increment_investment_cycle_year(cycle_years: list, rebase_year: int, increme
     years = [
         year_obj for year_obj in cycle_years if isinstance(year_obj, int) 
     ]
-    years = [
-        year + increment_amount if year >= rebase_year else year for year in years 
-    ]
+    if years:
+        years = [
+            net_zero_year_bring_forward(year + increment_amount) if year >= rebase_year else year for year in years 
+        ]
     ranges = [
         year_obj for year_obj in cycle_years if isinstance(year_obj, range)
     ]
     if not ranges:
         return years
-    
     new_range_list = []
     for range_obj in ranges:
-        if range_obj[-1] < rebase_year:
+        first_year = range_obj[0]
+        last_year = range_obj[-1]
+        first_year_incremented = net_zero_year_bring_forward(first_year + increment_amount)
+        last_year_incremented = net_zero_year_bring_forward(last_year + increment_amount + 1)
+        new_range_obj = range_obj
+        if last_year < rebase_year:
             new_range_list.append(range_obj)
-        elif range_obj[0] <= rebase_year <= range_obj[-1]:
-            new_range_list.append(range_obj) # consider changing
-        elif range_obj[0] > rebase_year:
-            new_range_obj = range(range_obj[0] + increment_amount, range_obj[-1] + increment_amount)
-            new_range_list.append(range_obj)
-            
+        elif first_year >= rebase_year:
+            new_range_obj = range(first_year_incremented, last_year_incremented)
+        elif first_year <= rebase_year <= last_year:
+            new_range_obj = range(first_year, last_year_incremented)
+        new_range_list.append(new_range_obj)
     return combine_two_lists_maintain_order(years, new_range_list)
 
 def combine_two_lists_maintain_order(years: list, range_list: list):

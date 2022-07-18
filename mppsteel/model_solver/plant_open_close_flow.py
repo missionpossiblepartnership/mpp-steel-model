@@ -117,6 +117,14 @@ def open_real_plants(
                     new_plant_capacity * MEGATON_TO_KILOTON_FACTOR
                 )
                 dict_entry["initial_technology"] = xcost_tech
+
+                capacity_constraint_container.update_potential_plant_switcher(
+                    year, new_plant_name, new_plant_capacity, "New Plant"
+                )
+                capacity_constraint_container.subtract_capacity_from_balance(
+                    year, new_plant_name, enforce_constraint=False
+                )
+
                 metadata_container.append(dict_entry)
                 tech_choices_container.update_choice(year, new_plant_name, xcost_tech)
                 # include usage for plant
@@ -138,13 +146,6 @@ def open_real_plants(
                 [updated_steel_plant_df, pd.DataFrame(metadata_container)]
             ).reset_index(drop=True)
 
-            capacity_constraint_container.update_potential_plant_switcher(
-                year, new_plant_name, new_plant_capacity, "New Plant"
-            )
-            capacity_constraint_container.subtract_capacity_from_balance(
-                investment_container, year, new_plant_name
-            )
-
     return updated_steel_plant_df
 
 def return_len_closed_plants_closed_in_year(steel_plant_df: pd.DataFrame, year: int):
@@ -160,6 +161,7 @@ def close_real_plants(
     investment_container: PlantInvestmentCycle,
     material_container: MarketContainerClass,
     capacity_container: CapacityContainerClass,
+    capacity_constraint_container: PlantCapacityConstraint,
     tech_choices_container: PlantChoices,
     steel_plant_df: pd.DataFrame,
     business_case_ref: dict,
@@ -219,6 +221,7 @@ def close_real_plants(
                 )
                 plant_tech = tech_choices_container.get_choice(year, plant_to_close)
                 plant_capacity = capacity_container.return_plant_capacity(year, plant_to_close)
+                capacity_constraint_container.remove_plant_from_waiting_list(year, plant_to_close)
                 # remove usage for plant
                 create_material_usage_dict(
                     material_usage_dict_container=material_container,
@@ -247,7 +250,7 @@ def close_real_plants(
             assert round(capacity_removed, TRADE_ROUNDING_NUMBER) >= round(min_capacity_to_close, TRADE_ROUNDING_NUMBER), f"{region}: Capacity Removed {capacity_removed} is less than Indicative Capacity Removed {min_capacity_to_close}"
             assert round(initial_capacity, TRADE_ROUNDING_NUMBER) >= round(new_total_capacity, TRADE_ROUNDING_NUMBER), f"{region}: New Capacity {new_total_capacity} is greater than Old Capacity {initial_capacity}"
             assert round(initial_utilization, TRADE_ROUNDING_NUMBER) <= round(new_utilization, TRADE_ROUNDING_NUMBER), f"{region}: Initial Utilization {initial_utilization} is smaller than the New Utilization {new_utilization}"
-            assert round(close_plant_util_cutoff, TRADE_ROUNDING_NUMBER) <= round(new_utilization, TRADE_ROUNDING_NUMBER) <= round(open_plant_util_cutoff, TRADE_ROUNDING_NUMBER), f"{region}: utilization {new_utilization :2f} is out of bounds -> capacity_removed: {capacity_removed} | capacity removal gap: {capacity_removal_actual_minus_indicative} | {production_demand_gap_analysis[region]}"
+            assert round(close_plant_util_cutoff, TRADE_ROUNDING_NUMBER) <= round(new_utilization, TRADE_ROUNDING_NUMBER) <= round(open_plant_util_cutoff, TRADE_ROUNDING_NUMBER), f"{region}: utilization {new_utilization: .2f} is out of bounds -> capacity_removed: {capacity_removed} | capacity removal gap: {capacity_removal_actual_minus_indicative} | {production_demand_gap_analysis[region]}"
             assert new_number_of_closed_plants > initial_number_of_closed_plants, f"Closed Plants not being updated -> plants_to_close: {plants_to_close} | initial_active_checks: {initial_number_of_closed_plants} | new_active_checks: {new_number_of_closed_plants} | plants: {join_list_as_string(actual_plants_to_close)}"
             assert closed_plants_prior + len(actual_plants_to_close) == closed_plants_post, f"Closed plants prior: {closed_plants_prior} | Actual closed plants to add: {len(actual_plants_to_close)} | Closed plants post: {closed_plants_post}"
 
@@ -354,8 +357,8 @@ def open_close_plants(
 
     updated_steel_plant_df = close_real_plants(
         production_demand_gap_analysis, utilization_container, investment_container,
-        material_container, capacity_container, tech_choices_container,
-        updated_steel_plant_df, business_case_ref, year,
+        material_container, capacity_container, capacity_constraint_container, 
+        tech_choices_container, updated_steel_plant_df, business_case_ref, year,
         open_plant_util_cutoff, close_plant_util_cutoff, regional_scrap
     )
 

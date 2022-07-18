@@ -180,12 +180,12 @@ def trade_flow(
 
     if round(global_trade_balance, TRADE_ROUNDING_NUMBER) == 0:
         logger.info(
-            f"TRADE BALANCING ROUND 2: Trade Balance is completely balanced at {global_trade_balance: 2f} Mt in year {year}"
+            f"TRADE BALANCING ROUND 2: Trade Balance is completely balanced at {global_trade_balance: .2f} Mt in year {year}"
         )
 
     elif round(global_trade_balance, TRADE_ROUNDING_NUMBER) > 0:
         logger.info(
-            f"TRADE BALANCING ROUND 2-A: Trade Balance Surplus of {global_trade_balance: 2f} Mt in year {year}. Balancing to zero."
+            f"TRADE BALANCING ROUND 2-A: Trade Balance Surplus of {global_trade_balance: .2f} Mt in year {year}. Balancing to zero."
         )
         for region in exporting_regions:
             current_utilization = utilization_container.get_utilization_values(year, region)
@@ -209,7 +209,7 @@ def trade_flow(
 
     elif round(global_trade_balance, TRADE_ROUNDING_NUMBER) < 0:
         logger.info(
-            f"TRADE BALANCING ROUND 3: Trade Balance Deficit of {global_trade_balance: 2f} Mt in year {year}, balancing to zero via utilization optimization."
+            f"TRADE BALANCING ROUND 3: Trade Balance Deficit of {global_trade_balance: .2f} Mt in year {year}, balancing to zero via utilization optimization."
         )
         eligible_regions = exporting_regions + balanced_regions
         for region in relative_production_cost_df.loc[eligible_regions].sort_values(["cost_of_steelmaking"], ascending=False).index:
@@ -240,7 +240,7 @@ def trade_flow(
         if round(global_trade_balance, TRADE_ROUNDING_NUMBER) < 0:
             cheapest_region = regions_with_cost_close_to_mean["cost_of_steelmaking"].idxmin()
             logger.info(
-                f"TRADE BALANCING ROUND 3-C: Assigning trade balance of {global_trade_balance :2f} Mt to cheapest region: {cheapest_region}"
+                f"TRADE BALANCING ROUND 3-C: Assigning trade balance of {global_trade_balance: .2f} Mt to cheapest region: {cheapest_region}"
             )
             results_container, regional_capacity_dict, cases, global_trade_balance = open_plants_cheapest_region(
                 results_container, market_container, utilization_container, regional_capacity_dict, cases, year, cheapest_region, global_trade_balance,
@@ -258,7 +258,7 @@ def trade_flow(
             f"Trade Balance is completely balanced at {global_trade_balance: 4f} Mt in year {year}"
         )
     else:
-        raise AssertionError(f"Trade Balance is not equal to zero after all rounds complete -> {global_trade_balance: 2f} ||| {market_container.trade_container_getter(year)}")
+        raise AssertionError(f"Trade Balance is not equal to zero after all rounds complete -> {global_trade_balance: .2f} ||| {market_container.trade_container_getter(year)}")
 
     global_production = market_container.trade_container_aggregator(year, "production")
     global_demand = sum(demand_dict.values())
@@ -273,7 +273,7 @@ def trade_flow(
     test_production_equals_demand(global_demand, global_production)
     test_utilization_values(utilization_container, results_container, year, util_min, util_max, cases)
 
-    logger.info(f"Final Trade Balance is {global_trade_balance: 2f} Mt in year {year}")
+    logger.info(f"Final Trade Balance is {global_trade_balance: .2f} Mt in year {year}")
     return results_container
 
 def merge_trade_status_col_to_rpc_df(rpc_df: pd.DataFrame, trade_status_container: dict):

@@ -251,7 +251,7 @@ def test_capacity_values(results_container: dict, capacity_dict: dict, cases: di
         results_container_value = results_container[region]["new_total_capacity"]
         capacity_dict_value = capacity_dict[region]
         if round(results_container_value, TRADE_ROUNDING_NUMBER) != round(capacity_dict_value, TRADE_ROUNDING_NUMBER):
-            raise AssertionError(f"Capacity Value Test | Region: {region} - container_result (capacity_dict_result): {results_container_value: 2f} ({capacity_dict_value: 2f}) Cases: {cases[region]}")
+            raise AssertionError(f"Capacity Value Test | Region: {region} - container_result (capacity_dict_result): {results_container_value: .2f} ({capacity_dict_value: .2f}) Cases: {cases[region]}")
 
 def test_production_equals_demand(global_production: float, global_demand: float):
     assert round(global_production, TRADE_ROUNDING_NUMBER) == round(global_demand, TRADE_ROUNDING_NUMBER), f"global_production: {global_production} | global_demand: {global_demand}"
@@ -261,7 +261,7 @@ def test_production_values(results_container: dict, market_container: MarketCont
         dict_result = results_container[region]["new_utilized_capacity"]
         container_result = market_container.return_trade_balance(year, region, account_type="production")
         if round(dict_result, TRADE_ROUNDING_NUMBER) != round(container_result, TRADE_ROUNDING_NUMBER):
-            raise AssertionError(f"Production Value Test | Year: {year} | Region: {region} | Dict Value (Container Value): {dict_result} ({container_result: 2f}) | Cases: {cases[region]}")
+            raise AssertionError(f"Production Value Test | Year: {year} | Region: {region} | Dict Value (Container Value): {dict_result} ({container_result: .2f}) | Cases: {cases[region]}")
 
 def test_utilization_values(utilization_container: UtilizationContainerClass, results_container: dict, year: int, util_min: float, util_max: float, cases: dict = None):
     util_container = utilization_container.get_utilization_values(year)
@@ -269,10 +269,10 @@ def test_utilization_values(utilization_container: UtilizationContainerClass, re
     underutilized_regions = [key for key in util_container if round(util_container[key], TRADE_ROUNDING_NUMBER) < util_min]
     cases = cases or {region: "" for region in util_container}
     if overutilized_regions:
-        string_container = [f"{region}: {util_container[region]: 2f} - {cases[region]}" for region in overutilized_regions]
+        string_container = [f"{region}: {util_container[region]: .2f} - {cases[region]}" for region in overutilized_regions]
         raise AssertionError(f"Regional utilization rates: {util_container} | Regions Overutilized in {year}: {util_container} {join_list_as_string(string_container)}")
     if underutilized_regions:
-        string_container = [f"{region}: {util_container[region]: 2f} - {cases[region]}" for region in underutilized_regions]
+        string_container = [f"{region}: {util_container[region]: .2f} - {cases[region]}" for region in underutilized_regions]
         raise AssertionError(f"Regional utilization rates: {util_container} | Regions Underutilized in {year}: {join_list_as_string(string_container)}")
 
 def test_open_close_plants(results_container: dict, cases: dict):

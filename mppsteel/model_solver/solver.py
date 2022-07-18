@@ -230,12 +230,16 @@ def return_best_tech(
     capacity_constraint_container.update_potential_plant_switcher(
         year, plant_name, plant_capacities[plant_name], switch_type
     )
-    capacity_transaction_result = capacity_constraint_container.subtract_capacity_from_balance(
-        investment_container, year, plant_name
-    )
 
-    if not capacity_transaction_result:
-        best_choice = base_tech
+    if best_choice != base_tech:
+        capacity_transaction_result = capacity_constraint_container.subtract_capacity_from_balance(
+            year, plant_name
+        )
+        if not capacity_transaction_result:
+            best_choice = base_tech
+
+    else:
+        capacity_constraint_container.remove_plant_from_waiting_list(year, plant_name)
 
     if enforce_constraints:
         create_material_usage_dict(
@@ -488,6 +492,77 @@ def resort_primary_switchers(primary_switchers_df: pd.DataFrame, waiting_list_di
     return pd.concat([just_waiting_list_plant_df, not_waiting_list_plant_df]).reset_index(drop=True)
 
 
+def get_current_technology(
+    PlantChoiceContainer: PlantChoices,
+    year: int,
+    plant_name: str,
+    year_founded: int,
+    initial_technology: str
+):
+    current_tech = ""
+    if (year == MODEL_YEAR_START) or (year == year_founded):
+        current_tech = initial_technology
+    else:
+        current_tech = PlantChoiceContainer.get_choice(year - 1, plant_name)
+    return current_tech
+
+
+def create_solver_entry_dict(
+    PlantChoiceContainer: PlantChoices, year: int, plant_name: str, current_tech: str,
+    switch_tech: str, switch_type: str, update_record: bool = True, update_choice: bool = True
+):
+    entry = {
+        "year": year,
+        "plant_name": plant_name,
+        "current_tech": current_tech,
+        "switch_tech": switch_tech,
+        "switch_type": switch_type
+    }
+    if update_record:
+        PlantChoiceContainer.update_records("choice", entry)
+    if update_choice:
+        PlantChoiceContainer.update_choice(year, plant_name, switch_tech)
+    return entry
+
+def return_initial_tech(initial_tech_ref: dict, plant_name: str):
+    return initial_tech_ref[plant_name]
+
+def split_primary_plant_switchers(
+    primary_switchers_df: pd.DataFrame,
+    PlantInvestmentCycleContainer: PlantInvestmentCycle,
+    PlantChoiceContainer: PlantChoices,
+    year: int
+):
+    closed_plants_current_techs = {}
+    new_open_plants = {}
+    main_cycle_plants = {}
+    trans_switch_plants = {}
+    for row in primary_switchers_df.itertuples():
+        year_founded = PlantInvestmentCycleContainer.plant_start_years[row.plant_name]
+        switch_type = PlantInvestmentCycleContainer.return_plant_switch_type(
+            row.plant_name, year
+        )
+        current_tech = get_current_technology(
+            PlantChoiceContainer, year, row.plant_name, year_founded, row.initial_technology
+        )
+        if current_tech == "Close plant":
+            closed_plants_current_techs[row.plant_name] = current_tech
+        elif (year == year_founded) and (row.status == "new model plant"):
+            new_open_plants[row.plant_name] = current_tech
+        elif switch_type == "main cycle":
+            main_cycle_plants[row.plant_name] = {
+                "current_tech": current_tech,
+                "country_code": row.country_code,
+                "region": row.rmi_region
+            }
+        elif switch_type == "trans switch":
+            trans_switch_plants[row.plant_name] = {
+                "current_tech": current_tech,
+                "country_code": row.country_code,
+                "region": row.rmi_region
+            }
+    return closed_plants_current_techs, new_open_plants, main_cycle_plants, trans_switch_plants
+
 def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
     """Function containing the entire solver decision logic flow.
     1) In each year, the solver splits the plants non-switchers and switchers (secondary EAF plants and primary plants).
@@ -642,16 +717,11 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
                     current_tech = row.initial_technology
                 else:
                     current_tech = PlantChoiceContainer.get_choice(year - 1, plant_name)
-                PlantChoiceContainer.update_choice(year, plant_name, current_tech)
-
-                entry = {
-                    "year": year,
-                    "plant_name": plant_name,
-                    "current_tech": current_tech,
-                    "switch_tech": current_tech,
-                    "switch_type": "not a switch year",
-                }
-                PlantChoiceContainer.update_records("choice", entry)
+                create_solver_entry_dict(
+                    PlantChoiceContainer, year, plant_name, 
+                    current_tech, current_tech, "not a switch year", 
+                    update_record=True, update_choice=True
+                )
 
                 create_material_usage_dict(
                     material_usage_dict_container=MaterialUsageContainer,
@@ -688,15 +758,11 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
             plant_name = row.plant_name
             plant_capacity = row.plant_capacity / MEGATON_TO_KILOTON_FACTOR
             plant_region = row.rmi_region
-            entry = {
-                "year": year,
-                "plant_name": plant_name,
-                "current_tech": "EAF",
-                "switch_tech": "EAF",
-                "switch_type": "Secondary capacity is always EAF",
-            }
-            PlantChoiceContainer.update_records("choice", entry)
-            PlantChoiceContainer.update_choice(year, plant_name, "EAF")
+            create_solver_entry_dict(
+                PlantChoiceContainer, year, plant_name, 
+                "EAF", "EAF", "Secondary capacity is always EAF", 
+                update_record=True, update_choice=True
+            )
 
             create_material_usage_dict(
                 material_usage_dict_container=MaterialUsageContainer,
@@ -788,119 +854,119 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
             if len(waiting_list_dict) > 0:
                 primary_switchers_df = resort_primary_switchers(primary_switchers_df, waiting_list_dict)
 
-            # Start Iteration
-            for row in primary_switchers_df.itertuples():
-                # set initial metadata
-                plant_name = row.plant_name
-                country_code = row.country_code
-                region = row.rmi_region
-                year_founded = PlantInvestmentCycleContainer.plant_start_years[plant_name]
-                current_tech = ""
-                if (year == MODEL_YEAR_START) or (year == year_founded):
-                    current_tech = row.initial_technology
-                else:
-                    current_tech = PlantChoiceContainer.get_choice(year - 1, plant_name)
-                entry = {
-                    "year": year,
-                    "plant_name": plant_name,
-                    "current_tech": current_tech,
-                }
+            # Split up primary switchers into groups
+            closed_plants_current_techs, new_open_plants, main_cycle_plants, trans_switch_plants = split_primary_plant_switchers(
+                primary_switchers_df, PlantInvestmentCycleContainer, PlantChoiceContainer, year
+            )
 
-                # CASE 1: CLOSE PLANT
-                if current_tech == "Close plant":
-                    PlantChoiceContainer.update_choice(year, plant_name, "Close plant")
-                    entry["switch_tech"] = "Close plant"
-                    entry["switch_type"] = "Plant was already closed"
+            # CASE 1: CLOSED PLANTS
+            for plant_name in tqdm(closed_plants_current_techs, total=len(closed_plants_current_techs), desc="Closed Plants"):
+                current_tech = closed_plants_current_techs[plant_name]
+                create_solver_entry_dict(
+                    PlantChoiceContainer, year, plant_name, 
+                    closed_plants_current_techs[plant_name], "Close plant", 
+                    "Plant was already closed", update_record=True, update_choice=True
+                )
 
-                # CASE 2: NEW PLANT FOUNDING YEAR
-                elif (year == year_founded) and (row.status == "new model plant"):
-                    entry["switch_tech"] = current_tech
-                    entry["switch_type"] = "New plant founding year"
+            # CASE 2: NEW PLANTS
+            for plant_name in tqdm(new_open_plants, total=len(new_open_plants), desc="New Open Plants"):
+                current_tech = new_open_plants[plant_name]
+                create_solver_entry_dict(
+                    PlantChoiceContainer, year, plant_name, 
+                    current_tech, current_tech, "New plant founding year", 
+                    update_record=True, update_choice=True
+                )
 
-                # CASE 3: SWITCH TECH
-                else:
-                    switch_type = PlantInvestmentCycleContainer.return_plant_switch_type(
-                        plant_name, year
+            # CASE 3: MAIN CYCLE PLANTS
+            for plant_name in tqdm(main_cycle_plants, total=len(main_cycle_plants), desc="Main Cycle Plants"):
+                current_tech = main_cycle_plants[plant_name]["current_tech"]
+                best_choice_tech = return_best_tech(
+                    tco_reference_data=tco_slim,
+                    abatement_reference_data=abatement_slim,
+                    business_case_ref=business_case_ref,
+                    variable_costs_df=variable_costs_regional,
+                    green_premium_timeseries=green_premium_timeseries,
+                    tech_availability=tech_availability,
+                    tech_avail_from_dict=ta_dict,
+                    plant_capacities=plant_capacities_dict,
+                    scenario_dict=scenario_dict,
+                    investment_container=PlantInvestmentCycleContainer,
+                    plant_choice_container=PlantChoiceContainer,
+                    capacity_constraint_container=PlantCapacityConstraintContainer,
+                    year=year,
+                    plant_name=plant_name,
+                    region=main_cycle_plants[plant_name]["region"],
+                    country_code=main_cycle_plants[plant_name]["country_code"],
+                    base_tech=current_tech,
+                    transitional_switch_mode=False,
+                    material_usage_dict_container=MaterialUsageContainer,
+                )
+                switch_type_entry = "No change in main investment cycle year" if best_choice_tech == current_tech else "Regular change in investment cycle year"
+
+                create_solver_entry_dict(
+                    PlantChoiceContainer, year, plant_name,
+                    current_tech, best_choice_tech, switch_type_entry,
+                    update_record=True, update_choice=True
+                )
+
+            # CASE 4: TRANSITIONARY SWITCH PLANTS
+            if scenario_dict["transitional_switch"]:
+                for plant_name in tqdm(trans_switch_plants, total=len(trans_switch_plants), desc="Trans Switch Plants"):
+                    current_tech = trans_switch_plants[plant_name]["current_tech"]
+                    best_choice_tech = return_best_tech(
+                        tco_reference_data=tco_slim,
+                        abatement_reference_data=abatement_slim,
+                        business_case_ref=business_case_ref,
+                        variable_costs_df=variable_costs_regional,
+                        green_premium_timeseries=green_premium_timeseries,
+                        tech_availability=tech_availability,
+                        tech_avail_from_dict=ta_dict,
+                        plant_capacities=plant_capacities_dict,
+                        scenario_dict=scenario_dict,
+                        investment_container=PlantInvestmentCycleContainer,
+                        plant_choice_container=PlantChoiceContainer,
+                        capacity_constraint_container=PlantCapacityConstraintContainer,
+                        year=year,
+                        plant_name=plant_name,
+                        region=trans_switch_plants[plant_name]["region"],
+                        country_code=trans_switch_plants[plant_name]["country_code"],
+                        base_tech=current_tech,
+                        transitional_switch_mode=True,
+                        material_usage_dict_container=MaterialUsageContainer,
                     )
-                    # CASE 2-B: MAIN CYCLE
-                    if switch_type == "main cycle":
-                        best_choice_tech = return_best_tech(
-                            tco_reference_data=tco_slim,
-                            abatement_reference_data=abatement_slim,
-                            business_case_ref=business_case_ref,
-                            variable_costs_df=variable_costs_regional,
-                            green_premium_timeseries=green_premium_timeseries,
-                            tech_availability=tech_availability,
-                            tech_avail_from_dict=ta_dict,
-                            plant_capacities=plant_capacities_dict,
-                            scenario_dict=scenario_dict,
-                            investment_container=PlantInvestmentCycleContainer,
-                            plant_choice_container=PlantChoiceContainer,
-                            capacity_constraint_container=PlantCapacityConstraintContainer,
-                            year=year,
-                            plant_name=plant_name,
-                            region=region,
-                            country_code=country_code,
-                            base_tech=current_tech,
-                            transitional_switch_mode=False,
-                            material_usage_dict_container=MaterialUsageContainer,
+                    if best_choice_tech != current_tech:
+                        PlantInvestmentCycleContainer.adjust_cycle_for_transitional_switch(
+                            plant_name, year
                         )
-                        if best_choice_tech == current_tech:
-                            entry["switch_type"] = "No change in main investment cycle year"
-                        else:
-                            entry["switch_type"] = "Regular change in investment cycle year"
-                        PlantChoiceContainer.update_choice(
-                            year, plant_name, best_choice_tech
-                        )
+                    switch_type_entry = "Transitional switch in off-cycle investment year" if best_choice_tech != current_tech else "No change during off-cycle investment year"
+                    create_solver_entry_dict(
+                        PlantChoiceContainer, year, plant_name, 
+                        current_tech, best_choice_tech, switch_type_entry, 
+                        update_record=True, update_choice=True
+                    )
 
-                    # CASE 2-C: TRANSITIONARY SWITCH
-                    if scenario_dict["transitional_switch"]:
-
-                        if switch_type == "trans switch":
-                            best_choice_tech = return_best_tech(
-                                tco_reference_data=tco_slim,
-                                abatement_reference_data=abatement_slim,
-                                business_case_ref=business_case_ref,
-                                variable_costs_df=variable_costs_regional,
-                                green_premium_timeseries=green_premium_timeseries,
-                                tech_availability=tech_availability,
-                                tech_avail_from_dict=ta_dict,
-                                plant_capacities=plant_capacities_dict,
-                                scenario_dict=scenario_dict,
-                                investment_container=PlantInvestmentCycleContainer,
-                                plant_choice_container=PlantChoiceContainer,
-                                capacity_constraint_container=PlantCapacityConstraintContainer,
-                                year=year,
-                                plant_name=plant_name,
-                                region=region,
-                                country_code=country_code,
-                                base_tech=current_tech,
-                                transitional_switch_mode=True,
-                                material_usage_dict_container=MaterialUsageContainer,
-                            )
-                            if best_choice_tech != current_tech:
-                                entry[
-                                    "switch_type"
-                                ] = "Transitional switch in off-cycle investment year"
-                                PlantInvestmentCycleContainer.adjust_cycle_for_transitional_switch(
-                                    plant_name, year
-                                )
-                            else:
-                                entry[
-                                    "switch_type"
-                                ] = "No change during off-cycle investment year"
-                            PlantChoiceContainer.update_choice(
-                                year, plant_name, best_choice_tech
-                            )
-
-                    entry["switch_tech"] = best_choice_tech
-
-                PlantChoiceContainer.update_records("choice", entry)
+            # CASE 5: CAPACITY CONSTRAINED PLANTS
+            capacity_constrained_plants = PlantCapacityConstraintContainer.return_waiting_list(year)
+            PlantCapacityConstraintContainer.move_waiting_list_plants_to_next_year(PlantInvestmentCycleContainer, year)
+            PlantCapacityConstraintContainer.test_capacity_constraint(year)
+            assert set(capacity_constrained_plants).issubset(primary_switchers_df["plant_name"].to_list()), "Not all plants in the waiting list are in the current year's active plants"
+            initial_tech_ref = primary_switchers_df[["plant_name", "initial_technology"]].set_index("plant_name").to_dict()
+            for plant_name in capacity_constrained_plants:
+                year_founded = PlantInvestmentCycleContainer.plant_start_years[plant_name]
+                initial_tech = return_initial_tech(initial_tech_ref["initial_technology"], plant_name)
+                current_tech = get_current_technology(
+                    PlantChoiceContainer, year, plant_name, year_founded, initial_tech
+                )
+                create_solver_entry_dict(
+                    PlantChoiceContainer, year, plant_name,
+                    current_tech, current_tech, "Investment year deferred due to Capacity Constraint",
+                    update_record=True, update_choice=False
+                )
+            PlantCapacityConstraintContainer.print_capacity_summary(year)
 
         year_start_df = pd.concat(
             [capacity_adjusted_df, inactive_year_start_df]
         ).reset_index(drop=True)
-        PlantCapacityConstraintContainer.move_waiting_list_plants_to_next_year(year)
         MaterialUsageContainer.print_year_summary(year, regional_scrap=regional_scrap)
 
     final_steel_plant_df = year_start_df.copy()
@@ -919,9 +985,7 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
     regional_capacity_results = CapacityContainer.return_regional_capacity()
     plant_capacity_results = CapacityContainer.return_plant_capacity()
     utilization_results = UtilizationContainer.get_utilization_values()
-    constraints_summary = MaterialUsageContainer.output_constraints_summary(
-        model_year_range
-    )
+    constraints_summary = MaterialUsageContainer.output_constraints_summary(model_year_range)
 
     return {
         "tech_choice_dict": tech_choice_dict,

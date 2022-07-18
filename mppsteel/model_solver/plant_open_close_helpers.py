@@ -489,7 +489,7 @@ def production_demand_gap(
 
         results_container[region] = region_result
 
-        assert round(demand, TRADE_ROUNDING_NUMBER) == round(new_utilized_capacity, TRADE_ROUNDING_NUMBER), f"Demand - Production Imbalance for {region} -> Demand: {demand : 2f} Production: {new_utilized_capacity: 2f} Case: {cases[region]}"
+        assert round(demand, TRADE_ROUNDING_NUMBER) == round(new_utilized_capacity, TRADE_ROUNDING_NUMBER), f"Demand - Production Imbalance for {region} -> Demand: {demand : .2f} Production: {new_utilized_capacity: .2f} Case: {cases[region]}"
 
     return results_container
 

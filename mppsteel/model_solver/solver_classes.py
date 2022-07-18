@@ -27,7 +27,6 @@ from mppsteel.model_solver.solver_constraints import (
     tech_availability_check,
 )
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.utility.utils import join_list_as_string
 
 logger = get_logger(__name__)
 
@@ -82,7 +81,8 @@ class PlantChoices:
 
     def output_records_to_df(self, record_type: str):
         if record_type == "choice":
-            return pd.DataFrame(self.choice_records).reset_index(drop=True)
+            df = pd.DataFrame(self.choice_records).reset_index(drop=True)
+            return df.drop_duplicates(keep='last')
         elif record_type == "rank":
             df = pd.DataFrame(self.rank_records).reset_index(drop=True)
             df = df[~df.index.duplicated(keep="first")]
