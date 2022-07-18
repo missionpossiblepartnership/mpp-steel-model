@@ -517,3 +517,8 @@ parser.add_argument(
     action="store_true",
     help="Runs script to create investment cycles",
 )  # investment_cycles
+parser.add_argument(
+    "--pe_models",
+    action="store_true",
+    help="Runs the PE Model script"
+)

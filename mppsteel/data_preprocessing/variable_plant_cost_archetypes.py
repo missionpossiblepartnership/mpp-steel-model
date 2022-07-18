@@ -2,8 +2,8 @@
 
 import itertools
 import pandas as pd
-from tqdm import tqdm
 from typing import Iterable
+from pandas.testing import assert_series_equal
 
 from mppsteel.config.model_config import (
     PKL_DATA_FORMATTED,
@@ -167,6 +167,7 @@ class PlantVariableCostsInput:
             project_dir / PKL_DATA_IMPORTS, "static_energy_prices", "df"
         )[["Metric", "Year", "Value"]]
         static_energy_prices.set_index(["Metric", "Year"], inplace=True)
+        static_energy_prices["Value"] = static_energy_prices["Value"] / USD_TO_EUR_CONVERSION_DEFAULT
         feedstock_dict = generate_feedstock_dict(
             eur_to_usd_rate, project_dir=project_dir
         )
@@ -241,15 +242,18 @@ class PlantVariableCostsInput:
         df_store_trans["price"] = (
             df_store_trans.price_storage + df_store_trans.price_transport
         )
+        print(df_store_trans[df_store_trans["country_code"] == "USA"])
         df_store_trans = df_store_trans.drop(
             ["price_storage", "price_transport"], axis=1
         )
         df_store_trans = df_store_trans.merge(df_year, how="cross")
         df_store_trans_captured = df_store_trans.copy()
         df_store_trans_captured["material_category"] = "Captured CO2"
-        df_store_trans_used = df_transport.copy()
-        df_store_trans_used["material_category"] = "Used CO2"
-        return df_store_trans_captured, df_store_trans_used
+        df_transport_f = df_transport.drop(["price_transport"], axis=1)
+        df_transport_f["price"] = 0
+        df_transport_f["material_category"] = "Used CO2"
+        df_transport_f = df_transport_f.merge(df_year, how="cross")
+        return df_store_trans_captured, df_transport_f
 
     def get_gas_prices_per_country_and_year(self, gas_type, country_codes):
         gas_prices = self.static_energy_prices.loc[gas_type].reset_index().copy()
@@ -430,10 +434,11 @@ def format_variable_costs(
 
     df_c = variable_cost_df.copy()
     df_c.reset_index(drop=True, inplace=True)
-    prices_columns = [col for col in df_c.columns if 'price' in col]
-    non_price_columns_to_drop = ["material_category", "unit", "cost_type", "value"]
-
+    df_em = df_c[df_c["material_category"] != "Emissivity"]
+    assert_series_equal(df_em["cost"], df_em["value"] * df_em["price"], check_names=False)
     if group_data:
+        prices_columns = [col for col in df_c.columns if 'price' in col]
+        non_price_columns_to_drop = ["material_category", "unit", "cost_type", "value"]
         df_c.drop(
             prices_columns + non_price_columns_to_drop, axis=1, inplace=True
         )
@@ -443,6 +448,7 @@ def format_variable_costs(
             .sort_values(by=["country_code", "year", "technology"])
         )
         df_c["cost"] = df_c["cost"].apply(lambda x: cast_to_float(x))
+
     return df_c
 
 @timer_func

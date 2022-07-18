@@ -809,7 +809,7 @@ def format_pe_data(
     )  # ej to gj
     ccs_model_transport_f = subset_ccs_transport(
         ccs_model_transport, scenario_dict
-    )  # from USD/Mt to USD/t
+    )  # no conversion required
     ccs_model_storage_f = subset_ccs_storage(
         ccs_model_storage, scenario_dict
     )  # no conversion required

@@ -177,4 +177,7 @@ if __name__ == "__main__":
     if args.investment_cycles:
         investment_cycles()
 
+    if args.pe_models:
+        format_pe_data(scenario_dict=scenario_args)
+
     TIME_CONTAINER.return_time_container()
