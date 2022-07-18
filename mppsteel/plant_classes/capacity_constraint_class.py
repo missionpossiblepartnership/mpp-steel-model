@@ -1,6 +1,7 @@
 """Script for the CapacityConstraint class."""
 
 from mppsteel.config.model_config import (
+    MAX_WAITING_LIST_YEARS,
     MODEL_YEAR_END,
     CAPACITY_CONSTRAINT_FIXED_GROWTH_RATE,
     CAPACITY_CONSTRAINT_FIXED_RATE_MTPA,
@@ -25,7 +26,7 @@ class PlantCapacityConstraint:
         self.annual_capacity_turnover_limit = {}
         self.capacity_balance = {}
         self.potential_plant_switchers = {}
-        self.waiting_list = {}
+        self.waiting_list_counter = {}
 
     def instantiate_container(self, year_range: range):
         self.annual_capacity_turnover_limit = {year: 0 for year in year_range}
@@ -50,7 +51,9 @@ class PlantCapacityConstraint:
                 within_constraint=False, 
                 waiting_list=True
             )
-        
+        if plant_name not in self.waiting_list_counter:
+            self.waiting_list_counter[plant_name] = 0
+
     def subtract_capacity_from_balance(
         self, year: int, plant_name: str, enforce_constraint: bool = True
     ):
@@ -79,6 +82,7 @@ class PlantCapacityConstraint:
             for plant_name in waiting_list:
                 self.potential_plant_switchers[year + 1][plant_name] = self.potential_plant_switchers[year][plant_name]
                 plant_investment_cycle_container.adjust_cycle_for_deferred_investment(plant_name, year)
+                self.waiting_list_counter[plant_name] += 1
 
     def return_potential_switchers(self, year: int, plant_name: str = ""):
         return self.potential_plant_switchers[year][plant_name] if plant_name else self.potential_plant_switchers[year]
@@ -86,7 +90,15 @@ class PlantCapacityConstraint:
     def test_capacity_constraint(self, year):
         capacity_balance = self.capacity_balance[year]
         assert capacity_balance >= 0, f"Capacity balance is less than zero: {capacity_balance: .2f}"
-    
+
+    def waiting_list_limit_checker(self):
+        waiting_list_dict = self.waiting_list_counter
+        burst_limit_dict = {key: val for key,val in waiting_list_dict.items() if val >= MAX_WAITING_LIST_YEARS}
+        if burst_limit_dict:
+            logger.info(f"Some plants burst the waiting list limit of {MAX_WAITING_LIST_YEARS} years -> {burst_limit_dict}")
+        else:
+            logger.info(f"No plants burst the limit of {MAX_WAITING_LIST_YEARS} years. Max waiting list time is {max(waiting_list_dict.values())} years.")
+
     def print_capacity_summary(self, year: int):
         capacity_balance = self.capacity_balance[year]
         waiting_list = self.return_waiting_list(year)

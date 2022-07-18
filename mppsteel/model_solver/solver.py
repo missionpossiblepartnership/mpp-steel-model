@@ -973,6 +973,8 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
     active_check_results_dict = active_check_results(
         final_steel_plant_df, model_year_range
     )
+
+    PlantCapacityConstraintContainer.waiting_list_limit_checker()
     production_demand_analysis = market_container.output_trade_calculations_to_df("market_results")
     full_trade_summary = market_container.output_trade_calculations_to_df("merge_trade_summary", steel_demand_df)
     material_usage_results = MaterialUsageContainer.output_results_to_df()
