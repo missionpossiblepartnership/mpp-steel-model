@@ -1,8 +1,7 @@
 """Script to manage making multiple model_runs"""
 
-import multiprocessing as mp
-
 import pandas as pd
+import numpy as np
 
 from mppsteel.config.model_config import (
     COMBINED_OUTPUT_FOLDER_NAME,
@@ -16,6 +15,7 @@ from mppsteel.config.model_config import (
 )
 
 from mppsteel.model_graphs.graph_production import create_combined_scenario_graphs
+from mppsteel.model_results.multiple_model_run_summary import create_emissions_summary_stack, create_production_summary_stack, generate_multiple_model_run_summary_df
 from mppsteel.model_results.resource_demand_summary import create_resource_demand_summary
 from mppsteel.model_solver.solver import solver_flow
 from mppsteel.config.model_grouping import model_results_phase
@@ -146,6 +146,20 @@ def make_multiple_model_runs(
             store_result_to_container(run_container, filename, final_path, model_run, number_of_runs)
 
     # AGGREGATE MODEL RUNS
+    production_resource_usage = pd.concat(run_container["production_resource_usage"]).reset_index(drop=True)
+    production_emissions = pd.concat(run_container["production_emissions"]).reset_index(drop=True)
+
+    # CREATE SUMMARY DATAFRAMES
+    emissions_summary = create_emissions_summary_stack(production_emissions)
+    production_summary = create_production_summary_stack(production_resource_usage, "mt", "gj")
+    combined_summary = pd.concat(emissions_summary, production_summary).reset_index(drop=True)
+    summary_csv_filename = "emissions_multi_run_summary"
+
+    # WRITE FILES TO PKL
     store_run_container_to_pkl(run_container, pkl_output_folder)
+    serialize_file(combined_summary, pkl_output_folder, summary_csv_filename)
+
+    # WRITE FILES TO CSV
     for filename in files_to_aggregate:
         pickle_to_csv(output_save_path, pkl_output_folder, filename)
+    combined_summary.to_csv(f"{output_save_path}/{summary_csv_filename}.csv", index=False)
