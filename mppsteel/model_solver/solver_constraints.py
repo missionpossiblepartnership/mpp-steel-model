@@ -145,17 +145,16 @@ def create_scrap_constraints(model: pd.DataFrame) -> dict:
         dict: A multilevel dictionary of the Scrap constraints.
     """
     rsd = model[model["region"] != "World"].copy()
+    rsd = rsd[rsd.index.get_level_values("metric") == "Scrap availability"]
     rsd = (
         rsd[["region", "value"]]
-        .loc[:, :, "Scrap availability"]
         .reset_index()
-        .drop(["scenario"], axis=1)
         .set_index(["year", "region"])
         .copy()
     )
     rsd["value"] = rsd["value"] * (1 + SCRAP_CONSTRAINT_TOLERANCE_FACTOR)
     return {
-        int(year): rsd.loc[str(year)].to_dict()["value"]
+        year: rsd.loc[year].to_dict()["value"]
         for year in rsd.index.get_level_values(0)
     }
 

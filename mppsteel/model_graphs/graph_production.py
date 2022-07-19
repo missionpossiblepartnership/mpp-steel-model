@@ -2,7 +2,7 @@
 import itertools
 import pandas as pd
 import plotly.express as px
-from mppsteel.config.model_config import PKL_DATA_FORMATTED
+from mppsteel.config.model_config import MID_MODEL_CHECKPOINT_YEAR_FOR_GRAPHS, MODEL_YEAR_RANGE, NET_ZERO_TARGET_YEAR, PKL_DATA_FORMATTED
 from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import (
@@ -39,7 +39,7 @@ from mppsteel.model_graphs.combined_scenario_graphs import (
     create_combined_resource_chart,
     create_total_energy_usage_chart,
 )
-from mppsteel.utility.utils import join_list_as_string
+from mppsteel.utility.utils import decades_between_dates, join_list_as_string
 
 logger = get_logger(__name__)
 
@@ -279,7 +279,7 @@ def create_opex_capex_graph_regional(
     capex_dict: dict,
     country_mapper: dict,
     filepath: str = None,
-    year: int = 2050,
+    year: int = NET_ZERO_TARGET_YEAR,
     region: str = "NAFTA",
 ) -> px.bar:
     """Handler function for the Opex Capex split graph.
@@ -290,7 +290,7 @@ def create_opex_capex_graph_regional(
         emissivity_df (pd.DataFrame): The emissivity DataFrame.
         capex_dict (dict): The capex dictionary reference.
         country_mapper (dict): Mapper for coutry_codes to regions.
-        year (int): The year to subset the DataFrame. Defaults to 2050.
+        year (int): The year to subset the DataFrame. Defaults to NET_ZERO_TARGET_YEAR.
         filepath (str, optional): The folder path you want to save the chart to. Defaults to None. Defaults to 'NAFTA'.
 
     Returns:
@@ -525,9 +525,10 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
     )
     variable_cost_df.sort_index(ascending=True, inplace=True)
     plant_result_df = read_pickle_folder(intermediate_path, "plant_result_df", "df")
-    trade_summary_results = read_pickle_folder(
-        intermediate_path, "trade_summary_results", "df"
+    full_trade_summary = read_pickle_folder(
+        intermediate_path, "full_trade_summary", "df"
     )
+    model_decades = decades_between_dates(MODEL_YEAR_RANGE)
 
     carbon_tax_timeseries = read_pickle_folder(
         intermediate_path, "carbon_tax_timeseries"
@@ -580,12 +581,12 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
         calculated_emissivity_combined_df,
         capex_dict,
         rmi_mapper,
-        year=2050,
+        year=NET_ZERO_TARGET_YEAR,
         filepath=filepath,
     )
 
     for year, region in list(
-        itertools.product({2030, 2050}, {"China", "India", "Europe", "NAFTA"})
+        itertools.product({MID_MODEL_CHECKPOINT_YEAR_FOR_GRAPHS, NET_ZERO_TARGET_YEAR}, {"China", "India", "Europe", "NAFTA"})
     ):
         create_opex_capex_graph_regional(
             variable_cost_df,
@@ -607,7 +608,7 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
     create_new_plant_capacity_graph(plant_result_df, "area", filepath=filepath)
     create_new_plant_capacity_graph(plant_result_df, "bar", filepath=filepath)
 
-    create_trade_balance_graph(trade_summary_results, filepath=filepath)
+    create_trade_balance_graph(full_trade_summary, filepath=filepath)
 
     for resource_type, region in list(
         itertools.product({"energy", "material"}, {"China", "India", "Europe", "NAFTA"})
@@ -621,21 +622,21 @@ def create_graphs(filepath: str, scenario_dict: dict) -> None:
 
     create_lcost_graph(
         lcost_df=levelized_cost_standardized,
-        chosen_year=2030,
+        chosen_year=MID_MODEL_CHECKPOINT_YEAR_FOR_GRAPHS,
         filename="levelized_cost_standardized",
         filepath=filepath
     )
 
     for year, region in list(
         itertools.product(
-            {2020, 2030, 2040, 2050}, {"China", "India", "Europe", "NAFTA"}
+            model_decades, {"China", "India", "Europe", "NAFTA"}
         )
     ):
         create_tco_graph(tco_ref, year, region, "Avg BF-BOF", filepath=filepath)
 
     for year, region, scope in list(
         itertools.product(
-            {2020, 2030, 2050},
+            model_decades,
             {"China", "India", "Europe", "NAFTA"},
             {"s1_emissivity", "s2_emissivity", "s3_emissivity", "s1+s2", "combined"},
         )

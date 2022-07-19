@@ -131,10 +131,15 @@ def load_data(serialize: bool = False) -> dict:
     regional_steel_demand = extract_data(
         IMPORT_DATA_PATH, "Regional Steel Demand", "csv"
     )
-
+    """
     # WSA data
     wsa_production = extract_data(
         IMPORT_DATA_PATH, "WSA World Steel in Figures 2021", "xlsx", 1
+    )
+    """
+    # WSA data
+    wsa_production = extract_data(
+        IMPORT_DATA_PATH, "WSA Production 2020", "csv"
     )
     # Fossil Fuel Data
     fossil_fuel_model = extract_data(

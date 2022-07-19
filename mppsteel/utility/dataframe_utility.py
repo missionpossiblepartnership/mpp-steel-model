@@ -73,7 +73,7 @@ def move_cols_to_front(df: pd.DataFrame, cols_at_front: list[str]) -> list:
     return cols_at_front + non_abatement_columns
 
 
-def expand_dataset_years(df: pd.DataFrame, year_pairs: Sequence[tuple[int, int]]) -> pd.DataFrame:
+def expand_dataset_year_pairs(df: pd.DataFrame, year_pairs: Sequence[tuple[int, int]]) -> pd.DataFrame:
     """Expands the number of years contained in a DataFrame where the current timeseries is in intervals.
 
     Args:
@@ -86,11 +86,10 @@ def expand_dataset_years(df: pd.DataFrame, year_pairs: Sequence[tuple[int, int]]
     df_c = df.copy()
     for year_pair in year_pairs:
         start_year, end_year = year_pair
-        year_range = range(start_year + 1, end_year)
-        for ticker, year in enumerate(year_range, start=1):
-            df_c[year] = df_c[year - 1] + (
-                (df_c[end_year] / len(year_range)) * (ticker / len(year_range))
-            )
+        year_range = range(start_year + 1, end_year + 1)
+        interval = (df_c[end_year] - df_c[start_year]) / len(year_range)
+        for year in year_range:
+            df_c[year] = df_c[year - 1] + interval
     return df_c
 
 
@@ -205,7 +204,6 @@ def return_furnace_group(furnace_dict: dict, tech: str) -> str:
         if tech in furnace_dict[key]:
             return value
 
-
 def melt_and_index(
     df: pd.DataFrame, id_vars: list[str], var_name: str, index: list[str]
 ) -> pd.DataFrame:
@@ -240,7 +238,7 @@ def expand_melt_and_sort_years(
         pd.DataFrame: The modified DataFrame.
     """
     df_c = df.copy()
-    df_c = expand_dataset_years(df_c, year_pairs)
+    df_c = expand_dataset_year_pairs(df_c, year_pairs)
     years = [year_col for year_col in df_c.columns if isinstance(year_col, int)]
     df_c = df_c.melt(id_vars=set(df_c.columns).difference(set(years)), var_name="year")
     return df_c.sort_values(by=["year"], axis=0)
@@ -259,3 +257,30 @@ def change_cols_to_numeric(df: pd.DataFrame, numeric_cols: list) -> pd.DataFrame
     for col in numeric_cols:
         df_c[col] = pd.to_numeric(df[col])
     return df_c
+
+
+def extend_df_years(df: pd.DataFrame, year_column: str, year_end: int, index: list = None) -> pd.DataFrame:
+    df_c = df.reset_index().copy() if index else df.copy()    
+    max_year = df_c[year_column].max()
+    new_rows_full_df = pd.DataFrame().reindex_like(df_c)
+    if max_year == year_end:
+        return df
+    if max_year > year_end:
+        logger.warn(f"You entered {year_end}, but it is smaller than the max year of the model {max_year}. Returning original DataFrame")
+        return df
+    if max_year != year_end:
+        new_row_container = []
+        for extend_year in range(max_year + 1, year_end + 1):
+            new_rows = df_c[df_c[year_column] == max_year].copy()
+            new_rows[year_column] = extend_year
+            new_row_container.append(new_rows)
+        new_rows_full_df = pd.concat(new_row_container)
+        test_dataframes_equal(df_c, new_rows_full_df, year_column, max_year, year_end)
+    final_df = pd.concat([df_c, new_rows_full_df]).reset_index(drop=True)
+    return final_df.set_index(index) if index else final_df
+
+
+def test_dataframes_equal(df1: pd.DataFrame, df2: pd.DataFrame, common_col: str, df1_index: int, df2_index: int):
+    df1_f = df1[df1[common_col] == df1_index].drop(common_col, axis=1)
+    df2_f = df2[df2[common_col] == df2_index].drop(common_col, axis=1)
+    assert df1_f.equals(df2_f), f"DataFrames not equal | common column: {common_col} | Indexes: {df1_index} and {df2_index} -> {df1_f} {df2_f}"

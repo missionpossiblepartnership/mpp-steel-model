@@ -2,34 +2,19 @@
 
 import pandas as pd
 import numpy_financial as npf
+from tqdm import tqdm
 
 from mppsteel.config.model_config import (
     DISCOUNT_RATE,
     INVESTMENT_CYCLE_DURATION_YEARS,
     MEGATON_TO_TON,
-    MODEL_YEAR_END,
+    MODEL_YEAR_END
 )
 from mppsteel.config.reference_lists import SWITCH_DICT
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.model_tests.df_tests import test_negative_df_values
 
 logger = get_logger(__name__)
-
-
-def carbon_tax_estimate(
-    s1_emissions_value: float, s2_emissions_value: float, carbon_tax_value: float
-) -> float:
-    """Creates a carbon tax based on the scope 1 & 2 emissivity as a standardised unit and a technology and a carbon tax value per ton of steel.
-
-    Args:
-        s1_emissions_value (float): Scope 1 emissivity as a standarised unit.
-        s2_emissions_value (float): Scope 2 emissivity as a standarised unit.
-        carbon_tax_value (float): A carbon tax value per standardised unit.
-
-    Returns:
-        float: A  carbon tax estimate based on S1 & S2 emissions and a carbon tax per unit value.
-    """
-    return (s1_emissions_value + s2_emissions_value) * carbon_tax_value
 
 
 def calculate_green_premium(
@@ -76,44 +61,6 @@ def calculate_green_premium(
         technology: npf.npv(DISCOUNT_RATE, df_combined.loc[technology]["cost"].values)
         for technology in technologies
     }
-
-
-def get_opex_costs(
-    country_code: str,
-    year: int,
-    variable_costs_df: pd.DataFrame,
-    opex_df: pd.DataFrame,
-    s1_emissions_ref: pd.DataFrame,
-    s2_emissions_ref: pd.DataFrame,
-    carbon_tax_timeseries: pd.DataFrame,
-) -> pd.DataFrame:
-    """Returns the combined Opex costs for each technology in each region.
-
-    Args:
-        country_code (str): The country code of the plant you want to get opex costs for,
-        year (int): The year you want to request opex values for.
-        variable_costs_df (pd.DataFrame): DataFrame containing the variable costs data split by technology and region.
-        opex_df (pd.DataFrame): The Fixed Opex DataFrame containing opex costs split by technology.
-        s1_emissions_ref (pd.DataFrame): The DataFrame for scope 1 emissions.
-        s2_emissions_value (pd.DataFrame): The DataFrame for scope 2 emissions.
-        carbon_tax_timeseries (pd.DataFrame): The carbon tax timeseries with the carbon tax amounts on a yearly basis.
-
-    Returns:
-        pd.DataFrame: A DataFrame containing the opex costs for each technology for a given year.
-    """
-
-    opex_costs = opex_df.loc[year]
-    carbon_tax_value = carbon_tax_timeseries.loc[year]["value"]
-    s1_emissions_value = s1_emissions_ref.loc[year]
-    s2_emissions_value = s2_emissions_ref.loc[year, country_code]
-    variable_costs = variable_costs_df.loc[country_code, year]
-
-    carbon_tax_result = carbon_tax_estimate(
-        s1_emissions_value, s2_emissions_value, carbon_tax_value
-    )
-    carbon_tax_result.rename(mapper={"emissions": "value"}, axis=1, inplace=True)
-    total_opex = variable_costs + opex_costs + carbon_tax_result
-    return total_opex.rename(mapper={"value": "opex"}, axis=1)
 
 
 def calculate_capex(

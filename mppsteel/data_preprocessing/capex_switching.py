@@ -11,9 +11,7 @@ from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.config.model_config import (
     MODEL_YEAR_RANGE,
-    PKL_DATA_FORMATTED,
-    SWITCH_CAPEX_DATA_POINTS,
-    MODEL_YEAR_START,
+    PKL_DATA_FORMATTED
 )
 
 from mppsteel.config.reference_lists import (
@@ -53,7 +51,6 @@ def create_switching_dfs(technology_list: list) -> dict:
 def get_capex_values(
     df_switching_dict: dict,
     capex_dict_ref: dict,
-    year_end: int,
 ) -> pd.DataFrame:
     """Assign values to the a DataFrame based on start and potential switching technology.
 
@@ -68,11 +65,8 @@ def get_capex_values(
     logger.info("Generating the capex values for each technology")
     df_dict_c = df_switching_dict.copy()
 
-    # Create a year range
-    year_range = range(MODEL_YEAR_START, year_end + 1)
-
     year_list = []
-    for year in tqdm(year_range, total=len(year_range), desc="Get Capex Values"):
+    for year in tqdm(MODEL_YEAR_RANGE, total=len(MODEL_YEAR_RANGE), desc="Get Capex Values"):
         tech_list = []
         for technology in SWITCH_DICT:
             df_temp = df_dict_c[technology].copy()
@@ -370,11 +364,10 @@ def create_capex_timeseries(serialize: bool = False) -> dict:
     logger.info("Creating the base switching dict")
     switching_dict = create_switching_dfs(TECH_REFERENCE_LIST)
     capex_dict = read_pickle_folder(PKL_DATA_FORMATTED, "capex_dict")
-    max_model_year = max([int(year) for year in SWITCH_CAPEX_DATA_POINTS.keys()])
+
     switching_df_with_capex = get_capex_values(
         df_switching_dict=switching_dict,
         capex_dict_ref=capex_dict,
-        year_end=max_model_year,
     )
     greenfield_df_f = greenfield_preprocessing(capex_dict["greenfield"])
     greenfield_switch_df = create_greenfield_switching_df(

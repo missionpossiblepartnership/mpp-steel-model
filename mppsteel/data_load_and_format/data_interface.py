@@ -3,13 +3,13 @@
 # For Data Manipulation
 import pandas as pd
 import pandera as pa
-import numpy as np
 import numpy.typing as npt
 
 from typing import Tuple, Union
 
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.log_utility import get_logger
+from mppsteel.utility.dataframe_utility import extend_df_years
 
 from mppsteel.data_validation.data_import_tests import (
     ETHANOL_PLASTIC_CHARCOAL_SCHEMA,
@@ -19,13 +19,15 @@ from mppsteel.data_validation.data_import_tests import (
 )
 
 # For logger and units dict
-from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
+from mppsteel.utility.file_handling_utility import extract_data, read_pickle_folder, serialize_file
 from mppsteel.utility.dataframe_utility import melt_and_index, convert_currency_col
 
 # Get model parameters
 from mppsteel.config.model_config import (
     GIGAJOULE_TO_MEGAJOULE_FACTOR,
+    IMPORT_DATA_PATH,
     MEGATON_TO_TON,
+    MODEL_YEAR_END,
     PETAJOULE_TO_GIGAJOULE,
     PKL_DATA_IMPORTS,
     PKL_DATA_FORMATTED,
@@ -66,7 +68,6 @@ def format_scope3_ef_2(df: pd.DataFrame, emissions_factor_slag: float) -> pd.Dat
     df_c["value"] = df_c["value"].apply(lambda x: x * emissions_factor_slag)
     return df_c
 
-
 @pa.check_input(SCOPE3_EF_SCHEMA_1)
 def modify_scope3_ef_1(
     df: pd.DataFrame, slag_values: npt.ArrayLike, met_coal_density: float
@@ -75,7 +76,7 @@ def modify_scope3_ef_1(
 
     Args:
         df (pd.DataFrame): A DataFrame of Scope 3 Emission Energy Factors
-        slag_values (np.array): An array of values for slag
+        slag_values (npt.array): An array of values for slag
         met_coal_density (float): A singular value representing the density of met coal.
 
     Returns:
@@ -104,6 +105,8 @@ def modify_scope3_ef_1(
         )
 
     scope3_df["value"] = scope3_df.apply(standardise_units, axis=1)  # to ton/GJ
+
+    scope3_df = extend_df_years(scope3_df, "Year", MODEL_YEAR_END)
     return scope3_df
 
 
@@ -155,16 +158,23 @@ def capex_dictionary_generator(
     Returns:
         dict: A dictionary of the formatted capex and opex dataframes.
     """
+    index_cols = ["Technology", "Year"]
     gf_df = melt_and_index(
-        greenfield_df, ["Technology"], "Year", ["Technology", "Year"]
+        greenfield_df, ["Technology"], "Year", index_cols
     )
     bf_df = melt_and_index(
-        brownfield_df, ["Technology"], "Year", ["Technology", "Year"]
+        brownfield_df, ["Technology"], "Year", index_cols
     )
-    oo_df = melt_and_index(other_df, ["Technology"], "Year", ["Technology", "Year"])
+    oo_df = melt_and_index(
+        other_df, ["Technology"], "Year", index_cols
+    )
     gf_df = convert_currency_col(gf_df, "value", eur_to_usd)
     bf_df = convert_currency_col(bf_df, "value", eur_to_usd)
     oo_df = convert_currency_col(oo_df, "value", eur_to_usd)
+
+    gf_df = extend_df_years(gf_df, "Year", MODEL_YEAR_END, index_cols)
+    bf_df = extend_df_years(bf_df, "Year", MODEL_YEAR_END, index_cols)
+    oo_df = extend_df_years(oo_df, "Year", MODEL_YEAR_END, index_cols)
 
     return {
         "greenfield": gf_df,
@@ -206,6 +216,7 @@ def format_commodities_data(df: pd.DataFrame, material_mapper: dict) -> pd.DataF
         PLASTIC_WASTE_ENERGY_DENSITY_MJ_PER_KG / GIGAJOULE_TO_MEGAJOULE_FACTOR
     )
     df_c["implied_price"] = df_c.apply(generate_implied_prices, axis=1)
+    df_c = extend_df_years(df_c, "year", MODEL_YEAR_END)
     return df_c
 
 
@@ -241,7 +252,7 @@ def format_business_cases(bc_df: pd.DataFrame) -> pd.DataFrame:
 
 
 @timer_func
-def create_capex_opex_dict(serialize: bool = False) -> dict:
+def create_capex_opex_dict(serialize: bool = False, from_csv: bool = False) -> dict:
     """Creates a Dictionary containing Greenfield, Brownfield and Opex values.
 
     Args:
@@ -250,9 +261,19 @@ def create_capex_opex_dict(serialize: bool = False) -> dict:
     Returns:
         dict: A dictionary containing the capex/opex values.
     """
-    greenfield_capex_df = read_pickle_folder(PKL_DATA_IMPORTS, "greenfield_capex")
-    brownfield_capex_df = read_pickle_folder(PKL_DATA_IMPORTS, "brownfield_capex")
-    other_opex_df = read_pickle_folder(PKL_DATA_IMPORTS, "other_opex")
+    if from_csv:
+        greenfield_capex_df = extract_data(
+            IMPORT_DATA_PATH, "CAPEX OPEX Per Technology", "xlsx", 0
+        )
+        brownfield_capex_df = extract_data(
+            IMPORT_DATA_PATH, "CAPEX OPEX Per Technology", "xlsx", 1
+        )
+        other_opex_df = extract_data(
+            IMPORT_DATA_PATH, "CAPEX OPEX Per Technology", "xlsx", 2)
+    else:
+        greenfield_capex_df = read_pickle_folder(PKL_DATA_IMPORTS, "greenfield_capex")
+        brownfield_capex_df = read_pickle_folder(PKL_DATA_IMPORTS, "brownfield_capex")
+        other_opex_df = read_pickle_folder(PKL_DATA_IMPORTS, "other_opex")
     capex_dict = capex_dictionary_generator(
         greenfield_capex_df,
         brownfield_capex_df,
@@ -319,7 +340,7 @@ def bc_unit_adjustments(row: pd.Series) -> pd.Series:
 
 
 @timer_func
-def create_business_case_reference(serialize: bool = True) -> dict:
+def create_business_case_reference(serialize: bool = True, from_csv: bool = False) -> dict:
     """Turns the business cases into a reference dictionary for fast access. But saves a dataframe version and dict as pickle file depending on the `serialize` boolean flag.
 
     Args:
@@ -328,7 +349,12 @@ def create_business_case_reference(serialize: bool = True) -> dict:
     Returns:
         dict: The dictionary reference of the standardised business cases.
     """
-    business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "technology_business_cases")
+    if from_csv:
+        business_cases = extract_data(
+            IMPORT_DATA_PATH, "Technology Business Cases", "csv"
+        )
+    else:
+        business_cases = read_pickle_folder(PKL_DATA_IMPORTS, "technology_business_cases")
     business_cases = format_business_cases(business_cases)
     business_cases.reset_index(inplace=True)
     business_cases["value"] = business_cases.apply(bc_unit_adjustments, axis=1)
@@ -341,4 +367,4 @@ def create_business_case_reference(serialize: bool = True) -> dict:
         serialize_file(
             business_case_reference, PKL_DATA_FORMATTED, "business_case_reference"
         )
-    return business_case_reference
+    return business_cases, business_case_reference

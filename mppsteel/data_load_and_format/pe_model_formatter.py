@@ -4,6 +4,7 @@
 import contextlib
 import pandas as pd
 from tqdm import tqdm
+from typing import Iterable
 
 from mppsteel.config.model_config import (
     EXAJOULE_TO_GIGAJOULE,
@@ -12,6 +13,7 @@ from mppsteel.config.model_config import (
     INITIAL_MET_COAL_PRICE_USD_PER_GJ,
     MEGATON_TO_TON,
     MMBTU_TO_GJ,
+    MODEL_YEAR_END,
     THERMAL_COAL_ENERGY_DENSITY,
     TON_TO_KILOGRAM_FACTOR,
     MEGAWATT_HOURS_TO_GIGAJOULES,
@@ -40,6 +42,7 @@ from mppsteel.config.reference_lists import (
     SOUTHEAST_ASIA_COUNTRIES,
     WESTERN_EUROPE_COUNTRIES
 )
+from mppsteel.utility.dataframe_utility import extend_df_years
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import (
     expand_melt_and_sort_years,
@@ -267,6 +270,9 @@ def fossil_fuel_region_reference_generator(country_ref: pd.DataFrame) -> dict:
         )
 }
 
+def get_intersection_of_ordered_list(ordered_list: Iterable, mapping_list: Iterable) -> list:
+    return [x for x in mapping_list if x in frozenset(ordered_list)] 
+
 
 def final_mapper(
     model: pd.DataFrame, reference_mapper: dict, year_range: range = None
@@ -288,13 +294,21 @@ def final_mapper(
             total=len(year_range),
             desc="Generating PE Model Reference Dictionary",
         ):
-            for model_region in set.intersection(set(reference_mapper.keys()), set(model.index.get_level_values(1).unique())):
+            ordered_region_list = get_intersection_of_ordered_list(
+                reference_mapper.keys(), 
+                model.index.get_level_values(1).unique()
+            )
+            for model_region in ordered_region_list:
                 for country_code in reference_mapper[model_region]:
                     final_mapper[(year, country_code)] = model.loc[
                         (year, model_region), "value"
                     ]
     else:
-        for model_region in set.intersection(set(reference_mapper.keys()), set(model.index)):
+        ordered_region_list = get_intersection_of_ordered_list(
+            reference_mapper.keys(),
+            model.index
+        )
+        for model_region in ordered_region_list:
             for country_code in reference_mapper[model_region]:
                 final_mapper[country_code] = model.loc[model_region, "value"]
     return final_mapper
@@ -419,6 +433,7 @@ def subset_power(
         pdf_c = convert_currency_col(pdf_c, "value", currency_conversion_factor)
     if per_gj:
         pdf_c["value"] = pdf_c["value"] / MEGAWATT_HOURS_TO_GIGAJOULES
+    pdf_c = extend_df_years(pdf_c, "year", MODEL_YEAR_END)
     return pdf_c[["year", "region", "unit", "value"]].set_index(["year", "region"])
 
 
@@ -476,6 +491,7 @@ def subset_hydrogen(
         h2df_c["value"] = (h2df_c["value"] / HYDROGEN_ENERGY_DENSITY_MJ_PER_KG) * (
             GIGAJOULE_TO_MEGAJOULE_FACTOR / TON_TO_KILOGRAM_FACTOR
         )
+    h2df_c = extend_df_years(h2df_c, "year", MODEL_YEAR_END)
     return h2df_c[["year", "region", "unit", "value"]].set_index(["year", "region"])
 
 
@@ -535,6 +551,7 @@ def subset_fossil_fuel_prices(
         thermal_coal = format_prices(df_c, "Thermal coal", THERMAL_COAL_ENERGY_DENSITY)
         met_coal = format_prices(df_c, "Met coal", 1)
         final_df = pd.concat([natural_gas, thermal_coal, met_coal])
+    final_df = extend_df_years(final_df, "year", MODEL_YEAR_END)
     return final_df[["year", "region", "variable", "unit", "value"]].set_index(["year", "region"])
 
 
@@ -571,6 +588,7 @@ def subset_bio_prices(
     bdf_c.columns = [col.lower().strip() for col in bdf_c.columns]
     if currency_conversion_factor:
         bdf_c = convert_currency_col(bdf_c, "value", currency_conversion_factor)
+    bdf_c = extend_df_years(bdf_c, "year", MODEL_YEAR_END)
     return bdf_c[["year", "region", "unit", "value"]].set_index(["year", "region"])
 
 
@@ -597,6 +615,7 @@ def subset_bio_constraints(
     bdf_c.columns = [col.lower().strip() for col in bdf_c.columns]
     if as_gj:
         bdf_c["value"] = bdf_c["value"] * EXAJOULE_TO_GIGAJOULE
+    bdf_c = extend_df_years(bdf_c, "year", MODEL_YEAR_END)
     return bdf_c[["year", "unit", "value"]].set_index(["year"])
 
 
@@ -605,7 +624,6 @@ def subset_ccs_transport(
     scenario_dict: dict,
     cost_scenario: str = "low",
     currency_conversion_factor: float = None,
-    price_per_ton: bool = False,
 ) -> pd.DataFrame:
     """Subsets the CCS transport model according to scenario parameters passed from the scenario dict.
 
@@ -614,8 +632,6 @@ def subset_ccs_transport(
         scenario_dict (dict): The scenario_dict containing the full scenario setting for the current model run. Defaults to None.
         cost_scenario (str, optional): The parameter setting for the cost_scenario column. Defaults to 'low'.
         currency_conversion_factor (float, optional): The currency conversion factor that converts one currency to another. Defaults to None.
-        price_per_ton (bool, optional): Converts the transport price from per ton to megaton. Defaults to False.
-
     Returns:
         pd.DataFrame: A DataFrame containing the subset of the model.
     """
@@ -623,15 +639,15 @@ def subset_ccs_transport(
         cost_scenario = CCS_SCENARIOS[scenario_dict["ccs_cost_scenario"]]
     cdf_c = cdf.copy()
     if cost_scenario == "low":
-        cost_scenario_input = "BaseCase"
-        transport_type_input = "Onshore Pipeline"
-        capacity_input = 5
-        t_cost_number = 1
+        cost_scenario_input = "Low"
+        transport_type_input = "Shipping"
+        capacity_input = 6
+        t_cost_number = 2
 
     elif cost_scenario == "high":
         cost_scenario_input = "BaseCase"
         transport_type_input = "Shipping"
-        capacity_input = 5
+        capacity_input = 6
         t_cost_number = 2
 
     cdf_c = cdf_c[
@@ -649,8 +665,6 @@ def subset_ccs_transport(
     )
     if currency_conversion_factor:
         cdf_c = convert_currency_col(cdf_c, "value", currency_conversion_factor)
-    if price_per_ton:
-        cdf_c["value"] = cdf_c["value"] / MEGATON_TO_TON
     return cdf_c[["region", "unit", "value"]].set_index(["region"])
 
 
@@ -729,6 +743,7 @@ def subset_ccs_constraint(
         df["value"] = df["value"] / GIGATON_TO_MEGATON_FACTOR
         df["unit"] = "Gton"
     df.columns = [col.lower() for col in df.columns]
+    df = extend_df_years(df, "year", MODEL_YEAR_END)
     return df.set_index(["year", "region"])
 
 
@@ -793,8 +808,8 @@ def format_pe_data(
         bio_model_constraints, as_gj=standardize_units
     )  # ej to gj
     ccs_model_transport_f = subset_ccs_transport(
-        ccs_model_transport, scenario_dict, price_per_ton=standardize_units
-    )  # from USD/Mt to USD/t
+        ccs_model_transport, scenario_dict
+    )  # no conversion required
     ccs_model_storage_f = subset_ccs_storage(
         ccs_model_storage, scenario_dict
     )  # no conversion required

@@ -2,8 +2,8 @@
 
 import itertools
 import pandas as pd
-from tqdm import tqdm
 from typing import Iterable
+from pandas.testing import assert_series_equal
 
 from mppsteel.config.model_config import (
     PKL_DATA_FORMATTED,
@@ -11,6 +11,7 @@ from mppsteel.config.model_config import (
     MODEL_YEAR_RANGE,
     PKL_DATA_IMPORTS,
     PROJECT_PATH,
+    USD_TO_EUR_CONVERSION_DEFAULT,
 )
 from mppsteel.config.reference_lists import RESOURCE_CATEGORY_MAPPER
 from mppsteel.utility.utils import cast_to_float
@@ -166,6 +167,7 @@ class PlantVariableCostsInput:
             project_dir / PKL_DATA_IMPORTS, "static_energy_prices", "df"
         )[["Metric", "Year", "Value"]]
         static_energy_prices.set_index(["Metric", "Year"], inplace=True)
+        static_energy_prices["Value"] = static_energy_prices["Value"] / USD_TO_EUR_CONVERSION_DEFAULT
         feedstock_dict = generate_feedstock_dict(
             eur_to_usd_rate, project_dir=project_dir
         )
@@ -246,9 +248,11 @@ class PlantVariableCostsInput:
         df_store_trans = df_store_trans.merge(df_year, how="cross")
         df_store_trans_captured = df_store_trans.copy()
         df_store_trans_captured["material_category"] = "Captured CO2"
-        df_store_trans_used = df_store_trans.copy()
-        df_store_trans_used["material_category"] = "Used CO2"
-        return df_store_trans_captured, df_store_trans_used
+        df_transport_f = df_transport.drop(["price_transport"], axis=1)
+        df_transport_f["price"] = 0
+        df_transport_f["material_category"] = "Used CO2"
+        df_transport_f = df_transport_f.merge(df_year, how="cross")
+        return df_store_trans_captured, df_transport_f
 
     def get_gas_prices_per_country_and_year(self, gas_type, country_codes):
         gas_prices = self.static_energy_prices.loc[gas_type].reset_index().copy()
@@ -297,7 +301,7 @@ class PlantVariableCostsInput:
         fossil_categories = [
             k
             for k, v in self.resource_category_mapper.items()
-            if v == "Fossil Fuels" and k not in ("Natural gas", "Plastic waste")
+            if v == "Fossil Fuels" and k not in ("Natural gas", "Plastic waste", "Met coal", "Thermal coal")
         ]
         fossil_price_dfs = []
         for category in fossil_categories:
@@ -396,6 +400,7 @@ def plant_variable_costs_vectorized(input_data: PlantVariableCostsInput) -> pd.D
         lambda material: input_data.resource_category_mapper[material]
     )
     dm["cost_type"] = dm["cost_type"].astype("category")
+    
     return dm
 
 
@@ -411,187 +416,6 @@ def plant_variable_costs(input_data: PlantVariableCostsInput) -> pd.DataFrame:
 
     """
     return plant_variable_costs_vectorized(input_data)
-    # return plant_variable_costs_row_wise(input_data)
-
-
-def plant_variable_costs_row_wise(input_data: PlantVariableCostsInput) -> pd.DataFrame:
-    """Creates a DataFrame reference of each plant's variable cost.
-
-    Args:
-        input_data (PlantVariableCostsInput): object holding all the input data for calculation..
-
-    Returns:
-        pd.DataFrame: A DataFrame containing each plant's variable costs.
-    """
-    power_grid_prices_ref = input_data.power_grid_prices_ref
-    h2_prices_ref = input_data.h2_prices_ref
-    bio_model_prices_ref = input_data.bio_model_prices_ref
-    ccs_model_transport_ref = input_data.ccs_model_transport_ref
-    ccs_model_storage_ref = input_data.ccs_model_storage_ref
-    fossil_fuel_ref = input_data.fossil_fuel_ref
-    business_cases = input_data.business_cases
-    static_energy_prices = input_data.static_energy_prices
-    feedstock_dict = input_data.feedstock_dict
-    product_range_year_country = input_data.product_range_year_country
-    df_list = []
-    for year, country_code in tqdm(
-        product_range_year_country,
-        total=len(product_range_year_country),
-        desc="Variable Cost Loop",
-    ):
-        df = generate_variable_costs(
-            year=year,
-            country_code=country_code,
-            business_cases_df=business_cases,
-            feedstock_dict=feedstock_dict,
-            static_energy_df=static_energy_prices,
-            electricity_ref=power_grid_prices_ref,
-            hydrogen_ref=h2_prices_ref,
-            bio_ref=bio_model_prices_ref,
-            ccs_storage_ref=ccs_model_storage_ref,
-            ccs_transport_ref=ccs_model_transport_ref,
-            fossil_fuel_ref=fossil_fuel_ref,
-        )
-        df_list.append(df)
-
-    df = pd.concat(df_list).reset_index(drop=True)
-    df["cost_type"] = df["material_category"].apply(
-        lambda material: RESOURCE_CATEGORY_MAPPER[material]
-    )
-    return df[df["cost_type"] != "Emissivity"].copy()
-
-
-def vc_mapper(
-    row: pd.Series,
-    country_code: str,
-    year: int,
-    static_year: int,
-    electricity_ref: dict,
-    hydrogen_ref: dict,
-    bio_ref: dict,
-    ccs_transport_ref: dict,
-    ccs_storage_ref: dict,
-    feedstock_dict: dict,
-    static_energy_df: pd.DataFrame,
-    fossil_fuel_ref: dict,
-) -> float:
-    """_summary_
-
-    Args:
-        row (pd.Series): A Series containing the consumption rates for each technology and resource.
-        country_code (str): The country code to create a reference for.
-        year (int): The year to create a reference for.
-        static_year (int): The static year to be used for datasets that end after a certain year.
-        electricity_ref (dict): The electricity grid price reference dict.
-        hydrogen_ref (dict): The hydrogen price reference dict.
-        bio_ref (dict): The bio price reference dict.
-        ccs_transport_ref (dict): The ccs transport price reference dict.
-        ccs_storage_ref (dict): The ccs storage price reference dict.
-        feedstock_dict (dict): The feedstock price reference dict.
-        static_energy_df (pd.DataFrame): The static energy reference dict.
-        fossil_fuel_ref (dict): The reference for the fossil_fuel_prices.
-
-    Returns:
-        float: A float value containing the variable cost value to assign.
-    """
-    if row.material_category == "Electricity":
-        return row.value * electricity_ref[(year, country_code)]
-
-    elif row.material_category == "Hydrogen":
-        return row.value * hydrogen_ref[(year, country_code)]
-
-    elif RESOURCE_CATEGORY_MAPPER[row.material_category] == "Bio Fuels":
-        return row.value * bio_ref[(year, country_code)]
-
-    elif RESOURCE_CATEGORY_MAPPER[row.material_category] == "CCS":
-        return row.value * (
-            ccs_transport_ref[country_code] + ccs_storage_ref[country_code]
-        )
-
-    elif row.material_category == "Natural gas":
-        return (
-            row.value * fossil_fuel_ref[(year, country_code, 'Natural gas')]
-        )
-
-    elif row.material_category == "Plastic waste":
-        return row.value * feedstock_dict["Plastic waste"]
-
-    elif row.material_category == "Thermal coal":
-        return row.value * fossil_fuel_ref[(year, country_code, 'Thermal coal')]
-
-    elif row.material_category == "Met coal":
-        return row.value * fossil_fuel_ref[(year, country_code, 'Met coal')]
-
-    elif (RESOURCE_CATEGORY_MAPPER[row.material_category] == "Fossil Fuels") and (
-        row.material_category not in ["Natural gas", "Plastic waste", "Thermal coal", "Met coal"]
-    ):
-        return (
-            row.value
-            * static_energy_df.loc[row.material_category, static_year]["Value"]
-        )
-
-    elif RESOURCE_CATEGORY_MAPPER[row.material_category] == "Feedstock":
-        return row.value * feedstock_dict[row.material_category]
-
-    elif RESOURCE_CATEGORY_MAPPER[row.material_category] == "Other Opex":
-        if row.material_category in {"BF slag", "Other slag"}:
-            return row.value * feedstock_dict[row.material_category]
-
-        elif row.material_category == "Steam":
-            return row.value * static_energy_df.loc["Steam", static_year]["Value"]
-    return 0
-
-
-def generate_variable_costs(
-    year: int,
-    country_code: str,
-    business_cases_df: pd.DataFrame,
-    feedstock_dict: dict = None,
-    static_energy_df: pd.DataFrame = None,
-    electricity_ref: pd.DataFrame = None,
-    hydrogen_ref: pd.DataFrame = None,
-    bio_ref: pd.DataFrame = None,
-    ccs_storage_ref: pd.DataFrame = None,
-    ccs_transport_ref: pd.DataFrame = None,
-    fossil_fuel_ref: dict = None,
-) -> pd.DataFrame:
-    """Generates a DataFrame based on variable cost parameters for a particular region passed to it.
-
-    Args:
-        year (int): The year you want to create variable costs for.
-        country_code (str): The country code that you want to get energy assumption prices for.
-        business_cases_df (pd.DataFrame): A DataFrame of standardised variable costs.
-        feedstock_dict (dict, optional): A dictionary containing feedstock resources and prices. Defaults to None.
-        static_energy_df (pd.DataFrame, optional): A DataFrame containing static energy prices. Defaults to None.
-        electricity_ref (pd.DataFrame, optional): The shared MPP Power assumptions model. Defaults to None.
-        hydrogen_ref (pd.DataFrame, optional): The shared MPP Hydrogen assumptions model. Defaults to None.
-        bio_ref (pd.DataFrame, optional): The shared MPP Bio assumptions model. Defaults to None.
-        ccs_storage_ref (pd.DataFrame, optional): The shared MPP CCS assumptions model. Defaults to None.
-        ccs_transport_ref (pd.DataFrame, optional): The shared MPP CCS assumptions model. Defaults to None.
-        fossil_fuel_ref (dict): The reference for the fossil_fuel_prices.
-    Returns:
-        pd.DataFrame: A DataFrame containing variable costs for a particular region.
-    """
-    df_c = business_cases_df.copy()
-    static_year = min(2026, year)
-    df_c["year"] = year
-    df_c["country_code"] = country_code
-    df_c["cost"] = df_c.apply(
-        vc_mapper,
-        country_code=country_code,
-        year=year,
-        static_year=static_year,
-        electricity_ref=electricity_ref,
-        hydrogen_ref=hydrogen_ref,
-        bio_ref=bio_ref,
-        ccs_transport_ref=ccs_transport_ref,
-        ccs_storage_ref=ccs_storage_ref,
-        feedstock_dict=feedstock_dict,
-        static_energy_df=static_energy_df,
-        fossil_fuel_ref=fossil_fuel_ref,
-        axis=1,
-    )
-    return df_c
 
 
 def format_variable_costs(
@@ -609,9 +433,13 @@ def format_variable_costs(
 
     df_c = variable_cost_df.copy()
     df_c.reset_index(drop=True, inplace=True)
+    df_em = df_c[df_c["material_category"] != "Emissivity"]
+    assert_series_equal(df_em["cost"], df_em["value"] * df_em["price"], check_names=False)
     if group_data:
+        prices_columns = [col for col in df_c.columns if 'price' in col]
+        non_price_columns_to_drop = ["material_category", "unit", "cost_type", "value"]
         df_c.drop(
-            ["material_category", "unit", "cost_type", "value"], axis=1, inplace=True
+            prices_columns + non_price_columns_to_drop, axis=1, inplace=True
         )
         df_c = (
             df_c.groupby(by=["country_code", "year", "technology"])
@@ -619,9 +447,8 @@ def format_variable_costs(
             .sort_values(by=["country_code", "year", "technology"])
         )
         df_c["cost"] = df_c["cost"].apply(lambda x: cast_to_float(x))
-        return df_c
-    return df_c
 
+    return df_c
 
 @timer_func
 def generate_variable_plant_summary(

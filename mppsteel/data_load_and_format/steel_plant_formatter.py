@@ -13,11 +13,13 @@ from mppsteel.utility.location_utility import (
 )
 
 from mppsteel.utility.file_handling_utility import (
+    extract_data,
     read_pickle_folder,
     serialize_file,
 )
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.config.model_config import (
+    IMPORT_DATA_PATH,
     MODEL_YEAR_START,
     PKL_DATA_FORMATTED,
     PKL_DATA_IMPORTS,
@@ -247,7 +249,7 @@ def create_active_check_col(row: pd.Series, year: int) -> bool:
 
 
 @timer_func
-def steel_plant_processor(serialize: bool = False) -> pd.DataFrame:
+def steel_plant_processor(serialize: bool = False, from_csv: bool = False) -> pd.DataFrame:
     """Generates a fully preprocessed Steel Plant DataFrame.
 
     Args:
@@ -256,7 +258,12 @@ def steel_plant_processor(serialize: bool = False) -> pd.DataFrame:
         pd.DataFrame: A DataFrame containing the preprocessed steel plants.
     """
     logger.info("Preprocessing the Steel Plant Data")
-    steel_plants = read_pickle_folder(PKL_DATA_IMPORTS, "steel_plants")
+    if from_csv:
+        steel_plants = extract_data(
+            IMPORT_DATA_PATH, "Steel Plant Data Anon Latest", "xlsx"
+        )
+    else:
+        steel_plants = read_pickle_folder(PKL_DATA_IMPORTS, "steel_plants")
     steel_plants = steel_plant_formatter(steel_plants)
     steel_plants = apply_countries_to_steel_plants(steel_plants)
     steel_plants["start_of_operation"] = steel_plants["start_of_operation"].apply(

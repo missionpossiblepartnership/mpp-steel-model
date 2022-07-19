@@ -3,6 +3,7 @@ from typing import Union
 
 import pandas as pd
 import plotly.express as px
+from mppsteel.config.model_config import MID_MODEL_CHECKPOINT_YEAR_FOR_GRAPHS
 
 from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
 from mppsteel.utility.log_utility import get_logger
@@ -32,7 +33,7 @@ def get_lcost_lowest_vals(
     df_s = df_c.set_index(["year", "technology", "country_code"]).loc[chosen_year]
     for technology in TECH_REFERENCE_LIST:
         df_t = df_s.loc[technology]
-        min_region = df_t.idxmin().values[0]
+        min_region = df_t[value_col].idxmin()
         min_val = df_t[value_col].min()
         max_val = df_t[value_col].max()
         tech_delta_dict[technology] = max_val - min_val
@@ -77,7 +78,7 @@ def melt_and_subset(df: pd.DataFrame, cost_types: list):
 
 def lcost_graph(
     lcost_data: pd.DataFrame,
-    chosen_year: int = 2030,
+    chosen_year: int = MID_MODEL_CHECKPOINT_YEAR_FOR_GRAPHS,
     save_filepath: str = None,
     ext: str = "png",
 ) -> px.bar:
@@ -85,8 +86,7 @@ def lcost_graph(
 
     Args:
         lcost_data (pd.DataFrame): The levelized cost DataFrame.
-        chosen_year (int, optional): The year you want to calculate the Lcost for. Defaults to 2030.
-        save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
+        save_filepath (str, optional): The filepath that you save the graph to. Defaults to MID_MODEL_CHECKPOINT_YEAR_FOR_GRAPHS.
         ext (str, optional): The extension of the image you are creating. Defaults to "png".
 
     Returns:

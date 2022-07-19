@@ -14,6 +14,7 @@ from mppsteel.config.model_config import (
     BIOMASS_ENERGY_DENSITY_GJ_PER_TON,
     TON_TO_KILOGRAM_FACTOR
 )
+from mppsteel.utility.function_timer_utility import timer_func
 
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.file_handling_utility import (
@@ -42,12 +43,12 @@ RESULTS_METADATA = {
     "biofuel_biomass": {
         "old_value_column": "biomass_gj",
         "new_value_column": "biomass_mt",
-        "conversion_factor": BIOMASS_ENERGY_DENSITY_GJ_PER_TON / MEGATON_TO_TON,
+        "conversion_factor": 1 / (BIOMASS_ENERGY_DENSITY_GJ_PER_TON * MEGATON_TO_TON),
     },
     "biofuel_biomethane": {
         "old_value_column": "biomethane_gj",
         "new_value_column": "biomethane_mt",
-        "conversion_factor": BIOMASS_ENERGY_DENSITY_GJ_PER_TON / MEGATON_TO_TON,
+        "conversion_factor": 1 / (BIOMASS_ENERGY_DENSITY_GJ_PER_TON * MEGATON_TO_TON),
     },
     "natural_gas": {
         "old_value_column": "natural_gas_gj",
@@ -123,7 +124,6 @@ def model_primary_secondary_materials(
     column_mapper = {"production": "crude_steel_mt", "scrap_mt": "scrap_steel_mt"}
     
     # DataFrame manipulation
-    print(production_df.columns)
     df_c = production_df[all_columns].copy()
     df_c.rename(
         mapper=column_mapper, 
@@ -179,6 +179,7 @@ def create_demand_summary(
     df_final = ft.reduce(lambda left, right: pd.merge(left, right, on=final_metadata_columns), dfs)
     return df_final.reset_index().round(2)
 
+@timer_func
 def create_resource_demand_summary(output_folder_path: str, serialize: bool = False) -> dict:
     """Production results flow to create the Production resource usage DataFrame and the Production Emissions DataFrame.
 

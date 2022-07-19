@@ -1,7 +1,7 @@
 """Module that generates a timeseries for various purposes"""
 # For Data Manipulation
 import pandas as pd
-from mppsteel.utility.dataframe_utility import convert_currency_col
+from mppsteel.utility.dataframe_utility import convert_currency_col, extend_df_years
 
 # For logger and units dict
 from mppsteel.utility.file_handling_utility import serialize_file, get_scenario_pkl_path
@@ -13,6 +13,8 @@ from mppsteel.config.model_config import (
     MODEL_YEAR_START,
     CARBON_TAX_START_YEAR,
     GREEN_PREMIUM_START_YEAR,
+    CARBON_TAX_END_YEAR,
+    GREEN_PREMIUM_END_YEAR
 )
 
 from mppsteel.config.model_scenarios import (
@@ -33,6 +35,7 @@ def timeseries_generator(
     end_value: float,
     start_value: float = 0,
     units: str = "",
+    extension_year: int = None
 ) -> pd.DataFrame:
     """Function that generates a timeseries based on particular logic
 
@@ -52,8 +55,8 @@ def timeseries_generator(
     df_schema = {"value": float, "units": str}
     # Define the year range for the df
     year_range = pd.RangeIndex(start_year, end_year + 1)
-    zero_range = range(int(start_year), int(series_start_year))
-    value_range = range(int(series_start_year), int(end_year + 1))
+    zero_range = range(int(start_year), int(series_start_year + 1))
+    value_range = range(int(series_start_year + 1), int(end_year + 1))
     # Create the DataFrame
     df = pd.DataFrame(
         index=pd.RangeIndex(0, len(year_range)),
@@ -82,7 +85,7 @@ def timeseries_generator(
             elif row.Index < end_year:
                 # logic for remaining years except last year
                 df_c.loc[row.Index, "value"] = (end_value / len(value_range)) * (
-                    (row.Index + 1) - series_start_year
+                    (row.Index) - series_start_year
                 )
             else:
                 df_c.loc[row.Index, "value"] = end_value  # logic for last year
@@ -99,8 +102,11 @@ def timeseries_generator(
     # change the column types
     for key in df_schema.keys():
         df[key].astype(df_schema[key])
+    df.reset_index(inplace=True)
+    if extension_year:
+        df = extend_df_years(df, "year", extension_year)
     logger.info(f"{timeseries_type} timeseries complete")
-    return df.reset_index()
+    return df
 
 
 @timer_func
@@ -125,24 +131,26 @@ def generate_timeseries(scenario_dict: dict = None, serialize: bool = False) -> 
     ]
     # Create Carbon Tax timeseries
     carbon_tax_timeseries = timeseries_generator(
-        "carbon_tax",
-        MODEL_YEAR_START,
-        MODEL_YEAR_END,
-        CARBON_TAX_START_YEAR,
-        carbon_tax_scenario_values[1],
-        carbon_tax_scenario_values[0],
+        timeseries_type="carbon_tax",
+        start_year=MODEL_YEAR_START,
+        end_year=CARBON_TAX_END_YEAR,
+        series_start_year=CARBON_TAX_START_YEAR,
+        end_value=carbon_tax_scenario_values[1],
+        start_value=carbon_tax_scenario_values[0],
+        extension_year=MODEL_YEAR_END
     )
     carbon_tax_timeseries = convert_currency_col(
         carbon_tax_timeseries, "value", scenario_dict["eur_to_usd"]
     )
 
     green_premium_timeseries = timeseries_generator(
-        "green_premium",
-        MODEL_YEAR_START,
-        MODEL_YEAR_END,
-        GREEN_PREMIUM_START_YEAR,
-        green_premium_scenario_values[1],
-        green_premium_scenario_values[0],
+        timeseries_type="green_premium",
+        start_year=MODEL_YEAR_START,
+        end_year=GREEN_PREMIUM_END_YEAR,
+        series_start_year=GREEN_PREMIUM_START_YEAR,
+        end_value=green_premium_scenario_values[1],
+        start_value=green_premium_scenario_values[0],
+        extension_year=MODEL_YEAR_END
     )
     green_premium_timeseries = convert_currency_col(
         green_premium_timeseries, "value", scenario_dict["eur_to_usd"]

@@ -1,12 +1,13 @@
 """Runs the data loading scripts"""
 from datetime import datetime
+from mppsteel.config.multiple_runs import join_scenario_data, make_multiple_model_runs
 
 from mppsteel.utility.utils import multiprocessing_scenarios
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.file_handling_utility import create_folders_if_nonexistant
 from mppsteel.utility.function_timer_utility import TIME_CONTAINER
 
-from mppsteel.config.model_config import DATETIME_FORMAT, FOLDERS_TO_CHECK_IN_ORDER
+from mppsteel.config.model_config import DATETIME_FORMAT, DEFAULT_NUMBER_OF_RUNS, FOLDERS_TO_CHECK_IN_ORDER
 
 from mppsteel.config.model_scenarios import (
     MAIN_SCENARIO_RUNS,
@@ -87,11 +88,26 @@ if __name__ == "__main__":
             model_output_folder=model_output_folder,
         )
 
+    if args.multi_run_full:
+        data_import_and_preprocessing_refresh()
+        scenario_preprocessing_phase(scenario_dict=scenario_args)
+        make_multiple_model_runs(
+            scenario_dict=scenario_args,
+            new_folder=True,
+            timestamp=timestamp,
+            number_of_runs=DEFAULT_NUMBER_OF_RUNS
+        )
+
+    if args.multi_run_half:
+        make_multiple_model_runs(
+            scenario_dict=scenario_args,
+            new_folder=True,
+            timestamp=timestamp,
+            number_of_runs=DEFAULT_NUMBER_OF_RUNS
+        )
+
     if args.solver:
         solver_flow(scenario_dict=scenario_args, serialize=True)
-
-    if args.minimodels:
-        model_results_phase(scenario_dict=scenario_args)
 
     if args.output:
         outputs_only(
@@ -102,6 +118,14 @@ if __name__ == "__main__":
 
     if args.scenario_model_run:
         scenario_model_run(
+            scenario_dict=scenario_args,
+            dated_output_folder=True,
+            model_output_folder=model_output_folder,
+        )
+
+    if args.half_model_run:
+        solver_flow(scenario_dict=scenario_args, serialize=True)
+        results_and_output(
             scenario_dict=scenario_args,
             dated_output_folder=True,
             model_output_folder=model_output_folder,
@@ -142,8 +166,8 @@ if __name__ == "__main__":
             dated_output_folder=True,
         )
 
-    if args.minimodels:
-        generate_minimodels(scenario_dict=scenario_args)
+    if args.total_opex:
+        total_opex_calculations(scenario_dict=scenario_args)
 
     if args.production:
         production_flow(scenario_dict=scenario_args)
@@ -176,5 +200,11 @@ if __name__ == "__main__":
 
     if args.data_transfer:
         transfer_results_to_azure(blob_storage_connect_str)
+
+    if args.investment_cycles:
+        investment_cycles()
+
+    if args.pe_models:
+        format_pe_data(scenario_dict=scenario_args)
 
     TIME_CONTAINER.return_time_container()

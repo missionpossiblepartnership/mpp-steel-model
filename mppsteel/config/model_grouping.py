@@ -3,16 +3,12 @@ import argparse
 
 from datetime import datetime
 
-import pandas as pd
-
 from mppsteel.utility.utils import stdout_query, get_currency_rate
 from mppsteel.utility.file_handling_utility import (
     pickle_to_csv,
     create_folder_if_nonexist,
     get_scenario_pkl_path,
-    create_folders_if_nonexistant,
-    read_pickle_folder,
-    serialize_file,
+    create_folders_if_nonexistant
 )
 
 from mppsteel.utility.log_utility import get_logger
@@ -36,6 +32,8 @@ from mppsteel.data_preprocessing.investment_cycles import investment_cycle_flow
 from mppsteel.data_preprocessing.variable_plant_cost_archetypes import (
     generate_variable_plant_summary,
 )
+from mppsteel.data_preprocessing.carbon_tax_reference import generate_carbon_tax_reference
+from mppsteel.data_preprocessing.total_opex_reference import generate_total_opex_cost_reference
 from mppsteel.data_preprocessing.levelized_cost import generate_levelized_cost_results
 from mppsteel.model_solver.solver import solver_flow
 from mppsteel.data_preprocessing.tco_abatement_switch import (
@@ -51,20 +49,15 @@ from mppsteel.model_results.investments import investment_results
 from mppsteel.model_results.green_capacity_ratio import generate_gcr_df
 from mppsteel.model_graphs.graph_production import (
     create_graphs,
-    create_combined_scenario_graphs,
 )
-from mppsteel.model_results.resource_demand_summary import create_resource_demand_summary
 
 from mppsteel.config.model_config import (
     DATETIME_FORMAT,
-    PKL_DATA_COMBINED,
     PKL_DATA_FORMATTED,
-    PKL_FOLDER,
     USD_TO_EUR_CONVERSION_DEFAULT,
     OUTPUT_FOLDER,
     INTERMEDIATE_RESULT_PKL_FILES,
-    FINAL_RESULT_PKL_FILES,
-    COMBINED_OUTPUT_FOLDER_NAME,
+    FINAL_RESULT_PKL_FILES
 )
 from mppsteel.config.model_scenarios import SCENARIO_OPTIONS
 
@@ -104,7 +97,7 @@ def add_currency_rates_to_scenarios(scenario_dict: dict, live: bool = False) -> 
 
     return scenario_dict
 
-
+#Hello
 # Model phasing
 def data_import_stage() -> None:
     load_data(serialize=True)
@@ -125,9 +118,18 @@ def data_preprocessing_scenarios(scenario_dict: dict) -> None:
     generate_preprocessed_emissions_data(serialize=True)
     generate_emissions_flow(scenario_dict=scenario_dict, serialize=True)
     generate_variable_plant_summary(scenario_dict, serialize=True)
+    generate_carbon_tax_reference(scenario_dict, serialize=True)
+    generate_total_opex_cost_reference(scenario_dict, serialize=True)
     generate_levelized_cost_results(scenario_dict=scenario_dict, serialize=True, standard_plant_ref=True)
     tco_presolver_reference(scenario_dict, serialize=True)
     abatement_presolver_reference(scenario_dict, serialize=True)
+
+def total_opex_calculations(scenario_dict: dict) -> None:
+    generate_variable_plant_summary(scenario_dict, serialize=True)
+    generate_carbon_tax_reference(scenario_dict, serialize=True)
+    generate_total_opex_cost_reference(scenario_dict, serialize=True)
+    generate_levelized_cost_results(scenario_dict=scenario_dict, serialize=True, standard_plant_ref=True)
+    tco_presolver_reference(scenario_dict, serialize=True)
 
 
 def investment_cycles() -> None:
@@ -175,57 +177,6 @@ def model_outputs_phase(
 
     for pkl_file in FINAL_RESULT_PKL_FILES:
         pickle_to_csv(save_path, final_path, pkl_file)
-
-
-def join_scenario_data(
-    scenario_options: list,
-    new_folder: bool = True,
-    timestamp: str = "",
-    final_outputs_only: bool = True,
-):
-    logger.info(f"Joining the Following Scenario Data {scenario_options}")
-    combined_ouptut_pkl_folder = f"{PKL_FOLDER}/{COMBINED_OUTPUT_FOLDER_NAME}"
-    create_folder_if_nonexist(combined_ouptut_pkl_folder)
-    output_save_path = OUTPUT_FOLDER
-    output_folder_graphs = f"{output_save_path}/graphs"
-    output_folder_name = f"{COMBINED_OUTPUT_FOLDER_NAME} {timestamp}"
-    output_folder_filepath = "/"
-    if new_folder:
-        output_folder_filepath = f"{OUTPUT_FOLDER}/{output_folder_name}"
-        output_folder_graphs = f"{output_folder_filepath}/graphs"
-        create_folder_if_nonexist(output_folder_filepath)
-        create_folder_if_nonexist(output_folder_graphs)
-        output_save_path = output_folder_filepath
-        output_save_path_graphs = output_folder_graphs
-
-    if not final_outputs_only:
-        for output_file in INTERMEDIATE_RESULT_PKL_FILES:
-            output_container = []
-            for scenario_name in scenario_options:
-                path = get_scenario_pkl_path(scenario_name, "intermediate")
-                output_container.append(read_pickle_folder(path, output_file, "df"))
-
-            combined_output = pd.concat(output_container).reset_index(drop=True)
-            serialize_file(combined_output, combined_ouptut_pkl_folder, output_file)
-            combined_output.to_csv(f"{output_save_path}/{output_file}.csv", index=False)
-
-    for output_file in FINAL_RESULT_PKL_FILES:
-        output_container = []
-        for scenario_name in scenario_options:
-            path = get_scenario_pkl_path(scenario_name, "final")
-            output_container.append(read_pickle_folder(path, output_file, "df"))
-
-        combined_output = pd.concat(output_container).reset_index(drop=True)
-        serialize_file(combined_output, combined_ouptut_pkl_folder, output_file)
-        combined_output.to_csv(f"{output_save_path}/{output_file}.csv", index=False)
-
-    resource_demand_summary = create_resource_demand_summary(
-        output_folder_path=PKL_DATA_COMBINED,
-        serialize=True
-    )
-    resource_demand_summary.to_csv(f"{output_save_path}/resource_demand_summary.csv", index=False)
-
-    create_combined_scenario_graphs(filepath=output_save_path_graphs)
 
 
 def model_graphs_phase(
@@ -452,9 +403,9 @@ parser.add_argument(
 )  # graphs_only
 parser.add_argument(
     "-n",
-    "--minimodels",
+    "--total_opex",
     action="store_true",
-    help="Runs the minimodels script directly",
+    help="Runs the total_opex_calculations script grouping",
 )  # generate_minimodels
 parser.add_argument(
     "-w",
@@ -501,3 +452,28 @@ parser.add_argument(
     action="store_true",
     help="Runs script to transfer data to blob storage",
 )  # transfer_results_to_azure
+parser.add_argument(
+    "--investment_cycles",
+    action="store_true",
+    help="Runs script to create investment cycles",
+)  # investment_cycles
+parser.add_argument(
+    "--pe_models",
+    action="store_true",
+    help="Runs the PE Model script"
+)
+parser.add_argument(
+    "--multi_run_full",
+    action="store_true",
+    help="Runs a full model scenario multiple times (from solver stage) and stores aggregated results"
+)
+parser.add_argument(
+    "--multi_run_half",
+    action="store_true",
+    help="Runs a half model scenario multiple times (from solver stage) and stores aggregated results"
+)
+parser.add_argument(
+    "--half_model_run",
+    action="store_true",
+    help="Runs a half model (from solver stage onwards) and stores results"
+)

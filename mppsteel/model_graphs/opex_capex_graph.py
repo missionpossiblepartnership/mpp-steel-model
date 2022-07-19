@@ -4,7 +4,7 @@ from typing import Union
 import pandas as pd
 import plotly.express as px
 import numpy_financial as npf
-from mppsteel.config.model_config import DISCOUNT_RATE
+from mppsteel.config.model_config import DISCOUNT_RATE, MODEL_YEAR_END
 from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
 
 from mppsteel.utility.utils import cast_to_float
@@ -308,7 +308,7 @@ def opex_capex_graph(
         array_order=TECH_REFERENCE_LIST,
         xaxis_title="Technology",
         yaxis_title="Cost",
-        title_text="Capex / OPEX breakdown in 2050",
+        title_text=f"Capex / OPEX breakdown in {year}",
     )
 
     if save_filepath:
@@ -390,7 +390,7 @@ def regional_split_of_preprocessed_data(
     emissivity_df: pd.DataFrame,
     capex_dict: dict,
     country_mapper: dict,
-    year: int = 2050,
+    year: int = MODEL_YEAR_END,
     region: str = None,
 ) -> pd.DataFrame:
     """Creates a DataFrame split by cost type for the purpose of creating a graph.
@@ -401,7 +401,7 @@ def regional_split_of_preprocessed_data(
         emissivity_df (pd.DataFrame): The emissivity DataFrame.
         capex_dict (dict): The capex dictionary reference.
         country_mapper (dict): Mapper for coutry_codes to regions
-        year (int): The year to subset the DataFrame. Defaults to 2050.
+        year (int): The year to subset the DataFrame. Defaults to MODEL_YEAR_END.
         region (str, optional): The region to subset the data. Defaults to None.
 
     Returns:
@@ -450,7 +450,7 @@ def opex_capex_graph_regional(
     emissivity_df: pd.DataFrame,
     capex_dict: dict,
     country_mapper: dict,
-    year: int = 2050,
+    year: int = MODEL_YEAR_END,
     region: str = None,
     save_filepath: str = None,
     ext: str = "png",
@@ -463,7 +463,7 @@ def opex_capex_graph_regional(
         emissivity_df (pd.DataFrame): The emissivity DataFrame.
         capex_dict (dict): The capex dictionary reference.
         country_mapper (dict): Mapper for coutry_codes to regions
-        year (int): The year to subset the DataFrame. Defaults to 2050.
+        year (int): The year to subset the DataFrame. Defaults to MODEL_YEAR_END.
         region (str, optional): The region to subset the data. Defaults to None.
         save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
         ext (str, optional): The extension of the image you are creating. Defaults to "png".
