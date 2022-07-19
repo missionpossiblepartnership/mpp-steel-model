@@ -5,7 +5,6 @@ import pandas as pd
 from mppsteel.config.model_config import (
     CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
     CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
-    MAIN_REGIONAL_SCHEMA,
     TRADE_PCT_BOUNDARY_FACTOR_DICT,
     TRADE_ROUNDING_NUMBER
 )
@@ -20,6 +19,7 @@ from mppsteel.trade_module.trade_helpers import (
     TradeStatus,
     calculate_cos,
     check_relative_production_cost,
+    merge_trade_status_col_to_rpc_df,
     return_trade_status,
     test_capacity_values,
     test_open_close_plants,
@@ -96,6 +96,7 @@ def trade_flow(
         cos_df, "cost_of_steelmaking", TRADE_PCT_BOUNDARY_FACTOR_DICT, year
     )
     trade_status_container = {}
+    initial_overproduction_container = {}
     results_container = {}
     region_list = REGION_LIST
     regional_capacity_dict = {region: 0 for region in region_list}
@@ -117,6 +118,7 @@ def trade_flow(
             year, region, demand_dict, util_min, util_max
         )
         initial_balance = round(plant_change_dict["initial_balance"], TRADE_ROUNDING_NUMBER)
+        initial_overproduction_container[region] = initial_balance > 0
 
         trade_status = return_trade_status(relative_cost_close_to_mean, initial_balance)
         trade_status_container[region] = trade_status.value
@@ -211,8 +213,8 @@ def trade_flow(
         logger.info(
             f"TRADE BALANCING ROUND 3: Trade Balance Deficit of {global_trade_balance: .2f} Mt in year {year}, balancing to zero via utilization optimization."
         )
-        eligible_regions = exporting_regions + balanced_regions
-        for region in relative_production_cost_df.loc[eligible_regions].sort_values(["cost_of_steelmaking"], ascending=False).index:
+        non_import_status_regions = [region for region in trade_status_container if trade_status_container[region] != TradeStatus.IMPORTER]
+        for region in relative_production_cost_df.loc[non_import_status_regions].sort_values(["cost_of_steelmaking"], ascending=False).index:
             # increase utilization
             current_utilization = utilization_container.get_utilization_values(year, region)
             total_capacity = regional_capacity_dict[region]
@@ -247,7 +249,8 @@ def trade_flow(
                 avg_plant_capacity_value, avg_plant_capacity_at_max_production, util_min, util_max
             )
 
-    relative_production_cost_df = merge_trade_status_col_to_rpc_df(relative_production_cost_df, trade_status_container)
+    relative_production_cost_df = merge_trade_status_col_to_rpc_df(
+        relative_production_cost_df, trade_status_container, initial_overproduction_container)
     market_container.store_results(year, relative_production_cost_df.reset_index(), "competitiveness")
 
     # final trade balance
@@ -275,10 +278,3 @@ def trade_flow(
 
     logger.info(f"Final Trade Balance is {global_trade_balance: .2f} Mt in year {year}")
     return results_container
-
-def merge_trade_status_col_to_rpc_df(rpc_df: pd.DataFrame, trade_status_container: dict):
-    rpc_df.reset_index(inplace=True)
-    rpc_df["trade_status"] = rpc_df[MAIN_REGIONAL_SCHEMA].apply(lambda region: trade_status_container[region])
-    return rpc_df.set_index(MAIN_REGIONAL_SCHEMA)
-
-# use demand figures for WSA - wait for Hannah

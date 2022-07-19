@@ -208,6 +208,13 @@ def utilization_boundary(utilization_figure: float, util_min: float, util_max: f
 def concat_region_year(year: int, region: str):
     return f"{region.replace(' ', '').replace(',', '')}_{year}"
 
+def merge_trade_status_col_to_rpc_df(
+    rpc_df: pd.DataFrame, trade_status_container: dict, initial_overproduction_container: dict
+):
+    rpc_df.reset_index(inplace=True)
+    rpc_df["initial_overproduction"] = rpc_df[MAIN_REGIONAL_SCHEMA].apply(lambda region: initial_overproduction_container[region])
+    rpc_df["initial_trade_status"] = rpc_df[MAIN_REGIONAL_SCHEMA].apply(lambda region: trade_status_container[region])
+    return rpc_df.set_index(MAIN_REGIONAL_SCHEMA)
 
 def create_empty_market_dict(
     year: int, region: str, capacity: float, 
