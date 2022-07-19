@@ -6,7 +6,8 @@ from mppsteel.config.model_config import (
     CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
     CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
     TRADE_PCT_BOUNDARY_FACTOR_DICT,
-    TRADE_ROUNDING_NUMBER
+    TRADE_ROUNDING_NUMBER,
+    UTILIZATION_ROUNDING_NUMBER
 )
 from mppsteel.config.reference_lists import REGION_LIST
 from mppsteel.model_solver.solver_classes import (
@@ -117,7 +118,7 @@ def trade_flow(
             capacity_container, utilization_container, 
             year, region, demand_dict, util_min, util_max
         )
-        initial_balance = round(plant_change_dict["initial_balance"], TRADE_ROUNDING_NUMBER)
+        initial_balance = plant_change_dict["initial_balance"]
         initial_overproduction_container[region] = initial_balance > 0
 
         trade_status = return_trade_status(relative_cost_close_to_mean, initial_balance)
@@ -125,26 +126,26 @@ def trade_flow(
 
         capacity = plant_change_dict["capacity"]
         demand = plant_change_dict["demand"]
-        min_utilization_required = round(demand / capacity, TRADE_ROUNDING_NUMBER)
+        min_utilization_required = demand / capacity
 
         if trade_status is TradeStatus.DOMESTIC:
             if initial_balance == 0:
                 plant_change_dict, regional_capacity_dict, cases = balanced_regional_balance(
-                    plant_change_dict, market_container, utilization_container, regional_capacity_dict, cases, year, region, util_min, util_max
+                    plant_change_dict, market_container, utilization_container, regional_capacity_dict, trade_status, cases, year, region, util_min, util_max
                 )
             elif min_utilization_required < util_min:
                 plant_change_dict, regional_capacity_dict, cases = close_plants(
-                    plant_change_dict, market_container, utilization_container, regional_capacity_dict, cases, year, region,
+                    plant_change_dict, market_container, utilization_container, regional_capacity_dict, trade_status, cases, year, region,
                     util_min, util_max, avg_plant_capacity_value
                 )
-            elif util_min <= min_utilization_required < util_max:
+            elif util_min <= min_utilization_required <= util_max:
                 plant_change_dict, regional_capacity_dict, cases = adjust_utilization(
-                    plant_change_dict, market_container, utilization_container, regional_capacity_dict, cases, year, region,
+                    plant_change_dict, market_container, utilization_container, regional_capacity_dict, trade_status, cases, year, region,
                     util_min, util_max,
                 )
-            elif min_utilization_required >= util_max:
+            elif min_utilization_required > util_max:
                 plant_change_dict, regional_capacity_dict, cases = open_plants(
-                    plant_change_dict, market_container, utilization_container, regional_capacity_dict, cases, year, region,
+                    plant_change_dict, market_container, utilization_container, regional_capacity_dict, trade_status, cases, year, region,
                     util_min, util_max, avg_plant_capacity_value, avg_plant_capacity_at_max_production
                 )
             else:
@@ -152,13 +153,13 @@ def trade_flow(
 
         elif trade_status is TradeStatus.EXPORTER:
             plant_change_dict, regional_capacity_dict, cases = cheap_excess_supply_export(
-                plant_change_dict, market_container, utilization_container, regional_capacity_dict, cases, year, region,
+                plant_change_dict, market_container, utilization_container, regional_capacity_dict, trade_status, cases, year, region,
                 util_min, util_max
             )
 
         elif trade_status is TradeStatus.IMPORTER:
             plant_change_dict, regional_capacity_dict, cases = supply_deficit_import(
-                plant_change_dict, market_container, utilization_container, regional_capacity_dict, cases, year, region,
+                plant_change_dict, market_container, utilization_container, regional_capacity_dict, trade_status, cases, year, region,
                 util_min, util_max
             )
 
@@ -202,18 +203,23 @@ def trade_flow(
             f"TRADE BALANCING ROUND 2-B: Reducing excess trade balance of {global_trade_balance :0.2f} via closing plants"
         )
         exporting_regions = market_container.list_regional_types(year, "exports")
-        for region in regions_with_cost_close_to_mean.loc[exporting_regions].sort_values(["cost_of_steelmaking"], ascending=False).index:
+        regions_close_mean = regions_with_cost_close_to_mean.index.to_list()
+        export_regions_check = all(region in regions_close_mean for region in exporting_regions)
+        intersection_regions = set(regions_close_mean).intersection(set(exporting_regions))
+        different_regions = set(exporting_regions).difference(set(regions_close_mean))
+        assert export_regions_check, f"Not all items in {exporting_regions} are in {regions_close_mean} | {return_region_stack(market_container, cases, different_regions, year)}"
+        for region in regions_with_cost_close_to_mean.loc[intersection_regions].sort_values(["cost_of_steelmaking"], ascending=False).index:
             if round(global_trade_balance, TRADE_ROUNDING_NUMBER) > 0:
                 results_container, regional_capacity_dict, cases, global_trade_balance = close_plants_for_exporters(
-                    results_container, market_container, utilization_container, regional_capacity_dict, cases,
-                    year, region, global_trade_balance, avg_plant_capacity_value, util_min, util_max
+                    results_container, market_container, utilization_container, regional_capacity_dict, trade_status, 
+                    cases, year, region, global_trade_balance, avg_plant_capacity_value, util_min, util_max
                 )
 
     elif round(global_trade_balance, TRADE_ROUNDING_NUMBER) < 0:
         logger.info(
             f"TRADE BALANCING ROUND 3: Trade Balance Deficit of {global_trade_balance: .2f} Mt in year {year}, balancing to zero via utilization optimization."
         )
-        non_import_status_regions = [region for region in trade_status_container if trade_status_container[region] != TradeStatus.IMPORTER]
+        non_import_status_regions = [region for region in trade_status_container if trade_status_container[region] != TradeStatus.IMPORTER.value]
         for region in relative_production_cost_df.loc[non_import_status_regions].sort_values(["cost_of_steelmaking"], ascending=False).index:
             # increase utilization
             current_utilization = utilization_container.get_utilization_values(year, region)
@@ -227,14 +233,16 @@ def trade_flow(
                     f"TRADE BALANCING ROUND 3-A: {region} can supply all of the import demand."
                 )
                 results_container, regional_capacity_dict, cases, global_trade_balance = assign_all_import_demand(
-                    results_container, market_container, utilization_container, regional_capacity_dict, cases, year, region, global_trade_balance, util_min, util_max
+                    results_container, market_container, utilization_container, regional_capacity_dict,
+                    cases, year, region, global_trade_balance, util_min, util_max
                 )
             elif round(potential_extra_production, TRADE_ROUNDING_NUMBER) < abs(global_trade_balance):
                 logger.info(
                     f"TRADE BALANCING ROUND 3-B: {region} can supply {potential_extra_production :0.2f} of the import demand of {global_trade_balance :0.2f}."
                 )
                 results_container, regional_capacity_dict, cases, global_trade_balance = assign_partial_import_demand(
-                    results_container, market_container, utilization_container, regional_capacity_dict, cases, year, region, 
+                    results_container, market_container, utilization_container, regional_capacity_dict, 
+                    cases, year, region, 
                     util_min, util_max, global_trade_balance, potential_extra_production
                 )
 
@@ -245,8 +253,9 @@ def trade_flow(
                 f"TRADE BALANCING ROUND 3-C: Assigning trade balance of {global_trade_balance: .2f} Mt to cheapest region: {cheapest_region}"
             )
             results_container, regional_capacity_dict, cases, global_trade_balance = open_plants_cheapest_region(
-                results_container, market_container, utilization_container, regional_capacity_dict, cases, year, cheapest_region, global_trade_balance,
-                avg_plant_capacity_value, avg_plant_capacity_at_max_production, util_min, util_max
+                results_container, market_container, utilization_container, regional_capacity_dict, trade_status, 
+                cases, year, cheapest_region, global_trade_balance, avg_plant_capacity_value, 
+                avg_plant_capacity_at_max_production, util_min, util_max
             )
 
     relative_production_cost_df = merge_trade_status_col_to_rpc_df(
@@ -278,3 +287,8 @@ def trade_flow(
 
     logger.info(f"Final Trade Balance is {global_trade_balance: .2f} Mt in year {year}")
     return results_container
+
+
+def return_region_stack(market_container: MarketContainerClass, cases: dict, regions: list, year: int):
+    for region in regions:
+        print(f"Region: {region} | trade_balance: {market_container.return_container()[year][region]} | cases: {cases[region]}")

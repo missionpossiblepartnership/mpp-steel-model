@@ -25,7 +25,8 @@ from mppsteel.config.model_config import (
     CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
     CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
     MEGATON_TO_KILOTON_FACTOR,
-    TRADE_ROUNDING_NUMBER
+    TRADE_ROUNDING_NUMBER,
+    UTILIZATION_ROUNDING_NUMBER
 )
 
 from mppsteel.model_solver.solver_classes import (
@@ -249,8 +250,8 @@ def close_real_plants(
 
             assert round(capacity_removed, TRADE_ROUNDING_NUMBER) >= round(min_capacity_to_close, TRADE_ROUNDING_NUMBER), f"{region}: Capacity Removed {capacity_removed} is less than Indicative Capacity Removed {min_capacity_to_close}"
             assert round(initial_capacity, TRADE_ROUNDING_NUMBER) >= round(new_total_capacity, TRADE_ROUNDING_NUMBER), f"{region}: New Capacity {new_total_capacity} is greater than Old Capacity {initial_capacity}"
-            assert round(initial_utilization, TRADE_ROUNDING_NUMBER) <= round(new_utilization, 2), f"{region}: Initial Utilization {initial_utilization} is smaller than the New Utilization {new_utilization}"
-            assert round(close_plant_util_cutoff, TRADE_ROUNDING_NUMBER) <= round(new_utilization, 2) <= round(open_plant_util_cutoff, TRADE_ROUNDING_NUMBER), f"{region}: utilization {new_utilization} is out of bounds -> capacity_removed: {capacity_removed} | capacity removal gap: {capacity_removal_actual_minus_indicative} | {production_demand_gap_analysis[region]}"
+            assert round(initial_utilization, UTILIZATION_ROUNDING_NUMBER) <= round(new_utilization, UTILIZATION_ROUNDING_NUMBER), f"{region}: Initial Utilization {initial_utilization} is smaller than the New Utilization {new_utilization}"
+            assert round(close_plant_util_cutoff, UTILIZATION_ROUNDING_NUMBER) <= round(new_utilization, UTILIZATION_ROUNDING_NUMBER) <= round(open_plant_util_cutoff, UTILIZATION_ROUNDING_NUMBER), f"{region}: utilization {new_utilization} is out of bounds -> capacity_removed: {capacity_removed} | capacity removal gap: {capacity_removal_actual_minus_indicative} | {production_demand_gap_analysis[region]}"
             assert new_number_of_closed_plants > initial_number_of_closed_plants, f"Closed Plants not being updated -> plants_to_close: {plants_to_close} | initial_active_checks: {initial_number_of_closed_plants} | new_active_checks: {new_number_of_closed_plants} | plants: {join_list_as_string(actual_plants_to_close)}"
             assert closed_plants_prior + len(actual_plants_to_close) == closed_plants_post, f"Closed plants prior: {closed_plants_prior} | Actual closed plants to add: {len(actual_plants_to_close)} | Closed plants post: {closed_plants_post}"
 

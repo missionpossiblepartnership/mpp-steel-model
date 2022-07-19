@@ -8,7 +8,8 @@ import pandas as pd
 from mppsteel.config.model_config import (
     MAIN_REGIONAL_SCHEMA,
     MODEL_YEAR_START,
-    TRADE_ROUNDING_NUMBER
+    TRADE_ROUNDING_NUMBER,
+    UTILIZATION_ROUNDING_NUMBER
 )
 from mppsteel.model_solver.solver_classes import (
     CapacityContainerClass,
@@ -245,7 +246,7 @@ def create_empty_market_dict(
 def test_market_dict_output(plant_change_dict: dict, util_min: float, util_max: float):
     assert round(plant_change_dict["new_total_capacity"], TRADE_ROUNDING_NUMBER) > 0, plant_change_dict
     assert round(plant_change_dict["new_utilized_capacity"], TRADE_ROUNDING_NUMBER) > 0, plant_change_dict
-    assert util_min <= round(plant_change_dict["new_utilization"], TRADE_ROUNDING_NUMBER) <= util_max, plant_change_dict
+    assert util_min <= round(plant_change_dict["new_utilization"], UTILIZATION_ROUNDING_NUMBER) <= util_max, plant_change_dict
 
     if plant_change_dict["new_capacity_required"] > 0:
         assert plant_change_dict["plants_required"] > 0, plant_change_dict
@@ -276,11 +277,13 @@ def test_utilization_values(utilization_container: UtilizationContainerClass, re
     underutilized_regions = [key for key in util_container if round(util_container[key], TRADE_ROUNDING_NUMBER) < util_min]
     cases = cases or {region: "" for region in util_container}
     if overutilized_regions:
-        string_container = [f"{region}: {util_container[region]: .2f} - {cases[region]}" for region in overutilized_regions]
-        raise AssertionError(f"Regional utilization rates: {util_container} | Regions Overutilized in {year}: {util_container} {join_list_as_string(string_container)}")
+        for region in overutilized_regions:
+            print(f"{region}: {util_container[region]} -> {cases[region]}")
+        raise AssertionError(f"Regions Overutilized in {year}: {util_container} {overutilized_regions}")
     if underutilized_regions:
-        string_container = [f"{region}: {util_container[region]: .2f} - {cases[region]}" for region in underutilized_regions]
-        raise AssertionError(f"Regional utilization rates: {util_container} | Regions Underutilized in {year}: {join_list_as_string(string_container)}")
+        for region in underutilized_regions:
+            print(f"{region}: {util_container[region]} -> {cases[region]}")
+        raise AssertionError(f"Regions Underutilized in {year}: {underutilized_regions}")
 
 def test_open_close_plants(results_container: dict, cases: dict):
     incorrect_open_plants = [region for region in results_container if results_container[region]["plants_required"] < 0]
@@ -300,4 +303,4 @@ def print_demand_production_balance(market_container: MarketContainerClass, dema
 def test_regional_production(results_container: dict, rpc_df: pd.DataFrame, cases: dict):
     for region in results_container:
         summary_dict = results_container[region]
-        assert round(summary_dict["new_utilized_capacity"], TRADE_ROUNDING_NUMBER) > 0, f"Production > 0 test failed for {region} -> cases: {cases[region]} -> summary dictionary: {summary_dict}, rpc: {rpc_df.loc[region]}"
+        assert round(summary_dict["new_utilized_capacity"], UTILIZATION_ROUNDING_NUMBER) > 0, f"Production > 0 test failed for {region} -> cases: {cases[region]} -> summary dictionary: {summary_dict}, rpc: {rpc_df.loc[region]}"

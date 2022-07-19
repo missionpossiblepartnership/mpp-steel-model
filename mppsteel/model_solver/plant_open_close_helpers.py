@@ -19,7 +19,8 @@ from mppsteel.config.model_config import (
     MAIN_REGIONAL_SCHEMA,
     CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
     CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
-    TRADE_ROUNDING_NUMBER
+    TRADE_ROUNDING_NUMBER,
+    UTILIZATION_ROUNDING_NUMBER
 )
 
 from mppsteel.model_solver.solver_classes import (
@@ -417,7 +418,7 @@ def production_demand_gap(
             avg_plant_capacity_value * capacity_util_max
         )
 
-        initial_min_utilization_reqiured = round(demand / capacity, TRADE_ROUNDING_NUMBER)
+        initial_min_utilization_reqiured = round(demand / capacity, UTILIZATION_ROUNDING_NUMBER)
 
         new_capacity_required = 0
         excess_capacity = 0
