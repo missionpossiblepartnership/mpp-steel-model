@@ -95,7 +95,7 @@ if __name__ == "__main__":
             scenario_dict=scenario_args,
             new_folder=True,
             timestamp=timestamp,
-            number_of_runs=2
+            number_of_runs=DEFAULT_NUMBER_OF_RUNS
         )
 
     if args.multi_run_half:
@@ -103,7 +103,7 @@ if __name__ == "__main__":
             scenario_dict=scenario_args,
             new_folder=True,
             timestamp=timestamp,
-            number_of_runs=2
+            number_of_runs=DEFAULT_NUMBER_OF_RUNS
         )
 
     if args.solver:

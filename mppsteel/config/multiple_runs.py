@@ -145,6 +145,7 @@ def make_multiple_model_runs(
         for filename in files_to_aggregate:
             store_result_to_container(run_container, filename, final_path, model_run, number_of_runs)
 
+    logger.info("Producing combined run summary DataFrame")
     # AGGREGATE MODEL RUNS
     production_resource_usage = pd.concat(run_container["production_resource_usage"]).reset_index(drop=True)
     production_emissions = pd.concat(run_container["production_emissions"]).reset_index(drop=True)
@@ -155,6 +156,7 @@ def make_multiple_model_runs(
     combined_summary = pd.concat(emissions_summary, production_summary).reset_index(drop=True)
     summary_csv_filename = "emissions_multi_run_summary"
 
+    logger.info("Writing results to file")
     # WRITE FILES TO PKL
     store_run_container_to_pkl(run_container, pkl_output_folder)
     serialize_file(combined_summary, pkl_output_folder, summary_csv_filename)
