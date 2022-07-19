@@ -93,7 +93,7 @@ class PlantCapacityConstraint:
 
     def waiting_list_limit_checker(self):
         waiting_list_dict = self.waiting_list_counter
-        burst_limit_dict = {key: val for key,val in waiting_list_dict.items() if val >= MAX_WAITING_LIST_YEARS}
+        burst_limit_dict = {key: val for key,val in waiting_list_dict.items() if val > MAX_WAITING_LIST_YEARS}
         if burst_limit_dict:
             logger.info(f"Some plants burst the waiting list limit of {MAX_WAITING_LIST_YEARS} years -> {burst_limit_dict}")
         else:
