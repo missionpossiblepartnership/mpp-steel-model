@@ -137,7 +137,7 @@ def make_multiple_model_runs(
     final_path = get_scenario_pkl_path(scenario_dict["scenario_name"], "final")
     files_to_aggregate = ["production_resource_usage", "production_emissions"]
     run_container = {filename: [] for filename in files_to_aggregate}
-
+    
     # INDIVIDUAL MODEL RUNS
     for model_run in range(1, number_of_runs + 1):
         solver_flow(scenario_dict=scenario_dict, serialize=True)
@@ -148,13 +148,13 @@ def make_multiple_model_runs(
 
     logger.info("Producing combined run summary DataFrame")
     # AGGREGATE MODEL RUNS
-    production_resource_usage = pd.concat(run_container["production_resource_usage"]).reset_index(drop=True)
-    production_emissions = pd.concat(run_container["production_emissions"]).reset_index(drop=True)
+    production_resource_usage = read_pickle_folder(pkl_output_folder, "production_resource_usage", "df")
+    production_emissions = read_pickle_folder(pkl_output_folder, "production_emissions", "df")
 
     # CREATE SUMMARY DATAFRAMES
     emissions_summary = create_emissions_summary_stack(production_emissions)
     production_summary = create_production_summary_stack(production_resource_usage, "mt", "gj")
-    combined_summary = pd.concat(emissions_summary, production_summary).reset_index(drop=True)
+    combined_summary = pd.concat([emissions_summary, production_summary]).reset_index(drop=True)
     summary_csv_filename = "multi_run_summary"
 
     logger.info("Writing results to file")

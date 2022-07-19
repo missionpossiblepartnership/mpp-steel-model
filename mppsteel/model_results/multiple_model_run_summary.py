@@ -104,11 +104,11 @@ def remove_items_from_list(ref_list: list, cols_to_remove: list):
         ref_list.remove(column)
 
 def create_production_summary_stack(production_df: pd.DataFrame, material_unit: str, energy_unit: str):
-    material_unit = f"_{material_unit}"
-    energy_unit = f"_{energy_unit}"
-    material_cols = get_specific_cols(production_df.columns, material_unit, material_unit)
+    material_unit_for_cols = f"_{material_unit}"
+    energy_unit_for_cols = f"_{energy_unit}"
+    material_cols = get_specific_cols(production_df.columns, material_unit_for_cols, material_unit_for_cols)
     remove_items_from_list(material_cols, ["emissivity"])
-    energy_cols = get_specific_cols(production_df.columns, energy_unit, energy_unit)
+    energy_cols = get_specific_cols(production_df.columns, energy_unit_for_cols, energy_unit_for_cols)
     remove_items_from_list(energy_cols, ["coal"])
     df_container = []
     for material_col in material_cols:
