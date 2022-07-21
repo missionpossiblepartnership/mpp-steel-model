@@ -8,6 +8,7 @@ from mppsteel.config.model_config import (
     DEFAULT_NUMBER_OF_RUNS,
     FINAL_RESULT_PKL_FILES,
     INTERMEDIATE_RESULT_PKL_FILES,
+    MULTIPLE_MODEL_RUN_EVALUATION_YEAR,
     MULTIPLE_RUN_SCENARIO_FOLDER_NAME,
     OUTPUT_FOLDER,
     PKL_DATA_COMBINED,
@@ -112,7 +113,7 @@ def store_run_container_to_pkl(
     for filename in run_container:
         df = pd.concat(run_container[filename]).reset_index(drop=True)
         serialize_file(df, pkl_path, filename)
-
+@timer_func
 def make_multiple_model_runs(
     scenario_dict: dict,
     new_folder: bool = True,
@@ -137,7 +138,7 @@ def make_multiple_model_runs(
     final_path = get_scenario_pkl_path(scenario_dict["scenario_name"], "final")
     files_to_aggregate = ["production_resource_usage", "production_emissions"]
     run_container = {filename: [] for filename in files_to_aggregate}
-    
+
     # INDIVIDUAL MODEL RUNS
     for model_run in range(1, number_of_runs + 1):
         solver_flow(scenario_dict=scenario_dict, serialize=True)
@@ -152,8 +153,10 @@ def make_multiple_model_runs(
     production_emissions = read_pickle_folder(pkl_output_folder, "production_emissions", "df")
 
     # CREATE SUMMARY DATAFRAMES
-    emissions_summary = create_emissions_summary_stack(production_emissions)
-    production_summary = create_production_summary_stack(production_resource_usage, "mt", "gj")
+    emissions_summary = create_emissions_summary_stack(
+        production_emissions, years=[MULTIPLE_MODEL_RUN_EVALUATION_YEAR])
+    production_summary = create_production_summary_stack(
+        production_resource_usage, material_unit="mt", energy_unit="gj", years=[MULTIPLE_MODEL_RUN_EVALUATION_YEAR])
     combined_summary = pd.concat([emissions_summary, production_summary]).reset_index(drop=True)
     summary_csv_filename = "multi_run_summary"
 
