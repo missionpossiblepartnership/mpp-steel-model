@@ -3,7 +3,7 @@ import pytest
 from mppsteel.config.model_scenarios import DEFAULT_SCENARIO
 from mppsteel.config.model_config import USD_TO_EUR_CONVERSION_DEFAULT
 
-from mppsteel.model_solver.solver import choose_technology_core, ChooseTechnologyInput
+from mppsteel.model_solver.solver_flow import choose_technology_core, ChooseTechnologyInput
 
 @pytest.fixture
 def scenario_dict():

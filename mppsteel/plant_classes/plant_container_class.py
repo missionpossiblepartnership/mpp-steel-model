@@ -9,10 +9,10 @@ class PlantIdContainer:
     def __init__(self):
         self.id_container = []
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "PlantIdContainer"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "Instance of PlantIdContainer"
 
     def add_id(self, plant_id: str) -> None:
@@ -26,7 +26,7 @@ class PlantIdContainer:
             self.id_container.remove(plant_id)
             print(f"Plant ID removed {plant_id}")
 
-    def generate_plant_id(self, add_to_container: bool = False):
+    def generate_plant_id(self, add_to_container: bool = False) -> str:
         unmatched = True
         while unmatched:
             new_id = generate_plant_id()
@@ -46,9 +46,9 @@ class PlantIdContainer:
     def remove_duplicate_ids(self) -> None:
         self.id_container = list(set(self.id_container))
 
-    def add_steel_plant_ids(self, plant_df: pd.DataFrame):
+    def add_steel_plant_ids(self, plant_df: pd.DataFrame) -> pd.DataFrame:
         plant_df["plant_id"].apply(lambda x: self.add_id(x))
 
 
-def generate_plant_id(chars: str = string.digits, n: int = 5):
+def generate_plant_id(chars: str = string.digits, n: int = 5) -> str:
     return "MPP" + "".join(random.choice(chars) for _ in range(n))

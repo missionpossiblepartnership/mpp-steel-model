@@ -107,7 +107,7 @@ if __name__ == "__main__":
         )
 
     if args.solver:
-        solver_flow(scenario_dict=scenario_args, serialize=True)
+        main_solver_flow(scenario_dict=scenario_args, serialize=True)
 
     if args.output:
         outputs_only(
@@ -124,7 +124,7 @@ if __name__ == "__main__":
         )
 
     if args.half_model_run:
-        solver_flow(scenario_dict=scenario_args, serialize=True)
+        main_solver_flow(scenario_dict=scenario_args, serialize=True)
         results_and_output(
             scenario_dict=scenario_args,
             dated_output_folder=True,

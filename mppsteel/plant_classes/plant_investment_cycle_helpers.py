@@ -50,18 +50,22 @@ def calculate_investment_years(
     return decision_years
 
 
-def return_cycle_length(inv_intervals) -> int:
+def return_cycle_length(inv_intervals, investment_cycle_randomness: bool = False) -> int:
     """Returns a new cycle length based on a fixed value and a random value within a predefined inveral.
 
     Args:
         inv_intervals (int): A fixed interval value aroud which the final interval will fluctuate.
+        investment_cycle_randomness (bool): Switch to turn on randomness in range.
 
     Returns:
         int: A final interval value.
     """
-    return inv_intervals + random.randrange(
-        -INVESTMENT_CYCLE_VARIANCE_YEARS, INVESTMENT_CYCLE_VARIANCE_YEARS, 1
-    )
+    cycle_length = inv_intervals
+    if investment_cycle_randomness:
+        cycle_length = inv_intervals + random.randrange(
+            -INVESTMENT_CYCLE_VARIANCE_YEARS, INVESTMENT_CYCLE_VARIANCE_YEARS, 1
+        )
+    return cycle_length
 
 
 def return_switch_type(investment_cycle: list, year: int) -> str:
@@ -349,7 +353,7 @@ def increment_investment_cycle_year(cycle_years: list, rebase_year: int, increme
 
 def combine_two_lists_maintain_order(years: list, range_list: list):
     year_dict = {year: year for year in years}
-    range_dict = {range_obj[0]: range_obj for range_obj in range_list}
+    range_dict = {range_obj.start: range_obj for range_obj in range_list}
     combined_dict = {**year_dict, **range_dict}
     sorted_list = sorted(list(combined_dict.keys()))
     return [combined_dict[elem] for elem in sorted_list]

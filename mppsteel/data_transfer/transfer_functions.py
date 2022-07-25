@@ -50,7 +50,7 @@ def clean_container_string(str_to_clean: str) -> str:
     return str_to_clean.replace(' ', '-').replace('_', '-').lower()
 
 
-def get_date_and_time(path_to_dir: str, use_current_date: bool = False, include_sha: bool = False, scenario: str = ''):
+def get_date_and_time(path_to_dir: str, use_current_date: bool = False, include_sha: bool = False, scenario: str = '') -> str:
     date_and_time = datetime.datetime.now().strftime(DATETIME_FORMAT)
     if not use_current_date: 
         date_match = re.findall(DATE_REGEX_PATTERN, path_to_dir)
@@ -92,7 +92,7 @@ def upload_to_container(blob_service_client, container_name, local_file_name) ->
         blob_client.upload_blob(data)
     return None
 
-def create_zipped_file(list_of_files: list, zipped_file_name: str):
+def create_zipped_file(list_of_files: list, zipped_file_name: str) -> None:
     # Create a ZipFile Object
     with ZipFile(f"{zipped_file_name}.zip", "w") as zip_object:
         # Add multiple files to the zip

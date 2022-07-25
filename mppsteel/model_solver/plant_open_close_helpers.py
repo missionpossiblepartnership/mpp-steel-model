@@ -2,13 +2,14 @@
 
 from copy import deepcopy
 import math
+from typing import Union
 
 import pandas as pd
 
 import random
 
 from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
-from mppsteel.model_solver.solver_constraints import tech_availability_check
+from mppsteel.model_solver.solver_flow_helpers import tech_availability_check
 
 from mppsteel.utility.location_utility import pick_random_country_from_region_subset
 from mppsteel.utility.utils import replace_dict_items, get_dict_keys_by_value, get_closest_number_in_list
@@ -23,11 +24,13 @@ from mppsteel.config.model_config import (
     UTILIZATION_ROUNDING_NUMBER
 )
 
-from mppsteel.model_solver.solver_classes import (
-    CapacityContainerClass,
-    UtilizationContainerClass,
+from mppsteel.plant_classes.capacity_container_class import CapacityContainerClass
+from mppsteel.plant_classes.regional_utilization_class import (
+    UtilizationContainerClass
+)
+from mppsteel.model_solver.material_usage_class import (
     MaterialUsage,
-    apply_constraints_for_min_cost_tech,
+    create_material_usage_dict
 )
 from mppsteel.trade_module.trade_helpers import utilization_boundary, get_initial_utilization
 
@@ -161,7 +164,7 @@ def get_min_cost_region(lcost_df: pd.DataFrame, year: int) -> str:
     return lcost_df_c["levelized_cost"].idxmin()
 
 
-def check_year_range_for_switch_type(tech_choices_dict: pd.DataFrame, plant_name: str, list_with_years: list, switch_type: str):
+def check_year_range_for_switch_type(tech_choices_dict: pd.DataFrame, plant_name: str, list_with_years: list, switch_type: str) -> Union[None, range]:
     df_c = tech_choices_dict[tech_choices_dict["plant_name"] == plant_name].copy()
     if list_with_years:
         check_df = df_c[df_c["year"].isin(list_with_years)].copy()
@@ -176,7 +179,7 @@ def get_trans_switch_range(list_of_ranges: list, number_to_check: int) -> list:
     return []
 
 
-def get_closest_year_main_switch(list_with_years: list, year_to_check: int):
+def get_closest_year_main_switch(list_with_years: list, year_to_check: int) -> Union[int, None]:
     my_list = [year for year in list_with_years if year <= year_to_check]
     if my_list:
         return get_closest_number_in_list(my_list, year_to_check)
@@ -184,7 +187,7 @@ def get_closest_year_main_switch(list_with_years: list, year_to_check: int):
         return None
 
 
-def get_closest_year_trans_switch(list_of_ranges, tech_choices_dict, year_to_check, plant_name):
+def get_closest_year_trans_switch(list_of_ranges, tech_choices_dict, year_to_check, plant_name) -> Union[None, range]:
     list_with_years = get_trans_switch_range(
         list_of_ranges,
         year_to_check
@@ -377,8 +380,8 @@ def production_demand_gap(
     capacity_container: CapacityContainerClass,
     utilization_container: UtilizationContainerClass,
     year: int,
-    capacity_util_max: float = CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
-    capacity_util_min: float = CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
+    util_max: float = CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
+    util_min: float = CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
 ) -> dict:
     """Generates an open close dictionary of metadata for each region. The following optimization steps are taken by the algorithm.
     1) Determine whether a plant can meet its current regional demand with its current utilization levels.
@@ -390,8 +393,8 @@ def production_demand_gap(
         capacity_container (CapacityContainerClass): The CapacityContainerClass Instance containing the capacity state.
         utilization_container (UtilizationContainerClass): The UtilizationContainerClass Instance containing the utilization state.
         year (int): The current model cycle year.
-        capacity_util_max (float, optional): The maximum capacity utilization that plants are allowed to reach before having to open new plants. Defaults to CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION.
-        capacity_util_min (float, optional): The minimum capacity utilization that plants are allowed to reach before having to close existing plants. Defaults to CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION.
+        util_max (float, optional): The maximum capacity utilization that plants are allowed to reach before having to open new plants. Defaults to CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION.
+        util_min (float, optional): The minimum capacity utilization that plants are allowed to reach before having to close existing plants. Defaults to CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION.
 
     Returns:
         dict: A dictionary of open close metadata for each region.
@@ -411,11 +414,11 @@ def production_demand_gap(
         )
         capacity = capacity_container.return_regional_capacity(year, region)
         initial_utilization = get_initial_utilization(utilization_container, year, region)
-        bounded_utilization = utilization_boundary(initial_utilization, capacity_util_min, capacity_util_max)
+        bounded_utilization = utilization_boundary(initial_utilization, util_min, util_max)
         avg_plant_capacity_value = deepcopy(avg_plant_global_capacity)
 
         avg_plant_capacity_at_max_production = (
-            avg_plant_capacity_value * capacity_util_max
+            avg_plant_capacity_value * util_max
         )
 
         initial_min_utilization_reqiured = round(demand / capacity, UTILIZATION_ROUNDING_NUMBER)
@@ -425,14 +428,14 @@ def production_demand_gap(
         new_plants_required = 0
         plants_to_close = 0
 
-        if capacity_util_min <= initial_min_utilization_reqiured <= capacity_util_max:
+        if util_min <= initial_min_utilization_reqiured <= util_max:
             cases[region].append("INCREASE CAPACITY: Capacity can be adjusted to meet demand")
             new_total_capacity = deepcopy(capacity)
             new_min_utilization_required = demand / capacity
 
-        elif initial_min_utilization_reqiured < capacity_util_min:
+        elif initial_min_utilization_reqiured < util_min:
             cases[region].append("CLOSE PLANT: Excess capacity even in lowest utilization option")
-            required_capacity = demand / capacity_util_min
+            required_capacity = demand / util_min
             excess_capacity = capacity - required_capacity
             plants_to_close = math.ceil(
                 excess_capacity / avg_plant_capacity_value
@@ -442,13 +445,13 @@ def production_demand_gap(
             )
             new_min_utilization_required = demand / new_total_capacity
             new_min_utilization_required = utilization_boundary(
-                new_min_utilization_required, capacity_util_min, capacity_util_max
+                new_min_utilization_required, util_min, util_max
             )
             new_capacity_required = -(capacity - new_total_capacity)
 
-        elif initial_min_utilization_reqiured > capacity_util_max:
+        elif initial_min_utilization_reqiured > util_max:
             cases[region].append("OPEN PLANT: Capacity adjustment not enough to meet demand")
-            new_capacity_required = demand - (capacity * capacity_util_max)
+            new_capacity_required = demand - (capacity * util_max)
             new_plants_required = math.ceil(
                 new_capacity_required / avg_plant_capacity_at_max_production
             )
@@ -456,7 +459,7 @@ def production_demand_gap(
                 new_plants_required * avg_plant_capacity_value
             )
             new_min_utilization_required = utilization_boundary(
-                demand / new_total_capacity, capacity_util_min, capacity_util_max
+                demand / new_total_capacity, util_min, util_max
             )
 
         utilization_container.update_region(year, region, new_min_utilization_required)
@@ -529,11 +532,92 @@ def create_and_test_market_df(market_dict: dict, year: int, test_df: bool = Fals
         market_balance_test(df, year)
     return df
 
-def create_test_production_df():
+def create_test_production_df() -> pd.DataFrame:
         # just a minimal dataframe to make the empty test pass FIXME
         my_minimal_row = [2020, "DEU", 0, 1, 0, 0, 0]
         my_df_columns = [
             "year", "region", "demand", "new_total_capacity", 
             "new_utilized_capacity", "plants_required", "plants_to_close"
         ]
-        return  pd.DataFrame([my_minimal_row], columns=my_df_columns)
+        return pd.DataFrame([my_minimal_row], columns=my_df_columns)
+
+
+def apply_constraints_for_min_cost_tech(
+    business_case_ref: dict,
+    plant_capacities_dict: dict,
+    tech_availability: pd.DataFrame,
+    material_usage_dict_container: MaterialUsage,
+    combined_available_list: list,
+    plant_capacity: float,
+    tech_moratorium: bool,
+    regional_scrap: bool,
+    year: int,
+    plant_name: str,
+    region: str,
+) -> list:
+    """Subsets a list of technologies according to whether they pass certain availability checks for TRL>8 and resource availability.
+
+    Args:
+        business_case_ref (dict): The Business Cases of resourse usage.
+        plant_capacities_dict (dict): A dictionary of plant names and capacity values.
+        tech_availability (pd.DataFrame): A DataFrame of technology availability.
+        material_usage_dict_container (MaterialUsage): The MaterialUsage Instance containing the material consumption state.
+        combined_available_list (list): The initial technology availabilty list.
+        plant_capacity (float): A capacity of the plant
+        tech_moratorium (bool): Scenario boolean flag that determines if there is a tehcnology moratorium.
+        year (int): The current model cycle year
+        plant_name (str): The name of the plant.
+        region (str): The region of the plant.
+
+    Returns:
+        list: The subsetted list.
+    """
+    new_availability_list = []
+    # Constraints checks
+    combined_available_list = [
+        tech
+        for tech in combined_available_list
+        if tech_availability_check(
+            tech_availability, tech, year, tech_moratorium=tech_moratorium
+        )
+    ]
+    for technology in combined_available_list:
+        material_check_container = create_material_usage_dict(
+            material_usage_dict_container,
+            plant_capacities_dict,
+            business_case_ref,
+            plant_name,
+            region,
+            year,
+            technology,
+            regional_scrap,
+            plant_capacity,
+            override_constraint=False,
+            apply_transaction=False
+        )
+
+        if all(material_check_container.values()):
+            new_availability_list.append(technology)
+
+        failure_resources = [
+            resource
+            for resource in material_check_container
+            if material_check_container[resource]
+        ]
+
+        result = "PASS" if all(material_check_container.values()) else "FAIL"
+
+        entry = {
+            "plant": plant_name,
+            "region": region,
+            "start_technology": "none",
+            "switch_technology": technology,
+            "year": year,
+            "assign_case": "new plant",
+            "result": result,
+            "failure_resources": failure_resources,
+            "pass_boolean_check": material_check_container,
+        }
+
+        material_usage_dict_container.record_results(entry)
+    return new_availability_list

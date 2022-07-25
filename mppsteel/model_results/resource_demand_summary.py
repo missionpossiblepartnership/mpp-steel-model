@@ -82,7 +82,7 @@ def calculate_metric(
     old_value_column: str, 
     new_value_column: str, 
     conversion_factor: float = 1
-):
+) -> pd.DataFrame:
     # Column manipulation
     all_columns = base_columns + [old_value_column]
     

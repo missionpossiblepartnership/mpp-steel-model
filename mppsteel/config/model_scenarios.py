@@ -65,6 +65,7 @@ SCENARIO_SETTINGS = {
     "solver_logic": SOLVER_LOGICS.keys(),
     "trade_active": [True, False],
     "regional_scrap_constraint": [True, False],
+    "investment_cycle_randomness": [True, False]
 }
 
 DEFAULT_SCENARIO = {
@@ -86,6 +87,7 @@ DEFAULT_SCENARIO = {
     "solver_logic": "scale",  # scale / rank / bins
     "trade_active": True,  # bool
     "regional_scrap_constraint": False,  # bool
+    "investment_cycle_randomness": False  # bool
 }
 TECH_MORATORIUM = {
     "scenario_name": "tech_moratorium",
@@ -106,6 +108,7 @@ TECH_MORATORIUM = {
     "solver_logic": "rank",
     "trade_active": True,
     "regional_scrap_constraint": False,
+    "investment_cycle_randomness": False
 }
 CARBON_COST = {
     "scenario_name": "carbon_cost",
@@ -126,6 +129,7 @@ CARBON_COST = {
     "solver_logic": "rank",
     "trade_active": True,
     "regional_scrap_constraint": False,
+    "investment_cycle_randomness": False
 }
 BAU_SCENARIO = {
     "scenario_name": "baseline",
@@ -146,6 +150,7 @@ BAU_SCENARIO = {
     "solver_logic": "rank",
     "trade_active": True,
     "regional_scrap_constraint": False,
+    "investment_cycle_randomness": False
 }
 BAU_HIGH_CIRC_SCENARIO = {
     "scenario_name": "baseline_high_circ",
@@ -166,6 +171,7 @@ BAU_HIGH_CIRC_SCENARIO = {
     "solver_logic": "rank",
     "trade_active": True,
     "regional_scrap_constraint": False,
+    "investment_cycle_randomness": False
 }
 ABATEMENT_SCENARIO = {
     "scenario_name": "abatement",
@@ -186,6 +192,7 @@ ABATEMENT_SCENARIO = {
     "solver_logic": "rank",
     "trade_active": True,
     "regional_scrap_constraint": False,
+    "investment_cycle_randomness": False
 }
 ABATEMENT_HIGH_CIRC_SCENARIO = {
     "scenario_name": "fastest_abatement",
@@ -206,6 +213,7 @@ ABATEMENT_HIGH_CIRC_SCENARIO = {
     "solver_logic": "rank",
     "trade_active": True,
     "regional_scrap_constraint": False,
+    "investment_cycle_randomness": False
 }
 
 SCENARIO_OPTIONS = {

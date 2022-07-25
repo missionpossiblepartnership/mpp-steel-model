@@ -17,7 +17,7 @@ from mppsteel.config.model_config import (
 from mppsteel.model_graphs.graph_production import create_combined_scenario_graphs
 from mppsteel.model_results.multiple_model_run_summary import create_emissions_summary_stack, create_production_summary_stack
 from mppsteel.model_results.resource_demand_summary import create_resource_demand_summary
-from mppsteel.model_solver.solver import solver_flow
+from mppsteel.model_solver.solver_flow import main_solver_flow
 from mppsteel.config.model_grouping import model_results_phase
 
 from mppsteel.utility.function_timer_utility import timer_func
@@ -108,17 +108,18 @@ def store_result_to_container(
 def store_run_container_to_pkl(
     run_container: dict,
     pkl_path: str,
-):
+) -> None:
     for filename in run_container:
         df = pd.concat(run_container[filename]).reset_index(drop=True)
         serialize_file(df, pkl_path, filename)
+
 @timer_func
 def make_multiple_model_runs(
     scenario_dict: dict,
     new_folder: bool = True,
     timestamp: str = "",
     number_of_runs: int = DEFAULT_NUMBER_OF_RUNS
-):
+) -> None:
     scenario_name = scenario_dict['scenario_name']
 
     # Create Folders
@@ -140,7 +141,7 @@ def make_multiple_model_runs(
 
     # INDIVIDUAL MODEL RUNS
     for model_run in range(1, number_of_runs + 1):
-        solver_flow(scenario_dict=scenario_dict, serialize=True)
+        main_solver_flow(scenario_dict=scenario_dict, serialize=True)
         model_results_phase(scenario_dict)
         for filename in files_to_aggregate:
             store_result_to_container(run_container, filename, final_path, model_run, number_of_runs)
@@ -160,8 +161,8 @@ def make_multiple_model_runs(
     summary_csv_filename = "multi_run_summary"
 
     logger.info("Writing results to file")
+
     # WRITE FILES TO PKL
-    
     serialize_file(combined_summary, pkl_output_folder, summary_csv_filename)
 
     # WRITE FILES TO CSV

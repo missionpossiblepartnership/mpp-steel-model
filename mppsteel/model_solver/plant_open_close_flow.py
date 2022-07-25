@@ -29,11 +29,13 @@ from mppsteel.config.model_config import (
     UTILIZATION_ROUNDING_NUMBER
 )
 
-from mppsteel.model_solver.solver_classes import (
-    CapacityContainerClass,
-    UtilizationContainerClass,
-    MarketContainerClass,
-    PlantChoices,
+from mppsteel.plant_classes.plant_choices_class import PlantChoices
+from mppsteel.plant_classes.capacity_container_class import CapacityContainerClass
+from mppsteel.model_solver.market_container_class import MarketContainerClass
+from mppsteel.plant_classes.regional_utilization_class import (
+    UtilizationContainerClass
+)
+from mppsteel.model_solver.material_usage_class import (
     MaterialUsage,
     create_material_usage_dict,
 )
@@ -52,7 +54,6 @@ def open_real_plants(
     material_container: MarketContainerClass,
     capacity_container: CapacityContainerClass,
     capacity_constraint_container: PlantCapacityConstraint,
-    investment_container: PlantInvestmentCycle,
     tech_choices_container: PlantChoices,
     lev_cost_df: pd.DataFrame,
     steel_plant_df: pd.DataFrame,
@@ -63,7 +64,7 @@ def open_real_plants(
     regional_scrap: bool,
     tech_moratorium: bool,
     enforce_constraints: bool,
-):
+) -> pd.DataFrame:
 
     if lev_cost_df.empty:
         lev_cost_df = pd.DataFrame(columns=["year", "region", "technology"])
@@ -149,10 +150,10 @@ def open_real_plants(
 
     return updated_steel_plant_df
 
-def return_len_closed_plants_closed_in_year(steel_plant_df: pd.DataFrame, year: int):
+def return_len_closed_plants_closed_in_year(steel_plant_df: pd.DataFrame, year: int) -> int:
     return len(steel_plant_df[steel_plant_df["end_of_operation"] == year])
 
-def return_len_inactive_plants(steel_plant_df: pd.DataFrame, year: int):
+def return_len_inactive_plants(steel_plant_df: pd.DataFrame) -> int:
     return len(steel_plant_df[steel_plant_df["active_check"] == False])
 
 
@@ -167,11 +168,11 @@ def close_real_plants(
     steel_plant_df: pd.DataFrame,
     business_case_ref: dict,
     year: int,
-    open_plant_util_cutoff: float,
-    close_plant_util_cutoff: float,
-    regional_scrap: bool,
+    util_max: float,
+    util_min: float,
+    regional_scrap: bool
+) -> pd.DataFrame:
 
-):
     investment_dict = investment_container.return_investment_dict()
     plant_start_years = investment_container.plant_start_years
     plant_cycle_lengths = investment_container.return_cycle_lengths()
@@ -180,7 +181,7 @@ def close_real_plants(
 
     for region in list(production_demand_gap_analysis.keys()):
         plants_to_close = production_demand_gap_analysis[region]["plants_to_close"]
-        initial_number_of_closed_plants = return_len_inactive_plants(updated_steel_plant_df, year)
+        initial_number_of_closed_plants = return_len_inactive_plants(updated_steel_plant_df)
 
         if plants_to_close > 0:
             initial_capacity = production_demand_gap_analysis[region]["capacity"]
@@ -241,7 +242,7 @@ def close_real_plants(
 
             capacity_removal_actual_minus_indicative = capacity_removed - min_capacity_to_close
             closed_plants_post = return_len_closed_plants_closed_in_year(updated_steel_plant_df, year)
-            new_number_of_closed_plants = return_len_inactive_plants(updated_steel_plant_df, year)
+            new_number_of_closed_plants = return_len_inactive_plants(updated_steel_plant_df)
             new_total_capacity = initial_capacity - capacity_removed
             new_utilization = production_dict_value / new_total_capacity
             utilization_container.update_region(year, region, new_utilization)
@@ -251,7 +252,7 @@ def close_real_plants(
             assert round(capacity_removed, TRADE_ROUNDING_NUMBER) >= round(min_capacity_to_close, TRADE_ROUNDING_NUMBER), f"{region}: Capacity Removed {capacity_removed} is less than Indicative Capacity Removed {min_capacity_to_close}"
             assert round(initial_capacity, TRADE_ROUNDING_NUMBER) >= round(new_total_capacity, TRADE_ROUNDING_NUMBER), f"{region}: New Capacity {new_total_capacity} is greater than Old Capacity {initial_capacity}"
             assert round(initial_utilization, UTILIZATION_ROUNDING_NUMBER) <= round(new_utilization, UTILIZATION_ROUNDING_NUMBER), f"{region}: Initial Utilization {initial_utilization} is smaller than the New Utilization {new_utilization}"
-            assert round(close_plant_util_cutoff, UTILIZATION_ROUNDING_NUMBER) <= round(new_utilization, UTILIZATION_ROUNDING_NUMBER) <= round(open_plant_util_cutoff, UTILIZATION_ROUNDING_NUMBER), f"{region}: utilization {new_utilization} is out of bounds -> capacity_removed: {capacity_removed} | capacity removal gap: {capacity_removal_actual_minus_indicative} | {production_demand_gap_analysis[region]}"
+            assert round(util_min, UTILIZATION_ROUNDING_NUMBER) <= round(new_utilization, UTILIZATION_ROUNDING_NUMBER) <= round(util_max, UTILIZATION_ROUNDING_NUMBER), f"{region}: utilization {new_utilization} is out of bounds -> capacity_removed: {capacity_removed} | capacity removal gap: {capacity_removal_actual_minus_indicative} | {production_demand_gap_analysis[region]}"
             assert new_number_of_closed_plants > initial_number_of_closed_plants, f"Closed Plants not being updated -> plants_to_close: {plants_to_close} | initial_active_checks: {initial_number_of_closed_plants} | new_active_checks: {new_number_of_closed_plants} | plants: {join_list_as_string(actual_plants_to_close)}"
             assert closed_plants_prior + len(actual_plants_to_close) == closed_plants_post, f"Closed plants prior: {closed_plants_prior} | Actual closed plants to add: {len(actual_plants_to_close)} | Closed plants post: {closed_plants_post}"
 
@@ -279,8 +280,9 @@ def open_close_plants(
     tech_moratorium: bool = False,
     regional_scrap: bool = False,
     enforce_constraints: bool = False,
-    open_plant_util_cutoff: float = CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
-    close_plant_util_cutoff: float = CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
+    investment_cycle_randomness: bool = False,
+    util_max: float = CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
+    util_min: float = CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
 ) -> pd.DataFrame:
     """Adjusts a Plant Dataframe by determining how each region should achieve its demand for the year.
     The function works by either
@@ -308,8 +310,8 @@ def open_close_plants(
         tech_moratorium (bool, optional): The scenario boolean value that determines whether there is a technology moratorium. Defaults to False.
         regional_scrap (bool, optional): The scenario boolean value that determines whether there is a regional or global scrap constraints. Defaults to False.
         enforce_constraints (bool, optional): The scenario boolean value that determines if all constraints are enforced. Defaults to False.
-        open_plant_util_cutoff (float, optional): The maximum capacity utilization that plants are allowed to reach before having to open new plants. Defaults to CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION.
-        close_plant_util_cutoff (float, optional): The minimum capacity utilization that plants are allowed to reach before having to close existing plants. Defaults to CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION.
+        util_max (float, optional): The maximum capacity utilization that plants are allowed to reach before having to open new plants. Defaults to CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION.
+        util_min (float, optional): The minimum capacity utilization that plants are allowed to reach before having to close existing plants. Defaults to CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION.
 
     Returns:
         pd.DataFrame: The initial DataFrame passed to the function with the plants that have been opened and close updated.
@@ -332,8 +334,8 @@ def open_close_plants(
             capex_dict=capex_dict,
             tech_choices_ref=tech_choices_container.return_choices(),
             year=year,
-            util_min=close_plant_util_cutoff,
-            util_max=open_plant_util_cutoff,
+            util_min=util_min,
+            util_max=util_max,
         )
     else:
         logger.info(f"Starting the non-trade flow for {year}")
@@ -342,16 +344,13 @@ def open_close_plants(
         capacity_container=capacity_container,
         utilization_container=utilization_container,
         year=year,
-        capacity_util_max=open_plant_util_cutoff,
-        capacity_util_min=close_plant_util_cutoff,
+        capacity_util_max=util_max,
+        capacity_util_min=util_min,
         )
-
-    regions = list(production_demand_gap_analysis.keys())
-    random.shuffle(regions)
 
     updated_steel_plant_df = open_real_plants(
         production_demand_gap_analysis, plant_id_container, material_container,
-        capacity_container, capacity_constraint_container, investment_container, 
+        capacity_container, capacity_constraint_container, 
         tech_choices_container, lev_cost_df, updated_steel_plant_df, tech_availability, 
         country_df, business_case_ref, year, regional_scrap, tech_moratorium, enforce_constraints
     )
@@ -360,10 +359,10 @@ def open_close_plants(
         production_demand_gap_analysis, utilization_container, investment_container,
         material_container, capacity_container, capacity_constraint_container, 
         tech_choices_container, updated_steel_plant_df, business_case_ref, year,
-        open_plant_util_cutoff, close_plant_util_cutoff, regional_scrap
+        util_max, util_min, regional_scrap
     )
 
-    test_utilization_values(utilization_container, production_demand_gap_analysis, year, close_plant_util_cutoff, open_plant_util_cutoff)
+    test_utilization_values(utilization_container, production_demand_gap_analysis, year, util_min, util_max)
     production_demand_gap_analysis_df = create_and_test_market_df(production_demand_gap_analysis, year, test_df=True)
     market_container.store_results(year, production_demand_gap_analysis_df, "market_results")
 
@@ -382,6 +381,6 @@ def open_close_plants(
     )
     new_open_plants = return_modified_plants(new_active_plants, year, "open")
     investment_container.add_new_plants(
-        new_open_plants["plant_name"], new_open_plants["start_of_operation"]
+        new_open_plants["plant_name"], new_open_plants["start_of_operation"], investment_cycle_randomness
     )
     return updated_steel_plant_df

@@ -5,7 +5,8 @@ from typing import Tuple
 
 import pandas as pd
 import numpy as np
-from mppsteel.model_solver.solver_classes import PlantChoices, apply_constraints
+from mppsteel.plant_classes.plant_choices_class import PlantChoices
+from mppsteel.model_solver.material_usage_class import MaterialUsage, create_material_usage_dict
 
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.utils import create_bin_rank_dict, join_list_as_string, return_bin_rank
@@ -620,3 +621,56 @@ def subset_presolver_df(df: pd.DataFrame, subset_type: str) -> pd.DataFrame:
         df_c = change_cols_to_numeric(df_c, ["abated_combined_emissivity"])
         df_c = df_c[emissions_cols].set_index(index_cols)
         return df_c.sort_index(ascending=True)
+
+
+def apply_constraints(
+    business_case_ref: dict,
+    plant_capacities: dict,
+    material_usage_dict_container: MaterialUsage,
+    combined_available_list: list,
+    year: int,
+    plant_name: str,
+    region: str,
+    base_tech: str,
+    regional_scrap: bool,
+    override_constraint: bool,
+    apply_transaction: bool
+):
+    # Constraints checks
+    new_availability_list = []
+    for switch_technology in combined_available_list:
+        material_check_container = create_material_usage_dict(
+            material_usage_dict_container,
+            plant_capacities,
+            business_case_ref,
+            plant_name,
+            region,
+            year,
+            switch_technology,
+            regional_scrap,
+            override_constraint=override_constraint,
+            apply_transaction=apply_transaction
+        )
+        if all(material_check_container.values()):
+            new_availability_list.append(switch_technology)
+        failure_resources = [
+            resource
+            for resource in material_check_container
+            if not material_check_container[resource]
+        ]
+
+        result = "PASS" if all(material_check_container.values()) else "FAIL"
+
+        entry = {
+            "plant": plant_name,
+            "region": region,
+            "start_technology": base_tech,
+            "switch_technology": switch_technology,
+            "year": year,
+            "assign_case": "pre-existing plant",
+            "result": result,
+            "failure_resources": failure_resources,
+            "pass_boolean_check": material_check_container,
+        }
+        material_usage_dict_container.record_results(entry)
+    return new_availability_list

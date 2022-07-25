@@ -1,5 +1,7 @@
 """Script for the PlantInvestmentCycle class."""
 
+import pandas as pd
+
 from mppsteel.config.model_config import (
     MODEL_YEAR_END,
     INVESTMENT_CYCLE_DURATION_YEARS,
@@ -25,20 +27,20 @@ logger = get_logger(__name__)
 class PlantInvestmentCycle:
     """Class for managing the the investment cycles for plants."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.plant_names = []
         self.plant_start_years = {}
         self.plant_investment_cycle_length = {}
         self.plant_cycles = {}
         self.plant_cycles_with_off_cycle = {}
 
-    def instantiate_plants(self, plant_names: list, plant_start_years: list):
+    def instantiate_plants(self, plant_names: list, plant_start_years: list, investment_cycle_randomness: bool) -> None:
         self.plant_names = plant_names
         start_year_dict = dict(zip(plant_names, plant_start_years))
         for plant_name in self.plant_names:
             self.plant_start_years[plant_name] = start_year_dict[plant_name]
             self.plant_investment_cycle_length[plant_name] = return_cycle_length(
-                INVESTMENT_CYCLE_DURATION_YEARS
+                INVESTMENT_CYCLE_DURATION_YEARS, investment_cycle_randomness
             )
             self.plant_cycles[plant_name] = calculate_investment_years(
                 self.plant_start_years[plant_name],
@@ -51,13 +53,13 @@ class PlantInvestmentCycle:
             self.plant_cycles_with_off_cycle
         )
 
-    def add_new_plants(self, plant_names: list, plant_start_years: list):
+    def add_new_plants(self, plant_names: list, plant_start_years: list, investment_cycle_randomness: bool) -> None:
         new_dict = dict(zip(plant_names, plant_start_years))
         for plant_name in plant_names:
             self.plant_names.append(plant_name)
             self.plant_start_years[plant_name] = new_dict[plant_name]
             self.plant_investment_cycle_length[plant_name] = return_cycle_length(
-                INVESTMENT_CYCLE_DURATION_YEARS
+                INVESTMENT_CYCLE_DURATION_YEARS, investment_cycle_randomness
             )
             self.plant_cycles[plant_name] = calculate_investment_years(
                 self.plant_start_years[plant_name],
@@ -67,25 +69,25 @@ class PlantInvestmentCycle:
                 plant_name
             ] = add_off_cycle_investment_years(self.plant_cycles[plant_name])
 
-    def adjust_cycle_for_transitional_switch(self, plant_name: str, rebase_year: int):
+    def adjust_cycle_for_transitional_switch(self, plant_name: str, rebase_year: int) -> None:
         new_cycle = adjust_transitional_switch_in_investment_cycle(
             self.plant_cycles_with_off_cycle[plant_name], rebase_year
         )
         self.plant_cycles_with_off_cycle[plant_name] = new_cycle
 
-    def adjust_cycle_for_deferred_investment(self, plant_name: str, rebase_year: int):
+    def adjust_cycle_for_deferred_investment(self, plant_name: str, rebase_year: int) -> None:
         new_cycle = increment_investment_cycle_year(
             self.plant_cycles_with_off_cycle[plant_name], rebase_year
         )
         self.plant_cycles_with_off_cycle[plant_name] = new_cycle
 
-    def create_investment_df(self):
+    def create_investment_df(self) -> pd.DataFrame:
         return create_investment_cycle_reference(self.plant_cycles_with_off_cycle)
 
-    def return_plant_switch_type(self, plant_name: str, year: int):
+    def return_plant_switch_type(self, plant_name: str, year: int) -> str:
         return return_switch_type(self.plant_cycles_with_off_cycle[plant_name], year)
 
-    def return_investment_dict(self):
+    def return_investment_dict(self) -> dict:
         return self.plant_cycles_with_off_cycle
 
     def return_cycle_lengths(self, plant_name: str = None):
@@ -102,7 +104,7 @@ class PlantInvestmentCycle:
             if len(entry) == 1:
                 assert entry[0] + cycle_length > MODEL_YEAR_END, f"Only one entry for {plant_name}. Initial year: {entry[0]} | Cycle length {cycle_length} | Next investment cycle {entry[0] + cycle_length}"
 
-    def return_plant_switchers(self, active_plants: list, year: int, value_type: str):
+    def return_plant_switchers(self, active_plants: list, year: int, value_type: str) -> list:
         (
             main_cycle_switchers,
             trans_cycle_switchers,

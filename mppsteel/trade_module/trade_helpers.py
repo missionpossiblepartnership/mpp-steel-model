@@ -11,16 +11,13 @@ from mppsteel.config.model_config import (
     TRADE_ROUNDING_NUMBER,
     UTILIZATION_ROUNDING_NUMBER
 )
-from mppsteel.model_solver.solver_classes import (
-    CapacityContainerClass,
-    UtilizationContainerClass,
-    MarketContainerClass,
-)
+from mppsteel.plant_classes.capacity_container_class import CapacityContainerClass
+from mppsteel.model_solver.market_container_class import MarketContainerClass
+from mppsteel.plant_classes.regional_utilization_class import UtilizationContainerClass
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.utils import join_list_as_string
 
 logger = get_logger(__name__)
-
 
 class TradeStatus(Enum):
     DOMESTIC = "Domestic"
@@ -180,7 +177,7 @@ def calculate_cos(
     cos_df["cost_of_steelmaking"] = cos_df.apply(final_cos_adjustment, axis=1)
     return cos_df.set_index(MAIN_REGIONAL_SCHEMA)
 
-def get_initial_utilization(utilization_container: UtilizationContainerClass, year: int, region: str):
+def get_initial_utilization(utilization_container: UtilizationContainerClass, year: int, region: str) -> float:
     return utilization_container.get_utilization_values(year, region) if year == MODEL_YEAR_START else utilization_container.get_utilization_values(year - 1, region)
 
 
@@ -203,15 +200,15 @@ def modify_production_demand_dict(
         production_demand_dict_c[region][dict_key] = data_entry_dict[dict_key]
     return production_demand_dict_c
 
-def utilization_boundary(utilization_figure: float, util_min: float, util_max: float):
+def utilization_boundary(utilization_figure: float, util_min: float, util_max: float) -> float:
     return max(min(utilization_figure, util_max), util_min)
 
-def concat_region_year(year: int, region: str):
+def concat_region_year(year: int, region: str) -> str:
     return f"{region.replace(' ', '').replace(',', '')}_{year}"
 
 def merge_trade_status_col_to_rpc_df(
     rpc_df: pd.DataFrame, trade_status_container: dict, initial_overproduction_container: dict
-):
+) -> pd.DataFrame:
     rpc_df.reset_index(inplace=True)
     rpc_df["initial_overproduction"] = rpc_df[MAIN_REGIONAL_SCHEMA].apply(lambda region: initial_overproduction_container[region])
     rpc_df["initial_trade_status"] = rpc_df[MAIN_REGIONAL_SCHEMA].apply(lambda region: trade_status_container[region])
@@ -222,7 +219,7 @@ def create_empty_market_dict(
     demand: float, initial_utilization: float,
     initial_balance: float,
     avg_plant_capacity_value: float,
-):
+) -> dict:
     return {
         "year": year,
         "region": region,
@@ -295,7 +292,7 @@ def test_open_close_plants(results_container: dict, cases: dict):
         string_container = [f"{region}: {results_container[region]['plants_to_close']} - {cases[region]}" for region in incorrect_close_plants]
         raise AssertionError(f"Incorrect number of plants_to_close in: {join_list_as_string(string_container)}")
 
-def print_demand_production_balance(market_container: MarketContainerClass, demand_dict: dict, year):
+def print_demand_production_balance(market_container: MarketContainerClass, demand_dict: dict, year) -> None:
     for region, demand in demand_dict.items():
         production = market_container.return_trade_balance(year, region, "production")
         print(f"region: {region} | demand: {demand} | production: {production} | trade_balance: {production - demand}")

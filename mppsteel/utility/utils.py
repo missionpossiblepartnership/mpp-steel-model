@@ -174,7 +174,7 @@ def return_bin_rank(x: float, bin_dict: dict) -> float:
                 return bin_dict[val]
 
 
-def replace_dict_items(base_dict: dict, repl_dict: dict):
+def replace_dict_items(base_dict: dict, repl_dict: dict) -> dict:
     base_dict_c = deepcopy(base_dict)
     for col_entry in repl_dict:
         if col_entry in base_dict_c:
@@ -182,12 +182,12 @@ def replace_dict_items(base_dict: dict, repl_dict: dict):
     return base_dict_c
 
 
-def get_dict_keys_by_value(base_dict: dict, value):
+def get_dict_keys_by_value(base_dict: dict, value) -> list:
     item_list = base_dict.items()
     return [item[0] for item in item_list if item[1] == value]
 
 
-def multiprocessing_scenarios(scenario_options: list, func):
+def multiprocessing_scenarios(scenario_options: list, func) -> None:
     # Multiprocessing
     virtual_cores = len(scenario_options)
     n_cores = mp.cpu_count()
@@ -215,5 +215,5 @@ def decades_between_dates(year_range: range, include_final_year: bool = False) -
     return set(decades_set)
 
 
-def get_closest_number_in_list(my_list: list, my_number: int):
+def get_closest_number_in_list(my_list: list, my_number: int) -> Union[int, None]:
     return min(my_list, key = lambda x: abs(x - my_number)) if my_list else None

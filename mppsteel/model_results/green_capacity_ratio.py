@@ -4,7 +4,7 @@ from copy import deepcopy
 
 import pandas as pd
 
-from mppsteel.model_solver.solver import active_check_results
+from mppsteel.model_solver.solver_flow_helpers import active_check_results
 from mppsteel.config.model_config import MODEL_YEAR_RANGE, MODEL_YEAR_START
 from mppsteel.config.reference_lists import TECHNOLOGY_PHASES
 from mppsteel.utility.function_timer_utility import timer_func

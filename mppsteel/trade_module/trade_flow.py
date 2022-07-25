@@ -6,15 +6,12 @@ from mppsteel.config.model_config import (
     CAPACITY_UTILIZATION_CUTOFF_FOR_CLOSING_PLANT_DECISION,
     CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
     TRADE_PCT_BOUNDARY_FACTOR_DICT,
-    TRADE_ROUNDING_NUMBER,
-    UTILIZATION_ROUNDING_NUMBER
+    TRADE_ROUNDING_NUMBER
 )
 from mppsteel.config.reference_lists import REGION_LIST
-from mppsteel.model_solver.solver_classes import (
-    CapacityContainerClass,
-    UtilizationContainerClass,
-    MarketContainerClass,
-)
+from mppsteel.plant_classes.capacity_container_class import CapacityContainerClass
+from mppsteel.model_solver.market_container_class import MarketContainerClass
+from mppsteel.plant_classes.regional_utilization_class import UtilizationContainerClass
 from mppsteel.data_load_and_format.reg_steel_demand_formatter import steel_demand_getter
 from mppsteel.trade_module.trade_helpers import (
     TradeStatus,
@@ -289,6 +286,6 @@ def trade_flow(
     return results_container
 
 
-def return_region_stack(market_container: MarketContainerClass, cases: dict, regions: list, year: int):
+def return_region_stack(market_container: MarketContainerClass, cases: dict, regions: list, year: int) -> None:
     for region in regions:
         print(f"Region: {region} | trade_balance: {market_container.return_container()[year][region]} | cases: {cases[region]}")

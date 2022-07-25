@@ -35,7 +35,7 @@ from mppsteel.data_preprocessing.variable_plant_cost_archetypes import (
 from mppsteel.data_preprocessing.carbon_tax_reference import generate_carbon_tax_reference
 from mppsteel.data_preprocessing.total_opex_reference import generate_total_opex_cost_reference
 from mppsteel.data_preprocessing.levelized_cost import generate_levelized_cost_results
-from mppsteel.model_solver.solver import solver_flow
+from mppsteel.model_solver.solver_flow import main_solver_flow
 from mppsteel.data_preprocessing.tco_abatement_switch import (
     tco_presolver_reference,
     abatement_presolver_reference,
@@ -108,10 +108,10 @@ def data_preprocessing_generic() -> None:
     create_capex_opex_dict(serialize=True)
     create_capex_timeseries(serialize=True)
     create_business_case_reference(serialize=True)
-    investment_cycle_flow(serialize=True)
 
 
 def data_preprocessing_scenarios(scenario_dict: dict) -> None:
+    investment_cycle_flow(scenario_dict=scenario_dict, serialize=True)
     get_steel_demand(scenario_dict=scenario_dict, serialize=True)
     generate_timeseries(scenario_dict=scenario_dict, serialize=True)
     format_pe_data(scenario_dict=scenario_dict, serialize=True, standardize_units=True)
@@ -228,7 +228,7 @@ def scenario_model_run(
     scenario_dict: dict, dated_output_folder: bool, model_output_folder: str
 ) -> None:
     scenario_preprocessing_phase(scenario_dict)
-    solver_flow(scenario_dict, serialize=True)
+    main_solver_flow(scenario_dict, serialize=True)
     model_results_phase(scenario_dict)
     model_outputs_phase(scenario_dict, dated_output_folder, model_output_folder)
     model_graphs_phase(scenario_dict, dated_output_folder, model_output_folder)
@@ -340,7 +340,7 @@ parser.add_argument(
 ### THESE ARGUMENTS ARE FOR DEVELOPMENT PRUPORSES: RUNNING SECTIONS OF THE MODEL IN ISOLATION
 parser.add_argument(
     "-s", "--solver", action="store_true", help="Runs the solver scripts directly"
-)  # solver_flow
+)  # main_solver_flow
 parser.add_argument(
     "-p",
     "--preprocessing",

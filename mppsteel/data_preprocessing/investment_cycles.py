@@ -17,10 +17,11 @@ from mppsteel.plant_classes.plant_investment_cycle_class import PlantInvestmentC
 logger = get_logger(__name__)
 
 @timer_func
-def investment_cycle_flow(serialize: bool = False) -> pd.DataFrame:
+def investment_cycle_flow(scenario_dict: dict, serialize: bool = False) -> pd.DataFrame:
     """Inintiates the complete investment cycle flow and serializes the resulting DataFrame.
 
     Args:
+        scenario_dict (int): Model Scenario settings.
         serialize (bool, optional): Flag to only serialize the DataFrame to a pickle file and not return a DataFrame. Defaults to False.
 
     Returns:
@@ -29,11 +30,11 @@ def investment_cycle_flow(serialize: bool = False) -> pd.DataFrame:
     steel_plant_df = read_pickle_folder(
         PKL_DATA_FORMATTED, "steel_plants_processed", "df"
     )
-
+    investment_cycle_randomness = scenario_dict["investment_cycle_randomness"]
     PlantInvestmentCycles = PlantInvestmentCycle()
     steel_plant_names = steel_plant_df["plant_name"].to_list()
     start_plant_years = steel_plant_df["start_of_operation"].to_list()
-    PlantInvestmentCycles.instantiate_plants(steel_plant_names, start_plant_years)
+    PlantInvestmentCycles.instantiate_plants(steel_plant_names, start_plant_years, investment_cycle_randomness)
     PlantInvestmentCycles.test_cycle_lengths()
 
     if serialize:

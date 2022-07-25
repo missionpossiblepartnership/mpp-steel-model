@@ -6,17 +6,22 @@ from mppsteel.config.model_config import (
     MODEL_YEAR_RANGE
 )
 from mppsteel.config.model_scenarios import TECH_MORATORIUM
-from mppsteel.config.reference_lists import REGION_LIST, RESOURCE_CATEGORY_MAPPER, TECH_REFERENCE_LIST
+from mppsteel.config.reference_lists import REGION_LIST, RESOURCE_CATEGORY_MAPPER
 from mppsteel.data_load_and_format.data_interface import create_business_case_reference, create_capex_opex_dict
 from mppsteel.data_load_and_format.reg_steel_demand_formatter import get_steel_demand
 from mppsteel.data_load_and_format.steel_plant_formatter import create_active_check_col, steel_plant_processor
 from mppsteel.data_preprocessing.variable_plant_cost_archetypes import PlantVariableCostsInput, format_variable_costs, plant_variable_costs
-from mppsteel.model_solver.solver_classes import CapacityContainerClass, MarketContainerClass, PlantChoices, UtilizationContainerClass, create_wsa_2020_utilization_dict
+from mppsteel.plant_classes.plant_choices_class import PlantChoices
+from mppsteel.plant_classes.capacity_container_class import CapacityContainerClass
+from mppsteel.model_solver.market_container_class import MarketContainerClass
+from mppsteel.plant_classes.regional_utilization_class import (
+    UtilizationContainerClass, create_wsa_2020_utilization_dict
+)
 from mppsteel.trade_module.trade_flow import trade_flow
 import pandas as pd
 
 
-def make_business_case(material_category, value, technology):
+def make_business_case(material_category: str, value: float, technology: str) -> dict:
     """
     Create a business case with a given material_category and value.
     """
@@ -28,7 +33,7 @@ def make_business_case(material_category, value, technology):
         "value": value,
     }
 
-def make_business_cases(values):
+def make_business_cases(values: list) -> pd.DataFrame:
     return pd.DataFrame(
         [
             make_business_case(material_category, value, technology)
@@ -37,7 +42,7 @@ def make_business_cases(values):
     )
 
 
-def make_input_data(feedstock_dict, static_energy_prices, business_cases, year, country_code, kwargs):
+def make_input_data(feedstock_dict: dict, static_energy_prices: pd.DataFrame, business_cases: pd.DataFrame, year: int, country_code: str, kwargs: dict):
     """
     Create the input data for the plant_variable_costs function.
     """
@@ -56,7 +61,7 @@ def make_input_data(feedstock_dict, static_energy_prices, business_cases, year, 
         )
     return PlantVariableCostsInput(**input_kwargs)
 
-def get_feedstock_dict():
+def get_feedstock_dict() -> dict:
     return {
         "Plastic waste": 6.527621014136413,
         "Iron ore": 97.73,
@@ -67,7 +72,7 @@ def get_feedstock_dict():
         "Other slag": 0.0,
     }
 
-def get_static_energy_prices():
+def get_static_energy_prices() -> pd.DataFrame:
     material_categories = [
         "Natural gas - low",
         "Natural gas - high",
@@ -143,9 +148,9 @@ def test_trade_flow():
     )
 
     for region in REGION_LIST:
-        assert production_demand_dict[region] == pytest.approx(result_dict[region]), f"Region: {region} failed"
+        assert production_demand_dict[region] == pytest.approx(RESULT_DICT[region]), f"Region: {region} failed"
 
-result_dict = {
+RESULT_DICT = {
         'Africa': {'avg_plant_capacity': 2.357,
             'capacity': 35.577,
             'demand': 40.30256228,

@@ -7,7 +7,7 @@ import numpy_financial as npf
 from tqdm import tqdm
 
 from mppsteel.model_results.investments import get_investment_capital_costs
-from mppsteel.model_solver.solver import active_check_results
+from mppsteel.model_solver.solver_flow_helpers import active_check_results
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
