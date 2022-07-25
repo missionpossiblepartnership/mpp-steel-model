@@ -1,14 +1,13 @@
 """Script to manage making multiple model_runs"""
 
 import pandas as pd
-import numpy as np
 
 from mppsteel.config.model_config import (
     COMBINED_OUTPUT_FOLDER_NAME,
     DEFAULT_NUMBER_OF_RUNS,
     FINAL_RESULT_PKL_FILES,
     INTERMEDIATE_RESULT_PKL_FILES,
-    MULTIPLE_MODEL_RUN_EVALUATION_YEAR,
+    MULTIPLE_MODEL_RUN_EVALUATION_YEARS,
     MULTIPLE_RUN_SCENARIO_FOLDER_NAME,
     OUTPUT_FOLDER,
     PKL_DATA_COMBINED,
@@ -16,7 +15,7 @@ from mppsteel.config.model_config import (
 )
 
 from mppsteel.model_graphs.graph_production import create_combined_scenario_graphs
-from mppsteel.model_results.multiple_model_run_summary import create_emissions_summary_stack, create_production_summary_stack, generate_multiple_model_run_summary_df
+from mppsteel.model_results.multiple_model_run_summary import create_emissions_summary_stack, create_production_summary_stack
 from mppsteel.model_results.resource_demand_summary import create_resource_demand_summary
 from mppsteel.model_solver.solver import solver_flow
 from mppsteel.config.model_grouping import model_results_phase
@@ -154,9 +153,9 @@ def make_multiple_model_runs(
 
     # CREATE SUMMARY DATAFRAMES
     emissions_summary = create_emissions_summary_stack(
-        production_emissions, years=[MULTIPLE_MODEL_RUN_EVALUATION_YEAR])
+        production_emissions, years=MULTIPLE_MODEL_RUN_EVALUATION_YEARS)
     production_summary = create_production_summary_stack(
-        production_resource_usage, material_unit="mt", energy_unit="gj", years=[MULTIPLE_MODEL_RUN_EVALUATION_YEAR])
+        production_resource_usage, material_unit="mt", energy_unit="gj", years=MULTIPLE_MODEL_RUN_EVALUATION_YEARS)
     combined_summary = pd.concat([emissions_summary, production_summary]).reset_index(drop=True)
     summary_csv_filename = "multi_run_summary"
 

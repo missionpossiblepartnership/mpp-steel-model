@@ -3,12 +3,8 @@
 import itertools
 import pandas as pd
 import numpy as np
-import pickle
-from typing import Iterable, Sequence
-import random
 
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.utility.utils import join_list_as_string
 
 logger = get_logger(__name__)
 
@@ -83,11 +79,6 @@ def generate_multiple_model_run_summary_df(
                 "resource": resource,
                 "year": year,
                 "sum": created_summary_stats(df_s, value_col, "sum"),
-                "mean": created_summary_stats(df_s, value_col, "mean"),
-                "min": created_summary_stats(df_s, value_col, "min"),
-                "max": created_summary_stats(df_s, value_col, "max"),
-                "var": created_summary_stats(df_s, value_col, "var"),
-                "std": created_summary_stats(df_s, value_col, "std")
             }
         )
     df_container.append(df)
