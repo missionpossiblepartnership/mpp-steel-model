@@ -207,4 +207,7 @@ if __name__ == "__main__":
     if args.pe_models:
         format_pe_data(scenario_dict=scenario_args)
 
+    if args.steel_plants:
+        steel_plant_processor(scenario_dict=scenario_args)
+
     TIME_CONTAINER.return_time_container()

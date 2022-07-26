@@ -103,8 +103,8 @@ def data_import_stage() -> None:
     load_data(serialize=True)
 
 
-def data_preprocessing_generic() -> None:
-    steel_plant_processor(serialize=True)
+def data_preprocessing_generic(scenario_dict: dict) -> None:
+    steel_plant_processor(scenario_dict=scenario_dict, serialize=True)
     create_capex_opex_dict(serialize=True)
     create_capex_timeseries(serialize=True)
     create_business_case_reference(serialize=True)
@@ -477,3 +477,8 @@ parser.add_argument(
     action="store_true",
     help="Runs a half model (from solver stage onwards) and stores results"
 )
+parser.add_argument(
+    "--steel_plants",
+    action="store_true",
+    help="Runs the steel plant formatter"
+) # steel_plant_processor

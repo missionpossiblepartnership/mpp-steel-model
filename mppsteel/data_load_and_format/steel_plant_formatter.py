@@ -215,7 +215,22 @@ def apply_countries_to_steel_plants(
     return df_c
 
 
-def convert_start_year(year_value: str) -> int:
+class PlantStartYearAssignor():
+    def __init__(self):
+        self.years_assigned = []
+
+    def initiate_model(self, plants_to_assign: int):
+        self.model_start_year = MODEL_YEAR_START
+        self.plants_to_assign = plants_to_assign
+
+    def return_start_year(self):
+        plant_start_year = (self.model_start_year) - (self.plants_to_assign)
+        self.plants_to_assign -= 1
+        self.years_assigned.append(plant_start_year)
+        return plant_start_year
+
+
+def convert_start_year(row, steel_plant_start_year_assignor: PlantStartYearAssignor, start_year_randomness: bool = False) -> int:
     """Converts a string or int year value to an int year value.
     If the initial year value is the value `unknown`, return a integer within a range set by configurable parameters.
 
@@ -225,11 +240,13 @@ def convert_start_year(year_value: str) -> int:
     Returns:
         int: An integer containing the year value.
     """
-    if year_value == "unknown":
-        return random.randrange(
-            STEEL_PLANT_EARLIEST_START_DATE, STEEL_PLANT_LATEST_START_DATE, 1
-        )
-    return int(year_value)
+    if row.start_of_operation == "unknown":
+        if start_year_randomness:
+            return random.randrange(
+                STEEL_PLANT_EARLIEST_START_DATE, STEEL_PLANT_LATEST_START_DATE, 1
+            )
+        return steel_plant_start_year_assignor.return_start_year()
+    return int(row.start_of_operation)
 
 
 def create_active_check_col(row: pd.Series, year: int) -> bool:
@@ -249,7 +266,7 @@ def create_active_check_col(row: pd.Series, year: int) -> bool:
 
 
 @timer_func
-def steel_plant_processor(serialize: bool = False, from_csv: bool = False) -> pd.DataFrame:
+def steel_plant_processor(scenario_dict: dict, serialize: bool = False, from_csv: bool = False) -> pd.DataFrame:
     """Generates a fully preprocessed Steel Plant DataFrame.
 
     Args:
@@ -266,8 +283,16 @@ def steel_plant_processor(serialize: bool = False, from_csv: bool = False) -> pd
         steel_plants = read_pickle_folder(PKL_DATA_IMPORTS, "steel_plants")
     steel_plants = steel_plant_formatter(steel_plants)
     steel_plants = apply_countries_to_steel_plants(steel_plants)
-    steel_plants["start_of_operation"] = steel_plants["start_of_operation"].apply(
-        lambda year_value: convert_start_year(year_value)
+
+    plants_to_assign_start_years = len(steel_plants[steel_plants["start_of_operation"] == "unknown"])
+    steel_plant_start_year_assignor = PlantStartYearAssignor()
+    steel_plant_start_year_assignor.initiate_model(plants_to_assign_start_years)
+    start_year_randomness = scenario_dict["start_year_randomness"]
+    steel_plants["start_of_operation"] = steel_plants.apply(
+        convert_start_year, 
+        start_year_randomness=start_year_randomness, 
+        steel_plant_start_year_assignor=steel_plant_start_year_assignor, 
+        axis=1
     )
     steel_plants["end_of_operation"] = ""
     steel_plants["active_check"] = steel_plants.apply(

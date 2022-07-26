@@ -65,7 +65,8 @@ SCENARIO_SETTINGS = {
     "solver_logic": SOLVER_LOGICS.keys(),
     "trade_active": [True, False],
     "regional_scrap_constraint": [True, False],
-    "investment_cycle_randomness": [True, False]
+    "investment_cycle_randomness": [True, False],
+    "start_year_randomness": [True, False]
 }
 
 DEFAULT_SCENARIO = {
@@ -84,10 +85,11 @@ DEFAULT_SCENARIO = {
     "fossil_fuel_scenario": "low", # low / high
     "steel_demand_scenario": "average",  # bau / average / high
     "tech_switch_scenario": "lowest_cost",  # max_abatement / lowest_cost / equal_weight
-    "solver_logic": "scale",  # scale / rank / bins
+    "solver_logic": "rank",  # scale / rank / bins
     "trade_active": True,  # bool
     "regional_scrap_constraint": True,  # bool
-    "investment_cycle_randomness": False  # bool
+    "investment_cycle_randomness": False,  # bool
+    "start_year_randomness": False  # bool
 }
 TECH_MORATORIUM = {
     "scenario_name": "tech_moratorium",
@@ -105,10 +107,11 @@ TECH_MORATORIUM = {
     "fossil_fuel_scenario": "low",
     "steel_demand_scenario": "bau",
     "tech_switch_scenario": "lowest_cost",
-    "solver_logic": "scale",
+    "solver_logic": "rank",
     "trade_active": True,
     "regional_scrap_constraint": True,
-    "investment_cycle_randomness": False
+    "investment_cycle_randomness": False,
+    "start_year_randomness": False
 }
 CARBON_COST = {
     "scenario_name": "carbon_cost",
@@ -126,10 +129,11 @@ CARBON_COST = {
     "fossil_fuel_scenario": "low",
     "steel_demand_scenario": "bau",
     "tech_switch_scenario": "lowest_cost",
-    "solver_logic": "scale",
+    "solver_logic": "rank",
     "trade_active": True,
     "regional_scrap_constraint": True,
-    "investment_cycle_randomness": False
+    "investment_cycle_randomness": False,
+    "start_year_randomness": False
 }
 BAU_SCENARIO = {
     "scenario_name": "baseline",
@@ -147,10 +151,11 @@ BAU_SCENARIO = {
     "fossil_fuel_scenario": "low",
     "steel_demand_scenario": "bau",
     "tech_switch_scenario": "lowest_cost",
-    "solver_logic": "scale",
+    "solver_logic": "rank",
     "trade_active": True,
     "regional_scrap_constraint": True,
-    "investment_cycle_randomness": False
+    "investment_cycle_randomness": False,
+    "start_year_randomness": False
 }
 BAU_HIGH_CIRC_SCENARIO = {
     "scenario_name": "baseline_high_circ",
@@ -168,10 +173,11 @@ BAU_HIGH_CIRC_SCENARIO = {
     "fossil_fuel_scenario": "low",
     "steel_demand_scenario": "high",
     "tech_switch_scenario": "lowest_cost",
-    "solver_logic": "scale",
+    "solver_logic": "rank",
     "trade_active": True,
     "regional_scrap_constraint": True,
-    "investment_cycle_randomness": False
+    "investment_cycle_randomness": False,
+    "start_year_randomness": False
 }
 ABATEMENT_SCENARIO = {
     "scenario_name": "abatement",
@@ -189,10 +195,11 @@ ABATEMENT_SCENARIO = {
     "fossil_fuel_scenario": "low",
     "steel_demand_scenario": "bau",
     "tech_switch_scenario": "max_abatement",
-    "solver_logic": "scale",
+    "solver_logic": "rank",
     "trade_active": True,
     "regional_scrap_constraint": True,
-    "investment_cycle_randomness": False
+    "investment_cycle_randomness": False,
+    "start_year_randomness": False
 }
 ABATEMENT_HIGH_CIRC_SCENARIO = {
     "scenario_name": "fastest_abatement",
@@ -210,10 +217,11 @@ ABATEMENT_HIGH_CIRC_SCENARIO = {
     "fossil_fuel_scenario": "low",
     "steel_demand_scenario": "high",
     "tech_switch_scenario": "max_abatement",
-    "solver_logic": "scale",
+    "solver_logic": "rank",
     "trade_active": True,
     "regional_scrap_constraint": True,
-    "investment_cycle_randomness": False
+    "investment_cycle_randomness": False,
+    "start_year_randomness": False
 }
 
 SCENARIO_OPTIONS = {
