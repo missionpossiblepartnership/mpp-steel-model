@@ -28,8 +28,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    blob_storage_connect_str = ""
-
     # INITAL SCENARIO ARGUMENTS
     scenario_args = DEFAULT_SCENARIO
     if args.choose_scenario:
@@ -197,9 +195,6 @@ if __name__ == "__main__":
 
     if args.emissivity:
         generate_emissions_flow(scenario_dict=scenario_args, serialize=True)
-
-    if args.data_transfer:
-        transfer_results_to_azure(blob_storage_connect_str)
 
     if args.investment_cycles:
         investment_cycles()

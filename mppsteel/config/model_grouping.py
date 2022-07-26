@@ -12,7 +12,6 @@ from mppsteel.utility.file_handling_utility import (
 )
 
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.data_transfer.azure_transfer import full_transfer_flow
 
 from mppsteel.data_load_and_format.data_import import load_data
 from mppsteel.data_load_and_format.reg_steel_demand_formatter import get_steel_demand
@@ -103,14 +102,14 @@ def data_import_stage() -> None:
     load_data(serialize=True)
 
 
-def data_preprocessing_generic(scenario_dict: dict) -> None:
-    steel_plant_processor(scenario_dict=scenario_dict, serialize=True)
+def data_preprocessing_generic() -> None:
     create_capex_opex_dict(serialize=True)
     create_capex_timeseries(serialize=True)
     create_business_case_reference(serialize=True)
 
 
 def data_preprocessing_scenarios(scenario_dict: dict) -> None:
+    steel_plant_processor(scenario_dict=scenario_dict, serialize=True)
     investment_cycle_flow(scenario_dict=scenario_dict, serialize=True)
     get_steel_demand(scenario_dict=scenario_dict, serialize=True)
     generate_timeseries(scenario_dict=scenario_dict, serialize=True)
@@ -301,13 +300,6 @@ def lcost_flow(scenario_dict: dict) -> None:
 def gcr_flow(scenario_dict: dict) -> None:
     generate_gcr_df(scenario_dict, serialize=True)
 
-def transfer_results_to_azure(connect_str: str):
-    full_transfer_flow(
-        connect_str=connect_str,
-        include_combined_data=True,
-        zipped=True
-    )
-
 
 parser = argparse.ArgumentParser(
     description="The MPP Python Steel Model Command Line Interface", add_help=False
@@ -446,12 +438,6 @@ parser.add_argument(
 parser.add_argument(
     "-j", "--emissivity", action="store_true", help="Runs the emissivity script only"
 )  # get_emissivity
-parser.add_argument(
-    "-m",
-    "--data_transfer",
-    action="store_true",
-    help="Runs script to transfer data to blob storage",
-)  # transfer_results_to_azure
 parser.add_argument(
     "--investment_cycles",
     action="store_true",
