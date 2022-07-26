@@ -1,5 +1,6 @@
 """Utility library for functions used throughout the module"""
 import itertools
+import math
 import sys
 
 import multiprocessing as mp
@@ -11,6 +12,7 @@ from datetime import datetime
 from typing import Union, Iterable as it
 
 from currency_converter import CurrencyConverter
+from mppsteel.config.model_config import NUMBER_OF_TECHNOLOGIES_PER_BIN_GROUP
 
 from mppsteel.utility.log_utility import get_logger
 
@@ -121,21 +123,21 @@ def cast_to_float(val: Union[float, int, Iterable[float]]) -> float:
 
 
 def create_bin_rank_dict(
-    data: np.array, number_of_items: int, max_bin_size: int = 3, reverse: bool = False, rounding: int = 3
+    data: np.array, number_of_items: int,  reverse: bool = False, rounding: int = 3
 ) -> dict:
     """Create a dictionary of bin value: bin rank key: value pairs.
 
     Args:
         data (np.array): The data that you want to create bins for.
         number_of_items: The number of items that determines the minium number of bins you want to create.
-        max_bin_size (int, optional): The max number of bins you want to create. Defaults to 3.
         reverse (bool, optional): Reverse the enumeration of the bins (descending rather than ascending order). Defaults to False.
         rounding (int, optional): Optionally round the numbers for the bin groups. Defaults to 3.
 
     Returns:
         dict: A dictionary of bin value: bin rank.
     """
-
+    # max_bin_size = math.floor(number_of_items / NUMBER_OF_TECHNOLOGIES_PER_BIN_GROUP)
+    max_bin_size = 3
     bins = min(number_of_items, max_bin_size)
     bins = np.linspace(data.min(), data.max(), bins)
     digitized = np.digitize(data, bins)

@@ -49,18 +49,17 @@ def check_relative_production_cost(
     Returns:
         pd.DataFrame: The COS DataFrame with new columns `relative_cost_below_avg` and `relative_cost_close_to_mean`
     """
-    def apply_upper_boundary(row: pd.DataFrame, mean_value: float, value_range: float, pct_boundary_dict: dict):
-        return mean_value + (value_range * (pct_boundary_dict[row['rmi_region']]))
+    def apply_upper_boundary(row: pd.DataFrame, mean_value: float, pct_boundary_dict: dict):
+        return mean_value * (1 + (pct_boundary_dict[row['rmi_region']]))
 
     def close_to_mean_test(row: pd.DataFrame):
         return row['cost_of_steelmaking'] < row['upper_boundary']
 
     df_c = cos_df.copy()
     mean_val = df_c[value_col].mean()
-    value_range = df_c[value_col].max() - df_c[value_col].min()
     df_c.reset_index(inplace=True)
     df_c['upper_boundary'] = df_c.apply(
-        apply_upper_boundary, mean_value=mean_val, value_range=value_range, pct_boundary_dict=pct_boundary_dict, axis=1)
+        apply_upper_boundary, mean_value=mean_val, pct_boundary_dict=pct_boundary_dict, axis=1)
     df_c["relative_cost_below_avg"] = df_c[value_col].apply(lambda x: x <= mean_val)
     df_c["relative_cost_close_to_mean"] = df_c.apply(close_to_mean_test, axis=1)
     df_c["year"] = year

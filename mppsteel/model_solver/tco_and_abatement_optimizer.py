@@ -1,4 +1,5 @@
 """Script for the tco and abatament optimisation functions."""
+from copy import deepcopy
 from functools import lru_cache
 import random
 from typing import Tuple
@@ -375,6 +376,7 @@ def get_best_choice(
         str: The best technology choice for a given year.
     """
     cost_value_col = "tco_gf_capex" if transitional_switch_mode else "tco_regular_capex"
+    updated_tech_availability = technology_list
     # Scaling algorithm
     if solver_logic in {"scaled", "scaled_bins"}:
         # Calculate minimum scaled values
@@ -389,7 +391,6 @@ def get_best_choice(
             rank=False,
             transitional_switch_mode=transitional_switch_mode,
         )
-
         if enforce_constraints:
             constraint_included_techs = apply_constraints(
                 business_case_ref,
@@ -404,11 +405,13 @@ def get_best_choice(
                 override_constraint=False,
                 apply_transaction=False
             )
-            if transitional_switch_mode and start_tech not in constraint_included_techs:
-                constraint_included_techs.append(start_tech)
+            updated_tech_availability = deepcopy(constraint_included_techs)
 
-            if not transitional_switch_mode and 1 not in tco_values.loc[constraint_included_techs]["tco_rank_score"].values:
-                constraint_included_techs.append(start_tech)
+            if transitional_switch_mode and start_tech not in updated_tech_availability:
+                updated_tech_availability.append(start_tech)
+
+            if not updated_tech_availability:
+                updated_tech_availability.append(start_tech)
 
         # Simply return current technology if no other options
         if len(tco_values) < 2:
@@ -441,7 +444,6 @@ def get_best_choice(
             binned_rank_dict = create_bin_rank_dict(
                 tco_values_scaled[cost_value_col],
                 number_of_items=len(technology_list),
-                max_bin_size=3
             )
             tco_values_scaled["tco_scaled"] = tco_values_scaled[cost_value_col].apply(
                 lambda x: return_bin_rank(x, bin_dict=binned_rank_dict)
@@ -455,7 +457,6 @@ def get_best_choice(
             binned_rank_dict = create_bin_rank_dict(
                 tco_values_scaled["abated_combined_emissivity"],
                 number_of_items=len(technology_list),
-                max_bin_size=3,
                 reverse=True,
             )
             tco_values_scaled["abatement_scaled"] = tco_values_scaled[
@@ -477,7 +478,7 @@ def get_best_choice(
         record_ranking(
             combined_scales,
             technology_list,
-            constraint_included_techs,
+            updated_tech_availability,
             plant_choice_container,
             year,
             region,
@@ -490,7 +491,7 @@ def get_best_choice(
             transitional_switch_mode
         )
         combined_scales.drop(
-            labels=combined_scales.index.difference(constraint_included_techs),
+            labels=combined_scales.index.difference(updated_tech_availability),
             inplace=True,
         )
         combined_scales.sort_values("overall_score", axis=0, inplace=True)
@@ -502,7 +503,7 @@ def get_best_choice(
             min_value = combined_scales["overall_score"].min()
             best_values = combined_scales[combined_scales["overall_rank"] == min_value]
 
-            return return_best_choice(best_values, start_tech, constraint_included_techs)
+            return return_best_choice(best_values, start_tech, updated_tech_availability)
 
     # Ranking algorithm
     if solver_logic == "ranked":
@@ -533,11 +534,12 @@ def get_best_choice(
                 override_constraint=False,
                 apply_transaction=False
             )
-            if transitional_switch_mode and start_tech not in constraint_included_techs:
-                constraint_included_techs.append(start_tech)
+            updated_tech_availability = deepcopy(constraint_included_techs)
+            if transitional_switch_mode and start_tech not in updated_tech_availability:
+                updated_tech_availability.append(start_tech)
 
-            if not transitional_switch_mode and 1 not in tco_values.loc[constraint_included_techs]["tco_rank_score"].values:
-                constraint_included_techs.append(start_tech)
+            if not transitional_switch_mode and 1 not in tco_values.loc[updated_tech_availability]["tco_rank_score"].values:
+                updated_tech_availability.append(start_tech)
 
         tco_values.drop(
             columns=tco_values.columns.difference(["tco_rank_score"]),
@@ -556,7 +558,7 @@ def get_best_choice(
         record_ranking(
             combined_ranks,
             technology_list,
-            constraint_included_techs,
+            updated_tech_availability,
             plant_choice_container,
             year,
             region,
@@ -569,13 +571,13 @@ def get_best_choice(
             transitional_switch_mode
         )
         combined_ranks.drop(
-            labels=combined_ranks.index.difference(constraint_included_techs),
+            labels=combined_ranks.index.difference(updated_tech_availability),
             inplace=True,
         )
         combined_ranks.sort_values("overall_rank", axis=0, inplace=True)
         min_value = combined_ranks["overall_rank"].min()
         best_values = combined_ranks[combined_ranks["overall_rank"] == min_value]
-        return return_best_choice(best_values, start_tech, constraint_included_techs)
+        return return_best_choice(best_values, start_tech, updated_tech_availability)
 
 
 def subset_presolver_df(df: pd.DataFrame, subset_type: str) -> pd.DataFrame:
