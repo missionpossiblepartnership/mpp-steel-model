@@ -1,8 +1,14 @@
 """Runs the data loading scripts"""
-from datetime import datetime
-from mppsteel.config.multiple_runs import join_scenario_data, make_multiple_model_runs
 
-from mppsteel.utility.utils import multiprocessing_scenarios
+from datetime import datetime
+from mppsteel.config.multiple_runs import (
+    join_scenario_data, 
+    make_multiple_model_runs,
+    multiprocessing_scenarios_single_run,
+    multiprocessing_scenarios_preprocessing,
+    multiprocessing_scenarios_solver_flow
+)
+
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.file_handling_utility import create_folders_if_nonexistant
 from mppsteel.utility.function_timer_utility import TIME_CONTAINER
@@ -30,6 +36,10 @@ if __name__ == "__main__":
 
     # INITAL SCENARIO ARGUMENTS
     scenario_args = DEFAULT_SCENARIO
+    number_of_runs = DEFAULT_NUMBER_OF_RUNS
+    if args.number_of_runs:
+        number_of_runs = int(args.number_of_runs)
+
     if args.choose_scenario:
         if args.choose_scenario in SCENARIO_OPTIONS.keys():
             logger.info(f"CORRECT SCENARIO CHOSEN: {args.choose_scenario}")
@@ -65,7 +75,7 @@ if __name__ == "__main__":
 
         logger.info(f"Running {MAIN_SCENARIO_RUNS} scenario options")
         data_import_and_preprocessing_refresh()
-        multiprocessing_scenarios(
+        multiprocessing_scenarios_single_run(
             scenario_options=MAIN_SCENARIO_RUNS, func=scenario_batch_run
         )
         join_scenario_data(
@@ -87,21 +97,42 @@ if __name__ == "__main__":
         )
 
     if args.multi_run_full:
-        data_import_and_preprocessing_refresh()
+        logger.info(f"Running model in full {number_of_runs} times for {scenario_args['scenario_name']} scenario")
+        data_import_and_preprocessing_refresh(scenario_dict=scenario_args)
         scenario_preprocessing_phase(scenario_dict=scenario_args)
         make_multiple_model_runs(
             scenario_dict=scenario_args,
-            new_folder=True,
+            files_to_aggregate=["production_resource_usage", "production_emissions"],
+            dated_output_folder=True,
             timestamp=timestamp,
-            number_of_runs=DEFAULT_NUMBER_OF_RUNS
+            number_of_runs=number_of_runs,
+            aggregate_only=False
         )
 
     if args.multi_run_half:
+        logger.info(f"Running half-model {number_of_runs} times for {scenario_args['scenario_name']} scenario")
         make_multiple_model_runs(
             scenario_dict=scenario_args,
-            new_folder=True,
+            files_to_aggregate=["production_resource_usage", "production_emissions"],
+            dated_output_folder=True,
             timestamp=timestamp,
-            number_of_runs=DEFAULT_NUMBER_OF_RUNS
+            number_of_runs=number_of_runs,
+            aggregate_only=False
+        )
+
+    if args.multi_run_multi_scenario:
+        logger.info(f"Running the model {number_of_runs} times for {len(MAIN_SCENARIO_RUNS)} scenarios")
+        scenario_options = {scenario: add_currency_rates_to_scenarios(SCENARIO_OPTIONS[scenario]) for scenario in MAIN_SCENARIO_RUNS}
+        data_import_and_preprocessing_refresh(scenario_options["baseline"])
+        multiprocessing_scenarios_preprocessing(
+            scenario_options, scenario_preprocessing_phase
+        )
+        multiprocessing_scenarios_solver_flow(
+            scenario_options=scenario_options,
+            repeating_function=make_multiple_model_runs,
+            timestamp=timestamp,
+            number_of_runs=number_of_runs,
+            files_to_aggregate=["production_resource_usage", "production_emissions", "full_trade_summary"]
         )
 
     if args.solver:
@@ -142,7 +173,8 @@ if __name__ == "__main__":
         model_results_phase(scenario_dict=scenario_args)
 
     if args.generic_preprocessing:
-        data_preprocessing_generic()
+        data_preprocessing_generic_1()
+        data_preprocessing_generic_2(scenario_dict=scenario_args)
 
     if args.variable_costs:
         generate_variable_plant_summary(scenario_dict=scenario_args, serialize=True)

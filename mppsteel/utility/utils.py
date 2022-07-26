@@ -1,9 +1,6 @@
 """Utility library for functions used throughout the module"""
 import itertools
-import math
 import sys
-
-import multiprocessing as mp
 
 import numpy as np
 from collections.abc import Iterable
@@ -187,23 +184,6 @@ def replace_dict_items(base_dict: dict, repl_dict: dict) -> dict:
 def get_dict_keys_by_value(base_dict: dict, value) -> list:
     item_list = base_dict.items()
     return [item[0] for item in item_list if item[1] == value]
-
-
-def multiprocessing_scenarios(scenario_options: list, func) -> None:
-    # Multiprocessing
-    virtual_cores = len(scenario_options)
-    n_cores = mp.cpu_count()
-    logger.info(f"{n_cores} cores detected, creating {virtual_cores} virtual cores")
-    pool = mp.Pool(processes=virtual_cores)
-
-    # Model flow - Load reusable data
-    for scenario in scenario_options:
-        # run the multiprocessing pool over the cores
-        pool.apply_async(func, args=(scenario, True))
-
-    # close and join the pools
-    pool.close()
-    pool.join()
 
 
 def join_list_as_string(list_object: list) -> str:

@@ -102,16 +102,18 @@ def data_import_stage() -> None:
     load_data(serialize=True)
 
 
-def data_preprocessing_generic() -> None:
+def data_preprocessing_generic_1() -> None:
     create_capex_opex_dict(serialize=True)
     create_capex_timeseries(serialize=True)
     create_business_case_reference(serialize=True)
 
-
-def data_preprocessing_scenarios(scenario_dict: dict) -> None:
+def data_preprocessing_generic_2(scenario_dict):
     steel_plant_processor(scenario_dict=scenario_dict, serialize=True)
     investment_cycle_flow(scenario_dict=scenario_dict, serialize=True)
     get_steel_demand(scenario_dict=scenario_dict, serialize=True)
+    
+
+def data_preprocessing_scenarios(scenario_dict: dict) -> None:
     generate_timeseries(scenario_dict=scenario_dict, serialize=True)
     format_pe_data(scenario_dict=scenario_dict, serialize=True, standardize_units=True)
     generate_preprocessed_emissions_data(serialize=True)
@@ -142,7 +144,6 @@ def model_presolver(scenario_dict: dict) -> None:
 
 def scenario_preprocessing_phase(scenario_dict: dict) -> None:
     data_preprocessing_scenarios(scenario_dict)
-    model_presolver(scenario_dict)
 
 
 def model_results_phase(scenario_dict: dict) -> None:
@@ -195,18 +196,19 @@ def data_import_refresh() -> None:
 
 
 def data_preprocessing_refresh(scenario_dict: dict) -> None:
-    data_preprocessing_generic()
+    data_preprocessing_generic_1()
+    data_preprocessing_generic_2(scenario_dict)
     data_preprocessing_scenarios(scenario_dict)
 
 
-def data_import_and_preprocessing_refresh() -> None:
+def data_import_and_preprocessing_refresh(scenario_dict) -> None:
     data_import_stage()
-    data_preprocessing_generic()
+    data_preprocessing_generic_1()
+    data_preprocessing_generic_2(scenario_dict)
 
 
 def tco_and_abatement_calculations(scenario_dict: dict) -> None:
     model_presolver(scenario_dict)
-
 
 def scenario_batch_run(scenario: str, dated_output_folder: bool) -> None:
     # create new folders for path
@@ -257,7 +259,7 @@ def graphs_only(
 def full_flow(
     scenario_dict: dict, dated_output_folder: bool, model_output_folder: str
 ) -> None:
-    data_import_and_preprocessing_refresh()
+    data_import_and_preprocessing_refresh(scenario_dict)
     scenario_model_run(scenario_dict, dated_output_folder, model_output_folder)
 
 
@@ -327,7 +329,12 @@ parser.add_argument(
 parser.add_argument(
     "-f", "--full_model", action="store_true", help="Runs the complete model flow"
 )  # full_flow
-
+parser.add_argument(
+    "-n",
+    "--number_of_runs",
+    action="store",
+    help="The number of runs that the model should run for a multi-model run",
+)
 
 ### THESE ARGUMENTS ARE FOR DEVELOPMENT PRUPORSES: RUNNING SECTIONS OF THE MODEL IN ISOLATION
 parser.add_argument(
@@ -394,7 +401,6 @@ parser.add_argument(
     "-g", "--graphs", action="store_true", help="Runs the graph output script directly"
 )  # graphs_only
 parser.add_argument(
-    "-n",
     "--total_opex",
     action="store_true",
     help="Runs the total_opex_calculations script grouping",
@@ -462,6 +468,11 @@ parser.add_argument(
     "--half_model_run",
     action="store_true",
     help="Runs a half model (from solver stage onwards) and stores results"
+)
+parser.add_argument(
+    "--multi_run_multi_scenario",
+    action="store_true",
+    help="Runs the model multiple times for multiple scenarios"
 )
 parser.add_argument(
     "--steel_plants",
