@@ -107,14 +107,14 @@ class MarketContainerClass:
         return sum(container)
 
     def list_regional_types(self, year: int, account_type: bool) -> list:
-        return [region for region in self.trade_container[year] if self.trade_container[year][region][account_type] > 0]
+        return [region for region in self.trade_container[year] if round(self.trade_container[year][region][account_type], TRADE_ROUNDING_NUMBER) > 0]
 
-    def check_if_trade_balance(self, year: int, rounding_factor: int = 3) -> list:
+    def check_if_trade_balance(self, year: int) -> list:
         balance_list = []
         for region in self.trade_container[year]:
             imports = self.trade_container[year][region]["imports"]
             exports = self.trade_container[year][region]["exports"]
-            if round(exports, rounding_factor) - round(imports, rounding_factor) == 0:
+            if round(exports, TRADE_ROUNDING_NUMBER) - round(imports, TRADE_ROUNDING_NUMBER) == 0:
                 balance_list.append(region)
         return balance_list
     

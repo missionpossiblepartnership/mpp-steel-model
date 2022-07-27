@@ -2,11 +2,13 @@
 
 from datetime import datetime
 from mppsteel.config.multiple_runs import (
+    aggregate_multi_run_scenarios,
+    generate_files_to_path_dict,
     join_scenario_data, 
     make_multiple_model_runs,
+    multiprocessing_scenarios_multiple_scenarios_multiple_runs,
     multiprocessing_scenarios_single_run,
-    multiprocessing_scenarios_preprocessing,
-    multiprocessing_scenarios_solver_flow
+    multiprocessing_scenarios_preprocessing
 )
 
 from mppsteel.utility.log_utility import get_logger
@@ -74,7 +76,7 @@ if __name__ == "__main__":
     if args.main_scenarios:
 
         logger.info(f"Running {MAIN_SCENARIO_RUNS} scenario options")
-        data_import_and_preprocessing_refresh()
+        data_import_and_preprocessing_refresh(SCENARIO_OPTIONS[MAIN_SCENARIO_RUNS[0]])
         multiprocessing_scenarios_single_run(
             scenario_options=MAIN_SCENARIO_RUNS, func=scenario_batch_run
         )
@@ -97,42 +99,59 @@ if __name__ == "__main__":
         )
 
     if args.multi_run_full:
-        logger.info(f"Running model in full {number_of_runs} times for {scenario_args['scenario_name']} scenario")
+        scenario_name = scenario_args['scenario_name']
+        logger.info(f"Running model in full {number_of_runs} times for {scenario_name} scenario")
+        files_to_path = generate_files_to_path_dict([scenario_name,])
         data_import_and_preprocessing_refresh(scenario_dict=scenario_args)
         scenario_preprocessing_phase(scenario_dict=scenario_args)
         make_multiple_model_runs(
             scenario_dict=scenario_args,
-            files_to_aggregate=["production_resource_usage", "production_emissions"],
+            files_to_path=files_to_path,
+            number_of_runs=number_of_runs
+        )
+        aggregate_multi_run_scenarios(
+            scenario_options={scenario_name: scenario_args}, 
+            files_to_path=files_to_path,
             dated_output_folder=True,
-            timestamp=timestamp,
-            number_of_runs=number_of_runs,
-            aggregate_only=False
+            timestamp=timestamp
         )
 
     if args.multi_run_half:
-        logger.info(f"Running half-model {number_of_runs} times for {scenario_args['scenario_name']} scenario")
+        scenario_name=scenario_args['scenario_name']
+        scenario_options={scenario_name: scenario_args}
+        logger.info(f"Running half-model {number_of_runs} times for {scenario_name} scenario")
+        files_to_path = generate_files_to_path_dict([scenario_name,])
         make_multiple_model_runs(
             scenario_dict=scenario_args,
-            files_to_aggregate=["production_resource_usage", "production_emissions"],
+            files_to_path=files_to_path,
+            number_of_runs=number_of_runs
+        )
+        aggregate_multi_run_scenarios(
+            scenario_options={scenario_name: scenario_args}, 
+            files_to_path=files_to_path,
             dated_output_folder=True,
-            timestamp=timestamp,
-            number_of_runs=number_of_runs,
-            aggregate_only=False
+            timestamp=timestamp
         )
 
     if args.multi_run_multi_scenario:
         logger.info(f"Running the model {number_of_runs} times for {len(MAIN_SCENARIO_RUNS)} scenarios")
         scenario_options = {scenario: add_currency_rates_to_scenarios(SCENARIO_OPTIONS[scenario]) for scenario in MAIN_SCENARIO_RUNS}
+        files_to_path = generate_files_to_path_dict(MAIN_SCENARIO_RUNS)
         data_import_and_preprocessing_refresh(scenario_options["baseline"])
         multiprocessing_scenarios_preprocessing(
             scenario_options, scenario_preprocessing_phase
         )
-        multiprocessing_scenarios_solver_flow(
-            scenario_options=scenario_options,
+        multiprocessing_scenarios_multiple_scenarios_multiple_runs(
             repeating_function=make_multiple_model_runs,
-            timestamp=timestamp,
-            number_of_runs=number_of_runs,
-            files_to_aggregate=["production_resource_usage", "production_emissions", "full_trade_summary"]
+            scenario_options=scenario_options, 
+            files_to_path=files_to_path,
+            number_of_runs=number_of_runs
+        )
+        aggregate_multi_run_scenarios(
+            scenario_options=scenario_options, 
+            files_to_path=files_to_path,
+            dated_output_folder=True,
+            timestamp=timestamp
         )
 
     if args.solver:
