@@ -217,7 +217,9 @@ def trade_flow(
             f"TRADE BALANCING ROUND 3: Trade Balance Deficit of {global_trade_balance: .2f} Mt in year {year}, balancing to zero via utilization optimization."
         )
         non_import_status_regions = [region for region in trade_status_container if trade_status_container[region] != TradeStatus.IMPORTER.value]
-        for region in relative_production_cost_df.loc[non_import_status_regions].sort_values(["cost_of_steelmaking"], ascending=False).index:
+        plant_closure_regions = [region for region in cases if "R0: EXPENSIVE EXCESS SUPPLY -> close plant" in cases[region]]
+        non_import_non_closure_plants = list(set(non_import_status_regions).difference(set(plant_closure_regions)))
+        for region in relative_production_cost_df.loc[non_import_non_closure_plants].sort_values(["cost_of_steelmaking"], ascending=False).index:
             # increase utilization
             current_utilization = utilization_container.get_utilization_values(year, region)
             total_capacity = regional_capacity_dict[region]

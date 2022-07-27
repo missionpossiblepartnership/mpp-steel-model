@@ -60,7 +60,7 @@ def calculate_mkt_balance(production: float, demand: float, trade_status: TradeS
     if trade_status is TradeStatus.IMPORTER:
         exports = 0
 
-    elif trade_status is TradeStatus.EXPORTER or trade_status is TradeStatus.DOMESTIC:
+    if (trade_status is TradeStatus.EXPORTER) or (trade_status is TradeStatus.DOMESTIC):
         imports = 0
 
     return MarketBalanceContainer(
