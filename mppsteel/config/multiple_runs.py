@@ -1,27 +1,26 @@
 """Script to manage making multiple model_runs"""
 
-import itertools
 import multiprocessing as mp
+from distributed import Client
 from typing import Callable
 
 import pandas as pd
-
-from mppsteel.config.model_scenarios import SCENARIO_OPTIONS
+import modin.pandas as mpd
+from tqdm import tqdm
 
 from mppsteel.config.model_config import (
     COMBINED_OUTPUT_FOLDER_NAME,
     DEFAULT_NUMBER_OF_RUNS,
     FINAL_RESULT_PKL_FILES,
     INTERMEDIATE_RESULT_PKL_FILES,
-    MULTIPLE_MODEL_RUN_EVALUATION_YEARS,
     MULTIPLE_RUN_SCENARIO_FOLDER_NAME,
     OUTPUT_FOLDER,
     PKL_DATA_COMBINED,
     PKL_FOLDER,
 )
 
+from mppsteel.model_results.multiple_model_run_summary import summarise_combined_data
 from mppsteel.model_graphs.graph_production import create_combined_scenario_graphs
-from mppsteel.model_results.multiple_model_run_summary import create_emissions_summary_stack, create_production_summary_stack
 from mppsteel.model_results.resource_demand_summary import create_resource_demand_summary
 from mppsteel.model_solver.solver_flow import main_solver_flow
 from mppsteel.config.model_grouping import model_results_phase
@@ -32,8 +31,9 @@ from mppsteel.utility.file_handling_utility import (
     pickle_to_csv,
     read_pickle_folder,
     serialize_file,
-    get_scenario_pkl_path,
+    get_scenario_pkl_path
 )
+
 from mppsteel.utility.log_utility import get_logger
 # Create logger
 logger = get_logger(__name__)
@@ -174,11 +174,10 @@ def store_run_container_to_pkl(
         df = pd.concat(run_container[filename]).reset_index(drop=True)
         serialize_file(df, pkl_path, filename)
 
-def pkl_folder_filepath_creation(scenario_name: str) -> str:
-    # Create Folders
-    logger.info(f"Creating Folders for {scenario_name}")
+def pkl_folder_filepath_creation(scenario_name: str, create_folder: bool = False) -> str:
     pkl_output_folder = f"{PKL_FOLDER}/{MULTIPLE_RUN_SCENARIO_FOLDER_NAME}/{scenario_name}"
-    create_folder_if_nonexist(pkl_output_folder)
+    if create_folder:
+        create_folder_if_nonexist(pkl_output_folder)
     return pkl_output_folder
 
 def output_folder_path_creation(
@@ -237,94 +236,6 @@ def generate_files_to_path_dict(scenarios: list):
     return files_to_path
 
 
-def consumption_summary(df, grouping_cols: list, unit_list: list):
-    total_runs = df["total_runs"].unique()[0]
-    resource_cols = [col for col in df.columns if any(ext in col for ext in unit_list)]
-    combined_cols = grouping_cols + resource_cols
-    df_c = df[combined_cols]
-    grouped_df = df_c.groupby(
-        by=grouping_cols,
-    ).sum()
-    grouped_df = grouped_df / total_runs
-    return grouped_df.reset_index()
-
-def generic_summary(df: pd.DataFrame, grouping_cols: list, value_cols: list, agg_dict: dict, include_plant_count: bool = False):
-    total_runs = df["total_runs"].unique()[0]
-    combined_cols = grouping_cols + value_cols
-    df_c = df[combined_cols]
-    if include_plant_count:
-        df_c.loc[:,"number_of_plants"] = 0
-        agg_dict["number_of_plants"] = "size"
-    grouped_df = df_c.groupby(by=grouping_cols).agg(agg_dict)
-    grouped_df = grouped_df / total_runs
-    return grouped_df.reset_index()
-
-def summarise_combined_data(data_dict: dict) -> dict:
-
-    production_emissions_summary = consumption_summary(
-        df=data_dict["production_emissions"], 
-        grouping_cols=["scenario", "year", "region_rmi", "technology"], 
-        unit_list=["_gt", "_mt"]
-    )
-
-    production_resource_usage_summary = consumption_summary(
-        df=data_dict["production_resource_usage"], 
-        grouping_cols=["scenario", "year", "region_rmi", "technology"], 
-        unit_list=["_gt", "_mt", "_gj", "_pj"]
-    )
-
-    plant_capacity_summary = generic_summary(
-        df=data_dict["production_resource_usage"],
-        grouping_cols=["scenario", "year", "region_rmi", "technology"],
-        value_cols=["capacity"],
-        agg_dict={"capacity": "sum"},
-        include_plant_count=True
-    )
-
-    cost_of_steelmaking_summary = generic_summary(
-        df=data_dict["cost_of_steelmaking"],
-        grouping_cols=["scenario", "year", "region_rmi"],
-        value_cols=["cost_of_steelmaking"],
-        agg_dict={"cost_of_steelmaking": "sum"}
-    )
-
-    investment_results_summary = generic_summary(
-        df=data_dict["investment_results"],
-        grouping_cols=["scenario", "year", "region_rmi", "switch_type", "start_tech", "end_tech"],
-        value_cols=["capital_cost"],
-        agg_dict={"capital_cost": "sum"},
-        include_plant_count=True
-    )
-
-    levelized_cost_standardized_summary = generic_summary(
-        df=data_dict["levelized_cost_standardized"],
-        grouping_cols=["scenario", "year", "region", "country_code", "technology"],
-        value_cols=["levelized_cost"],
-        agg_dict={"levelized_cost": "sum"}
-    )
-
-    calc_em_value_cols = ["s1_emissivity", "s2_emissivity", "s3_emissivity", "combined_emissivity"]
-    calc_em_agg_dict = {val_col: "sum" for val_col in calc_em_value_cols}
-    calculated_emissivity_combined_summary = generic_summary(
-        df=data_dict["calculated_emissivity_combined"],
-        grouping_cols=["scenario", "year", "region", "country_code", "technology"],
-        value_cols=["s1_emissivity", "s2_emissivity", "s3_emissivity", "combined_emissivity"],
-        agg_dict=calc_em_agg_dict,
-    )
-
-    return {
-        "production_emissions_summary": production_emissions_summary,
-        "production_resource_usage_summary": production_resource_usage_summary,
-        "plant_capacity_summary": plant_capacity_summary,
-        "cost_of_steelmaking_summary": cost_of_steelmaking_summary,
-        "investment_results_summary": investment_results_summary,
-        "levelized_cost_standardized_summary": levelized_cost_standardized_summary,
-        "calculated_emissivity_combined_summary": calculated_emissivity_combined_summary,
-        "full_trade_summary": data_dict["full_trade_summary"],
-        "plant_result_df": data_dict["plant_result_df"]
-    }
-
-
 def make_multiple_model_runs(
     scenario_dict: dict,
     files_to_path: dict,
@@ -333,9 +244,12 @@ def make_multiple_model_runs(
 
     scenario_name = scenario_dict["scenario_name"]
     logger.info("Running model")
-    pkl_output_folder = pkl_folder_filepath_creation(scenario_name)
+    pkl_output_folder = pkl_folder_filepath_creation(scenario_name, create_folder=True)
 
     multi_model_run(scenario_dict, files_to_path[scenario_name], pkl_output_folder, number_of_runs)
+
+def append_to_list(appending_list, filename: str, scenario: str):
+    appending_list.append(read_pickle_folder(pkl_folder_filepath_creation(scenario), filename, "df"))
 
 def aggregate_multi_run_scenarios(
     scenario_options: dict,
@@ -343,17 +257,40 @@ def aggregate_multi_run_scenarios(
     dated_output_folder: bool = True,
     timestamp: str = "",
 ):
-    combined_pkl_path = pkl_folder_filepath_creation("combined")
+    combined_pkl_path = pkl_folder_filepath_creation("combined", create_folder=True)
     output_save_path = output_folder_path_creation(dated_output_folder, timestamp)
     files_to_aggregate = list(files_to_path[list(scenario_options.keys())[0]].keys())
 
     agg_dict = {filename: [] for filename in files_to_aggregate}
-    for filename, scenario in itertools.product(files_to_aggregate, scenario_options.keys()) :
-        agg_dict[filename].append(read_pickle_folder(pkl_folder_filepath_creation(scenario), filename, "df"))
+
+    for filename in tqdm(files_to_aggregate, total=len(files_to_aggregate), desc=f"Running pkl scenario data merge"):
+        with mp.Manager() as manager:
+            L = manager.list()
+            processes = []
+            for scenario in scenario_options.keys():
+                p = mp.Process(
+                    target=append_to_list, 
+                    kwargs=dict(
+                        appending_list = L,
+                        filename=filename,
+                        scenario=scenario,
+                    )   
+                )  # Passing the list
+                p.start()
+                processes.append(p)
+            
+            for p in processes:
+                p.join()
+
+            agg_dict[filename] = list(L)
+
+    # delete 
+    for object in [L, p, processes, manager]:
+        del object
+
+    client = Client() # manages localhost app for modin operations
     for filename in files_to_aggregate:
-        df = pd.concat(agg_dict[filename]).reset_index(drop=True)
-        agg_dict[filename] = df
-        serialize_file(df, combined_pkl_path, filename)
+        agg_dict[filename] = mpd.concat(agg_dict[filename]).reset_index(drop=True)
 
     summarised_data_dict = summarise_combined_data(agg_dict)
 
