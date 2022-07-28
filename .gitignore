@@ -164,3 +164,6 @@ experimental.py
 # vim
 .*swp
 .*swo
+
+# dask
+dask-worker-space/
