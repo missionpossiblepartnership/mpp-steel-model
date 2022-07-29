@@ -87,10 +87,11 @@ def add_average_values(df: pd.DataFrame) -> pd.DataFrame:
     """
     df_c = df.copy()
     average_values = (
-        df_c.loc[:, "BAU", :]["value"].values
-        + df_c.loc[:, "High Circ", :]["value"].values
+        df_c.loc[(slice(None), "BAU", slice(None)), "value"].values
+        + df_c.loc[(slice(None), "High Circ", slice(None)), "value"].values
     ) / 2
-    average_base = df_c.loc[:, "BAU", :].rename({"BAU": "Average"}).copy()
+    average_base = df_c.loc[(slice(None), "BAU", slice(None)), :].copy()
+    average_base.rename({"BAU": "Average"}, inplace=True)
     average_base["value"] = average_values
     return pd.concat([df_c, average_base])
 
@@ -142,7 +143,7 @@ def get_steel_demand(scenario_dict: dict, serialize: bool = False, from_csv: boo
     scenario_entry = STEEL_DEMAND_SCENARIO_MAPPER[
         scenario_dict["steel_demand_scenario"]
     ]
-    steel_demand_f = steel_demand_f.loc[:, scenario_entry, :].copy()
+    steel_demand_f = steel_demand_f.loc[(slice(None), scenario_entry, slice(None))].copy()
     index_cols = ["year", "metric"]
     steel_demand_f.reset_index().set_index(index_cols)
     steel_demand_f = extend_df_years(steel_demand_f, "year", MODEL_YEAR_END, index_cols)

@@ -154,15 +154,21 @@ def create_folder_if_nonexist(folder_path: str):
 
 
 def get_scenario_pkl_path(
-    scenario: str = None, pkl_folder_type: str = None, default_path: bool = False
+    scenario: str = None, pkl_folder_type: str = None, default_path: bool = False, model_run: str = ""
 ):
     if pkl_folder_type == "intermediate":
+        full_path = f"{PKL_FOLDER}/{scenario}/{INTERMEDIATE_DATA_OUTPUT_NAME}"
         if default_path:
             return PKL_DATA_INTERMEDIATE
-        return f"{PKL_FOLDER}/{scenario}/{INTERMEDIATE_DATA_OUTPUT_NAME}"
+        elif model_run:
+            return f"{full_path}/run_{model_run}"
+        return full_path
     if pkl_folder_type == "final":
+        full_path = f"{PKL_FOLDER}/{scenario}/{FINAL_DATA_OUTPUT_NAME}"
         if default_path:
             return PKL_DATA_FINAL
-        return f"{PKL_FOLDER}/{scenario}/{FINAL_DATA_OUTPUT_NAME}"
+        elif model_run:
+            return f"{full_path}/run_{model_run}"
+        return full_path
     if pkl_folder_type == "combined":
         return f"{PKL_FOLDER}/{COMBINED_OUTPUT_FOLDER_NAME}"

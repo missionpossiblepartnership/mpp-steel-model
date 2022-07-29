@@ -403,23 +403,29 @@ def create_cost_of_steelmaking_data(
 
 @timer_func
 def generate_cost_of_steelmaking_results(
-    scenario_dict: dict, serialize: bool = False
+    scenario_dict: dict, serialize: bool = False, model_run: str = ""
 ) -> dict:
     """Full flow to create the Cost of Steelmaking and the Levelized Cost of Steelmaking DataFrames.
 
     Args:
         scenario_dict (dict): A dictionary with scenarios key value mappings from the current model execution.
         serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
+        model_run (str, optional): The run of the model to customize pkl folder paths. Defaults to "".
 
     Returns:
         dict: A dictionary with the Cost of Steelmaking DataFrame and the Levelized Cost of Steelmaking DataFrame.
     """
-    intermediate_path = get_scenario_pkl_path(
-        scenario_dict["scenario_name"], "intermediate"
+    intermediate_path_preprocessing = get_scenario_pkl_path(
+        scenario=scenario_dict["scenario_name"], pkl_folder_type="intermediate",
     )
-    final_path = get_scenario_pkl_path(scenario_dict["scenario_name"], "final")
+    intermediate_path = get_scenario_pkl_path(
+        scenario=scenario_dict["scenario_name"], pkl_folder_type="intermediate", model_run=model_run
+    )
+    final_path = get_scenario_pkl_path(
+        scenario=scenario_dict["scenario_name"], pkl_folder_type="final", model_run=model_run
+    )
     variable_costs_regional = read_pickle_folder(
-        intermediate_path, "variable_costs_regional", "df"
+        intermediate_path_preprocessing, "variable_costs_regional", "df"
     )
     capex_dict = read_pickle_folder(PKL_DATA_FORMATTED, "capex_dict", "df")
 

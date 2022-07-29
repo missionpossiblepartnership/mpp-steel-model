@@ -750,21 +750,22 @@ def create_levelized_cost_actuals(results_dict: dict, scenario_dict: dict):
 
 
 @timer_func
-def main_solver_flow(scenario_dict: dict, serialize: bool = False) -> dict:
+def main_solver_flow(scenario_dict: dict, serialize: bool = False, model_run: str = "") -> dict:
     """Initiates the complete solver flow and serializes the outputs. Tracks all technology choices and plant changes.
 
     Args:
         scenario_dict (dict): A dictionary with scenarios key value mappings from the current model execution.
         serialize (bool, optional): Flag to only serialize the DataFrame to a pickle file and not return a DataFrame. Defaults to False.
+        model_run (str, optional): The run of the model to customize pkl folder paths. Defaults to "".
 
     Returns:
         dict: A dictionary containing the best technology results and the resultant steel plants. tech_choice_dict is organised as year: plant: best tech.
     """
     intermediate_path = get_scenario_pkl_path(
-        scenario_dict["scenario_name"], "intermediate"
+        scenario=scenario_dict["scenario_name"], pkl_folder_type="intermediate", model_run=model_run
     )
     final_path = get_scenario_pkl_path(
-        scenario_dict["scenario_name"], "final"
+        scenario=scenario_dict["scenario_name"], pkl_folder_type="final", model_run=model_run
     )
     results_dict = choose_technology(scenario_dict=scenario_dict)
 

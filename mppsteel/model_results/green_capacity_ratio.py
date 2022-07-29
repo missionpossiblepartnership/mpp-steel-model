@@ -126,7 +126,7 @@ def create_gcr_df(
 
 
 @timer_func
-def generate_gcr_df(scenario_dict: dict, serialize: bool = False) -> pd.DataFrame:
+def generate_gcr_df(scenario_dict: dict, serialize: bool = False, model_run: str = "") -> pd.DataFrame:
     """Complete flow to create the Green Capacity Ratio DataFrame.
 
     Args:
@@ -138,9 +138,11 @@ def generate_gcr_df(scenario_dict: dict, serialize: bool = False) -> pd.DataFram
     """
     logger.info("- Starting Green Capacity Ratio")
     intermediate_path = get_scenario_pkl_path(
-        scenario_dict["scenario_name"], "intermediate"
+        scenario=scenario_dict["scenario_name"], pkl_folder_type="intermediate", model_run=model_run
     )
-    final_path = get_scenario_pkl_path(scenario_dict["scenario_name"], "final")
+    final_path = get_scenario_pkl_path(
+        scenario=scenario_dict["scenario_name"], pkl_folder_type="final", model_run=model_run
+    )
     plant_result_df = read_pickle_folder(intermediate_path, "plant_result_df", "df")
     tech_choice_dict = read_pickle_folder(intermediate_path, "tech_choice_dict", "dict")
     rmi_mapper = create_country_mapper()

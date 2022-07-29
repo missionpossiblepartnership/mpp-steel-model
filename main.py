@@ -1,6 +1,9 @@
 """Runs the data loading scripts"""
 
 from datetime import datetime
+
+from distributed import Client
+
 from mppsteel.config.multiple_runs import (
     aggregate_multi_run_scenarios,
     generate_files_to_path_dict,
@@ -41,6 +44,9 @@ if __name__ == "__main__":
     number_of_runs = DEFAULT_NUMBER_OF_RUNS
     if args.number_of_runs:
         number_of_runs = int(args.number_of_runs)
+
+    if args.multi_run_half or args.multi_run_full or args.multi_run_multi_scenario:
+        client = Client() # manages localhost app for modin operations
 
     if args.choose_scenario:
         if args.choose_scenario in SCENARIO_OPTIONS.keys():
@@ -102,16 +108,17 @@ if __name__ == "__main__":
         scenario_name = scenario_args['scenario_name']
         logger.info(f"Running model in full {number_of_runs} times for {scenario_name} scenario")
         files_to_path = generate_files_to_path_dict([scenario_name,])
+        """
         data_import_and_preprocessing_refresh(scenario_dict=scenario_args)
         scenario_preprocessing_phase(scenario_dict=scenario_args)
+        """
         make_multiple_model_runs(
             scenario_dict=scenario_args,
-            files_to_path=files_to_path,
             number_of_runs=number_of_runs
         )
         aggregate_multi_run_scenarios(
-            scenario_options={scenario_name: scenario_args}, 
-            files_to_path=files_to_path,
+            scenario_options={scenario_name: scenario_args},
+            single_scenario=True,
             dated_output_folder=True,
             timestamp=timestamp
         )
@@ -123,12 +130,11 @@ if __name__ == "__main__":
         files_to_path = generate_files_to_path_dict([scenario_name,])
         make_multiple_model_runs(
             scenario_dict=scenario_args,
-            files_to_path=files_to_path,
             number_of_runs=number_of_runs
         )
         aggregate_multi_run_scenarios(
-            scenario_options={scenario_name: scenario_args}, 
-            files_to_path=files_to_path,
+            scenario_options={scenario_name: scenario_args},
+            single_scenario=True,
             dated_output_folder=True,
             timestamp=timestamp
         )
@@ -143,13 +149,12 @@ if __name__ == "__main__":
         )
         multiprocessing_scenarios_multiple_scenarios_multiple_runs(
             repeating_function=make_multiple_model_runs,
-            scenario_options=scenario_options, 
-            files_to_path=files_to_path,
+            scenario_options=scenario_options,
             number_of_runs=number_of_runs
         )
         aggregate_multi_run_scenarios(
-            scenario_options=scenario_options, 
-            files_to_path=files_to_path,
+            scenario_options=scenario_options,
+            single_scenario=False,
             dated_output_folder=True,
             timestamp=timestamp
         )

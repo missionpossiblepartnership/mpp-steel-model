@@ -1,7 +1,7 @@
 """Script to manage making multiple model_runs"""
 
 import multiprocessing as mp
-from distributed import Client
+import shutil
 from typing import Callable
 
 import pandas as pd
@@ -28,6 +28,7 @@ from mppsteel.config.model_grouping import model_results_phase
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import (
     create_folder_if_nonexist,
+    create_folders_if_nonexistant,
     pickle_to_csv,
     read_pickle_folder,
     serialize_file,
@@ -154,16 +155,15 @@ def add_model_run_metadata_columns(
 
 def store_result_to_container(
     run_container: dict, 
-    filename: str, 
     scenario_name: str,
-    pkl_path: str, 
+    filename: str, 
+    pkl_path: str,
     model_run: int, 
     number_of_runs: int
 ) -> dict:
     df = read_pickle_folder(pkl_path, filename, "df")
     df = add_model_run_metadata_columns(df, scenario_name, model_run, number_of_runs)
     run_container[filename].append(df)
-    return run_container
 
 
 def store_run_container_to_pkl(
@@ -171,8 +171,8 @@ def store_run_container_to_pkl(
     pkl_path: str,
 ) -> None:
     for filename in run_container:
-        df = pd.concat(run_container[filename]).reset_index(drop=True)
-        serialize_file(df, pkl_path, filename)
+        df = mpd.concat(run_container[filename]).reset_index(drop=True)
+        serialize_file(df._to_pandas(), pkl_path, filename)
 
 def pkl_folder_filepath_creation(scenario_name: str, create_folder: bool = False) -> str:
     pkl_output_folder = f"{PKL_FOLDER}/{MULTIPLE_RUN_SCENARIO_FOLDER_NAME}/{scenario_name}"
@@ -183,9 +183,10 @@ def pkl_folder_filepath_creation(scenario_name: str, create_folder: bool = False
 def output_folder_path_creation(
     dated_output_folder: bool = True,
     timestamp: str = "",
+    single_scenario: str = ""
 ):
     output_save_path = OUTPUT_FOLDER
-    output_folder_name = f"{MULTIPLE_RUN_SCENARIO_FOLDER_NAME} {timestamp}"
+    output_folder_name = f"{MULTIPLE_RUN_SCENARIO_FOLDER_NAME} {single_scenario} {timestamp}" if single_scenario else f"{MULTIPLE_RUN_SCENARIO_FOLDER_NAME} {timestamp}"
     output_folder_filepath = "/"
     if dated_output_folder:
         output_folder_filepath = f"{OUTPUT_FOLDER}/{output_folder_name}"
@@ -193,102 +194,146 @@ def output_folder_path_creation(
         output_save_path = output_folder_filepath
     return output_save_path
 
-def core_run_function(scenario_dict: dict, files_to_path_dict: dict, run_container: dict, model_run: int, number_of_runs: int):
-        main_solver_flow(scenario_dict=scenario_dict, serialize=True)
-        model_results_phase(scenario_dict)
-        for filename in files_to_path_dict:
-            store_result_to_container(run_container, filename, scenario_dict["scenario_name"], files_to_path_dict[filename], model_run, number_of_runs)
+def core_run_function(scenario_dict: dict, model_run: int):
+    generate_files_to_path_dict([scenario_dict["scenario_name"]], model_run, create_path=True)
+    main_solver_flow(scenario_dict=scenario_dict, serialize=True, model_run = str(model_run))
+    model_results_phase(scenario_dict, model_run = str(model_run))
 
-def multi_model_run(
-    scenario_dict: dict, files_to_path_dict: dict, pkl_output_folder: str, number_of_runs: int
+def make_multiple_model_runs(
+    scenario_dict: dict, number_of_runs: int = DEFAULT_NUMBER_OF_RUNS, remove_run_folders: bool = False
 ) -> None:
 
     scenario_name = scenario_dict["scenario_name"]
     logger.info(f"Generating the scenario data for {scenario_name}")
-
-    run_container = {filename: [] for filename in files_to_path_dict}
+    pkl_output_folder = pkl_folder_filepath_creation(scenario_name, create_folder=True)
     run_range = range(1, number_of_runs + 1)
-    for model_run in run_range:
-        core_run_function(
-            scenario_dict=scenario_dict,
-            files_to_path_dict=files_to_path_dict,
-            run_container=run_container,
-            model_run=model_run,
-            number_of_runs=number_of_runs
-        )
+
+    pool = create_pool(run_range)
+    workers = [
+        pool.apply_async(
+            core_run_function, 
+            kwds=dict(
+                scenario_dict=scenario_dict,
+                model_run=model_run
+            )
+        ) for model_run in run_range
+    ]
+    for async_pool in workers:
+        async_pool.get()
+    pool.close()
+    pool.join()
+
+    run_container = aggregate_results(
+        scenario_name, run_range, number_of_runs, remove_run_folders=remove_run_folders
+    )
+
     store_run_container_to_pkl(run_container, pkl_output_folder)
 
-def generate_files_to_path_dict(scenarios: list):
+def aggregate_results(scenario_name: str, run_range: range, number_of_runs: int, remove_run_folders: bool = False):
+    generic_files_to_path_dict = generate_files_to_path_dict([scenario_name,])[scenario_name]
+    run_container = {filename: [] for filename in generic_files_to_path_dict}
+    for model_run in run_range:
+        model_run_files_to_path = generate_files_to_path_dict([scenario_name,], model_run)
+        for filename in run_container:
+            store_result_to_container(run_container, scenario_name, filename, model_run_files_to_path[scenario_name][filename], model_run, number_of_runs)
+
+    if remove_run_folders:
+        for model_run in run_range:
+            intermediate_path = get_scenario_pkl_path(
+                scenario=scenario_name, pkl_folder_type="intermediate", model_run=model_run
+            )
+            final_path = get_scenario_pkl_path(
+                scenario=scenario_name, pkl_folder_type="final", model_run=model_run
+            )
+            shutil.rmtree(intermediate_path)
+            shutil.rmtree(final_path)
+    
+    return run_container
+
+
+def generate_files_to_path_dict(scenarios: list, model_run: str = "", create_path: bool = False):
     files_to_path = {scenario: {} for scenario in scenarios}
     for scenario in scenarios:
-        final_path = get_scenario_pkl_path(scenario, "final")
-        intermediate_path = get_scenario_pkl_path(scenario, "intermediate")
+        intermediate_path_preprocessing = get_scenario_pkl_path(
+            scenario=scenario, pkl_folder_type="intermediate",
+        )
+        intermediate_path = get_scenario_pkl_path(
+            scenario=scenario, pkl_folder_type="intermediate", model_run=model_run
+        )
+        final_path = get_scenario_pkl_path(
+            scenario=scenario, pkl_folder_type="final", model_run=model_run
+        )
+        if create_path:
+            create_folders_if_nonexistant([intermediate_path, final_path])
         files_to_path[scenario] = {
             "production_resource_usage": final_path,
             "production_emissions": final_path,
             "investment_results": final_path,
             "cost_of_steelmaking": final_path,
             "full_trade_summary": intermediate_path,
-            "levelized_cost_standardized": intermediate_path,
-            "calculated_emissivity_combined": intermediate_path,
-            "plant_result_df": intermediate_path
+            "plant_result_df": intermediate_path,
+            "levelized_cost_standardized": intermediate_path_preprocessing,
+            "calculated_emissivity_combined": intermediate_path_preprocessing
         }
+
     return files_to_path
-
-
-def make_multiple_model_runs(
-    scenario_dict: dict,
-    files_to_path: dict,
-    number_of_runs: int = DEFAULT_NUMBER_OF_RUNS,
-) -> None:
-
-    scenario_name = scenario_dict["scenario_name"]
-    logger.info("Running model")
-    pkl_output_folder = pkl_folder_filepath_creation(scenario_name, create_folder=True)
-
-    multi_model_run(scenario_dict, files_to_path[scenario_name], pkl_output_folder, number_of_runs)
 
 def append_to_list(appending_list, filename: str, scenario: str):
     appending_list.append(read_pickle_folder(pkl_folder_filepath_creation(scenario), filename, "df"))
 
-def aggregate_multi_run_scenarios(
-    scenario_options: dict,
-    files_to_path: dict,
-    dated_output_folder: bool = True,
-    timestamp: str = "",
+def create_process_function_kwargs_scenario_agg(appending_list, filename, scenario):
+    return dict(
+        appending_list=appending_list,
+        filename=filename,
+        scenario=scenario,
+    )
+
+def manager_run(
+    process_function: Callable, process_kwargs_function: Callable, 
+    process_iterable_dict: dict, container: dict, filename: str = "", 
 ):
-    combined_pkl_path = pkl_folder_filepath_creation("combined", create_folder=True)
-    output_save_path = output_folder_path_creation(dated_output_folder, timestamp)
-    files_to_aggregate = list(files_to_path[list(scenario_options.keys())[0]].keys())
+    with mp.Manager() as manager:
+        L = manager.list()
+        processes = []
+        for iter in process_iterable_dict:
+            p = mp.Process(
+                target=process_function, 
+                kwargs=process_kwargs_function(L, filename, iter),   
+            )
+            p.start()
+            processes.append(p)
+        
+        for p in processes:
+            p.join()
+        if filename:
+            container[filename] = list(L)
 
-    agg_dict = {filename: [] for filename in files_to_aggregate}
-
-    for filename in tqdm(files_to_aggregate, total=len(files_to_aggregate), desc=f"Running pkl scenario data merge"):
-        with mp.Manager() as manager:
-            L = manager.list()
-            processes = []
-            for scenario in scenario_options.keys():
-                p = mp.Process(
-                    target=append_to_list, 
-                    kwargs=dict(
-                        appending_list = L,
-                        filename=filename,
-                        scenario=scenario,
-                    )   
-                )  # Passing the list
-                p.start()
-                processes.append(p)
-            
-            for p in processes:
-                p.join()
-
-            agg_dict[filename] = list(L)
-
-    # delete 
     for object in [L, p, processes, manager]:
         del object
 
-    client = Client() # manages localhost app for modin operations
+def aggregate_multi_run_scenarios(
+    scenario_options: dict,
+    single_scenario: bool = True,
+    dated_output_folder: bool = True,
+    timestamp: str = "",
+):
+    if single_scenario:
+        single_scenario = list(scenario_options.keys())[0]
+    combined_pkl_path = pkl_folder_filepath_creation("combined", create_folder=True)
+    output_save_path = output_folder_path_creation(dated_output_folder, timestamp, single_scenario)
+    files_to_aggregate =  list(generate_files_to_path_dict(scenario_options.keys())[single_scenario].keys())
+
+    agg_dict = {filename: [] for filename in files_to_aggregate}
+
+    for filename in tqdm(files_to_aggregate, total=len(files_to_aggregate), desc="Running pkl scenario data merge"):
+        manager_run(
+            process_function=append_to_list,
+            process_kwargs_function=create_process_function_kwargs_scenario_agg,
+            process_iterable_dict=scenario_options,
+            container=agg_dict,
+            filename=filename,
+        )
+
     for filename in files_to_aggregate:
         agg_dict[filename] = mpd.concat(agg_dict[filename]).reset_index(drop=True)
 

@@ -110,10 +110,10 @@ def data_preprocessing_generic_1() -> None:
 def data_preprocessing_generic_2(scenario_dict):
     steel_plant_processor(scenario_dict=scenario_dict, serialize=True)
     investment_cycle_flow(scenario_dict=scenario_dict, serialize=True)
-    get_steel_demand(scenario_dict=scenario_dict, serialize=True)
     generate_preprocessed_emissions_data(serialize=True)
 
 def data_preprocessing_scenarios(scenario_dict: dict) -> None:
+    get_steel_demand(scenario_dict=scenario_dict, serialize=True)
     generate_timeseries(scenario_dict=scenario_dict, serialize=True)
     format_pe_data(scenario_dict=scenario_dict, serialize=True, standardize_units=True)
     generate_emissions_flow(scenario_dict=scenario_dict, serialize=True)
@@ -144,13 +144,13 @@ def model_presolver(scenario_dict: dict) -> None:
 def scenario_preprocessing_phase(scenario_dict: dict) -> None:
     data_preprocessing_scenarios(scenario_dict)
 
-
-def model_results_phase(scenario_dict: dict) -> None:
-    production_results_flow(scenario_dict, serialize=True)
-    investment_results(scenario_dict, serialize=True)
-    metaresults_flow(scenario_dict, serialize=True)
-    generate_cost_of_steelmaking_results(scenario_dict, serialize=True)
-    generate_gcr_df(scenario_dict, serialize=True)
+# model_run (str, optional): The run of the model to customize pkl folder paths. Defaults to "".
+def model_results_phase(scenario_dict: dict, model_run: str = "") -> None:
+    production_results_flow(scenario_dict, serialize=True, model_run=model_run)
+    investment_results(scenario_dict, serialize=True, model_run=model_run)
+    metaresults_flow(scenario_dict, serialize=True, model_run=model_run)
+    generate_cost_of_steelmaking_results(scenario_dict, serialize=True, model_run=model_run)
+    generate_gcr_df(scenario_dict, serialize=True, model_run=model_run)
 
 
 def model_outputs_phase(

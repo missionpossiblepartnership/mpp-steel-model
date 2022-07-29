@@ -237,20 +237,26 @@ def load_materials_mapper(materials_list: list, reverse: bool = False) -> dict:
 
 
 @timer_func
-def production_results_flow(scenario_dict: dict, serialize: bool = False) -> dict:
+def production_results_flow(scenario_dict: dict, serialize: bool = False, model_run: str = "") -> dict:
     """Production results flow to create the Production resource usage DataFrame and the Production Emissions DataFrame.
 
     Args:
         scenario_dict (dict): A dictionary with scenarios key value mappings from the current model execution.
         serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
+        model_run (str, optional): The run of the model to customize pkl folder paths. Defaults to "".
 
     Returns:
         dict: A dictionary containing the two DataFrames.
     """
-    intermediate_path = get_scenario_pkl_path(
-        scenario_dict["scenario_name"], "intermediate"
+    intermediate_path_preprocessing = get_scenario_pkl_path(
+        scenario=scenario_dict["scenario_name"], pkl_folder_type="intermediate",
     )
-    final_path = get_scenario_pkl_path(scenario_dict["scenario_name"], "final")
+    intermediate_path = get_scenario_pkl_path(
+        scenario=scenario_dict["scenario_name"], pkl_folder_type="intermediate", model_run=model_run
+    )
+    final_path = get_scenario_pkl_path(
+        scenario=scenario_dict["scenario_name"], pkl_folder_type="final", model_run=model_run
+    )
     logger.info("- Starting Production Results Model Flow")
     plant_result_df = read_pickle_folder(intermediate_path, "plant_result_df", "df")
     tech_choices_dict = read_pickle_folder(
@@ -261,7 +267,7 @@ def production_results_flow(scenario_dict: dict, serialize: bool = False) -> dic
     )
     rmi_mapper = create_country_mapper()
     calculated_emissivity_combined = read_pickle_folder(
-        intermediate_path, "calculated_emissivity_combined", "df"
+        intermediate_path_preprocessing, "calculated_emissivity_combined", "df"
     )
     plant_capacity_results = read_pickle_folder(
         intermediate_path, "plant_capacity_results", "df"
@@ -270,7 +276,7 @@ def production_results_flow(scenario_dict: dict, serialize: bool = False) -> dic
         PKL_DATA_FORMATTED, "standardised_business_cases", "df"
     )
     carbon_tax_timeseries = read_pickle_folder(
-        intermediate_path, "carbon_tax_timeseries", "df"
+        intermediate_path_preprocessing, "carbon_tax_timeseries", "df"
     )
     active_check_results_dict = read_pickle_folder(
         intermediate_path, "active_check_results_dict", "df"
@@ -294,7 +300,6 @@ def production_results_flow(scenario_dict: dict, serialize: bool = False) -> dic
     production_emissions = generate_production_emission_stats(
         production_results, calculated_emissivity_combined, carbon_tax_timeseries
     )
-
     results_dict = {
         "production_resource_usage": production_resource_usage,
         "production_emissions": production_emissions,
