@@ -74,7 +74,7 @@ def multiprocessing_scenarios_preprocessing(
 
 def multiprocessing_scenarios_multiple_scenarios_multiple_runs(
     repeating_function: Callable, scenario_options: list,  
-    files_to_path: dict, number_of_runs: int, 
+    files_to_path: dict, number_of_runs: int, remove_run_folders: bool = False
 ):
     pool = create_pool(scenario_options.keys())
     workers = [
@@ -84,6 +84,7 @@ def multiprocessing_scenarios_multiple_scenarios_multiple_runs(
                 scenario_dict=scenario_options[scenario],
                 files_to_path=files_to_path,
                 number_of_runs=number_of_runs,
+                remove_run_folders=remove_run_folders
             )   
         ) for scenario in scenario_options
     ]

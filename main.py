@@ -108,13 +108,12 @@ if __name__ == "__main__":
         scenario_name = scenario_args['scenario_name']
         logger.info(f"Running model in full {number_of_runs} times for {scenario_name} scenario")
         files_to_path = generate_files_to_path_dict([scenario_name,])
-        """
         data_import_and_preprocessing_refresh(scenario_dict=scenario_args)
         scenario_preprocessing_phase(scenario_dict=scenario_args)
-        """
         make_multiple_model_runs(
             scenario_dict=scenario_args,
-            number_of_runs=number_of_runs
+            number_of_runs=number_of_runs,
+            remove_run_folders=True
         )
         aggregate_multi_run_scenarios(
             scenario_options={scenario_name: scenario_args},
@@ -130,7 +129,8 @@ if __name__ == "__main__":
         files_to_path = generate_files_to_path_dict([scenario_name,])
         make_multiple_model_runs(
             scenario_dict=scenario_args,
-            number_of_runs=number_of_runs
+            number_of_runs=number_of_runs,
+            remove_run_folders=True
         )
         aggregate_multi_run_scenarios(
             scenario_options={scenario_name: scenario_args},
@@ -150,7 +150,8 @@ if __name__ == "__main__":
         multiprocessing_scenarios_multiple_scenarios_multiple_runs(
             repeating_function=make_multiple_model_runs,
             scenario_options=scenario_options,
-            number_of_runs=number_of_runs
+            number_of_runs=number_of_runs,
+            remove_run_folders=True
         )
         aggregate_multi_run_scenarios(
             scenario_options=scenario_options,
