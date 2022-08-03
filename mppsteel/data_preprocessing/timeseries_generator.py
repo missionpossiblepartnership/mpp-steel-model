@@ -1,10 +1,11 @@
 """Module that generates a timeseries for various purposes"""
 # For Data Manipulation
+from typing import Union
 import pandas as pd
 from mppsteel.utility.dataframe_utility import convert_currency_col, extend_df_years
 
 # For logger and units dict
-from mppsteel.utility.file_handling_utility import serialize_file, get_scenario_pkl_path
+from mppsteel.utility.file_handling_utility import return_pkl_paths, serialize_file, get_scenario_pkl_path
 from mppsteel.utility.function_timer_utility import timer_func
 
 # Get model parameters
@@ -110,19 +111,18 @@ def timeseries_generator(
 
 
 @timer_func
-def generate_timeseries(scenario_dict: dict = None, serialize: bool = False) -> dict:
+def generate_timeseries(scenario_dict: dict = None, pkl_paths: Union[dict, None] = None, serialize: bool = False) -> dict:
     """Generates timeseries for biomass, carbon taxes and electricity.
 
     Args:
         scenario_dict (dict): The scenario_dict containing the full scenario setting for the current model run.
+        pkl_paths (Union[dict, None], optional): A dictionary containing custom pickle paths. Defaults to {}.
         serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
 
     Returns:
         dict: A dict containing dataframes with the following keys: 'biomass', 'carbon_tax', 'electricity'.
     """
-    intermediate_path = get_scenario_pkl_path(
-        scenario_dict["scenario_name"], "intermediate"
-    )
+    _, intermediate_path, _ = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
     carbon_tax_scenario_values = CARBON_TAX_SCENARIOS[
         scenario_dict["carbon_tax_scenario"]
     ]

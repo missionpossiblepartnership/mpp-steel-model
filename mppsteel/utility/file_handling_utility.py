@@ -154,7 +154,7 @@ def create_folder_if_nonexist(folder_path: str):
 
 
 def get_scenario_pkl_path(
-    scenario: str = None, pkl_folder_type: str = None, default_path: bool = False, model_run: str = ""
+    scenario: str = None, pkl_folder_type: str = None, default_path: bool = False, model_run: str = "", iteration_run: bool = False
 ):
     if pkl_folder_type == "intermediate":
         full_path = f"{PKL_FOLDER}/{scenario}/{INTERMEDIATE_DATA_OUTPUT_NAME}"
@@ -162,6 +162,9 @@ def get_scenario_pkl_path(
             return PKL_DATA_INTERMEDIATE
         elif model_run:
             return f"{full_path}/run_{model_run}"
+        elif iteration_run:
+            base_scenario = "baseline_1".split("_")[0]
+            return f"{PKL_FOLDER}/iteration_runs/{base_scenario}/{scenario}/{INTERMEDIATE_DATA_OUTPUT_NAME}"
         return full_path
     if pkl_folder_type == "final":
         full_path = f"{PKL_FOLDER}/{scenario}/{FINAL_DATA_OUTPUT_NAME}"
@@ -169,6 +172,28 @@ def get_scenario_pkl_path(
             return PKL_DATA_FINAL
         elif model_run:
             return f"{full_path}/run_{model_run}"
+        elif iteration_run:
+            base_scenario = "baseline_1".split("_")[0]
+            return f"{PKL_FOLDER}/iteration_runs/{base_scenario}/{scenario}/{FINAL_DATA_OUTPUT_NAME}"
         return full_path
     if pkl_folder_type == "combined":
         return f"{PKL_FOLDER}/{COMBINED_OUTPUT_FOLDER_NAME}"
+
+
+def return_pkl_paths(scenario_name: str, paths: Union[dict, None] = None, model_run: str = ""):
+    intermediate_path_preprocessing = get_scenario_pkl_path(
+        scenario=scenario_name, pkl_folder_type="intermediate",
+    )
+    intermediate_path = get_scenario_pkl_path(
+        scenario=scenario_name, pkl_folder_type="intermediate", model_run=model_run
+    )
+    final_path = get_scenario_pkl_path(
+        scenario=scenario_name, pkl_folder_type="final", model_run=model_run
+    )
+    if paths and ("intermediate_path" in paths):
+        intermediate_path =  paths["intermediate_path"]
+
+    if paths and ("final_path" in paths):
+        final_path =  paths["final_path"]
+
+    return intermediate_path_preprocessing, intermediate_path, final_path

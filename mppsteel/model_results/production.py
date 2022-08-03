@@ -1,5 +1,6 @@
 """Production Results generator for technology investments"""
 
+from typing import Union
 import pandas as pd
 from tqdm import tqdm
 
@@ -18,6 +19,7 @@ from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
+    return_pkl_paths,
     serialize_file,
     get_scenario_pkl_path,
 )
@@ -237,26 +239,22 @@ def load_materials_mapper(materials_list: list, reverse: bool = False) -> dict:
 
 
 @timer_func
-def production_results_flow(scenario_dict: dict, serialize: bool = False, model_run: str = "") -> dict:
+def production_results_flow(scenario_dict: dict, pkl_paths: Union[dict, None] = None, serialize: bool = False, model_run: str = "") -> dict:
     """Production results flow to create the Production resource usage DataFrame and the Production Emissions DataFrame.
 
     Args:
         scenario_dict (dict): A dictionary with scenarios key value mappings from the current model execution.
+        pkl_paths (Union[dict, None], optional): A dictionary containing custom pickle paths. Defaults to {}.
         serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
         model_run (str, optional): The run of the model to customize pkl folder paths. Defaults to "".
 
     Returns:
         dict: A dictionary containing the two DataFrames.
     """
-    intermediate_path_preprocessing = get_scenario_pkl_path(
-        scenario=scenario_dict["scenario_name"], pkl_folder_type="intermediate",
-    )
-    intermediate_path = get_scenario_pkl_path(
-        scenario=scenario_dict["scenario_name"], pkl_folder_type="intermediate", model_run=model_run
-    )
-    final_path = get_scenario_pkl_path(
-        scenario=scenario_dict["scenario_name"], pkl_folder_type="final", model_run=model_run
-    )
+    scenario_name = scenario_dict["scenario_name"]
+
+    intermediate_path_preprocessing, intermediate_path, final_path = return_pkl_paths(scenario_name, pkl_paths, model_run)
+
     logger.info("- Starting Production Results Model Flow")
     plant_result_df = read_pickle_folder(intermediate_path, "plant_result_df", "df")
     tech_choices_dict = read_pickle_folder(

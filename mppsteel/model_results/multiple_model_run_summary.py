@@ -57,6 +57,14 @@ def summarise_combined_data(agg_dict: dict) -> dict:
         include_plant_count=True
     )
 
+    plant_capacity_summary_country_breakdown = generic_summary(
+        df=agg_dict["production_resource_usage"],
+        grouping_cols=["scenario", "year", "country_code", "technology"],
+        value_cols=["capacity", "production", "iron_ore_mt", "scrap_mt"],
+        agg_dict={"capacity": "sum", "production": "sum", "iron_ore_mt": "sum", "scrap_mt": "sum"},
+        include_plant_count=True
+    )
+
     logger.info("Creating cost of steelmaking summary")
     cost_of_steelmaking_summary = generic_summary(
         df=agg_dict["cost_of_steelmaking"],
@@ -95,6 +103,7 @@ def summarise_combined_data(agg_dict: dict) -> dict:
         "production_emissions_summary": production_emissions_summary,
         "production_resource_usage_summary": production_resource_usage_summary,
         "plant_capacity_summary": plant_capacity_summary,
+        "plant_capacity_summary_country_breakdown": plant_capacity_summary_country_breakdown,
         "cost_of_steelmaking_summary": cost_of_steelmaking_summary,
         "investment_results_summary": investment_results_summary,
         "levelized_cost_standardized_summary": levelized_cost_standardized_summary,

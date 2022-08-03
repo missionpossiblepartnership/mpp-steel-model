@@ -2,6 +2,7 @@
 
 import itertools
 from functools import lru_cache
+from typing import Union
 from tqdm.auto import tqdm as tqdma
 import pandas as pd
 
@@ -16,6 +17,7 @@ from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
+    return_pkl_paths,
     serialize_file,
     get_scenario_pkl_path,
 )
@@ -33,18 +35,17 @@ from mppsteel.utility.log_utility import get_logger
 logger = get_logger(__name__)
 
 
-def tco_regions_ref_generator(scenario_dict: dict) -> pd.DataFrame:
+def tco_regions_ref_generator(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> pd.DataFrame:
     """Creates a summary of TCO values for each technology and region.
 
     Args:
         scenario_dict (dict): The scenario_dict containing the full scenario setting for the current model run.
+        pkl_paths (Union[dict, None], optional): A dictionary containing custom pickle paths. Defaults to {}.
 
     Returns:
         pd.DataFrame: A DataFrame containing the components necessary to calculate TCO (not including green premium).
     """
-    intermediate_path = get_scenario_pkl_path(
-        scenario_dict["scenario_name"], "intermediate"
-    )
+    _, intermediate_path, final_path = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
     capex_df = read_pickle_folder(PKL_DATA_FORMATTED, "capex_switching_df", "df")
     capex_df.reset_index(inplace=True)
     capex_df.rename(
@@ -282,7 +283,7 @@ def tco_calculator(tco_ref_df: pd.DataFrame) -> pd.DataFrame:
 
 @timer_func
 def tco_presolver_reference(
-    scenario_dict: dict, serialize: bool = False
+    scenario_dict: dict, pkl_paths: Union[dict, None] = None, serialize: bool = False
 ) -> pd.DataFrame:
     """Complete flow to create two reference TCO DataFrames.
     The first DataFrame `tco_summary` create contains only TCO summary data on a regional level (not plant level).
@@ -290,15 +291,14 @@ def tco_presolver_reference(
 
     Args:
         scenario_dict (dict): A dictionary with scenarios key value mappings from the current model execution.
+        pkl_paths (Union[dict, None], optional): A dictionary containing custom pickle paths. Defaults to {}.
         serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
 
     Returns:
         pd.DataFrame: A DataFrame containing the complete TCO reference DataFrame (including green premium values).
     """
     logger.info("Running TCO Reference Sheet")
-    intermediate_path = get_scenario_pkl_path(
-        scenario_dict["scenario_name"], "intermediate"
-    )
+    _, intermediate_path, _ = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
     greenfield_switching_df = read_pickle_folder(
         PKL_DATA_FORMATTED, "greenfield_switching_df", "df"
     )
@@ -315,21 +315,21 @@ def tco_presolver_reference(
 
 @timer_func
 def abatement_presolver_reference(
-    scenario_dict: dict, serialize: bool = False
+    scenario_dict: dict, pkl_paths: dict, serialize: bool = False
 ) -> pd.DataFrame:
     """Complete flow required to create the emissivity abatement presolver reference table.
 
     Args:
         scenario_dict (dict): A dictionary with scenarios key value mappings from the current model execution.
+        pkl_paths (Union[dict, None], optional): A dictionary containing custom pickle paths. Defaults to {}.
         serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
 
     Returns:
         pd.DataFrame: A DataFrame containing the emissivity abatement values.
     """
     logger.info("Running Abatement Reference Sheet")
-    intermediate_path = get_scenario_pkl_path(
-        scenario_dict["scenario_name"], "intermediate"
-    )
+    
+    _, intermediate_path, final_path = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
     calculated_emissivity_combined = read_pickle_folder(
         intermediate_path, "calculated_emissivity_combined", "df"
     )

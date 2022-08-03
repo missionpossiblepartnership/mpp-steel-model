@@ -25,7 +25,7 @@ def get_today_time(fmt: str = "%y%m%d_%H%M%S") -> str:
     Returns:
         str: A string with today's date.
     """
-    return datetime.today().strftime(fmt)
+    return datetime.now().strftime(fmt)
 
 
 def create_list_permutations(list1: list, list2: list) -> list:

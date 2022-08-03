@@ -33,7 +33,7 @@ def get_file_handler() -> TimedRotatingFileHandler:
     Returns:
         [type]: A formatted file handler.
     """
-    today_time = datetime.today().strftime(DATETIME_FORMAT)
+    today_time = datetime.now().strftime(DATETIME_FORMAT)
     if not Path(LOG_PATH).is_dir():
         try:
             os.mkdir(LOG_PATH)

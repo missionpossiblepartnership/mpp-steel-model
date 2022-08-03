@@ -2,7 +2,7 @@
 
 import itertools
 import pandas as pd
-from typing import Iterable
+from typing import Iterable, Union
 from pandas.testing import assert_series_equal
 
 from mppsteel.config.model_config import (
@@ -18,6 +18,7 @@ from mppsteel.utility.utils import cast_to_float
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
+    return_pkl_paths,
     serialize_file,
     get_scenario_pkl_path,
 )
@@ -130,14 +131,14 @@ class PlantVariableCostsInput:
     @classmethod
     def from_filesystem(
         cls,
-        scenario_dict,
-        project_dir=PROJECT_PATH,
-        resource_category_mapper=RESOURCE_CATEGORY_MAPPER,
-        year_range=MODEL_YEAR_RANGE,
+        scenario_dict: dict,
+        intermediate_path: str=None,
+        project_dir: str=PROJECT_PATH,
+        resource_category_mapper: dict=RESOURCE_CATEGORY_MAPPER,
+        year_range: range=MODEL_YEAR_RANGE,
     ):
-        intermediate_path = project_dir / get_scenario_pkl_path(
-            scenario_dict["scenario_name"], "intermediate"
-        )
+
+        intermediate_path = project_dir / intermediate_path
         eur_to_usd_rate = scenario_dict["eur_to_usd"]
 
         steel_plants = read_pickle_folder(
@@ -452,21 +453,20 @@ def format_variable_costs(
 
 @timer_func
 def generate_variable_plant_summary(
-    scenario_dict: dict, serialize: bool = False
+    scenario_dict: dict, pkl_paths: Union[dict, None] = None, serialize: bool = False
 ) -> pd.DataFrame:
     """The complete flow for creating variable costs.
 
     Args:
         scenario_dict (dict): A dictionary with scenarios key value mappings from the current model execution.
+        pkl_paths (Union[dict, None], optional): A dictionary containing custom pickle paths. Defaults to {}.
         serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
 
     Returns:
         pd.DataFrame: A DataFrame containing the variable plant results.
     """
-    intermediate_path = get_scenario_pkl_path(
-        scenario_dict["scenario_name"], "intermediate"
-    )
-    input_data = PlantVariableCostsInput.from_filesystem(scenario_dict)
+    _, intermediate_path, final_path = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
+    input_data = PlantVariableCostsInput.from_filesystem(scenario_dict, intermediate_path)
     variable_costs = plant_variable_costs(input_data)
     variable_costs_summary = format_variable_costs(variable_costs)
     variable_costs_summary_material_breakdown = format_variable_costs(

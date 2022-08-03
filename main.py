@@ -1,14 +1,17 @@
 """Runs the data loading scripts"""
 
 from datetime import datetime
+from itertools import chain
 
 from distributed import Client
 
 from mppsteel.config.multiple_runs import (
     aggregate_multi_run_scenarios,
+    create_scenario_paths,
     generate_files_to_path_dict,
     join_scenario_data, 
     make_multiple_model_runs,
+    make_scenario_iterations,
     multiprocessing_scenarios_multiple_scenarios_multiple_runs,
     multiprocessing_scenarios_single_run,
     multiprocessing_scenarios_preprocessing
@@ -18,9 +21,11 @@ from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.file_handling_utility import create_folders_if_nonexistant
 from mppsteel.utility.function_timer_utility import TIME_CONTAINER
 
-from mppsteel.config.model_config import DATETIME_FORMAT, DEFAULT_NUMBER_OF_RUNS, FOLDERS_TO_CHECK_IN_ORDER
-
+from mppsteel.config.model_config import (
+    DATETIME_FORMAT, DEFAULT_NUMBER_OF_RUNS, FOLDERS_TO_CHECK_IN_ORDER
+)
 from mppsteel.config.model_scenarios import (
+    BATCH_ITERATION_SCENARIOS,
     MAIN_SCENARIO_RUNS,
     DEFAULT_SCENARIO,
     SCENARIO_SETTINGS,
@@ -30,6 +35,7 @@ from mppsteel.config.model_scenarios import (
     CARBON_COST,
     TECH_MORATORIUM,
 )
+from mppsteel.config.runtime_args import parser
 
 from mppsteel.config.model_grouping import *
 
@@ -67,10 +73,10 @@ if __name__ == "__main__":
     # SCENARIO CUSTOMIZATION
     scenario_args = add_currency_rates_to_scenarios(scenario_args)
 
-    timestamp = datetime.today().strftime(DATETIME_FORMAT)
+    timestamp = datetime.now().strftime(DATETIME_FORMAT)
     logger.info(f"Model running at {timestamp}")
     model_output_folder = f"{scenario_args['scenario_name']} {timestamp}"
-
+    
     intermediate_path = get_scenario_pkl_path(
         scenario_args["scenario_name"], "intermediate"
     )
@@ -80,11 +86,17 @@ if __name__ == "__main__":
 
     # SCENARIO Flows
     if args.main_scenarios:
-
         logger.info(f"Running {MAIN_SCENARIO_RUNS} scenario options")
+        for scenario_name in MAIN_SCENARIO_RUNS:
+            create_scenario_paths(scenario_name)
         data_import_and_preprocessing_refresh(SCENARIO_OPTIONS[MAIN_SCENARIO_RUNS[0]])
+        scenario_options = [SCENARIO_OPTIONS[scenario_name] for scenario_name in MAIN_SCENARIO_RUNS]
         multiprocessing_scenarios_single_run(
-            scenario_options=MAIN_SCENARIO_RUNS, func=scenario_batch_run
+            scenario_options=scenario_options, 
+            func=scenario_batch_run, 
+            dated_output_folder=True, 
+            iteration_run=False, 
+            include_outputs=True
         )
         join_scenario_data(
             scenario_options=MAIN_SCENARIO_RUNS,
@@ -92,57 +104,11 @@ if __name__ == "__main__":
             final_outputs_only=True,
         )
 
-    logger.info(
-        f"""Running model with the following parameters:  
-    {scenario_args}"""
-    )
-
-    if args.full_model:
-        full_flow(
-            scenario_dict=scenario_args,
-            dated_output_folder=True,
-            model_output_folder=model_output_folder,
-        )
-
-    if args.multi_run_full:
-        scenario_name = scenario_args['scenario_name']
-        logger.info(f"Running model in full {number_of_runs} times for {scenario_name} scenario")
-        files_to_path = generate_files_to_path_dict([scenario_name,])
-        data_import_and_preprocessing_refresh(scenario_dict=scenario_args)
-        scenario_preprocessing_phase(scenario_dict=scenario_args)
-        make_multiple_model_runs(
-            scenario_dict=scenario_args,
-            number_of_runs=number_of_runs,
-            remove_run_folders=True
-        )
-        aggregate_multi_run_scenarios(
-            scenario_options={scenario_name: scenario_args},
-            single_scenario=True,
-            dated_output_folder=True,
-            timestamp=timestamp
-        )
-
-    if args.multi_run_half:
-        scenario_name=scenario_args['scenario_name']
-        scenario_options={scenario_name: scenario_args}
-        logger.info(f"Running half-model {number_of_runs} times for {scenario_name} scenario")
-        files_to_path = generate_files_to_path_dict([scenario_name,])
-        make_multiple_model_runs(
-            scenario_dict=scenario_args,
-            number_of_runs=number_of_runs,
-            remove_run_folders=True
-        )
-        aggregate_multi_run_scenarios(
-            scenario_options={scenario_name: scenario_args},
-            single_scenario=True,
-            dated_output_folder=True,
-            timestamp=timestamp
-        )
-
     if args.multi_run_multi_scenario:
         logger.info(f"Running the model {number_of_runs} times for {len(MAIN_SCENARIO_RUNS)} scenarios")
         scenario_options = {scenario: add_currency_rates_to_scenarios(SCENARIO_OPTIONS[scenario]) for scenario in MAIN_SCENARIO_RUNS}
-        files_to_path = generate_files_to_path_dict(MAIN_SCENARIO_RUNS)
+        for scenario_name in MAIN_SCENARIO_RUNS:
+            create_scenario_paths(scenario_name)
         data_import_and_preprocessing_refresh(scenario_options["baseline"])
         multiprocessing_scenarios_preprocessing(
             scenario_options, scenario_preprocessing_phase
@@ -160,6 +126,68 @@ if __name__ == "__main__":
             timestamp=timestamp
         )
 
+    if args.model_iterations_run:
+        logger.info(f"Running model iterations for {BATCH_ITERATION_SCENARIOS}")
+        for base_scenario in BATCH_ITERATION_SCENARIOS:
+            create_scenario_paths(base_scenario)
+            scenario_list = make_scenario_iterations(SCENARIO_OPTIONS[base_scenario], SCENARIO_SETTINGS)
+            logger.info(f"Running {len(scenario_list)} iterations for {base_scenario}")
+            data_import_and_preprocessing_refresh(scenario_list[0])
+            multiprocessing_scenarios_single_run(
+                scenario_options=scenario_list,
+                func=scenario_batch_run,
+                dated_output_folder=True,
+                iteration_run=True,
+                include_outputs=False
+            )
+
+    logger.info(
+        f"""Running model with the following parameters:  
+    {scenario_args}"""
+    )
+
+    if args.full_model:
+        full_flow(
+            scenario_dict=scenario_args,
+            pkl_paths=None,
+            dated_output_folder=True,
+            model_output_folder=model_output_folder,
+        )
+
+    if args.multi_run_full:
+        scenario_name = scenario_args['scenario_name']
+        logger.info(f"Running model in full {number_of_runs} times for {scenario_name} scenario")
+        data_import_and_preprocessing_refresh(scenario_dict=scenario_args)
+        scenario_preprocessing_phase(scenario_dict=scenario_args)
+        make_multiple_model_runs(
+            scenario_dict=scenario_args,
+            number_of_runs=number_of_runs,
+            remove_run_folders=False
+        )
+        aggregate_multi_run_scenarios(
+            scenario_options={scenario_name: scenario_args},
+            single_scenario=True,
+            dated_output_folder=True,
+            timestamp=timestamp
+        )
+
+    if args.multi_run_half:
+        scenario_name=scenario_args['scenario_name']
+        scenario_options={scenario_name: scenario_args}
+        logger.info(f"Running half-model {number_of_runs} times for {scenario_name} scenario")
+        make_multiple_model_runs(
+            scenario_dict=scenario_args,
+            number_of_runs=number_of_runs,
+            remove_run_folders=True
+        )
+        aggregate_multi_run_scenarios(
+            scenario_options={scenario_name: scenario_args},
+            single_scenario=True,
+            dated_output_folder=True,
+            timestamp=timestamp
+        )
+
+
     if args.solver:
         main_solver_flow(scenario_dict=scenario_args, serialize=True)
 
@@ -173,6 +201,7 @@ if __name__ == "__main__":
     if args.scenario_model_run:
         scenario_model_run(
             scenario_dict=scenario_args,
+            pkl_paths=None,
             dated_output_folder=True,
             model_output_folder=model_output_folder,
         )

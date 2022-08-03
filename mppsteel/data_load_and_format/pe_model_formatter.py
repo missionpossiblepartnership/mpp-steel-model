@@ -4,7 +4,7 @@
 import contextlib
 import pandas as pd
 from tqdm import tqdm
-from typing import Iterable
+from typing import Iterable, Union
 
 from mppsteel.config.model_config import (
     EXAJOULE_TO_GIGAJOULE,
@@ -51,6 +51,7 @@ from mppsteel.utility.dataframe_utility import (
 from mppsteel.utility.location_utility import get_countries_from_group
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
+    return_pkl_paths,
     serialize_file,
     get_scenario_pkl_path,
 )
@@ -749,13 +750,14 @@ def subset_ccs_constraint(
 
 @timer_func
 def format_pe_data(
-    scenario_dict: dict, serialize: bool = False, standardize_units: bool = True
+    scenario_dict: dict, pkl_paths: Union[dict, None] = None, serialize: bool = False, standardize_units: bool = True
 ) -> dict:
     """Full process flow for the Power & Energy data.
     Inputs the the import data, subsets the data, then creates a model reference dictionary for the model.
 
     Args:
         scenario_dict (dict): The scenario_dict containing the full scenario setting for the current model run.
+        pkl_paths (Union[dict, None], optional): A dictionary containing custom pickle paths. Defaults to {}.
         serialize (bool, optional): Serializes the Power & Energy data. Defaults to False.
         standarside_units (bool, optional): Optional flag to determine whether to automatically standardise all units to their desired units for further use downstream. Defaults to True.
 
@@ -862,9 +864,7 @@ def format_pe_data(
     }
 
     if serialize:
-        intermediate_path = get_scenario_pkl_path(
-            scenario_dict["scenario_name"], "intermediate"
-        )
+        _, intermediate_path, _ = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
         # DataFrames
         serialize_file(h2_prices_f, intermediate_path, "hydrogen_prices_formatted")
         serialize_file(

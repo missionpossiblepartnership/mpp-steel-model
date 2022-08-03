@@ -2,7 +2,7 @@
 
 # For Data Manipulation
 import itertools
-from typing import Tuple
+from typing import Tuple, Union
 import pandas as pd
 
 from tqdm import tqdm
@@ -12,6 +12,7 @@ from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import move_cols_to_front
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
+    return_pkl_paths,
     serialize_file,
     get_scenario_pkl_path,
 )
@@ -321,20 +322,19 @@ def final_combined_emissions_formatting(
 
 @timer_func
 def generate_emissions_flow(
-    scenario_dict: dict, serialize: bool = False
+    scenario_dict: dict, pkl_paths: Union[dict, None] = None, serialize: bool = False
 ) -> pd.DataFrame:
     """Complete flow for createing the emissivity reference for Scopes 1, 2 & 3.
 
     Args:
         scenario_dict (dict): A dictionary with scenarios key value mappings from the current model execution.
+        pkl_paths (Union[dict, None], optional): A dictionary containing custom pickle paths. Defaults to {}.
         serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
 
     Returns:
         pd.DataFrame: The combined S1, S2 & S3 emissions DataFrame reference.
     """
-    intermediate_path = get_scenario_pkl_path(
-        scenario_dict["scenario_name"], "intermediate"
-    )
+    _, intermediate_path, final_path = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
     business_cases_summary = read_pickle_folder(
         PKL_DATA_FORMATTED, "standardised_business_cases", "df"
     ).reset_index()

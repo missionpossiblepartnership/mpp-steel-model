@@ -3,7 +3,7 @@
 import pandas as pd
 from tqdm import tqdm
 
-from typing import Iterable
+from typing import Iterable, Union
 from mppsteel.utility.dataframe_utility import extend_df_years
 
 from mppsteel.model_solver.solver_summary import tech_capacity_splits, utilization_mapper
@@ -14,6 +14,7 @@ from mppsteel.plant_classes.capacity_constraint_class import PlantCapacityConstr
 from mppsteel.data_load_and_format.reg_steel_demand_formatter import steel_demand_getter
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
+    return_pkl_paths,
     serialize_file,
     get_scenario_pkl_path,
 )
@@ -155,7 +156,7 @@ class ChooseTechnologyInput:
 
     @classmethod
     def from_filesystem(
-        cls, scenario_dict, project_dir=PROJECT_PATH, year_range=MODEL_YEAR_RANGE
+        cls, scenario_dict, pkl_paths, year_range=MODEL_YEAR_RANGE
     ):
         tech_moratorium = scenario_dict["tech_moratorium"]
         trade_active = scenario_dict["trade_active"]
@@ -163,9 +164,8 @@ class ChooseTechnologyInput:
         regional_scrap_constraint = scenario_dict["regional_scrap_constraint"]
         investment_cycle_randomness = scenario_dict["investment_cycle_randomness"]
 
-        intermediate_path = get_scenario_pkl_path(
-            scenario_dict["scenario_name"], "intermediate"
-        )
+        _, intermediate_path, _ = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
+
         original_plant_df = read_pickle_folder(
             PROJECT_PATH / PKL_DATA_FORMATTED, "steel_plants_processed", "df"
         )
@@ -710,7 +710,7 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
     }
 
 
-def choose_technology(scenario_dict: dict) -> dict:
+def choose_technology(scenario_dict: dict, pkl_paths: dict) -> dict:
     """Function containing the entire solver decision logic flow.
     1) In each year, the solver splits the plants non-switchers and switchers (secondary EAF plants and primary plants).
     2) The solver extracts the prior year technology of the non-switchers and assumes this is the current technology of the switchers.
@@ -721,10 +721,12 @@ def choose_technology(scenario_dict: dict) -> dict:
 
     Args:
         scenario_dict (int): Model Scenario settings.
+        pkl_paths (dict): A dict from runtime containing any custom pkl_paths.
     Returns:
         dict: A dictionary containing the best technology resuls. Organised as [year][plant][best tech].
     """
-    return choose_technology_core(ChooseTechnologyInput.from_filesystem(scenario_dict))
+    return choose_technology_core(ChooseTechnologyInput.from_filesystem(
+        scenario_dict=scenario_dict, pkl_paths=pkl_paths))
 
 def create_levelized_cost_actuals(results_dict: dict, scenario_dict: dict):
     # Create Levelized cost results
@@ -750,24 +752,21 @@ def create_levelized_cost_actuals(results_dict: dict, scenario_dict: dict):
 
 
 @timer_func
-def main_solver_flow(scenario_dict: dict, serialize: bool = False, model_run: str = "") -> dict:
+def main_solver_flow(scenario_dict: dict, pkl_paths: Union[dict, None] = None, serialize: bool = False, model_run: str = "") -> dict:
     """Initiates the complete solver flow and serializes the outputs. Tracks all technology choices and plant changes.
 
     Args:
         scenario_dict (dict): A dictionary with scenarios key value mappings from the current model execution.
+        pkl_paths (Union[dict, None], optional): A dictionary containing custom pickle paths. Defaults to {}.
         serialize (bool, optional): Flag to only serialize the DataFrame to a pickle file and not return a DataFrame. Defaults to False.
         model_run (str, optional): The run of the model to customize pkl folder paths. Defaults to "".
 
     Returns:
         dict: A dictionary containing the best technology results and the resultant steel plants. tech_choice_dict is organised as year: plant: best tech.
     """
-    intermediate_path = get_scenario_pkl_path(
-        scenario=scenario_dict["scenario_name"], pkl_folder_type="intermediate", model_run=model_run
-    )
-    final_path = get_scenario_pkl_path(
-        scenario=scenario_dict["scenario_name"], pkl_folder_type="final", model_run=model_run
-    )
-    results_dict = choose_technology(scenario_dict=scenario_dict)
+    _, intermediate_path, final_path = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths, model_run)
+
+    results_dict = choose_technology(scenario_dict=scenario_dict, pkl_paths=pkl_paths)
 
     levelized_cost_results = create_levelized_cost_actuals(results_dict=results_dict, scenario_dict=scenario_dict)
 

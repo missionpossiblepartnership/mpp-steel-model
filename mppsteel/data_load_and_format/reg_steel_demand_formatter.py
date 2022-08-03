@@ -1,6 +1,7 @@
 """Formats Regional Steel Demand and defines getter function"""
 
 import itertools
+from typing import Union
 import pandas as pd
 import pandera as pa
 
@@ -15,6 +16,7 @@ from mppsteel.utility.location_utility import (
 from mppsteel.utility.file_handling_utility import (
     extract_data,
     read_pickle_folder,
+    return_pkl_paths,
     serialize_file,
     get_scenario_pkl_path,
 )
@@ -117,19 +119,18 @@ def replace_2020_steel_demand_values_with_wsa_production(
     return demand_df_c
 
 @timer_func
-def get_steel_demand(scenario_dict: dict, serialize: bool = False, from_csv: bool = False) -> pd.DataFrame:
+def get_steel_demand(scenario_dict: dict, pkl_paths: Union[dict, None] = None, serialize: bool = False, from_csv: bool = False) -> pd.DataFrame:
     """Complete preprocessing flow for the regional steel demand data.
 
     Args:
         scenario_dict (dict): The scenario_dict containing the full scenario setting for the current model run.
+        pkl_paths (Union[dict, None], optional): A dictionary containing custom pickle paths. Defaults to {}.
         serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
 
     Returns:
         pd.DataFrame: The formatted DataFrame of regional Steel Demand data.
     """
-    intermediate_path = get_scenario_pkl_path(
-        scenario_dict["scenario_name"], "intermediate"
-    )
+    _, intermediate_path, final_path = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
     if from_csv:
         steel_demand = extract_data(
             IMPORT_DATA_PATH, "Regional Steel Demand", "csv"

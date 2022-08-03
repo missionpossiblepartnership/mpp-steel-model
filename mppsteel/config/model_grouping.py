@@ -1,6 +1,6 @@
 """Model flow functions for the main script"""
-import argparse
 
+from typing import Union
 from datetime import datetime
 
 from mppsteel.utility.utils import stdout_query, get_currency_rate
@@ -8,7 +8,8 @@ from mppsteel.utility.file_handling_utility import (
     pickle_to_csv,
     create_folder_if_nonexist,
     get_scenario_pkl_path,
-    create_folders_if_nonexistant
+    create_folders_if_nonexistant,
+    return_pkl_paths
 )
 
 from mppsteel.utility.log_utility import get_logger
@@ -112,49 +113,49 @@ def data_preprocessing_generic_2(scenario_dict):
     investment_cycle_flow(scenario_dict=scenario_dict, serialize=True)
     generate_preprocessed_emissions_data(serialize=True)
 
-def data_preprocessing_scenarios(scenario_dict: dict) -> None:
-    get_steel_demand(scenario_dict=scenario_dict, serialize=True)
-    generate_timeseries(scenario_dict=scenario_dict, serialize=True)
-    format_pe_data(scenario_dict=scenario_dict, serialize=True, standardize_units=True)
-    generate_emissions_flow(scenario_dict=scenario_dict, serialize=True)
-    generate_variable_plant_summary(scenario_dict, serialize=True)
-    generate_carbon_tax_reference(scenario_dict, serialize=True)
-    generate_total_opex_cost_reference(scenario_dict, serialize=True)
-    generate_levelized_cost_results(scenario_dict=scenario_dict, serialize=True, standard_plant_ref=True)
-    tco_presolver_reference(scenario_dict, serialize=True)
-    abatement_presolver_reference(scenario_dict, serialize=True)
+def data_preprocessing_scenarios(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> None:
+    get_steel_demand(scenario_dict=scenario_dict, pkl_paths=pkl_paths, serialize=True)
+    generate_timeseries(scenario_dict=scenario_dict, pkl_paths=pkl_paths, serialize=True)
+    format_pe_data(scenario_dict=scenario_dict, pkl_paths=pkl_paths, serialize=True, standardize_units=True)
+    generate_emissions_flow(scenario_dict=scenario_dict, pkl_paths=pkl_paths, serialize=True)
+    generate_variable_plant_summary(scenario_dict, pkl_paths=pkl_paths, serialize=True)
+    generate_carbon_tax_reference(scenario_dict, pkl_paths=pkl_paths, serialize=True)
+    generate_total_opex_cost_reference(scenario_dict, pkl_paths=pkl_paths, serialize=True)
+    generate_levelized_cost_results(scenario_dict=scenario_dict, pkl_paths=pkl_paths, serialize=True, standard_plant_ref=True)
+    tco_presolver_reference(scenario_dict, pkl_paths=pkl_paths, serialize=True)
+    abatement_presolver_reference(scenario_dict, pkl_paths=pkl_paths, serialize=True)
 
-def total_opex_calculations(scenario_dict: dict) -> None:
-    generate_variable_plant_summary(scenario_dict, serialize=True)
-    generate_carbon_tax_reference(scenario_dict, serialize=True)
-    generate_total_opex_cost_reference(scenario_dict, serialize=True)
-    generate_levelized_cost_results(scenario_dict=scenario_dict, serialize=True, standard_plant_ref=True)
-    tco_presolver_reference(scenario_dict, serialize=True)
+def total_opex_calculations(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> None:
+    generate_variable_plant_summary(scenario_dict, pkl_paths=pkl_paths, serialize=True)
+    generate_carbon_tax_reference(scenario_dict, pkl_paths=pkl_paths, serialize=True)
+    generate_total_opex_cost_reference(scenario_dict, pkl_paths=pkl_paths, serialize=True)
+    generate_levelized_cost_results(scenario_dict=scenario_dict, pkl_paths=pkl_paths, serialize=True, standard_plant_ref=True)
+    tco_presolver_reference(scenario_dict, pkl_paths=pkl_paths, serialize=True)
 
 
 def investment_cycles() -> None:
     investment_cycle_flow(serialize=True)
 
 
-def model_presolver(scenario_dict: dict) -> None:
-    tco_presolver_reference(scenario_dict, serialize=True)
-    abatement_presolver_reference(scenario_dict, serialize=True)
+def model_presolver(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> None:
+    tco_presolver_reference(scenario_dict, pkl_paths=pkl_paths, serialize=True)
+    abatement_presolver_reference(scenario_dict, pkl_paths=pkl_paths, serialize=True)
 
 
-def scenario_preprocessing_phase(scenario_dict: dict) -> None:
-    data_preprocessing_scenarios(scenario_dict)
+def scenario_preprocessing_phase(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> None:
+    data_preprocessing_scenarios(scenario_dict, pkl_paths=pkl_paths)
 
 # model_run (str, optional): The run of the model to customize pkl folder paths. Defaults to "".
-def model_results_phase(scenario_dict: dict, model_run: str = "") -> None:
-    production_results_flow(scenario_dict, serialize=True, model_run=model_run)
-    investment_results(scenario_dict, serialize=True, model_run=model_run)
-    metaresults_flow(scenario_dict, serialize=True, model_run=model_run)
-    generate_cost_of_steelmaking_results(scenario_dict, serialize=True, model_run=model_run)
-    generate_gcr_df(scenario_dict, serialize=True, model_run=model_run)
+def model_results_phase(scenario_dict: dict, pkl_paths: Union[dict, None] = None, model_run: str = "") -> None:
+    production_results_flow(scenario_dict, pkl_paths=pkl_paths, serialize=True, model_run=model_run)
+    investment_results(scenario_dict, pkl_paths=pkl_paths, serialize=True, model_run=model_run)
+    metaresults_flow(scenario_dict, pkl_paths=pkl_paths, serialize=True, model_run=model_run)
+    generate_cost_of_steelmaking_results(scenario_dict, pkl_paths=pkl_paths, serialize=True, model_run=model_run)
+    generate_gcr_df(scenario_dict, pkl_paths=pkl_paths, serialize=True, model_run=model_run)
 
 
 def model_outputs_phase(
-    scenario_dict: dict, new_folder: bool = False, output_folder: str = ""
+    scenario_dict: dict, pkl_paths: Union[dict, None] = None, new_folder: bool = False, output_folder: str = ""
 ) -> None:
     save_path = OUTPUT_FOLDER
     if new_folder:
@@ -163,10 +164,7 @@ def model_outputs_phase(
         save_path = folder_filepath
 
     # Save Intermediate Pickle Files
-    intermediate_path = get_scenario_pkl_path(
-        scenario_dict["scenario_name"], "intermediate"
-    )
-    final_path = get_scenario_pkl_path(scenario_dict["scenario_name"], "final")
+    _, intermediate_path, final_path = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
 
     pickle_to_csv(save_path, PKL_DATA_FORMATTED, "capex_switching_df", reset_index=True)
 
@@ -179,14 +177,14 @@ def model_outputs_phase(
 
 
 def model_graphs_phase(
-    scenario_dict: dict, new_folder: bool = False, model_output_folder: str = ""
+    scenario_dict: dict, pkl_paths: Union[dict, None] = None, new_folder: bool = False, model_output_folder: str = ""
 ) -> None:
     save_path = OUTPUT_FOLDER
     if new_folder:
         folder_filepath = f"{OUTPUT_FOLDER}/{model_output_folder}/graphs"
         create_folder_if_nonexist(folder_filepath)
         save_path = folder_filepath
-    create_graphs(filepath=save_path, scenario_dict=scenario_dict)
+    create_graphs(filepath=save_path, scenario_dict=scenario_dict, pkl_paths=pkl_paths)
 
 
 # Group phases
@@ -194,10 +192,10 @@ def data_import_refresh() -> None:
     data_import_stage()
 
 
-def data_preprocessing_refresh(scenario_dict: dict) -> None:
+def data_preprocessing_refresh(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> None:
     data_preprocessing_generic_1()
     data_preprocessing_generic_2(scenario_dict)
-    data_preprocessing_scenarios(scenario_dict)
+    data_preprocessing_scenarios(scenario_dict, pkl_paths=pkl_paths)
 
 
 def data_import_and_preprocessing_refresh(scenario_dict) -> None:
@@ -206,275 +204,107 @@ def data_import_and_preprocessing_refresh(scenario_dict) -> None:
     data_preprocessing_generic_2(scenario_dict)
 
 
-def tco_and_abatement_calculations(scenario_dict: dict) -> None:
-    model_presolver(scenario_dict)
+def tco_and_abatement_calculations(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> None:
+    model_presolver(scenario_dict, pkl_paths=pkl_paths)
 
-def scenario_batch_run(scenario: str, dated_output_folder: bool) -> None:
+
+def scenario_batch_run(scenario_dict: dict, dated_output_folder: bool = False, iteration_run: bool = False, include_outputs: bool = True) -> None:
+    scenario_name = scenario_dict["scenario_name"]
     # create new folders for path
-    intermediate_path = get_scenario_pkl_path(scenario, "intermediate")
-    final_path = get_scenario_pkl_path(scenario, "final")
+    intermediate_path = get_scenario_pkl_path(scenario=scenario_name, pkl_folder_type="intermediate", iteration_run=iteration_run)
+    final_path = get_scenario_pkl_path(scenario=scenario_name, pkl_folder_type="final", iteration_run=iteration_run)
+    pkl_paths = {"intermediate_path": intermediate_path, "final_path": final_path}
     create_folders_if_nonexistant([intermediate_path, final_path])
     # Set up scenario and metadata
-    scenario_args = SCENARIO_OPTIONS[scenario]
+    scenario_args = dict(scenario_dict)
     scenario_args = add_currency_rates_to_scenarios(scenario_args)
-    timestamp = datetime.today().strftime(DATETIME_FORMAT)
-    model_output_folder = f"{scenario} {timestamp}"
+    timestamp = datetime.now().strftime(DATETIME_FORMAT)
+    model_output_folder = f"{scenario_name} {timestamp}"
 
     # Model run
-    scenario_model_run(scenario_args, dated_output_folder, model_output_folder)
+    scenario_model_run(
+        scenario_dict=scenario_args,
+        pkl_paths=pkl_paths,
+        dated_output_folder=dated_output_folder,
+        model_output_folder=model_output_folder,
+        include_outputs=include_outputs
+    )
 
 
 def scenario_model_run(
-    scenario_dict: dict, dated_output_folder: bool, model_output_folder: str
+    scenario_dict: dict, pkl_paths: dict, dated_output_folder: bool, model_output_folder: str, include_outputs: bool = True
 ) -> None:
-    scenario_preprocessing_phase(scenario_dict)
-    main_solver_flow(scenario_dict, serialize=True)
-    model_results_phase(scenario_dict)
-    model_outputs_phase(scenario_dict, dated_output_folder, model_output_folder)
-    model_graphs_phase(scenario_dict, dated_output_folder, model_output_folder)
+    scenario_preprocessing_phase(scenario_dict, pkl_paths=pkl_paths)
+    main_solver_flow(scenario_dict, pkl_paths=pkl_paths, serialize=True)
+    model_results_phase(scenario_dict, pkl_paths=pkl_paths)
+    if include_outputs:
+        model_outputs_phase(scenario_dict, pkl_paths=pkl_paths, dated_output_folder=dated_output_folder, model_output_folder=model_output_folder)
+        model_graphs_phase(scenario_dict, pkl_paths=pkl_paths, dated_output_folder=dated_output_folder, model_output_folder=model_output_folder)
 
 
 def results_and_output(
-    scenario_dict: dict, dated_output_folder: bool, model_output_folder: str
+    scenario_dict: dict, pkl_paths: dict, dated_output_folder: bool, model_output_folder: str
 ) -> None:
-    model_results_phase(scenario_dict)
-    model_outputs_phase(scenario_dict, dated_output_folder, model_output_folder)
-    model_graphs_phase(scenario_dict, dated_output_folder, model_output_folder)
+    model_results_phase(scenario_dict, pkl_paths=pkl_paths)
+    model_outputs_phase(scenario_dict, pkl_paths=pkl_paths, dated_output_folder=dated_output_folder, model_output_folder=model_output_folder)
+    model_graphs_phase(scenario_dict, pkl_paths=pkl_paths, dated_output_folder=dated_output_folder, model_output_folder=model_output_folder)
 
 
 def outputs_only(
-    scenario_dict: dict, dated_output_folder: bool, model_output_folder: str
+    scenario_dict: dict, pkl_paths: dict, dated_output_folder: bool, model_output_folder: str
 ) -> None:
-    model_outputs_phase(scenario_dict, dated_output_folder, model_output_folder)
-    model_graphs_phase(scenario_dict, dated_output_folder, model_output_folder)
+    model_outputs_phase(scenario_dict, pkl_paths, dated_output_folder, model_output_folder)
+    model_graphs_phase(scenario_dict, pkl_paths, dated_output_folder, model_output_folder)
 
 
 def graphs_only(
-    scenario_dict: dict, model_output_folder: str, dated_output_folder: bool
+    scenario_dict: dict, pkl_paths: dict, model_output_folder: str, dated_output_folder: bool
 ) -> None:
-    model_graphs_phase(scenario_dict, dated_output_folder, model_output_folder)
+    model_graphs_phase(scenario_dict, pkl_paths, dated_output_folder, model_output_folder)
 
 
 def full_flow(
-    scenario_dict: dict, dated_output_folder: bool, model_output_folder: str
+    scenario_dict: dict, pkl_paths: dict, dated_output_folder: bool, model_output_folder: str
 ) -> None:
     data_import_and_preprocessing_refresh(scenario_dict)
-    scenario_model_run(scenario_dict, dated_output_folder, model_output_folder)
+    scenario_model_run(scenario_dict, pkl_paths=pkl_paths, dated_output_folder=dated_output_folder, model_output_folder=model_output_folder)
 
 
-def generate_minimodels(scenario_dict: dict) -> None:
-    generate_timeseries(scenario_dict, serialize=True)
+def generate_minimodels(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> None:
+    generate_timeseries(scenario_dict, pkl_paths=pkl_paths, serialize=True)
 
 
-def tco_switch_reference(scenario_dict: dict) -> None:
-    tco_presolver_reference(scenario_dict, serialize=True)
+def tco_switch_reference(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> None:
+    tco_presolver_reference(scenario_dict, pkl_paths=pkl_paths, serialize=True)
 
 
-def abatement_switch_reference(scenario_dict: dict) -> None:
-    abatement_presolver_reference(scenario_dict, serialize=True)
+def abatement_switch_reference(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> None:
+    abatement_presolver_reference(scenario_dict, pkl_paths=pkl_paths, serialize=True)
 
 
-def production_flow(scenario_dict: dict) -> None:
-    production_results_flow(scenario_dict, serialize=True)
+def production_flow(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> None:
+    production_results_flow(scenario_dict, pkl_paths=pkl_paths, serialize=True)
 
 
-def cos_flow(scenario_dict: dict) -> None:
-    generate_cost_of_steelmaking_results(scenario_dict, serialize=True)
+def cos_flow(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> None:
+    generate_cost_of_steelmaking_results(scenario_dict, pkl_paths=pkl_paths, serialize=True)
 
 
-def global_metaresults_flow(scenario_dict: dict):
-    metaresults_flow(scenario_dict, serialize=True)
+def global_metaresults_flow(scenario_dict: dict, pkl_paths: Union[dict, None] = None):
+    metaresults_flow(scenario_dict, pkl_paths=pkl_paths, serialize=True)
 
 
-def investment_flow(scenario_dict: dict) -> None:
-    investment_results(scenario_dict, serialize=True)
+def investment_flow(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> None:
+    investment_results(scenario_dict, pkl_paths=pkl_paths, serialize=True)
 
 
-def get_emissivity(scenario_dict: dict) -> None:
-    generate_emissions_flow(scenario_dict, serialize=True)
+def get_emissivity(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> None:
+    generate_emissions_flow(scenario_dict, pkl_paths=pkl_paths, serialize=True)
 
 
-def lcost_flow(scenario_dict: dict) -> None:
-    generate_levelized_cost_results(scenario_dict=scenario_dict, serialize=True, standard_plant_ref=True)
+def lcost_flow(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> None:
+    generate_levelized_cost_results(scenario_dict=scenario_dict, pkl_paths=pkl_paths, serialize=True, standard_plant_ref=True)
 
 
-def gcr_flow(scenario_dict: dict) -> None:
-    generate_gcr_df(scenario_dict, serialize=True)
-
-
-parser = argparse.ArgumentParser(
-    description="The MPP Python Steel Model Command Line Interface", add_help=False
-)
-
-### THESE ARGUMENTS ARE FOR MAIN MODEL FLOWS: RUNNING SECTIONS OF THE MODEL IN FULL
-parser.add_argument(
-    "-q",
-    "--custom_scenario",
-    action="store_true",
-    help="Adds custom scenario inputs to the model",
-)
-parser.add_argument(
-    "-c",
-    "--choose_scenario",
-    action="store",
-    help="Runs a single fixed scenario to the model that you can specify by name",
-)
-parser.add_argument(
-    "-a",
-    "--main_scenarios",
-    action="store_true",
-    help="Runs specified scenarios using multiprocessing using scenario_batch_run",
-)  # scenario_batch_run
-parser.add_argument(
-    "-f", "--full_model", action="store_true", help="Runs the complete model flow"
-)  # full_flow
-parser.add_argument(
-    "-n",
-    "--number_of_runs",
-    action="store",
-    help="The number of runs that the model should run for a multi-model run",
-)
-
-### THESE ARGUMENTS ARE FOR DEVELOPMENT PRUPORSES: RUNNING SECTIONS OF THE MODEL IN ISOLATION
-parser.add_argument(
-    "-s", "--solver", action="store_true", help="Runs the solver scripts directly"
-)  # main_solver_flow
-parser.add_argument(
-    "-p",
-    "--preprocessing",
-    action="store_true",
-    help="Runs the preprocessing scripts directly",
-)  # data_preprocessing_refresh
-parser.add_argument(
-    "-o", "--output", action="store_true", help="Runs the output scripts directly"
-)  # outputs_only
-parser.add_argument(
-    "-h",
-    "--scenario_model_run",
-    action="store_true",
-    help="Runs the complete scenario adjusted scripts directly",
-)  # scenario_model_run
-parser.add_argument(
-    "-i",
-    "--data_import",
-    action="store_true",
-    help="Runs the data import scripts scripts directly",
-)  # data_import_refresh
-parser.add_argument(
-    "-d",
-    "--presolver",
-    action="store_true",
-    help="Runs the model_presolver scripts directly",
-)  # model_presolver
-parser.add_argument(
-    "-r",
-    "--results",
-    action="store_true",
-    help="Runs the model results scripts directly",
-)  # model_results_phase
-parser.add_argument(
-    "-b",
-    "--generic_preprocessing",
-    action="store_true",
-    help="Runs the data_preprocessing_generic script directly",
-)  # generic_preprocessing
-parser.add_argument(
-    "-v",
-    "--variable_costs",
-    action="store_true",
-    help="Runs the variable costs summary script directly",
-)  # generate_variable_plant_summary
-parser.add_argument(
-    "-l",
-    "--levelized_cost",
-    action="store_true",
-    help="Runs the levelized cost script directly",
-)  # lcost_flow
-parser.add_argument(
-    "-t",
-    "--results_and_output",
-    action="store_true",
-    help="Runs the results and output scripts directly",
-)  # results_and_output
-parser.add_argument(
-    "-g", "--graphs", action="store_true", help="Runs the graph output script directly"
-)  # graphs_only
-parser.add_argument(
-    "--total_opex",
-    action="store_true",
-    help="Runs the total_opex_calculations script grouping",
-)  # generate_minimodels
-parser.add_argument(
-    "-w",
-    "--production",
-    action="store_true",
-    help="Runs the production script directly",
-)  # production_flow
-parser.add_argument(
-    "-e",
-    "--investment",
-    action="store_true",
-    help="Runs the investments script directly",
-)  # investment_flow
-parser.add_argument(
-    "-u",
-    "--cos",
-    action="store_true",
-    help="Runs the cost of steelmaking script directly",
-)  # cos_flow
-parser.add_argument(
-    "-k",
-    "--metaresults",
-    action="store_true",
-    help="Runs the global metaresults script directly",
-)  # cost of steelmaking
-parser.add_argument(
-    "-x",
-    "--join_final_data",
-    action="store_true",
-    help="Joins final data sets from different scenarios",
-)  # tco_and_abatement_calculations
-parser.add_argument(
-    "-y", "--tco", action="store_true", help="Runs the tco script only"
-)  # tco_switch_reference
-parser.add_argument(
-    "-z", "--abatement", action="store_true", help="Runs the abatament script only"
-)  # abatement_switch_reference
-parser.add_argument(
-    "-j", "--emissivity", action="store_true", help="Runs the emissivity script only"
-)  # get_emissivity
-parser.add_argument(
-    "--investment_cycles",
-    action="store_true",
-    help="Runs script to create investment cycles",
-)  # investment_cycles
-parser.add_argument(
-    "--pe_models",
-    action="store_true",
-    help="Runs the PE Model script"
-)
-parser.add_argument(
-    "--multi_run_full",
-    action="store_true",
-    help="Runs a full model scenario multiple times (from solver stage) and stores aggregated results"
-)
-parser.add_argument(
-    "--multi_run_half",
-    action="store_true",
-    help="Runs a half model scenario multiple times (from solver stage) and stores aggregated results"
-)
-parser.add_argument(
-    "--half_model_run",
-    action="store_true",
-    help="Runs a half model (from solver stage onwards) and stores results"
-)
-parser.add_argument(
-    "--multi_run_multi_scenario",
-    action="store_true",
-    help="Runs the model multiple times for multiple scenarios"
-)
-parser.add_argument(
-    "--steel_plants",
-    action="store_true",
-    help="Runs the steel plant formatter"
-) # steel_plant_processor
+def gcr_flow(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> None:
+    generate_gcr_df(scenario_dict, pkl_paths=pkl_paths, serialize=True)

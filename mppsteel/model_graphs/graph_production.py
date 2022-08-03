@@ -1,5 +1,6 @@
 """Creates graphs from model outputs"""
 import itertools
+from typing import Union
 import pandas as pd
 import plotly.express as px
 from mppsteel.config.model_config import MID_MODEL_CHECKPOINT_YEAR_FOR_GRAPHS, MODEL_YEAR_RANGE, NET_ZERO_TARGET_YEAR, PKL_DATA_FORMATTED
@@ -8,6 +9,7 @@ from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
     get_scenario_pkl_path,
+    return_pkl_paths,
 )
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.model_graphs.plotly_graphs import TECHNOLOGY_ARCHETYPE_COLORS, area_chart
@@ -498,17 +500,17 @@ def create_emissions_graph(
 
 
 @timer_func
-def create_graphs(filepath: str, scenario_dict: dict) -> None:
+def create_graphs(filepath: str, scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> None:
     """The complete creation flow for all graphs.
 
     Args:
         filepath (str): The folder path you want to save the chart to. Defaults to None.
         scenario_dict (dict): A dictionary with scenarios key value mappings from the current model execution.
+        pkl_paths (Union[dict, None], optional): A dictionary containing custom pickle paths. Defaults to {}.
+        
     """
-    intermediate_path = get_scenario_pkl_path(
-        scenario_dict["scenario_name"], "intermediate"
-    )
-    final_path = get_scenario_pkl_path(scenario_dict["scenario_name"], "final")
+    _, intermediate_path, final_path = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
+
     production_resource_usage = read_pickle_folder(
         final_path, "production_resource_usage", "df"
     )

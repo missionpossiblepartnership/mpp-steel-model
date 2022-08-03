@@ -17,6 +17,7 @@ from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
+    return_pkl_paths,
     serialize_file,
     get_scenario_pkl_path,
 )
@@ -248,23 +249,19 @@ def get_investment_capital_costs(
 
 
 @timer_func
-def investment_results(scenario_dict: dict, serialize: bool = False, model_run: str = "") -> pd.DataFrame:
+def investment_results(scenario_dict: dict, pkl_paths: Union[dict, None] = None, serialize: bool = False, model_run: str = "") -> pd.DataFrame:
     """Complete Investment Results Flow to generate the Investment Results References DataFrame.
 
     Args:
         scenario_dict (dict): A dictionary with scenarios key value mappings from the current model execution.
+        pkl_paths (Union[dict, None], optional): A dictionary containing custom pickle paths. Defaults to {}.
         serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
         model_run (str, optional): The run of the model to customize pkl folder paths. Defaults to "".
     Returns:
         pd.DataFrame: A DataFrame containing the investment results.
     """
     logger.info("Generating Investment Results")
-    intermediate_path = get_scenario_pkl_path(
-        scenario=scenario_dict["scenario_name"], pkl_folder_type="intermediate", model_run=model_run
-    )
-    final_path = get_scenario_pkl_path(
-        scenario=scenario_dict["scenario_name"], pkl_folder_type="final", model_run=model_run
-    )
+    _, intermediate_path, final_path = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths, model_run)
     tech_choice_dict = read_pickle_folder(intermediate_path, "tech_choice_dict", "df")
     plant_investment_cycles = read_pickle_folder(
         intermediate_path, "investment_cycle_ref_result", "df"

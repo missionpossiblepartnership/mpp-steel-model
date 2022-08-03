@@ -1,5 +1,5 @@
 """Calculation Functions used to derive various forms of Cost of Steelmaking."""
-from typing import Iterable
+from typing import Iterable, Union
 
 import pandas as pd
 import numpy_financial as npf
@@ -12,6 +12,7 @@ from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
+    return_pkl_paths,
     serialize_file,
     get_scenario_pkl_path,
 )
@@ -403,7 +404,7 @@ def create_cost_of_steelmaking_data(
 
 @timer_func
 def generate_cost_of_steelmaking_results(
-    scenario_dict: dict, serialize: bool = False, model_run: str = ""
+    scenario_dict: dict, pkl_paths: Union[dict, None] = None, serialize: bool = False, model_run: str = ""
 ) -> dict:
     """Full flow to create the Cost of Steelmaking and the Levelized Cost of Steelmaking DataFrames.
 
@@ -415,15 +416,7 @@ def generate_cost_of_steelmaking_results(
     Returns:
         dict: A dictionary with the Cost of Steelmaking DataFrame and the Levelized Cost of Steelmaking DataFrame.
     """
-    intermediate_path_preprocessing = get_scenario_pkl_path(
-        scenario=scenario_dict["scenario_name"], pkl_folder_type="intermediate",
-    )
-    intermediate_path = get_scenario_pkl_path(
-        scenario=scenario_dict["scenario_name"], pkl_folder_type="intermediate", model_run=model_run
-    )
-    final_path = get_scenario_pkl_path(
-        scenario=scenario_dict["scenario_name"], pkl_folder_type="final", model_run=model_run
-    )
+    intermediate_path_preprocessing, intermediate_path, final_path = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths, model_run)
     variable_costs_regional = read_pickle_folder(
         intermediate_path_preprocessing, "variable_costs_regional", "df"
     )

@@ -1,8 +1,9 @@
 """Script to manage making multiple model_runs"""
 
+import itertools
 import multiprocessing as mp
 import shutil
-from typing import Callable
+from typing import Callable, List, Union
 
 import pandas as pd
 import modin.pandas as mpd
@@ -31,6 +32,7 @@ from mppsteel.utility.file_handling_utility import (
     create_folders_if_nonexistant,
     pickle_to_csv,
     read_pickle_folder,
+    return_pkl_paths,
     serialize_file,
     get_scenario_pkl_path
 )
@@ -46,9 +48,17 @@ def create_pool(processes_to_run: list):
     return mp.Pool(processes=virtual_cores)
 
 
-def multiprocessing_scenarios_single_run(scenario_options: list, func: Callable) -> None:
+def multiprocessing_scenarios_single_run(
+    scenario_options: List[dict], func: Callable, dated_output_folder: bool = False, 
+    iteration_run: bool = False, include_outputs: bool = True
+) -> None:
     pool = create_pool(scenario_options)
-    workers = [pool.apply_async(func, args=(scenario, True)) for scenario in scenario_options]
+    workers = [
+        pool.apply_async(
+            func, 
+            args=(scenario_dict, dated_output_folder, iteration_run, include_outputs)
+        ) for scenario_dict in scenario_options
+    ]
     for async_pool in workers:
         async_pool.get()
     pool.close()
@@ -195,10 +205,10 @@ def output_folder_path_creation(
         output_save_path = output_folder_filepath
     return output_save_path
 
-def core_run_function(scenario_dict: dict, model_run: int):
-    generate_files_to_path_dict([scenario_dict["scenario_name"]], model_run, create_path=True)
-    main_solver_flow(scenario_dict=scenario_dict, serialize=True, model_run = str(model_run))
-    model_results_phase(scenario_dict, model_run = str(model_run))
+def core_run_function(scenario_dict: dict, model_run: int, pkl_paths: Union[dict, None] = None):
+    generate_files_to_path_dict([scenario_dict["scenario_name"],], pkl_paths, model_run, create_path=True)
+    main_solver_flow(scenario_dict=scenario_dict, pkl_paths=pkl_paths, serialize=True, model_run=str(model_run))
+    model_results_phase(scenario_dict, pkl_paths=pkl_paths, model_run=str(model_run))
 
 def make_multiple_model_runs(
     scenario_dict: dict, number_of_runs: int = DEFAULT_NUMBER_OF_RUNS, remove_run_folders: bool = False
@@ -215,7 +225,8 @@ def make_multiple_model_runs(
             core_run_function, 
             kwds=dict(
                 scenario_dict=scenario_dict,
-                model_run=model_run
+                model_run=model_run,
+                pkl_paths=None,
             )
         ) for model_run in run_range
     ]
@@ -234,9 +245,16 @@ def aggregate_results(scenario_name: str, run_range: range, number_of_runs: int,
     generic_files_to_path_dict = generate_files_to_path_dict([scenario_name,])[scenario_name]
     run_container = {filename: [] for filename in generic_files_to_path_dict}
     for model_run in run_range:
-        model_run_files_to_path = generate_files_to_path_dict([scenario_name,], model_run)
+        model_run_files_to_path = generate_files_to_path_dict(scenarios=[scenario_name,], model_run=model_run)
         for filename in run_container:
-            store_result_to_container(run_container, scenario_name, filename, model_run_files_to_path[scenario_name][filename], model_run, number_of_runs)
+            store_result_to_container(
+                run_container=run_container, 
+                scenario_name=scenario_name, 
+                filename=filename, 
+                pkl_path=model_run_files_to_path[scenario_name][filename], 
+                model_run=model_run, 
+                number_of_runs=number_of_runs
+            )
 
     if remove_run_folders:
         for model_run in run_range:
@@ -252,21 +270,13 @@ def aggregate_results(scenario_name: str, run_range: range, number_of_runs: int,
     return run_container
 
 
-def generate_files_to_path_dict(scenarios: list, model_run: str = "", create_path: bool = False):
+def generate_files_to_path_dict(scenarios: list, pkl_paths: Union[dict, None] = None, model_run: str = "", create_path: bool = False):
     files_to_path = {scenario: {} for scenario in scenarios}
-    for scenario in scenarios:
-        intermediate_path_preprocessing = get_scenario_pkl_path(
-            scenario=scenario, pkl_folder_type="intermediate",
-        )
-        intermediate_path = get_scenario_pkl_path(
-            scenario=scenario, pkl_folder_type="intermediate", model_run=model_run
-        )
-        final_path = get_scenario_pkl_path(
-            scenario=scenario, pkl_folder_type="final", model_run=model_run
-        )
+    for scenario_name in scenarios:
+        intermediate_path_preprocessing, intermediate_path, final_path = return_pkl_paths(scenario_name, pkl_paths, model_run)
         if create_path:
             create_folders_if_nonexistant([intermediate_path, final_path])
-        files_to_path[scenario] = {
+        files_to_path[scenario_name] = {
             "production_resource_usage": final_path,
             "production_emissions": final_path,
             "investment_results": final_path,
@@ -312,17 +322,22 @@ def manager_run(
     for object in [L, p, processes, manager]:
         del object
 
+def return_single_scenario(scenario_options: dict):
+    return list(scenario_options.keys())[0]
+
 def aggregate_multi_run_scenarios(
     scenario_options: dict,
-    single_scenario: bool = True,
+    single_scenario: bool = False,
     dated_output_folder: bool = True,
     timestamp: str = "",
 ):
-    if single_scenario:
-        single_scenario = list(scenario_options.keys())[0]
     combined_pkl_path = pkl_folder_filepath_creation("combined", create_folder=True)
-    output_save_path = output_folder_path_creation(dated_output_folder, timestamp, single_scenario)
-    files_to_aggregate =  list(generate_files_to_path_dict(scenario_options.keys())[single_scenario].keys())
+    output_save_path = output_folder_path_creation(dated_output_folder, timestamp)
+    if single_scenario:
+        output_save_path = output_folder_path_creation(dated_output_folder, timestamp, return_single_scenario(scenario_options))
+    else:
+        output_save_path = output_folder_path_creation(dated_output_folder, timestamp)
+    files_to_aggregate =  list(generate_files_to_path_dict(scenario_options.keys())[return_single_scenario(scenario_options)].keys())
 
     agg_dict = {filename: [] for filename in files_to_aggregate}
 
@@ -343,3 +358,38 @@ def aggregate_multi_run_scenarios(
     for filename in summarised_data_dict:
         serialize_file(summarised_data_dict[filename], combined_pkl_path, filename)
         pickle_to_csv(output_save_path, combined_pkl_path, filename, reset_index=False)
+
+
+def make_scenario_iterations(base_scenario: dict, scenario_settings: dict):
+    scenario_list = []
+    product_iteration = list(itertools.product(
+            scenario_settings["carbon_tax_scenario"], 
+            scenario_settings["hydrogen_cost_scenario"], 
+            scenario_settings["electricity_cost_scenario"], 
+            scenario_settings["steel_demand_scenario"], 
+            scenario_settings["grid_scenario"]
+        )
+    )
+
+    for iteration, (
+        carbon_cost_scenario, hydrogen_cost_scenario, electricity_cost_scenario, 
+        steel_demand_scenario, grid_scenario) in enumerate(product_iteration
+    ):
+        new_scenario_dict = dict(base_scenario)
+        new_scenario_dict["scenario_name"] = f"{base_scenario['scenario_name']}_{iteration + 1}"
+        new_scenario_dict["carbon_tax_scenario"] = carbon_cost_scenario
+        new_scenario_dict["electricity_cost_scenario"] = electricity_cost_scenario
+        new_scenario_dict["hydrogen_cost_scenario"] = hydrogen_cost_scenario
+        new_scenario_dict["steel_demand_scenario"] = steel_demand_scenario
+        new_scenario_dict["grid_scenario"] = grid_scenario
+        scenario_list.append(new_scenario_dict)
+    return scenario_list
+
+def create_scenario_paths(scenario_name: str):
+    intermediate_path = get_scenario_pkl_path(
+        scenario_name, "intermediate"
+    )
+    final_path = get_scenario_pkl_path(
+        scenario_name, "final"
+    )
+    create_folders_if_nonexistant([intermediate_path, final_path])

@@ -1,6 +1,7 @@
 """Script to create Total Opex Cost Reference"""
 
 import itertools
+from typing import Union
 import pandas as pd
 
 from tqdm import tqdm
@@ -16,6 +17,7 @@ from mppsteel.config.model_config import (
 
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
+    return_pkl_paths,
     serialize_file,
     get_scenario_pkl_path,
 )
@@ -79,12 +81,10 @@ def total_opex_cost_ref_loop(
 
 @timer_func
 def generate_total_opex_cost_reference(
-    scenario_dict: dict, serialize: bool = False
+    scenario_dict: dict, pkl_paths: Union[dict, None] = None, serialize: bool = False
 ) -> pd.DataFrame:
     logger.info("Total Opex Reference Preprocessing")
-    intermediate_path = get_scenario_pkl_path(
-        scenario_dict["scenario_name"], "intermediate"
-    )
+    _, intermediate_path, final_path = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
     carbon_tax_reference = read_pickle_folder(
         intermediate_path, "carbon_tax_reference", "df"
     )

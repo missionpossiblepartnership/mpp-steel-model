@@ -1,6 +1,7 @@
 """Script to create Carbon Tax Reference"""
 
 import itertools
+from typing import Union
 import pandas as pd
 
 from tqdm import tqdm
@@ -15,6 +16,7 @@ from mppsteel.config.reference_lists import TECHNOLOGIES_TO_DROP
 
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
+    return_pkl_paths,
     serialize_file,
     get_scenario_pkl_path,
 )
@@ -80,13 +82,11 @@ def create_carbon_tax_reference(
 
 @timer_func
 def generate_carbon_tax_reference(
-    scenario_dict: dict, serialize: bool = False
+    scenario_dict: dict, pkl_paths: Union[dict, None] = None, serialize: bool = False
 ) -> pd.DataFrame:
     logger.info("Carbon Tax Preprocessing")
 
-    intermediate_path = get_scenario_pkl_path(
-        scenario_dict["scenario_name"], "intermediate"
-    )
+    _, intermediate_path, _ = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
     # Carbon Tax preprocessing
     carbon_tax_df = read_pickle_folder(intermediate_path, "carbon_tax_timeseries", "df")
     carbon_tax_df = carbon_tax_df.set_index("year")

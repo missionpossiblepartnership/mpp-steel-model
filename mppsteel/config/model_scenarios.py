@@ -51,7 +51,7 @@ SCENARIO_SETTINGS = {
     "tech_moratorium": [True, False],
     "enforce_constraints": [True, False],
     "transitional_switch": [True, False],
-    "carbon_tax": CARBON_TAX_SCENARIOS.keys(),
+    "carbon_tax_scenario": CARBON_TAX_SCENARIOS.keys(),
     "green_premium_scenario": GREEN_PREMIUM_SCENARIOS.keys(),
     "electricity_cost_scenario": COST_SCENARIO_MAPPER.keys(),
     "grid_scenario": GRID_DECARBONISATION_SCENARIOS.keys(),
@@ -239,3 +239,5 @@ MAIN_SCENARIO_RUNS = [
     "abatement", "fastest_abatement",
     "carbon_cost", "tech_moratorium"
 ]
+
+BATCH_ITERATION_SCENARIOS = ["baseline", "tech_moratorium", "carbon_cost"]
