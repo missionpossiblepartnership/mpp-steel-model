@@ -199,3 +199,6 @@ def decades_between_dates(year_range: range, include_final_year: bool = False) -
 
 def get_closest_number_in_list(my_list: list, my_number: int) -> Union[int, None]:
     return min(my_list, key = lambda x: abs(x - my_number)) if my_list else None
+
+def split_list_into_chunks(lst: list, n: int):
+    return [lst[i:i + n] for i in range(0, len(lst), n)]

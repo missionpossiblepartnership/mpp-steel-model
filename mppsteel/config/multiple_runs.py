@@ -2,6 +2,7 @@
 
 import itertools
 import multiprocessing as mp
+import re
 import shutil
 from typing import Callable, List, Union
 
@@ -25,6 +26,7 @@ from mppsteel.model_graphs.graph_production import create_combined_scenario_grap
 from mppsteel.model_results.resource_demand_summary import create_resource_demand_summary
 from mppsteel.model_solver.solver_flow import main_solver_flow
 from mppsteel.config.model_grouping import model_results_phase
+from mppsteel.utility.dataframe_utility import move_columns_to_front
 
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import (
@@ -56,7 +58,12 @@ def multiprocessing_scenarios_single_run(
     workers = [
         pool.apply_async(
             func, 
-            args=(scenario_dict, dated_output_folder, iteration_run, include_outputs)
+            kwds=dict(
+                scenario_dict=scenario_dict, 
+                dated_output_folder=dated_output_folder, 
+                iteration_run=iteration_run, 
+                include_outputs=include_outputs
+            )
         ) for scenario_dict in scenario_options
     ]
     for async_pool in workers:
@@ -74,7 +81,9 @@ def multiprocessing_scenarios_preprocessing(
     workers = [
         pool.apply_async(
             preprocessing_function, 
-            kwds=dict(scenario_dict=scenario_options[scenario])
+            kwds=dict(
+                scenario_dict=scenario_options[scenario]
+            )
         ) for scenario in scenario_options
     ]
     for async_pool in workers:
@@ -84,7 +93,7 @@ def multiprocessing_scenarios_preprocessing(
 
 def multiprocessing_scenarios_multiple_scenarios_multiple_runs(
     repeating_function: Callable, scenario_options: list,  
-    files_to_path: dict, number_of_runs: int, remove_run_folders: bool = False
+    files_to_path: dict, number_of_runs: int, remove_run_folders: bool = False,
 ):
     pool = create_pool(scenario_options.keys())
     workers = [
@@ -393,3 +402,24 @@ def create_scenario_paths(scenario_name: str):
         scenario_name, "final"
     )
     create_folders_if_nonexistant([intermediate_path, final_path])
+
+
+def generate_scenario_iterations_reference(
+    scenarios_to_iterate: list, scenario_options: dict, scenario_settings: dict) -> pd.DataFrame:
+    df_list = []
+
+    for scenario in scenarios_to_iterate:
+        scenario_list = make_scenario_iterations(scenario_options[scenario], scenario_settings)
+        df_list.append(pd.DataFrame(scenario_list))
+        
+    combined_df = pd.concat(df_list)
+    combined_df["base_scenario"] = combined_df["scenario_name"].apply(
+        lambda scenario: re.sub(r"\_\d+", "", scenario)
+    )
+    combined_df["iteration_scenario"] = combined_df["scenario_name"].apply(
+        lambda scenario: re.findall(r"\d+",scenario)[0].zfill(3)
+    )
+    new_column_order = move_columns_to_front(
+        combined_df.columns, ["scenario_name", "base_scenario", "iteration_scenario"]
+    )
+    return combined_df[new_column_order]

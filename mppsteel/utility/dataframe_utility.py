@@ -284,3 +284,8 @@ def test_dataframes_equal(df1: pd.DataFrame, df2: pd.DataFrame, common_col: str,
     df1_f = df1[df1[common_col] == df1_index].drop(common_col, axis=1)
     df2_f = df2[df2[common_col] == df2_index].drop(common_col, axis=1)
     assert df1_f.equals(df2_f), f"DataFrames not equal | common column: {common_col} | Indexes: {df1_index} and {df2_index} -> {df1_f} {df2_f}"
+
+
+def move_columns_to_front(column_list: list, columns_to_move: list) -> list:
+    non_moved_columns = list(set(column_list).difference(set(columns_to_move)))
+    return columns_to_move + non_moved_columns

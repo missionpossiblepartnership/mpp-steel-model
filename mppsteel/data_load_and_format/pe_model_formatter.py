@@ -52,8 +52,7 @@ from mppsteel.utility.location_utility import get_countries_from_group
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
     return_pkl_paths,
-    serialize_file,
-    get_scenario_pkl_path,
+    serialize_file
 )
 
 from mppsteel.utility.log_utility import get_logger
@@ -847,7 +846,7 @@ def format_pe_data(
         country_ref,
         CCS_CAPACITY_REGION_MAPPER,
         MODEL_YEAR_RANGE,
-    )
+    )   
     fossil_fuel_regions = fossil_fuel_region_reference_generator(country_ref)
     fossil_fuel_ref = fossil_fuel_mapper(fossil_fuel_prices_f, fossil_fuel_regions, MODEL_YEAR_RANGE)
     data_dict = {
@@ -864,7 +863,7 @@ def format_pe_data(
     }
 
     if serialize:
-        _, intermediate_path, _ = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
+        _, intermediate_path, _ = return_pkl_paths(scenario_name=scenario_dict["scenario_name"], paths=pkl_paths)
         # DataFrames
         serialize_file(h2_prices_f, intermediate_path, "hydrogen_prices_formatted")
         serialize_file(

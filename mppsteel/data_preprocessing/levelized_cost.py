@@ -11,8 +11,7 @@ from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
     return_pkl_paths,
-    serialize_file,
-    get_scenario_pkl_path,
+    serialize_file
 )
 from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.utility.log_utility import get_logger
@@ -183,7 +182,9 @@ def generate_levelized_cost_results(
     Returns:
         dict: A dictionary with the Levelized Cost DataFrame.
     """
-    _, intermediate_path, _ = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
+    _, intermediate_path, _ = return_pkl_paths(
+        scenario_name=scenario_dict["scenario_name"], paths=pkl_paths
+    )
     total_opex_reference = read_pickle_folder(
         intermediate_path, "total_opex_reference", "df"
     )

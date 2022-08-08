@@ -17,8 +17,7 @@ from mppsteel.utility.file_handling_utility import (
     extract_data,
     read_pickle_folder,
     return_pkl_paths,
-    serialize_file,
-    get_scenario_pkl_path,
+    serialize_file
 )
 from mppsteel.data_validation.data_import_tests import REGIONAL_STEEL_DEMAND_SCHEMA
 from mppsteel.utility.log_utility import get_logger
@@ -130,7 +129,7 @@ def get_steel_demand(scenario_dict: dict, pkl_paths: Union[dict, None] = None, s
     Returns:
         pd.DataFrame: The formatted DataFrame of regional Steel Demand data.
     """
-    _, intermediate_path, final_path = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
+    _, intermediate_path, _ = return_pkl_paths(scenario_name=scenario_dict["scenario_name"], paths=pkl_paths)
     if from_csv:
         steel_demand = extract_data(
             IMPORT_DATA_PATH, "Regional Steel Demand", "csv"

@@ -15,8 +15,7 @@ from mppsteel.data_load_and_format.reg_steel_demand_formatter import steel_deman
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
     return_pkl_paths,
-    serialize_file,
-    get_scenario_pkl_path,
+    serialize_file
 )
 from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.config.model_config import (
@@ -164,7 +163,7 @@ class ChooseTechnologyInput:
         regional_scrap_constraint = scenario_dict["regional_scrap_constraint"]
         investment_cycle_randomness = scenario_dict["investment_cycle_randomness"]
 
-        _, intermediate_path, _ = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
+        _, intermediate_path, _ = return_pkl_paths(scenario_name=scenario_dict["scenario_name"], paths=pkl_paths)
 
         original_plant_df = read_pickle_folder(
             PROJECT_PATH / PKL_DATA_FORMATTED, "steel_plants_processed", "df"
@@ -710,7 +709,7 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
     }
 
 
-def choose_technology(scenario_dict: dict, pkl_paths: dict) -> dict:
+def choose_technology(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> dict:
     """Function containing the entire solver decision logic flow.
     1) In each year, the solver splits the plants non-switchers and switchers (secondary EAF plants and primary plants).
     2) The solver extracts the prior year technology of the non-switchers and assumes this is the current technology of the switchers.
@@ -728,7 +727,7 @@ def choose_technology(scenario_dict: dict, pkl_paths: dict) -> dict:
     return choose_technology_core(ChooseTechnologyInput.from_filesystem(
         scenario_dict=scenario_dict, pkl_paths=pkl_paths))
 
-def create_levelized_cost_actuals(results_dict: dict, scenario_dict: dict):
+def create_levelized_cost_actuals(results_dict: dict, scenario_dict: dict, pkl_paths: Union[dict, None] = None):
     # Create Levelized cost results
     rmi_mapper = create_country_mapper(path=str(PROJECT_PATH / PKL_DATA_IMPORTS))
     tech_capacity_df = tech_capacity_splits(
@@ -745,6 +744,7 @@ def create_levelized_cost_actuals(results_dict: dict, scenario_dict: dict):
     )
     levelized_cost_results = generate_levelized_cost_results(
         scenario_dict=scenario_dict,
+        pkl_paths=pkl_paths,
         steel_plant_df=tech_capacity_df,
         standard_plant_ref=False
     )
@@ -768,7 +768,7 @@ def main_solver_flow(scenario_dict: dict, pkl_paths: Union[dict, None] = None, s
 
     results_dict = choose_technology(scenario_dict=scenario_dict, pkl_paths=pkl_paths)
 
-    levelized_cost_results = create_levelized_cost_actuals(results_dict=results_dict, scenario_dict=scenario_dict)
+    levelized_cost_results = create_levelized_cost_actuals(results_dict=results_dict, scenario_dict=scenario_dict, pkl_paths=pkl_paths)
 
     if serialize:
         logger.info("-- Serializing dataframes")

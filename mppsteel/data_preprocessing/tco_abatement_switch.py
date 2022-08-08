@@ -18,8 +18,7 @@ from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
     return_pkl_paths,
-    serialize_file,
-    get_scenario_pkl_path,
+    serialize_file
 )
 from mppsteel.config.reference_lists import SWITCH_DICT, TECH_REFERENCE_LIST, TECHNOLOGIES_TO_DROP
 from mppsteel.config.model_config import (
@@ -35,17 +34,14 @@ from mppsteel.utility.log_utility import get_logger
 logger = get_logger(__name__)
 
 
-def tco_regions_ref_generator(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> pd.DataFrame:
+def tco_regions_ref_generator(total_opex_reference: dict) -> pd.DataFrame:
     """Creates a summary of TCO values for each technology and region.
 
     Args:
-        scenario_dict (dict): The scenario_dict containing the full scenario setting for the current model run.
-        pkl_paths (Union[dict, None], optional): A dictionary containing custom pickle paths. Defaults to {}.
-
+        total_opex_reference (dict): A reference to the total opex dict.
     Returns:
         pd.DataFrame: A DataFrame containing the components necessary to calculate TCO (not including green premium).
     """
-    _, intermediate_path, final_path = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
     capex_df = read_pickle_folder(PKL_DATA_FORMATTED, "capex_switching_df", "df")
     capex_df.reset_index(inplace=True)
     capex_df.rename(
@@ -63,9 +59,6 @@ def tco_regions_ref_generator(scenario_dict: dict, pkl_paths: Union[dict, None] 
     )
     steel_plants = read_pickle_folder(
         PKL_DATA_FORMATTED, "steel_plants_processed", "df"
-    )
-    total_opex_reference = read_pickle_folder(
-        intermediate_path, "total_opex_reference", "df"
     )
     # Prepare looping references
     steel_plant_country_codes = steel_plants["country_code"].unique()
@@ -298,11 +291,14 @@ def tco_presolver_reference(
         pd.DataFrame: A DataFrame containing the complete TCO reference DataFrame (including green premium values).
     """
     logger.info("Running TCO Reference Sheet")
-    _, intermediate_path, _ = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
+    _, intermediate_path, _ = return_pkl_paths(scenario_name=scenario_dict["scenario_name"], paths=pkl_paths)
     greenfield_switching_df = read_pickle_folder(
         PKL_DATA_FORMATTED, "greenfield_switching_df", "df"
     )
-    opex_capex_reference_data = tco_regions_ref_generator(scenario_dict)
+    total_opex_reference = read_pickle_folder(
+        intermediate_path, "total_opex_reference", "df"
+    )
+    opex_capex_reference_data = tco_regions_ref_generator(total_opex_reference)
     opex_capex_reference_data = add_gf_capex_values_to_tco_ref(
         opex_capex_reference_data, greenfield_switching_df
     )
@@ -329,7 +325,7 @@ def abatement_presolver_reference(
     """
     logger.info("Running Abatement Reference Sheet")
     
-    _, intermediate_path, final_path = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
+    _, intermediate_path, _ = return_pkl_paths(scenario_name=scenario_dict["scenario_name"], paths=pkl_paths)
     calculated_emissivity_combined = read_pickle_folder(
         intermediate_path, "calculated_emissivity_combined", "df"
     )

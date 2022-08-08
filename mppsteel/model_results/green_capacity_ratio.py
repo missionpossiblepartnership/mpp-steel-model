@@ -13,8 +13,7 @@ from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
     return_pkl_paths,
-    serialize_file,
-    get_scenario_pkl_path,
+    serialize_file
 )
 from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.utility.log_utility import get_logger
@@ -141,7 +140,7 @@ def generate_gcr_df(scenario_dict: dict, pkl_paths: Union[dict, None] = None, se
         pd.DataFrame: The Green Capacity Ratio DataFrame with scenario metadata.
     """
     logger.info("- Starting Green Capacity Ratio")
-    _, intermediate_path, final_path = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
+    _, intermediate_path, final_path = return_pkl_paths(scenario_name=scenario_dict["scenario_name"], paths=pkl_paths)
     plant_result_df = read_pickle_folder(intermediate_path, "plant_result_df", "df")
     tech_choice_dict = read_pickle_folder(intermediate_path, "tech_choice_dict", "dict")
     rmi_mapper = create_country_mapper()

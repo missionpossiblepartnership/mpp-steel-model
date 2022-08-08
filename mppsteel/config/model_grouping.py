@@ -164,7 +164,7 @@ def model_outputs_phase(
         save_path = folder_filepath
 
     # Save Intermediate Pickle Files
-    _, intermediate_path, final_path = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
+    _, intermediate_path, final_path = return_pkl_paths(scenario_name=scenario_dict["scenario_name"], paths=pkl_paths)
 
     pickle_to_csv(save_path, PKL_DATA_FORMATTED, "capex_switching_df", reset_index=True)
 

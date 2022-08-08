@@ -4,6 +4,7 @@ import os
 import pickle
 
 from pathlib import Path
+import re
 from typing import Union
 
 import pandas as pd
@@ -90,7 +91,8 @@ def serialize_file(obj, pkl_folder: str, filename: str) -> None:
         pkl_folder (str): The folder where you want to store the pickle file.
         filename (str): The name of the file you want to use (do not include a file extension in the string)
     """
-    with open(f"{pkl_folder}/{filename}.pickle", "wb") as f:
+    filename = f"{pkl_folder}/{filename}.pickle"
+    with open(filename, "wb") as f:
         # Pickle the 'data' using the highest protocol available.
         logger.info(f"* Saving Pickle file {filename} to path")
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
@@ -149,38 +151,33 @@ def pickle_to_csv(
         df.to_csv(f"{folder_path}/{pickle_filename}.csv", index=False)
 
 
-def create_folder_if_nonexist(folder_path: str):
+def create_folder_if_nonexist(folder_path: str) -> None:
     Path(folder_path).mkdir(parents=True, exist_ok=True)
 
 
 def get_scenario_pkl_path(
-    scenario: str = None, pkl_folder_type: str = None, default_path: bool = False, model_run: str = "", iteration_run: bool = False
-):
-    if pkl_folder_type == "intermediate":
-        full_path = f"{PKL_FOLDER}/{scenario}/{INTERMEDIATE_DATA_OUTPUT_NAME}"
-        if default_path:
-            return PKL_DATA_INTERMEDIATE
-        elif model_run:
-            return f"{full_path}/run_{model_run}"
-        elif iteration_run:
-            base_scenario = "baseline_1".split("_")[0]
-            return f"{PKL_FOLDER}/iteration_runs/{base_scenario}/{scenario}/{INTERMEDIATE_DATA_OUTPUT_NAME}"
-        return full_path
-    if pkl_folder_type == "final":
-        full_path = f"{PKL_FOLDER}/{scenario}/{FINAL_DATA_OUTPUT_NAME}"
-        if default_path:
-            return PKL_DATA_FINAL
-        elif model_run:
-            return f"{full_path}/run_{model_run}"
-        elif iteration_run:
-            base_scenario = "baseline_1".split("_")[0]
-            return f"{PKL_FOLDER}/iteration_runs/{base_scenario}/{scenario}/{FINAL_DATA_OUTPUT_NAME}"
-        return full_path
+    scenario: str = None, pkl_folder_type: str = None, 
+    default_path: bool = False, model_run: str = "", 
+    iteration_run: bool = False
+) -> str:
     if pkl_folder_type == "combined":
         return f"{PKL_FOLDER}/{COMBINED_OUTPUT_FOLDER_NAME}"
 
+    pkl_folder_type_ext = INTERMEDIATE_DATA_OUTPUT_NAME if pkl_folder_type == "intermediate" else FINAL_DATA_OUTPUT_NAME
+    default_path_ext = PKL_DATA_INTERMEDIATE if pkl_folder_type == "intermediate" else PKL_DATA_FINAL
+    full_path = f"{PKL_FOLDER}/{scenario}/{pkl_folder_type_ext}"
 
-def return_pkl_paths(scenario_name: str, paths: Union[dict, None] = None, model_run: str = ""):
+    if default_path:
+        return default_path_ext
+    elif model_run:
+        return f"{full_path}/run_{model_run}"
+    elif iteration_run:
+        base_scenario = re.sub(r"\_\d+", "", scenario)
+        return f"{PKL_FOLDER}/iteration_runs/{base_scenario}/{scenario}/{pkl_folder_type_ext}"
+    return full_path
+
+
+def return_pkl_paths(scenario_name: str, paths: Union[dict, None] = None, model_run: str = "") -> tuple:
     intermediate_path_preprocessing = get_scenario_pkl_path(
         scenario=scenario_name, pkl_folder_type="intermediate",
     )
@@ -190,10 +187,12 @@ def return_pkl_paths(scenario_name: str, paths: Union[dict, None] = None, model_
     final_path = get_scenario_pkl_path(
         scenario=scenario_name, pkl_folder_type="final", model_run=model_run
     )
-    if paths and ("intermediate_path" in paths):
-        intermediate_path =  paths["intermediate_path"]
+    if paths:
+        if "intermediate_path" in paths.keys():
+            intermediate_path_preprocessing = paths["intermediate_path"]
+            intermediate_path = paths["intermediate_path"]
 
-    if paths and ("final_path" in paths):
-        final_path =  paths["final_path"]
+        if "final_path" in paths.keys():
+            final_path = paths["final_path"]
 
     return intermediate_path_preprocessing, intermediate_path, final_path

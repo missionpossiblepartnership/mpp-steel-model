@@ -18,8 +18,7 @@ from mppsteel.config.model_config import (
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
     return_pkl_paths,
-    serialize_file,
-    get_scenario_pkl_path,
+    serialize_file
 )
 from mppsteel.utility.function_timer_utility import timer_func
 
@@ -84,7 +83,7 @@ def generate_total_opex_cost_reference(
     scenario_dict: dict, pkl_paths: Union[dict, None] = None, serialize: bool = False
 ) -> pd.DataFrame:
     logger.info("Total Opex Reference Preprocessing")
-    _, intermediate_path, final_path = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
+    _, intermediate_path, _ = return_pkl_paths(scenario_name=scenario_dict["scenario_name"], paths=pkl_paths)
     carbon_tax_reference = read_pickle_folder(
         intermediate_path, "carbon_tax_reference", "df"
     )

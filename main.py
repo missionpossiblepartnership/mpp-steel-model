@@ -1,7 +1,7 @@
 """Runs the data loading scripts"""
 
 from datetime import datetime
-from itertools import chain
+
 
 from distributed import Client
 
@@ -9,6 +9,7 @@ from mppsteel.config.multiple_runs import (
     aggregate_multi_run_scenarios,
     create_scenario_paths,
     generate_files_to_path_dict,
+    generate_scenario_iterations_reference,
     join_scenario_data, 
     make_multiple_model_runs,
     make_scenario_iterations,
@@ -38,6 +39,7 @@ from mppsteel.config.model_scenarios import (
 from mppsteel.config.runtime_args import parser
 
 from mppsteel.config.model_grouping import *
+from mppsteel.utility.utils import split_list_into_chunks
 
 logger = get_logger(__name__)
 
@@ -96,7 +98,7 @@ if __name__ == "__main__":
             func=scenario_batch_run, 
             dated_output_folder=True, 
             iteration_run=False, 
-            include_outputs=True
+            include_outputs=True,
         )
         join_scenario_data(
             scenario_options=MAIN_SCENARIO_RUNS,
@@ -111,13 +113,14 @@ if __name__ == "__main__":
             create_scenario_paths(scenario_name)
         data_import_and_preprocessing_refresh(scenario_options["baseline"])
         multiprocessing_scenarios_preprocessing(
-            scenario_options, scenario_preprocessing_phase
+            scenario_options=scenario_options, 
+            preprocessing_function=scenario_preprocessing_phase,
         )
         multiprocessing_scenarios_multiple_scenarios_multiple_runs(
             repeating_function=make_multiple_model_runs,
             scenario_options=scenario_options,
             number_of_runs=number_of_runs,
-            remove_run_folders=True
+            remove_run_folders=True,
         )
         aggregate_multi_run_scenarios(
             scenario_options=scenario_options,
@@ -128,18 +131,30 @@ if __name__ == "__main__":
 
     if args.model_iterations_run:
         logger.info(f"Running model iterations for {BATCH_ITERATION_SCENARIOS}")
+
+        output_iteration_path = f"{OUTPUT_FOLDER}/iteration_run {timestamp}"
+        create_folders_if_nonexistant([output_iteration_path,])
+        scenario_iteration_reference = generate_scenario_iterations_reference(
+            BATCH_ITERATION_SCENARIOS, SCENARIO_OPTIONS, SCENARIO_SETTINGS
+        )
+        scenario_iteration_reference.to_csv(
+            f"{output_iteration_path}/scenario_iteration_reference.csv", index=False
+        )
+
         for base_scenario in BATCH_ITERATION_SCENARIOS:
             create_scenario_paths(base_scenario)
             scenario_list = make_scenario_iterations(SCENARIO_OPTIONS[base_scenario], SCENARIO_SETTINGS)
             logger.info(f"Running {len(scenario_list)} iterations for {base_scenario}")
             data_import_and_preprocessing_refresh(scenario_list[0])
-            multiprocessing_scenarios_single_run(
-                scenario_options=scenario_list,
-                func=scenario_batch_run,
-                dated_output_folder=True,
-                iteration_run=True,
-                include_outputs=False
-            )
+            scenario_list_chunks = split_list_into_chunks(scenario_list, 48)
+            for scenario_list_chunk in scenario_list_chunks:
+                multiprocessing_scenarios_single_run(
+                    scenario_options=scenario_list_chunk,
+                    func=scenario_batch_run,
+                    dated_output_folder=True,
+                    iteration_run=True,
+                    include_outputs=False
+                )
 
     logger.info(
         f"""Running model with the following parameters:  

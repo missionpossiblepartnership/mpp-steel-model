@@ -19,8 +19,7 @@ from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
     return_pkl_paths,
-    serialize_file,
-    get_scenario_pkl_path,
+    serialize_file
 )
 from mppsteel.model_tests.df_tests import (
     test_negative_df_values,
@@ -465,7 +464,7 @@ def generate_variable_plant_summary(
     Returns:
         pd.DataFrame: A DataFrame containing the variable plant results.
     """
-    _, intermediate_path, final_path = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
+    _, intermediate_path, _ = return_pkl_paths(scenario_name=scenario_dict["scenario_name"], paths=pkl_paths)
     input_data = PlantVariableCostsInput.from_filesystem(scenario_dict, intermediate_path)
     variable_costs = plant_variable_costs(input_data)
     variable_costs_summary = format_variable_costs(variable_costs)

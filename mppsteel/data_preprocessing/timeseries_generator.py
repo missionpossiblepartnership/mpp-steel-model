@@ -5,7 +5,7 @@ import pandas as pd
 from mppsteel.utility.dataframe_utility import convert_currency_col, extend_df_years
 
 # For logger and units dict
-from mppsteel.utility.file_handling_utility import return_pkl_paths, serialize_file, get_scenario_pkl_path
+from mppsteel.utility.file_handling_utility import return_pkl_paths, serialize_file
 from mppsteel.utility.function_timer_utility import timer_func
 
 # Get model parameters
@@ -122,7 +122,7 @@ def generate_timeseries(scenario_dict: dict = None, pkl_paths: Union[dict, None]
     Returns:
         dict: A dict containing dataframes with the following keys: 'biomass', 'carbon_tax', 'electricity'.
     """
-    _, intermediate_path, _ = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
+    _, intermediate_path, _ = return_pkl_paths(scenario_name=scenario_dict["scenario_name"], paths=pkl_paths)
     carbon_tax_scenario_values = CARBON_TAX_SCENARIOS[
         scenario_dict["carbon_tax_scenario"]
     ]

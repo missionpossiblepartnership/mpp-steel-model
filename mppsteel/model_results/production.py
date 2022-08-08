@@ -20,8 +20,7 @@ from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
     return_pkl_paths,
-    serialize_file,
-    get_scenario_pkl_path,
+    serialize_file
 )
 from mppsteel.model_solver.solver_summary import tech_capacity_splits, utilization_mapper
 from mppsteel.utility.location_utility import create_country_mapper

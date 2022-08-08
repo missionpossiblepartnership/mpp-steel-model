@@ -509,7 +509,7 @@ def create_graphs(filepath: str, scenario_dict: dict, pkl_paths: Union[dict, Non
         pkl_paths (Union[dict, None], optional): A dictionary containing custom pickle paths. Defaults to {}.
         
     """
-    _, intermediate_path, final_path = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths)
+    _, intermediate_path, final_path = return_pkl_paths(scenario_name=scenario_dict["scenario_name"], paths=pkl_paths)
 
     production_resource_usage = read_pickle_folder(
         final_path, "production_resource_usage", "df"
