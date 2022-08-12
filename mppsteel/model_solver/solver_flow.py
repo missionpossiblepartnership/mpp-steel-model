@@ -62,7 +62,7 @@ from mppsteel.data_load_and_format.country_reference import country_df_formatter
 from mppsteel.data_preprocessing.levelized_cost import generate_levelized_cost_results
 from mppsteel.utility.log_utility import get_logger
 
-# Create logger
+
 logger = get_logger(__name__)
 
 

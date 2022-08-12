@@ -31,7 +31,7 @@ from mppsteel.model_solver.material_usage_class import (
 )
 from mppsteel.utility.log_utility import get_logger
 
-# Create logger
+
 logger = get_logger(__name__)
 
 

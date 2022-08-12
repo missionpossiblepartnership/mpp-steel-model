@@ -39,7 +39,7 @@ from mppsteel.config.model_config import (
 )
 from mppsteel.config.reference_lists import KG_RESOURCES
 
-# Create logger
+
 logger = get_logger(__name__)
 
 COMMODITY_MATERIAL_MAPPER = {

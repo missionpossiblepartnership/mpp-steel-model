@@ -44,7 +44,7 @@ from mppsteel.trade_module.trade_flow import trade_flow
 
 from mppsteel.utility.log_utility import get_logger
 
-# Create logger
+
 logger = get_logger(__name__)
 
 

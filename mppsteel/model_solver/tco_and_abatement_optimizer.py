@@ -20,7 +20,7 @@ from mppsteel.config.model_config import (
     ABATEMENT_RANK_3,
 )
 
-# Create logger
+
 logger = get_logger(__name__)
 
 

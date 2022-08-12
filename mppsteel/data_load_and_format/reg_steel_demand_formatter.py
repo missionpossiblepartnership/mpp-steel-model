@@ -22,7 +22,7 @@ from mppsteel.utility.file_handling_utility import (
 from mppsteel.data_validation.data_import_tests import REGIONAL_STEEL_DEMAND_SCHEMA
 from mppsteel.utility.log_utility import get_logger
 
-# Create logger
+
 logger = get_logger(__name__)
 
 RMI_MATCHER = {

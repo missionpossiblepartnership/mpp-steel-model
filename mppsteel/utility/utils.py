@@ -202,3 +202,17 @@ def get_closest_number_in_list(my_list: list, my_number: int) -> Union[int, None
 
 def split_list_into_chunks(lst: list, n: int):
     return [lst[i:i + n] for i in range(0, len(lst), n)]
+
+def get_intersection_of_ordered_list(ordered_list: Iterable, mapping_list: Iterable) -> list:
+    return [x for x in mapping_list if x in frozenset(ordered_list)] 
+
+def reverse_dict_with_list_elements(dict_to_reverse: dict) -> dict:
+    new_dict = {}
+    for key in dict_to_reverse:
+        for elem in dict_to_reverse[key]:
+            new_dict[elem] = key
+    return new_dict
+
+def split_range_obj(range_obj: range, num_splits: int) -> list:
+    k, m = divmod(len(range_obj), num_splits)
+    return (range_obj[i*k + min(i, m):(i+1)*k + min(i+1, m)] for i in range(num_splits))

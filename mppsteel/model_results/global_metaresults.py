@@ -17,7 +17,7 @@ from mppsteel.utility.file_handling_utility import (
 )
 from mppsteel.utility.log_utility import get_logger
 
-# Create logger
+
 logger = get_logger(__name__)
 
 
@@ -126,7 +126,9 @@ def metaresults_flow(scenario_dict: dict, pkl_paths: Union[dict, None] = None, s
         pd.DataFrame: A DataFrame containing the Metaresults.
     """
     logger.info("- Starting Production Results Model Flow")
-    intermediate_path_preprocessing, intermediate_path, final_path = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths, model_run)
+    intermediate_path_preprocessing, intermediate_path, final_path = return_pkl_paths(
+        scenario_dict["scenario_name"], pkl_paths, model_run
+    )
     steel_demand_df = read_pickle_folder(
         intermediate_path_preprocessing, "regional_steel_demand_formatted", "df"
     )

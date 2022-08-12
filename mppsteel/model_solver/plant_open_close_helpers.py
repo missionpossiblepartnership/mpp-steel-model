@@ -36,7 +36,7 @@ from mppsteel.trade_module.trade_helpers import utilization_boundary, get_initia
 
 from mppsteel.utility.log_utility import get_logger
 
-# Create logger
+
 logger = get_logger(__name__)
 
 

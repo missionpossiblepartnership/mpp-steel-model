@@ -415,7 +415,9 @@ def generate_cost_of_steelmaking_results(
     Returns:
         dict: A dictionary with the Cost of Steelmaking DataFrame and the Levelized Cost of Steelmaking DataFrame.
     """
-    intermediate_path_preprocessing, intermediate_path, final_path = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths, model_run)
+    intermediate_path_preprocessing, intermediate_path, final_path = return_pkl_paths(
+        scenario_dict["scenario_name"], pkl_paths, model_run
+    )
     variable_costs_regional = read_pickle_folder(
         intermediate_path_preprocessing, "variable_costs_regional", "df"
     )

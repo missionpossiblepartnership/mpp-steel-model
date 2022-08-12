@@ -20,7 +20,7 @@ from mppsteel.plant_classes.plant_investment_cycle_helpers import (
     return_switch_type,
 )
 
-# Create logger
+
 logger = get_logger(__name__)
 
 

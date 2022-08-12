@@ -8,7 +8,7 @@ import numpy.typing as npt
 
 from mppsteel.utility.log_utility import get_logger
 
-# Create logger
+
 logger = get_logger(__name__)
 
 

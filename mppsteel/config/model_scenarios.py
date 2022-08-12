@@ -235,9 +235,12 @@ SCENARIO_OPTIONS = {
 }
 
 MAIN_SCENARIO_RUNS = [
-    "baseline", "baseline_high_circ",
-    "abatement", "fastest_abatement",
-    "carbon_cost", "tech_moratorium"
+    "baseline",
+    "baseline_high_circ",
+    "abatement",
+    "fastest_abatement",
+    "carbon_cost",
+    "tech_moratorium"
 ]
 
 BATCH_ITERATION_SCENARIOS = ["baseline", "tech_moratorium", "carbon_cost"]

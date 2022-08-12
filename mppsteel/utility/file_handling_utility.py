@@ -15,6 +15,7 @@ from mppsteel.config.model_config import (
     PKL_DATA_FINAL,
     PKL_DATA_INTERMEDIATE,
     PKL_FOLDER,
+    UNDERSCORE_NUMBER_REGEX,
 )
 
 from mppsteel.utility.log_utility import get_logger
@@ -172,7 +173,7 @@ def get_scenario_pkl_path(
     elif model_run:
         return f"{full_path}/run_{model_run}"
     elif iteration_run:
-        base_scenario = re.sub(r"\_\d+", "", scenario)
+        base_scenario = re.sub(UNDERSCORE_NUMBER_REGEX, "", scenario)
         return f"{PKL_FOLDER}/iteration_runs/{base_scenario}/{scenario}/{pkl_folder_type_ext}"
     return full_path
 
@@ -196,3 +197,30 @@ def return_pkl_paths(scenario_name: str, paths: Union[dict, None] = None, model_
             final_path = paths["final_path"]
 
     return intermediate_path_preprocessing, intermediate_path, final_path
+
+def create_scenario_paths(scenario_name: str):
+    intermediate_path = get_scenario_pkl_path(
+        scenario_name, "intermediate"
+    )
+    final_path = get_scenario_pkl_path(
+        scenario_name, "final"
+    )
+    create_folders_if_nonexistant([intermediate_path, final_path])
+
+def generate_files_to_path_dict(scenarios: list, pkl_paths: Union[dict, None] = None, model_run: str = "", create_path: bool = False):
+    files_to_path = {scenario: {} for scenario in scenarios}
+    for scenario_name in scenarios:
+        intermediate_path_preprocessing, intermediate_path, final_path = return_pkl_paths(scenario_name, pkl_paths, model_run)
+        if create_path:
+            create_folders_if_nonexistant([intermediate_path, final_path])
+        files_to_path[scenario_name] = {
+            "production_resource_usage": final_path,
+            "production_emissions": final_path,
+            "investment_results": final_path,
+            "cost_of_steelmaking": final_path,
+            "full_trade_summary": intermediate_path,
+            "plant_result_df": intermediate_path,
+            "levelized_cost_standardized": intermediate_path_preprocessing,
+            "calculated_emissivity_combined": intermediate_path_preprocessing
+        }
+    return files_to_path

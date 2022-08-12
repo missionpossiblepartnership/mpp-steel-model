@@ -28,7 +28,7 @@ from mppsteel.model_tests.df_tests import (
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.dataframe_utility import convert_currency_col
 
-# Create logger
+
 logger = get_logger(__name__)
 
 

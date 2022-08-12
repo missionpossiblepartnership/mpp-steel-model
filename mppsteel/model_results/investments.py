@@ -25,7 +25,7 @@ from mppsteel.utility.log_utility import get_logger
 from mppsteel.data_load_and_format.steel_plant_formatter import map_plant_id_to_df
 from mppsteel.utility.location_utility import create_country_mapper
 
-# Create logger
+
 logger = get_logger(__name__)
 
 
@@ -260,7 +260,9 @@ def investment_results(scenario_dict: dict, pkl_paths: Union[dict, None] = None,
         pd.DataFrame: A DataFrame containing the investment results.
     """
     logger.info("Generating Investment Results")
-    _, intermediate_path, final_path = return_pkl_paths(scenario_dict["scenario_name"], pkl_paths, model_run)
+    _, intermediate_path, final_path = return_pkl_paths(
+        scenario_dict["scenario_name"], pkl_paths, model_run
+    )
     tech_choice_dict = read_pickle_folder(intermediate_path, "tech_choice_dict", "df")
     plant_investment_cycles = read_pickle_folder(
         intermediate_path, "investment_cycle_ref_result", "df"

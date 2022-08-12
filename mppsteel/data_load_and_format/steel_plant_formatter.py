@@ -27,7 +27,7 @@ from mppsteel.config.model_config import (
     STEEL_PLANT_LATEST_START_DATE,
 )
 
-# Create logger
+
 logger = get_logger(__name__)
 
 NEW_COLUMN_NAMES = [

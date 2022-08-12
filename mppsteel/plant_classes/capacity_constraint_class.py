@@ -14,7 +14,7 @@ from mppsteel.plant_classes.plant_investment_cycle_class import PlantInvestmentC
 
 from mppsteel.utility.log_utility import get_logger
 
-# Create logger
+
 logger = get_logger(__name__)
 
 SwitchingPlant = namedtuple(

@@ -471,3 +471,14 @@ REGION_LIST = [
     "South and Central America",
     "Southeast Asia",
 ]
+
+PKL_FILE_RESULTS_REFERENCE = {
+    "intermediate_data": [
+        "tco_summary_data", "emissivity_abatement_switches", "variable_costs_regional"
+    ],
+    "final_data": [
+        "cost_of_steelmaking", "cumulative_investment_results", "global_metaresults", 
+        "green_capacity_ratio", "investment_results", "levelized_cost_results", 
+        "production_emissions", "production_resource_usage"
+    ]
+}

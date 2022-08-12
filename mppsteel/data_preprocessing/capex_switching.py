@@ -21,7 +21,7 @@ from mppsteel.config.reference_lists import (
 )
 from mppsteel.data_load_and_format.data_interface import capex_generator
 
-# Create logger
+
 logger = get_logger(__name__)
 
 

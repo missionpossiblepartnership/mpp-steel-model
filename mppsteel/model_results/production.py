@@ -26,7 +26,7 @@ from mppsteel.model_solver.solver_summary import tech_capacity_splits, utilizati
 from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.utility.log_utility import get_logger
 
-# Create logger
+
 logger = get_logger(__name__)
 
 def production_mapper(row):
@@ -252,7 +252,9 @@ def production_results_flow(scenario_dict: dict, pkl_paths: Union[dict, None] = 
     """
     scenario_name = scenario_dict["scenario_name"]
 
-    intermediate_path_preprocessing, intermediate_path, final_path = return_pkl_paths(scenario_name, pkl_paths, model_run)
+    intermediate_path_preprocessing, intermediate_path, final_path = return_pkl_paths(
+        scenario_name, pkl_paths, model_run
+    )
 
     logger.info("- Starting Production Results Model Flow")
     plant_result_df = read_pickle_folder(intermediate_path, "plant_result_df", "df")

@@ -56,8 +56,9 @@ from mppsteel.utility.file_handling_utility import (
 )
 
 from mppsteel.utility.log_utility import get_logger
+from mppsteel.utility.utils import get_intersection_of_ordered_list
 
-# Create logger
+
 logger = get_logger(__name__)
 
 RE_DICT = {
@@ -84,9 +85,9 @@ def power_hydrogen_region_reference_generator(country_ref: pd.DataFrame) -> dict
     oceania_countries = get_countries_from_group(
             country_ref, "Continent", "Oceania"
         )
-    row_countries = set(row_countries).difference(
+    row_countries = list(set(row_countries).difference(
         oceania_countries
-    )
+    ))
     asia_countries = get_countries_from_group(
             country_ref, "Continent", "Asia"
         )
@@ -269,9 +270,6 @@ def fossil_fuel_region_reference_generator(country_ref: pd.DataFrame) -> dict:
             country_ref, "RMI Model Region", "Japan, South Korea, and Taiwan"
         )
 }
-
-def get_intersection_of_ordered_list(ordered_list: Iterable, mapping_list: Iterable) -> list:
-    return [x for x in mapping_list if x in frozenset(ordered_list)] 
 
 
 def final_mapper(

@@ -9,7 +9,7 @@ import pycountry
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.data_validation.data_import_tests import COUNTRY_REF_SCHEMA
 
-# Create logger
+
 logger = get_logger(__name__)
 
 

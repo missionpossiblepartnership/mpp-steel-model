@@ -176,3 +176,8 @@ TRADE_PCT_BOUNDARY_FACTOR_DICT = {
     "India": 0.05,
     "Japan, South Korea, and Taiwan": 0
 }
+
+UNDERSCORE_NUMBER_REGEX = r"\_\d+"
+NUMBER_REGEX = r"\d+"
+
+MAX_TASKS_PER_MP_CHILD = 4

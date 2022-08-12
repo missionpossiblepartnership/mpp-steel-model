@@ -25,7 +25,7 @@ from mppsteel.config.model_config import (
 )
 from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
 
-# Create logger
+
 logger = get_logger(__name__)
 
 

@@ -10,7 +10,7 @@ from mppsteel.config.model_config import (
 
 from mppsteel.utility.log_utility import get_logger
 
-# Create logger
+
 logger = get_logger(__name__)
 
 
