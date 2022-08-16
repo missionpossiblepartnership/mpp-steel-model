@@ -243,4 +243,8 @@ MAIN_SCENARIO_RUNS = [
     "tech_moratorium"
 ]
 
-BATCH_ITERATION_SCENARIOS = ["baseline", "tech_moratorium", "carbon_cost"]
+BATCH_ITERATION_SCENARIOS = [
+    "baseline",
+    "carbon_cost"
+    "tech_moratorium"
+]

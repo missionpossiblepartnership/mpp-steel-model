@@ -110,7 +110,6 @@ if __name__ == "__main__":
     if args.multi_run_multi_scenario:
         logger.info(f"Running the model {number_of_runs} times for {len(MAIN_SCENARIO_RUNS)} scenarios")
         scenario_options = {scenario: add_currency_rates_to_scenarios(SCENARIO_OPTIONS[scenario]) for scenario in MAIN_SCENARIO_RUNS}
-        """
         for scenario_name in MAIN_SCENARIO_RUNS:
             create_scenario_paths(scenario_name)
         data_import_and_preprocessing_refresh(scenario_options["baseline"])
@@ -123,7 +122,6 @@ if __name__ == "__main__":
             number_of_runs=number_of_runs,
             remove_run_folders=True,
         )
-        """
         aggregate_multi_run_scenarios(
             scenario_options=scenario_options,
             single_scenario=False,
@@ -136,7 +134,6 @@ if __name__ == "__main__":
 
         output_iteration_path = f"{OUTPUT_FOLDER}/iteration_run {timestamp}"
         create_folders_if_nonexistant([output_iteration_path,])
-        """
         scenario_iteration_reference = generate_scenario_iterations_reference(
             BATCH_ITERATION_SCENARIOS, SCENARIO_OPTIONS, SCENARIO_SETTINGS
         )
@@ -159,17 +156,20 @@ if __name__ == "__main__":
                     iteration_run=True,
                     include_outputs=False
                 )
-        """
+
         files_to_aggregate = [
-            "production_resource_usage", "production_emissions", 
-            "investment_results", "cost_of_steelmaking", 
-            "calculated_emissivity_combined", "tco_summary_data"
+            "production_resource_usage", 
+            "production_emissions", 
+            "investment_results", 
+            "cost_of_steelmaking", 
+            "calculated_emissivity_combined", 
+            "tco_summary_data"
         ]
         combine_files_iteration_run(
             scenarios_to_iterate=BATCH_ITERATION_SCENARIOS,
             filenames=files_to_aggregate,
             output_path=output_iteration_path,
-            to_feather=True
+            serialize=True
         )
 
     logger.info(

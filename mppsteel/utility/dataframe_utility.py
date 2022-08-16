@@ -289,3 +289,8 @@ def test_dataframes_equal(df1: pd.DataFrame, df2: pd.DataFrame, common_col: str,
 def move_columns_to_front(column_list: list, columns_to_move: list) -> list:
     non_moved_columns = list(set(column_list).difference(set(columns_to_move)))
     return columns_to_move + non_moved_columns
+
+def change_col_type(df: pd.DataFrame, columns_to_change: list, new_col_type: str) -> pd.DataFrame:
+    for col in columns_to_change:
+        df[col] = df[col].astype(new_col_type)
+    return df

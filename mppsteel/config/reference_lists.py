@@ -474,7 +474,7 @@ REGION_LIST = [
 
 PKL_FILE_RESULTS_REFERENCE = {
     "intermediate_data": [
-        "tco_summary_data", "emissivity_abatement_switches", "variable_costs_regional"
+        "tco_summary_data", "emissivity_abatement_switches", "variable_costs_regional", "calculated_emissivity_combined"
     ],
     "final_data": [
         "cost_of_steelmaking", "cumulative_investment_results", "global_metaresults", 
