@@ -6,7 +6,7 @@ import numpy as np
 from collections.abc import Iterable
 from copy import deepcopy
 from datetime import datetime
-from typing import Union, Iterable as it
+from typing import Any, List, Union, Iterable as it
 
 from currency_converter import CurrencyConverter
 from mppsteel.config.model_config import NUMBER_OF_TECHNOLOGIES_PER_BIN_GROUP
@@ -173,45 +173,58 @@ def return_bin_rank(x: float, bin_dict: dict) -> float:
                 return bin_dict[val]
 
 
-def replace_dict_items(base_dict: dict, repl_dict: dict) -> dict:
+def replace_dict_items(base_dict: dict, replacement_dict: dict) -> dict:
+    """Replaces certain key, value pairs in a dictionary with those from another dictionary, where the keys match.
+
+    Args:
+        base_dict (dict): The base dictionary.
+        replacement_dict (dict): The replacement dictionary
+
+    Returns:
+        dict: The modified dictionary with the updated key, value pairs.
+    """
     base_dict_c = deepcopy(base_dict)
-    for col_entry in repl_dict:
+    for col_entry in replacement_dict:
         if col_entry in base_dict_c:
-            base_dict_c[col_entry] = repl_dict[col_entry]
+            base_dict_c[col_entry] = replacement_dict[col_entry]
     return base_dict_c
 
 
 def get_dict_keys_by_value(base_dict: dict, value) -> list:
-    item_list = base_dict.items()
-    return [item[0] for item in item_list if item[1] == value]
+    """Returns the dictionary key values that map to a specified value.
+
+    Args:
+        base_dict (dict): The base dictionary containing the values to check against.
+        value (_type_): The value that will be checked against the key, value pairs in base_dict.
+
+    Returns:
+        list: A list containing the matching keys.
+    """
+    return [item[0] for item in base_dict.items() if item[1] == value]
 
 
-def join_list_as_string(list_object: list) -> str:
-    return ", ".join(list_object)
+def join_list_as_string(list_object: list, sep: str = ",") -> str:
+    """Join elements of a list into a string object.
 
+    Args:
+        list_object (list): The list to join as a string.
+        sep (str): The separator that will separate the list_object.
 
-def decades_between_dates(year_range: range, include_final_year: bool = False) -> set:
-    decades_set = [year - (year % 10) for year in list(year_range)]
-    if include_final_year:
-        decades_set.append(year_range[-1])
-    return set(decades_set)
-
-
-def get_closest_number_in_list(my_list: list, my_number: int) -> Union[int, None]:
-    return min(my_list, key=lambda x: abs(x - my_number)) if my_list else None
-
-
-def split_list_into_chunks(lst: list, n: int):
-    return [lst[i : i + n] for i in range(0, len(lst), n)]
-
-
-def get_intersection_of_ordered_list(
-    ordered_list: Iterable, mapping_list: Iterable
-) -> list:
-    return [x for x in mapping_list if x in frozenset(ordered_list)]
+    Returns:
+        str: A str with all elements in list_object joined separated by sep.
+    """
+    return f"{sep} ".join(list_object)
 
 
 def reverse_dict_with_list_elements(dict_to_reverse: dict) -> dict:
+    """Reverse a dictionary that has value as a list, where each element in the list becomes a key, and the old keys become values.
+
+    Args:
+        dict_to_reverse (dict): The dictionary with list values that you want to reverse.
+
+    Returns:
+        dict: A modified dictionary.
+    """
     new_dict = {}
     for key in dict_to_reverse:
         for elem in dict_to_reverse[key]:
@@ -219,9 +232,58 @@ def reverse_dict_with_list_elements(dict_to_reverse: dict) -> dict:
     return new_dict
 
 
-def split_range_obj(range_obj: range, num_splits: int) -> list:
-    k, m = divmod(len(range_obj), num_splits)
-    return (
-        range_obj[i * k + min(i, m) : (i + 1) * k + min(i + 1, m)]
-        for i in range(num_splits)
-    )
+def decades_between_dates(year_range: range, include_final_year: bool = False) -> set:
+    """Returns a set of the decades between a range of dates.
+
+    Args:
+        year_range (range): A range of dates.
+        include_final_year (bool, optional): Flag to determine whether to include the final year of year_range whether it is a decade or not. Defaults to False.
+
+    Returns:
+        set: The set of decade years.
+    """
+    decades_set = [year - (year % 10) for year in list(year_range)]
+    if include_final_year:
+        decades_set.append(year_range[-1])
+    return set(decades_set)
+
+
+def get_closest_number_in_list(my_list: list, my_number: int) -> Union[int, None]:
+    """Returns the number closest to another number in list of numbers.
+
+    Args:
+        my_list (list): A list of values.
+        my_number (int): The number you want to return the closest element in my_list.
+
+    Returns:
+        Union[int, None]: The closest number in my_list. If my_list is empty, will return None.
+    """
+    return min(my_list, key=lambda x: abs(x - my_number)) if my_list else None
+
+
+def split_list_into_chunks(lst: List[Any], n: int) -> list:
+    """Splits a list into smaller lists of predetermined length.
+
+    Args:
+        lst (list): A list with any elements.
+        n (int): The predetermined size of each smaller list chunk.
+
+    Returns:
+        list: A list of length n, with each element as a smaller lists.
+    """
+    return [lst[i : i + n] for i in range(0, len(lst), n)]
+
+
+def get_intersection_of_ordered_list(
+    ordered_list: Iterable, mapping_list: Iterable
+) -> list:
+    """Return values from a list in the order of a different list.
+
+    Args:
+        ordered_list (Iterable): The list in the order of that you want to subset the mapping_list.
+        mapping_list (Iterable): The list that you want to subset with ordered_list.
+
+    Returns:
+        list: A list of ordered values at the intersection of ordered_list and mapping_list.
+    """
+    return [x for x in mapping_list if x in frozenset(ordered_list)]

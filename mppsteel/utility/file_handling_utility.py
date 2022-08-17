@@ -153,6 +153,11 @@ def pickle_to_csv(
 
 
 def create_folder_if_nonexist(folder_path: str) -> None:
+    """Create folder at a specified path if it does not already exist.
+
+    Args:
+        folder_path (str): The path to create if it does not exist.
+    """
     Path(folder_path).mkdir(parents=True, exist_ok=True)
 
 
@@ -189,6 +194,16 @@ def get_scenario_pkl_path(
 def return_pkl_paths(
     scenario_name: str, paths: Union[dict, None] = None, model_run: str = ""
 ) -> tuple:
+    """Returns the paths for a scenario and customises the extension depening on the base path given to it and whether it is a specific model run.
+
+    Args:
+        scenario_name (str): The name of the scenario for which to create paths.
+        paths (Union[dict, None], optional): Specific pkl paths to override the default paths. Defaults to None.
+        model_run (str, optional): The iteration run of the model. Defaults to "".
+
+    Returns:
+        tuple: A tuple of three paths to for intermediate data folder(s) and final path.
+    """
     intermediate_path_preprocessing = get_scenario_pkl_path(
         scenario=scenario_name,
         pkl_folder_type="intermediate",
@@ -211,6 +226,11 @@ def return_pkl_paths(
 
 
 def create_scenario_paths(scenario_name: str) -> None:
+    """Create customized intermediate and final paths based on a scenario name.
+
+    Args:
+        scenario_name (str): The name of the scenario for which to create paths.
+    """
     intermediate_path = get_scenario_pkl_path(scenario_name, "intermediate")
     final_path = get_scenario_pkl_path(scenario_name, "final")
     create_folders_if_nonexistant([intermediate_path, final_path])
@@ -222,6 +242,19 @@ def generate_files_to_path_dict(
     model_run: str = "",
     create_path: bool = False,
 ) -> dict:
+    """Creates a filepath dictionary for each scenario in scenarios. Each filepath is based on pkl_paths and
+    is customized in the return_pkl_paths with the optional model_run parameter.
+    Each path is optionally created using tue create_path boolean flag.
+
+    Args:
+        scenarios (list): The list of scenarios that form the keys of the filepath dictionary.
+        pkl_paths (Union[dict, None], optional): Specific pkl paths to override the default paths. Defaults to None.
+        model_run (str, optional): The iteration run of the model. Defaults to "".
+        create_path (bool, optional): Flag to determine whether new folders should be generated. Defaults to False.
+
+    Returns:
+        dict: A nested filepath dictionary with scenario as key, file as second key, and each path as the value.
+    """
     files_to_path = {scenario: {} for scenario in scenarios}
     for scenario_name in scenarios:
         (

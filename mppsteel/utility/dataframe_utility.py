@@ -250,21 +250,70 @@ def expand_melt_and_sort_years(
 def convert_currency_col(
     df: pd.DataFrame, curr_col: str, conversion_rate: float
 ) -> pd.DataFrame:
+    """Converts a column currency - curr_col - using a parameter conversion_rate.
+
+    Args:
+        df (pd.DataFrame): The DataFrame containing the currency column to convert.
+        curr_col (str): The name of the currency column.
+        conversion_rate (float): The conversion rate to multiply the currency column with.
+
+    Returns:
+        pd.DataFrame: The modified DataFrame.
+    """
     df_c = df.copy()
     df_c[curr_col] = df_c[curr_col] * conversion_rate
     return df_c
 
 
 def change_cols_to_numeric(df: pd.DataFrame, numeric_cols: list) -> pd.DataFrame:
+    """Converts columns specified to numeric columns.
+
+    Args:
+        df (pd.DataFrame): The DataFrame with the columns to be converted.
+        numeric_cols (list): A list containing the columns to convert.
+
+    Returns:
+        pd.DataFrame: The modified DataFrame.
+    """
     df_c = df.copy()
     for col in numeric_cols:
         df_c[col] = pd.to_numeric(df[col])
     return df_c
 
+def change_col_type(
+    df: pd.DataFrame, columns_to_change: list, new_col_type: str
+) -> pd.DataFrame:
+    """Converts columns specified to a certain type.
+
+    Args:
+        df (pd.DataFrame): The DataFrame with the columns to be converted.
+        columns_to_change (list): The columns to change in the df.
+        new_col_type (str): The new type for the columns.
+
+    Returns:
+        pd.DataFrame: The modified DataFrame.
+    """
+    df_c = df.copy()
+    for col in columns_to_change:
+        df_c[col] = df_c[col].astype(new_col_type)
+    return df_c
+
+
 
 def extend_df_years(
     df: pd.DataFrame, year_column: str, year_end: int, index: list = None
 ) -> pd.DataFrame:
+    """Extends a DataFrame with a year column by taking its final year and projecting the data columns into the future until a specified end year.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to extend.
+        year_column (str): The column containing the year timeseries.
+        year_end (int): The year that the modified DataFrame should end.
+        index (list, optional): The index column for the modified DataFrame. Defaults to None.
+
+    Returns:
+        pd.DataFrame: The modified DataFrame with the expanded years.
+    """
     df_c = df.reset_index().copy() if index else df.copy()
     max_year = df_c[year_column].max()
     new_rows_full_df = pd.DataFrame().reindex_like(df_c)
@@ -291,24 +340,34 @@ def test_dataframes_equal(
     df1: pd.DataFrame,
     df2: pd.DataFrame,
     common_col: str,
-    df1_index: int,
-    df2_index: int,
+    common_col_value1: int,
+    common_col_value2: int,
 ):
-    df1_f = df1[df1[common_col] == df1_index].drop(common_col, axis=1)
-    df2_f = df2[df2[common_col] == df2_index].drop(common_col, axis=1)
+    """Tests two DataFrames and checks for equality.
+
+    Args:
+        df1 (pd.DataFrame): A DataFrame to compare to df2.
+        df2 (pd.DataFrame): A DataFrame to compare to df1.
+        common_col (str): The common column to compare 
+        common_col_value1 (int): The rows with a value to be matched to df1.
+        common_col_value2 (int): The rows with a value to be matched to df2.
+    """
+    df1_f = df1[df1[common_col] == common_col_value1].drop(common_col, axis=1)
+    df2_f = df2[df2[common_col] == common_col_value2].drop(common_col, axis=1)
     assert df1_f.equals(
         df2_f
-    ), f"DataFrames not equal | common column: {common_col} | Indexes: {df1_index} and {df2_index} -> {df1_f} {df2_f}"
+    ), f"DataFrames not equal | common column: {common_col} | Indexes: {common_col_value1} and {common_col_value2} -> {df1_f} {df2_f}"
 
 
-def move_columns_to_front(column_list: list, columns_to_move: list) -> list:
-    non_moved_columns = list(set(column_list).difference(set(columns_to_move)))
-    return columns_to_move + non_moved_columns
+def move_elements_to_front_of_list(full_list: list, elements_to_move: list) -> list:
+    """Move elements in a list to the front of the list
 
+    Args:
+        full_list (list): The full list you want to move.
+        elements_to_move (list): The (ordered) elements to move to the front of the list
 
-def change_col_type(
-    df: pd.DataFrame, columns_to_change: list, new_col_type: str
-) -> pd.DataFrame:
-    for col in columns_to_change:
-        df[col] = df[col].astype(new_col_type)
-    return df
+    Returns:
+        list: The reordered list.
+    """
+    non_moved_columns = list(set(full_list).difference(set(elements_to_move)))
+    return elements_to_move + non_moved_columns

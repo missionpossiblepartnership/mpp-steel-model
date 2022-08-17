@@ -15,7 +15,7 @@ from mppsteel.config.model_config import (
     UNDERSCORE_NUMBER_REGEX,
 )
 from mppsteel.config.reference_lists import PKL_FILE_RESULTS_REFERENCE
-from mppsteel.utility.dataframe_utility import change_col_type, move_columns_to_front
+from mppsteel.utility.dataframe_utility import change_col_type, move_elements_to_front_of_list
 from mppsteel.utility.utils import reverse_dict_with_list_elements
 from mppsteel.utility.file_handling_utility import (
     create_folder_if_nonexist,
@@ -96,7 +96,7 @@ def generate_scenario_iterations_reference(
     combined_df["iteration_scenario"] = combined_df["scenario_name"].apply(
         lambda scenario: re.findall(NUMBER_REGEX, scenario)[0].zfill(3)
     )
-    new_column_order = move_columns_to_front(
+    new_column_order = move_elements_to_front_of_list(
         combined_df.columns, ["scenario_name", "base_scenario", "iteration_scenario"]
     )
     return combined_df[new_column_order]

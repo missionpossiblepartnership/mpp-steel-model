@@ -139,13 +139,32 @@ def create_country_mapper(schema: str = "rmi", path: str = PKL_DATA_IMPORTS) -> 
 
 
 def pick_random_country_from_region(
-    country_df: pd.DataFrame, region: str, region_schema
-):
+    country_df: pd.DataFrame, region: str, region_schema: str
+) -> str:
+    """Selects a random country from a country metadata dataframe based on a selected region_schema and region.
+
+    Args:
+        country_df (pd.DataFrame): The Country Metadata DataFrame.
+        region (str): The region to select a random country from. Must exist in the region schema.
+        region_schema (str): The schema of the region to select a random country from.
+
+    Returns:
+        str: The random country choice from a list.
+    """
     country_list = get_countries_from_group(country_df, region_schema, region)
     return random.choice(country_list)
 
 
-def pick_random_country_from_region_subset(plant_df: pd.DataFrame, region: str):
+def pick_random_country_from_region_subset(plant_df: pd.DataFrame, region: str) -> str:
+    """Picks a random country from a list of countries present in a Plant DataFrame for a specified region.
+
+    Args:
+        plant_df (pd.DataFrame): The plant_df containing the region and country metadata.
+        region (str): The region to select a random country from. Must exist in the plant_df
+
+    Returns:
+        str: The random country choice from a list.
+    """
     country_list = plant_df[plant_df[MAIN_REGIONAL_SCHEMA] == region][
         "country_code"
     ].unique()
