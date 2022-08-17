@@ -10,15 +10,12 @@ from mppsteel.config.model_config import MODEL_YEAR_RANGE
 from mppsteel.config.reference_lists import TECHNOLOGIES_TO_DROP
 from mppsteel.model_tests.df_tests import test_negative_df_values
 
-from mppsteel.config.model_config import (
-    MODEL_YEAR_RANGE,
-    PKL_DATA_FORMATTED
-)
+from mppsteel.config.model_config import MODEL_YEAR_RANGE, PKL_DATA_FORMATTED
 
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
     return_pkl_paths,
-    serialize_file
+    serialize_file,
 )
 from mppsteel.utility.function_timer_utility import timer_func
 
@@ -32,7 +29,7 @@ def get_opex_costs(
     year: int,
     variable_costs_df: pd.DataFrame,
     opex_df: pd.DataFrame,
-    carbon_tax_full_ref: pd.DataFrame
+    carbon_tax_full_ref: pd.DataFrame,
 ) -> pd.DataFrame:
     """Returns the combined Opex costs for each technology in each region.
 
@@ -54,11 +51,12 @@ def get_opex_costs(
     total_opex = variable_costs + opex_costs + carbon_tax_result
     return total_opex.rename(mapper={"value": "opex"}, axis=1)
 
+
 def total_opex_cost_ref_loop(
     product_range_year_country: list,
     variable_cost_summary: pd.DataFrame,
     other_opex_df: pd.DataFrame,
-    carbon_tax_full_ref: pd.DataFrame
+    carbon_tax_full_ref: pd.DataFrame,
 ) -> dict:
 
     opex_cost_ref = {}
@@ -72,18 +70,23 @@ def total_opex_cost_ref_loop(
             year,
             variable_cost_summary,
             other_opex_df,
-            carbon_tax_full_ref
+            carbon_tax_full_ref,
         )
-        assert technology_opex_values.isnull().values.any() == False, f"DF entry has nans: {technology_opex_values}"
+        assert (
+            technology_opex_values.isnull().values.any() == False
+        ), f"DF entry has nans: {technology_opex_values}"
         opex_cost_ref[(year, country_code)] = technology_opex_values
     return opex_cost_ref
+
 
 @timer_func
 def generate_total_opex_cost_reference(
     scenario_dict: dict, pkl_paths: Union[dict, None] = None, serialize: bool = False
 ) -> pd.DataFrame:
     logger.info("Total Opex Reference Preprocessing")
-    _, intermediate_path, _ = return_pkl_paths(scenario_name=scenario_dict["scenario_name"], paths=pkl_paths)
+    _, intermediate_path, _ = return_pkl_paths(
+        scenario_name=scenario_dict["scenario_name"], paths=pkl_paths
+    )
     carbon_tax_reference = read_pickle_folder(
         intermediate_path, "carbon_tax_reference", "df"
     )
@@ -106,8 +109,9 @@ def generate_total_opex_cost_reference(
     steel_plants = read_pickle_folder(
         PKL_DATA_FORMATTED, "steel_plants_processed", "df"
     )
-    product_range_year_country = list(itertools.product(
-        MODEL_YEAR_RANGE, steel_plants["country_code"].unique()))
+    product_range_year_country = list(
+        itertools.product(MODEL_YEAR_RANGE, steel_plants["country_code"].unique())
+    )
 
     logger.info("Creating Total Opex Reference Table")
 
@@ -115,7 +119,7 @@ def generate_total_opex_cost_reference(
         product_range_year_country,
         variable_cost_summary,
         other_opex_df,
-        carbon_tax_reference
+        carbon_tax_reference,
     )
     if serialize:
         logger.info("-- Serializing dataframe")

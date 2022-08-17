@@ -4,9 +4,7 @@ from mppsteel.data_load_and_format.steel_plant_formatter import map_plant_id_to_
 import pandas as pd
 from tqdm import tqdm
 
-from mppsteel.config.model_config import (
-    MODEL_YEAR_RANGE
-)
+from mppsteel.config.model_config import MODEL_YEAR_RANGE
 
 from mppsteel.utility.log_utility import get_logger
 
@@ -104,6 +102,7 @@ def get_capacity(
         if active_plant_checker_dict[plant_name][year]
         else 0
     )
+
 
 def utilization_mapper(row, utilization_results: dict):
     return (

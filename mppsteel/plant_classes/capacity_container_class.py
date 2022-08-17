@@ -3,10 +3,7 @@
 from typing import Tuple
 import pandas as pd
 
-from mppsteel.config.model_config import (
-    MEGATON_TO_KILOTON_FACTOR,
-    MAIN_REGIONAL_SCHEMA
-)
+from mppsteel.config.model_config import MEGATON_TO_KILOTON_FACTOR, MAIN_REGIONAL_SCHEMA
 from mppsteel.utility.log_utility import get_logger
 
 logger = get_logger(__name__)
@@ -99,7 +96,6 @@ class CapacityContainerClass:
 
         # return all years and regions
         return self.plant_capacities
-
 
 
 def create_regional_capacity_dict(

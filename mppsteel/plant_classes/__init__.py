@@ -5,5 +5,5 @@ from . import (
     capacity_constraint_class,
     capacity_container_class,
     plant_choices_class,
-    regional_utilization_class
+    regional_utilization_class,
 )

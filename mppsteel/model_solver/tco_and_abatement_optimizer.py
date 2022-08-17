@@ -7,10 +7,17 @@ from typing import Tuple
 import pandas as pd
 import numpy as np
 from mppsteel.plant_classes.plant_choices_class import PlantChoices
-from mppsteel.model_solver.material_usage_class import MaterialUsage, create_material_usage_dict
+from mppsteel.model_solver.material_usage_class import (
+    MaterialUsage,
+    create_material_usage_dict,
+)
 
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.utility.utils import create_bin_rank_dict, join_list_as_string, return_bin_rank
+from mppsteel.utility.utils import (
+    create_bin_rank_dict,
+    join_list_as_string,
+    return_bin_rank,
+)
 from mppsteel.utility.dataframe_utility import change_cols_to_numeric
 
 from mppsteel.config.model_config import (
@@ -128,7 +135,7 @@ def min_ranker(
     # sort the dataframe according to the value column
     df_subset.sort_values(value_col, ascending=True, inplace=True)
     # default ref: empty string
-    tco_reference_tech = ''
+    tco_reference_tech = ""
     data_type_col_mapper = {
         "tco": "tco_rank_score",
         "abatement": "abatement_rank_score",
@@ -162,7 +169,7 @@ def min_ranker(
             df_subset[data_type_col_mapper[data_type]] = df_subset[value_col].apply(
                 lambda x: abatement_ranker_logic(x)
             )
-    
+
     return df_subset, tco_reference_tech
 
 
@@ -203,7 +210,7 @@ def get_tco_and_abatement_values(
         start_tech=start_tech,
         technology_list=technology_list,
         rank=rank,
-        transitional_switch_mode=transitional_switch_mode
+        transitional_switch_mode=transitional_switch_mode,
     )
     abatement_values, _ = min_ranker(
         df=emissions_df,
@@ -214,7 +221,7 @@ def get_tco_and_abatement_values(
         start_tech=start_tech,
         technology_list=technology_list,
         rank=rank,
-        transitional_switch_mode=transitional_switch_mode
+        transitional_switch_mode=transitional_switch_mode,
     )
     return tco_values, abatement_values, tco_reference_tech
 
@@ -250,6 +257,7 @@ def record_ranking(
         scenario_name (str): The current scenario of the model_run.
         transitional_switch_mode (bool): Boolean flag that determines if transitional switch logic is active.
     """
+
     def boolean_check(row) -> bool:
         return not row.excluded_due_to_availability and row.excluded_due_to_constraints
 
@@ -263,9 +271,15 @@ def record_ranking(
         records["solver_logic"] = solver_logic
         records["weighting"] = str(weighting_dict)
         records["scenario_name"] = scenario_name
-        records["switch_type"] = "transitional switch" if transitional_switch_mode else "main cycle switch"
-        records["excluded_due_to_availability"] = records["switch_tech"].apply(lambda switch_tech: switch_tech not in availability_included_techs)
-        records["excluded_due_to_constraints"] = records["switch_tech"].apply(lambda switch_tech: switch_tech not in constraint_included_techs)
+        records["switch_type"] = (
+            "transitional switch" if transitional_switch_mode else "main cycle switch"
+        )
+        records["excluded_due_to_availability"] = records["switch_tech"].apply(
+            lambda switch_tech: switch_tech not in availability_included_techs
+        )
+        records["excluded_due_to_constraints"] = records["switch_tech"].apply(
+            lambda switch_tech: switch_tech not in constraint_included_techs
+        )
         records["excluded_for_any_reason"] = records.apply(boolean_check, axis=1)
 
         if solver_logic == "rank":
@@ -284,7 +298,7 @@ def record_ranking(
                     "tco_rank_score",
                     "abatement_rank_score",
                     "overall_rank",
-                    "excluded_due_to_constraints"
+                    "excluded_due_to_constraints",
                 ]
             ]
         elif solver_logic in {"scaled", "scaled_bins"}:
@@ -303,13 +317,19 @@ def record_ranking(
                     "tco_scaled",
                     "abatement_scaled",
                     "overall_score",
-                    "excluded_due_to_constraints"
+                    "excluded_due_to_constraints",
                 ]
             ]
         records = records.set_index(
             [
-                "year", "region", "plant_name", "solver_logic", 
-                "weighting", "switch_type", "scenario_name", "start_tech"
+                "year",
+                "region",
+                "plant_name",
+                "solver_logic",
+                "weighting",
+                "switch_type",
+                "scenario_name",
+                "start_tech",
             ]
         ).sort_index(ascending=True)
         plant_choice_container.update_records("rank", records)
@@ -403,7 +423,7 @@ def get_best_choice(
                 start_tech,
                 regional_scrap=regional_scrap,
                 override_constraint=False,
-                apply_transaction=False
+                apply_transaction=False,
             )
             updated_tech_availability = deepcopy(constraint_included_techs)
 
@@ -488,7 +508,7 @@ def get_best_choice(
             solver_logic,
             weighting_dict,
             scenario_name,
-            transitional_switch_mode
+            transitional_switch_mode,
         )
         combined_scales.drop(
             labels=combined_scales.index.difference(updated_tech_availability),
@@ -503,7 +523,9 @@ def get_best_choice(
             min_value = combined_scales["overall_score"].min()
             best_values = combined_scales[combined_scales["overall_rank"] == min_value]
 
-            return return_best_choice(best_values, start_tech, updated_tech_availability)
+            return return_best_choice(
+                best_values, start_tech, updated_tech_availability
+            )
 
     # Ranking algorithm
     if solver_logic == "ranked":
@@ -517,7 +539,7 @@ def get_best_choice(
             start_tech,
             technology_list,
             rank=True,
-            transitional_switch_mode=transitional_switch_mode
+            transitional_switch_mode=transitional_switch_mode,
         )
 
         if enforce_constraints:
@@ -532,13 +554,19 @@ def get_best_choice(
                 start_tech,
                 regional_scrap=regional_scrap,
                 override_constraint=False,
-                apply_transaction=False
+                apply_transaction=False,
             )
             updated_tech_availability = deepcopy(constraint_included_techs)
             if transitional_switch_mode and start_tech not in updated_tech_availability:
                 updated_tech_availability.append(start_tech)
 
-            if not transitional_switch_mode and 1 not in tco_values.loc[updated_tech_availability]["tco_rank_score"].values:
+            if (
+                not transitional_switch_mode
+                and 1
+                not in tco_values.loc[updated_tech_availability][
+                    "tco_rank_score"
+                ].values
+            ):
                 updated_tech_availability.append(start_tech)
 
         tco_values.drop(
@@ -568,7 +596,7 @@ def get_best_choice(
             solver_logic,
             weighting_dict,
             scenario_name,
-            transitional_switch_mode
+            transitional_switch_mode,
         )
         combined_ranks.drop(
             labels=combined_ranks.index.difference(updated_tech_availability),
@@ -636,7 +664,7 @@ def apply_constraints(
     base_tech: str,
     regional_scrap: bool,
     override_constraint: bool,
-    apply_transaction: bool
+    apply_transaction: bool,
 ):
     # Constraints checks
     new_availability_list = []
@@ -651,7 +679,7 @@ def apply_constraints(
             switch_technology,
             regional_scrap,
             override_constraint=override_constraint,
-            apply_transaction=apply_transaction
+            apply_transaction=apply_transaction,
         )
         if all(material_check_container.values()):
             new_availability_list.append(switch_technology)

@@ -8,7 +8,7 @@ from mppsteel.config.model_config import (
     DISCOUNT_RATE,
     INVESTMENT_CYCLE_DURATION_YEARS,
     MEGATON_TO_TON,
-    MODEL_YEAR_END
+    MODEL_YEAR_END,
 )
 from mppsteel.config.reference_lists import SWITCH_DICT
 from mppsteel.utility.log_utility import get_logger

@@ -3,7 +3,12 @@ import itertools
 from typing import Union
 import pandas as pd
 import plotly.express as px
-from mppsteel.config.model_config import MID_MODEL_CHECKPOINT_YEAR_FOR_GRAPHS, MODEL_YEAR_RANGE, NET_ZERO_TARGET_YEAR, PKL_DATA_FORMATTED
+from mppsteel.config.model_config import (
+    MID_MODEL_CHECKPOINT_YEAR_FOR_GRAPHS,
+    MODEL_YEAR_RANGE,
+    NET_ZERO_TARGET_YEAR,
+    PKL_DATA_FORMATTED,
+)
 from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import (
@@ -500,16 +505,20 @@ def create_emissions_graph(
 
 
 @timer_func
-def create_graphs(filepath: str, scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> None:
+def create_graphs(
+    filepath: str, scenario_dict: dict, pkl_paths: Union[dict, None] = None
+) -> None:
     """The complete creation flow for all graphs.
 
     Args:
         filepath (str): The folder path you want to save the chart to. Defaults to None.
         scenario_dict (dict): A dictionary with scenarios key value mappings from the current model execution.
         pkl_paths (Union[dict, None], optional): A dictionary containing custom pickle paths. Defaults to {}.
-        
+
     """
-    _, intermediate_path, final_path = return_pkl_paths(scenario_name=scenario_dict["scenario_name"], paths=pkl_paths)
+    _, intermediate_path, final_path = return_pkl_paths(
+        scenario_name=scenario_dict["scenario_name"], paths=pkl_paths
+    )
 
     production_resource_usage = read_pickle_folder(
         final_path, "production_resource_usage", "df"
@@ -519,7 +528,9 @@ def create_graphs(filepath: str, scenario_dict: dict, pkl_paths: Union[dict, Non
     calculated_emissivity_combined_df = read_pickle_folder(
         intermediate_path, "calculated_emissivity_combined", "df"
     )
-    levelized_cost_standardized = read_pickle_folder(intermediate_path, "levelized_cost_standardized", "df")
+    levelized_cost_standardized = read_pickle_folder(
+        intermediate_path, "levelized_cost_standardized", "df"
+    )
     investment_results = read_pickle_folder(final_path, "investment_results", "df")
     capex_dict = read_pickle_folder(PKL_DATA_FORMATTED, "capex_dict", "df")
     variable_cost_df = read_pickle_folder(
@@ -588,7 +599,10 @@ def create_graphs(filepath: str, scenario_dict: dict, pkl_paths: Union[dict, Non
     )
 
     for year, region in list(
-        itertools.product({MID_MODEL_CHECKPOINT_YEAR_FOR_GRAPHS, NET_ZERO_TARGET_YEAR}, {"China", "India", "Europe", "NAFTA"})
+        itertools.product(
+            {MID_MODEL_CHECKPOINT_YEAR_FOR_GRAPHS, NET_ZERO_TARGET_YEAR},
+            {"China", "India", "Europe", "NAFTA"},
+        )
     ):
         create_opex_capex_graph_regional(
             variable_cost_df,
@@ -626,13 +640,11 @@ def create_graphs(filepath: str, scenario_dict: dict, pkl_paths: Union[dict, Non
         lcost_df=levelized_cost_standardized,
         chosen_year=MID_MODEL_CHECKPOINT_YEAR_FOR_GRAPHS,
         filename="levelized_cost_standardized",
-        filepath=filepath
+        filepath=filepath,
     )
 
     for year, region in list(
-        itertools.product(
-            model_decades, {"China", "India", "Europe", "NAFTA"}
-        )
+        itertools.product(model_decades, {"China", "India", "Europe", "NAFTA"})
     ):
         create_tco_graph(tco_ref, year, region, "Avg BF-BOF", filepath=filepath)
 

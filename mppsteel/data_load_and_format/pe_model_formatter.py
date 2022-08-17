@@ -40,7 +40,7 @@ from mppsteel.config.reference_lists import (
     NORTH_ASIA_COUNTRIES,
     SOUTH_ASIA_COUNTRIES,
     SOUTHEAST_ASIA_COUNTRIES,
-    WESTERN_EUROPE_COUNTRIES
+    WESTERN_EUROPE_COUNTRIES,
 )
 from mppsteel.utility.dataframe_utility import extend_df_years
 from mppsteel.utility.function_timer_utility import timer_func
@@ -52,7 +52,7 @@ from mppsteel.utility.location_utility import get_countries_from_group
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
     return_pkl_paths,
-    serialize_file
+    serialize_file,
 )
 
 from mppsteel.utility.log_utility import get_logger
@@ -68,6 +68,7 @@ RE_DICT = {
     "gas": "Price of onsite gas + ccs",
 }
 
+
 def power_hydrogen_region_reference_generator(country_ref: pd.DataFrame) -> dict:
     """Creates a dictionary reference for the CCS model by mapping each model region to a distinct country code.
     The order of regions needs to proceed from the broadest region to the individual country to ensure that
@@ -79,18 +80,10 @@ def power_hydrogen_region_reference_generator(country_ref: pd.DataFrame) -> dict
     Returns:
         dict: A dictionary containing a mapping key of [country_code] to CCS value.
     """
-    row_countries = get_countries_from_group(
-            country_ref, "RMI Model Region", "RoW"
-        )
-    oceania_countries = get_countries_from_group(
-            country_ref, "Continent", "Oceania"
-        )
-    row_countries = list(set(row_countries).difference(
-        oceania_countries
-    ))
-    asia_countries = get_countries_from_group(
-            country_ref, "Continent", "Asia"
-        )
+    row_countries = get_countries_from_group(country_ref, "RMI Model Region", "RoW")
+    oceania_countries = get_countries_from_group(country_ref, "Continent", "Oceania")
+    row_countries = list(set(row_countries).difference(oceania_countries))
+    asia_countries = get_countries_from_group(country_ref, "Continent", "Asia")
     asia_countries.append("TWN")
     separate_asia_countries = JAPAN_SOUTHKOREA_TAIWAN + ["CHN", "IND"]
     for country in separate_asia_countries:
@@ -105,25 +98,19 @@ def power_hydrogen_region_reference_generator(country_ref: pd.DataFrame) -> dict
         "Middle_East": get_countries_from_group(
             country_ref, "RMI Model Region", "Middle East"
         ),
-        "Africa": get_countries_from_group(
-            country_ref, "RMI Model Region", "Africa"
-        ),
+        "Africa": get_countries_from_group(country_ref, "RMI Model Region", "Africa"),
         "AustralasiaOceania": get_countries_from_group(
             country_ref, "Continent", "Oceania"
         ),
         "Southeast_Asia": get_countries_from_group(
             country_ref, "RMI Model Region", "Southeast Asia"
         ),
-        "EU": get_countries_from_group(
-            country_ref, "RMI Model Region", "Europe"
-        ),
-        "Russia": get_countries_from_group(
-            country_ref, "RMI Model Region", "CIS"
-        ),
+        "EU": get_countries_from_group(country_ref, "RMI Model Region", "Europe"),
+        "Russia": get_countries_from_group(country_ref, "RMI Model Region", "CIS"),
         "US": NAFTA_COUNTRIES,
         "Japan_SthKorea_Taiwan": JAPAN_SOUTHKOREA_TAIWAN,
         "China": ["CHN"],
-        "India": ["IND"]
+        "India": ["IND"],
     }
 
 
@@ -145,13 +132,26 @@ def bio_region_reference_generator(country_ref: pd.DataFrame) -> dict:
         ),
         "Africa": get_countries_from_group(country_ref, "RMI Model Region", "Africa"),
         "CIS": get_countries_from_group(country_ref, "RMI Model Region", "CIS"),
-        "Middle_East": get_countries_from_group(country_ref, "RMI Model Region", "Middle East"),
-        "South Asia": get_countries_from_group(country_ref, "Region 1", "Southern Asia"),
-        "Southeast_Asia": get_countries_from_group(country_ref, "Region 1", "South-eastern Asia"),
-        "Western Europe": get_countries_from_group(country_ref, "Region 1", "Western Europe"),
-        "East Europe": get_countries_from_group(country_ref, "Region 1", "Eastern Europe"),
+        "Middle_East": get_countries_from_group(
+            country_ref, "RMI Model Region", "Middle East"
+        ),
+        "South Asia": get_countries_from_group(
+            country_ref, "Region 1", "Southern Asia"
+        ),
+        "Southeast_Asia": get_countries_from_group(
+            country_ref, "Region 1", "South-eastern Asia"
+        ),
+        "Western Europe": get_countries_from_group(
+            country_ref, "Region 1", "Western Europe"
+        ),
+        "East Europe": get_countries_from_group(
+            country_ref, "Region 1", "Eastern Europe"
+        ),
         "Carribbean": get_countries_from_group(country_ref, "Region 1", "Caribbean"),
-        "Central Asia": get_countries_from_group(country_ref, "Region 1", "Central Asia") + ["GEO", "TUR"],
+        "Central Asia": get_countries_from_group(
+            country_ref, "Region 1", "Central Asia"
+        )
+        + ["GEO", "TUR"],
         "AustralasiaOceania": get_countries_from_group(
             country_ref, "Continent", "Oceania"
         ),
@@ -161,8 +161,9 @@ def bio_region_reference_generator(country_ref: pd.DataFrame) -> dict:
         "US": ["USA"],
         "India": ["IND"],
         "China": ["CHN"],
-        "Russia": ["RUS"]
+        "Russia": ["RUS"],
     }
+
 
 def ccs_region_reference_generator(country_ref: pd.DataFrame) -> dict:
     """Creates a dictionary reference for the CCS model by mapping each model region to a distinct country code.
@@ -203,7 +204,7 @@ def ccs_region_reference_generator(country_ref: pd.DataFrame) -> dict:
         "Canada": ["CAN"],
         "Russia": ["RUS"],
         "Indonesia": ["IDN"],
-        "Brazil": ["BRA"]
+        "Brazil": ["BRA"],
     }
 
 
@@ -235,41 +236,28 @@ def fossil_fuel_region_reference_generator(country_ref: pd.DataFrame) -> dict:
     """
     asia_and_pacific = get_countries_from_group(
         country_ref, "RMI Model Region", "Southeast Asia"
-        ) + get_countries_from_group(
-            country_ref, "RMI Model Region", "RoW"
-        )
+    ) + get_countries_from_group(country_ref, "RMI Model Region", "RoW")
     return {
-
         "North America": get_countries_from_group(
             country_ref, "RMI Model Region", "NAFTA"
         ),
         "Latin America": get_countries_from_group(
             country_ref, "RMI Model Region", "South and Central America"
         ),
-        "Europe": get_countries_from_group(
-            country_ref, "RMI Model Region", "Europe"
-        ),
-        "Russia": get_countries_from_group(
-            country_ref, "RMI Model Region", "CIS"
-        ),
-        "Africa": get_countries_from_group(
-            country_ref, "RMI Model Region", "Africa"
-        ),
+        "Europe": get_countries_from_group(country_ref, "RMI Model Region", "Europe"),
+        "Russia": get_countries_from_group(country_ref, "RMI Model Region", "CIS"),
+        "Africa": get_countries_from_group(country_ref, "RMI Model Region", "Africa"),
         "Middle East": get_countries_from_group(
             country_ref, "RMI Model Region", "Middle East"
         ),
         "Rest of Asia and Pacific": asia_and_pacific,
         "Australasia/Oceania": asia_and_pacific,
-        "China": get_countries_from_group(
-            country_ref, "RMI Model Region", "China"
-        ),
-        "India": get_countries_from_group(
-            country_ref, "RMI Model Region", "India"
-        ),
+        "China": get_countries_from_group(country_ref, "RMI Model Region", "China"),
+        "India": get_countries_from_group(country_ref, "RMI Model Region", "India"),
         "Japan": get_countries_from_group(
             country_ref, "RMI Model Region", "Japan, South Korea, and Taiwan"
-        )
-}
+        ),
+    }
 
 
 def final_mapper(
@@ -293,8 +281,7 @@ def final_mapper(
             desc="Generating PE Model Reference Dictionary",
         ):
             ordered_region_list = get_intersection_of_ordered_list(
-                reference_mapper.keys(), 
-                model.index.get_level_values(1).unique()
+                reference_mapper.keys(), model.index.get_level_values(1).unique()
             )
             for model_region in ordered_region_list:
                 for country_code in reference_mapper[model_region]:
@@ -303,8 +290,7 @@ def final_mapper(
                     ]
     else:
         ordered_region_list = get_intersection_of_ordered_list(
-            reference_mapper.keys(),
-            model.index
+            reference_mapper.keys(), model.index
         )
         for model_region in ordered_region_list:
             for country_code in reference_mapper[model_region]:
@@ -312,9 +298,7 @@ def final_mapper(
     return final_mapper
 
 
-def fossil_fuel_mapper(
-    model: pd.DataFrame, reference_mapper: dict, year_range
-) -> dict:
+def fossil_fuel_mapper(model: pd.DataFrame, reference_mapper: dict, year_range) -> dict:
     """Helper function that creates a dictionary mapping of of country codes to regions and optionally a year range to a model's values.
 
     Args:
@@ -326,7 +310,7 @@ def fossil_fuel_mapper(
         dict: The dictionary mapping of the model with a key of [country_code] to value or [year, country_code] to value if `year_range` is active.
     """
     final_mapper = {}
-    resources = model['variable'].unique()
+    resources = model["variable"].unique()
 
     for year in tqdm(
         year_range,
@@ -334,18 +318,22 @@ def fossil_fuel_mapper(
         desc="Generating PE Model Reference Dictionary",
     ):
         for resource in resources:
-            model_r = model[model['variable'] == resource].copy()
-            for model_region in set.intersection(set(reference_mapper.keys()), set(model_r.index.get_level_values(1).unique())):
+            model_r = model[model["variable"] == resource].copy()
+            for model_region in set.intersection(
+                set(reference_mapper.keys()),
+                set(model_r.index.get_level_values(1).unique()),
+            ):
                 for country_code in reference_mapper[model_region]:
                     final_mapper[(year, country_code, resource)] = model_r.loc[
                         (year, model_region), "value"
                     ]
     for resource in resources:
-        model_r = model[model['variable'] == resource].copy()
+        model_r = model[model["variable"] == resource].copy()
         for year in year_range:
-            final_mapper[(year, "TWN", resource)] = model_r.loc[(year, "China"), "value"]
+            final_mapper[(year, "TWN", resource)] = model_r.loc[
+                (year, "China"), "value"
+            ]
     return final_mapper
-
 
 
 def model_reference_generator(
@@ -497,7 +485,7 @@ def subset_fossil_fuel_prices(
     fossil_fuel_prices: pd.DataFrame,
     scenario_dict: dict = None,
     currency_conversion_factor: float = None,
-    price_per_gj: bool = False
+    price_per_gj: bool = False,
 ) -> pd.DataFrame:
     """Subsets the hydrogen model according to scenario parameters passed from the scenario dict.
 
@@ -510,13 +498,15 @@ def subset_fossil_fuel_prices(
     Returns:
         pd.DataFrame: A DataFrame of the subsetted model.
     """
+
     def format_prices(df_c, resource_type, conversion_variable):
         result = df_c[df_c["variable"] == resource_type].copy()
         result["value"] = result["value"] / conversion_variable
         result["unit"] = "USD/GJ"
         return result
+
     df_c = fossil_fuel_prices.copy()
-    df_c['Variable'] = df_c['Variable'].replace({'Coal':'Thermal coal'})
+    df_c["Variable"] = df_c["Variable"].replace({"Coal": "Thermal coal"})
     if scenario_dict:
         price_scenario = FOSSIL_FUEL_SCENARIOS[scenario_dict["fossil_fuel_scenario"]]
         df_c = df_c[(df_c["Scenario"] == price_scenario)]
@@ -528,17 +518,17 @@ def subset_fossil_fuel_prices(
         value_name="value",
     ).copy()
     df_c.columns = [col.lower().strip() for col in df_c.columns]
-    df_c['year'] = df_c['year'].astype('int')
-    met_coal = df_c[df_c['variable'] == 'Thermal coal'].copy()
-    met_coal['variable'] = met_coal['variable'].replace({'Thermal coal':'Met coal'})
-    mc_regions = met_coal['region'].unique()
+    df_c["year"] = df_c["year"].astype("int")
+    met_coal = df_c[df_c["variable"] == "Thermal coal"].copy()
+    met_coal["variable"] = met_coal["variable"].replace({"Thermal coal": "Met coal"})
+    mc_regions = met_coal["region"].unique()
     df_list = []
     for region in mc_regions:
-        mc_r = met_coal[met_coal['region'] == region].copy()
-        mc_r_values = mc_r['value'].values
+        mc_r = met_coal[met_coal["region"] == region].copy()
+        mc_r_values = mc_r["value"].values
         growth_series = mc_r_values / mc_r_values[0]
         new_values = INITIAL_MET_COAL_PRICE_USD_PER_GJ * growth_series
-        mc_r['value'] = new_values
+        mc_r["value"] = new_values
         df_list.append(mc_r)
     met_coal = pd.concat(df_list)
     df_c = pd.concat([df_c, met_coal])
@@ -550,7 +540,9 @@ def subset_fossil_fuel_prices(
         met_coal = format_prices(df_c, "Met coal", 1)
         final_df = pd.concat([natural_gas, thermal_coal, met_coal])
     final_df = extend_df_years(final_df, "year", MODEL_YEAR_END)
-    return final_df[["year", "region", "variable", "unit", "value"]].set_index(["year", "region"])
+    return final_df[["year", "region", "variable", "unit", "value"]].set_index(
+        ["year", "region"]
+    )
 
 
 def subset_bio_prices(
@@ -747,7 +739,10 @@ def subset_ccs_constraint(
 
 @timer_func
 def format_pe_data(
-    scenario_dict: dict, pkl_paths: Union[dict, None] = None, serialize: bool = False, standardize_units: bool = True
+    scenario_dict: dict,
+    pkl_paths: Union[dict, None] = None,
+    serialize: bool = False,
+    standardize_units: bool = True,
 ) -> dict:
     """Full process flow for the Power & Energy data.
     Inputs the the import data, subsets the data, then creates a model reference dictionary for the model.
@@ -826,9 +821,7 @@ def format_pe_data(
     power_grid_emissions_ref = final_mapper(
         power_grid_emissions_f, power_hydrogen_regions, MODEL_YEAR_RANGE
     )
-    h2_prices_ref = final_mapper(
-        h2_prices_f, power_hydrogen_regions, MODEL_YEAR_RANGE
-    )
+    h2_prices_ref = final_mapper(h2_prices_f, power_hydrogen_regions, MODEL_YEAR_RANGE)
     h2_emissions_ref = final_mapper(
         h2_emissions_f, power_hydrogen_regions, MODEL_YEAR_RANGE
     )
@@ -844,9 +837,11 @@ def format_pe_data(
         country_ref,
         CCS_CAPACITY_REGION_MAPPER,
         MODEL_YEAR_RANGE,
-    )   
+    )
     fossil_fuel_regions = fossil_fuel_region_reference_generator(country_ref)
-    fossil_fuel_ref = fossil_fuel_mapper(fossil_fuel_prices_f, fossil_fuel_regions, MODEL_YEAR_RANGE)
+    fossil_fuel_ref = fossil_fuel_mapper(
+        fossil_fuel_prices_f, fossil_fuel_regions, MODEL_YEAR_RANGE
+    )
     data_dict = {
         "hydrogen_prices": h2_prices_f,
         "hydrogen_emissions": h2_emissions_f,
@@ -857,11 +852,13 @@ def format_pe_data(
         "ccs_transport": ccs_model_storage_f,
         "ccs_storage": ccs_model_transport_f,
         "ccs_constraints": ccs_model_constraints_f,
-        "fossil_fuel_prices": fossil_fuel_prices_f
+        "fossil_fuel_prices": fossil_fuel_prices_f,
     }
 
     if serialize:
-        _, intermediate_path, _ = return_pkl_paths(scenario_name=scenario_dict["scenario_name"], paths=pkl_paths)
+        _, intermediate_path, _ = return_pkl_paths(
+            scenario_name=scenario_dict["scenario_name"], paths=pkl_paths
+        )
         # DataFrames
         serialize_file(h2_prices_f, intermediate_path, "hydrogen_prices_formatted")
         serialize_file(
@@ -912,7 +909,5 @@ def format_pe_data(
         serialize_file(
             ccs_model_constraints_ref, intermediate_path, "ccs_model_constraints_ref"
         )
-        serialize_file(
-            fossil_fuel_ref, intermediate_path, "fossil_fuel_ref"
-        )
+        serialize_file(fossil_fuel_ref, intermediate_path, "fossil_fuel_ref")
     return data_dict

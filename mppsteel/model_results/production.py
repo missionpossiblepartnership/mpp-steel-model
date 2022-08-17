@@ -20,14 +20,18 @@ from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
     return_pkl_paths,
-    serialize_file
+    serialize_file,
 )
-from mppsteel.model_solver.solver_summary import tech_capacity_splits, utilization_mapper
+from mppsteel.model_solver.solver_summary import (
+    tech_capacity_splits,
+    utilization_mapper,
+)
 from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.utility.log_utility import get_logger
 
 
 logger = get_logger(__name__)
+
 
 def production_mapper(row):
     return (
@@ -35,6 +39,7 @@ def production_mapper(row):
         if row.technology == "Close plant"
         else row.capacity * row.capacity_utilization
     )
+
 
 def generate_production_stats(
     tech_capacity_df: pd.DataFrame, utilization_results: dict, country_mapper: dict
@@ -238,7 +243,12 @@ def load_materials_mapper(materials_list: list, reverse: bool = False) -> dict:
 
 
 @timer_func
-def production_results_flow(scenario_dict: dict, pkl_paths: Union[dict, None] = None, serialize: bool = False, model_run: str = "") -> dict:
+def production_results_flow(
+    scenario_dict: dict,
+    pkl_paths: Union[dict, None] = None,
+    serialize: bool = False,
+    model_run: str = "",
+) -> dict:
     """Production results flow to create the Production resource usage DataFrame and the Production Emissions DataFrame.
 
     Args:

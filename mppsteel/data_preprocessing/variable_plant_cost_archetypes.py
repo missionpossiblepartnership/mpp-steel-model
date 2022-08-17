@@ -19,7 +19,7 @@ from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
     return_pkl_paths,
-    serialize_file
+    serialize_file,
 )
 from mppsteel.model_tests.df_tests import (
     test_negative_df_values,
@@ -49,14 +49,21 @@ def generate_feedstock_dict(eur_to_usd_rate: float, project_dir=None) -> dict:
             if row.Metric in {"BF slag", "Other slag"}
             else row.Value
         )
+
     if project_dir is not None:
-        feedstock_prices = read_pickle_folder(project_dir / PKL_DATA_IMPORTS, "feedstock_prices", "df")
+        feedstock_prices = read_pickle_folder(
+            project_dir / PKL_DATA_IMPORTS, "feedstock_prices", "df"
+        )
     else:
-        feedstock_prices = read_pickle_folder(PKL_DATA_IMPORTS, "feedstock_prices", "df")
+        feedstock_prices = read_pickle_folder(
+            PKL_DATA_IMPORTS, "feedstock_prices", "df"
+        )
     feedstock_prices = convert_currency_col(feedstock_prices, "Value", eur_to_usd_rate)
     feedstock_prices["Value"] = feedstock_prices.apply(standardise_units, axis=1)
     if project_dir is not None:
-        commodities_df = read_pickle_folder(project_dir / PKL_DATA_FORMATTED, "commodities_df", "df")
+        commodities_df = read_pickle_folder(
+            project_dir / PKL_DATA_FORMATTED, "commodities_df", "df"
+        )
     else:
         commodities_df = read_pickle_folder(PKL_DATA_FORMATTED, "commodities_df", "df")
     commodities_dict = {
@@ -91,13 +98,15 @@ class PlantVariableCostsInput:
     The input for this dataframe can be read from filesystem:
      - PlantVariableCostsInput.from_filesystem(scenario_dict, project_dir, **kwargs)
     """
+
     def __init__(
         self,
         *,
         product_range_year_country: list[tuple[int, str]] = [],
         resource_category_mapper: dict[str, str] = {},
         business_cases: pd.DataFrame = pd.DataFrame(
-            [], columns=["technology", "material_category", "metric_type", "unit", "value"]
+            [],
+            columns=["technology", "material_category", "metric_type", "unit", "value"],
         ),
         power_grid_prices_ref: dict[tuple[int, str], float] = {},
         h2_prices_ref: dict[tuple[int, str], float] = {},
@@ -131,10 +140,10 @@ class PlantVariableCostsInput:
     def from_filesystem(
         cls,
         scenario_dict: dict,
-        intermediate_path: str=None,
-        project_dir: str=PROJECT_PATH,
-        resource_category_mapper: dict=RESOURCE_CATEGORY_MAPPER,
-        year_range: range=MODEL_YEAR_RANGE,
+        intermediate_path: str = None,
+        project_dir: str = PROJECT_PATH,
+        resource_category_mapper: dict = RESOURCE_CATEGORY_MAPPER,
+        year_range: range = MODEL_YEAR_RANGE,
     ):
 
         intermediate_path = project_dir / intermediate_path
@@ -157,9 +166,7 @@ class PlantVariableCostsInput:
         ccs_model_storage_ref = read_pickle_folder(
             intermediate_path, "ccs_model_storage_ref", "df"
         )
-        fossil_fuel_ref = read_pickle_folder(
-            intermediate_path, "fossil_fuel_ref", "df"
-        )
+        fossil_fuel_ref = read_pickle_folder(intermediate_path, "fossil_fuel_ref", "df")
         business_cases = read_pickle_folder(
             project_dir / PKL_DATA_FORMATTED, "standardised_business_cases", "df"
         ).reset_index()
@@ -167,7 +174,9 @@ class PlantVariableCostsInput:
             project_dir / PKL_DATA_IMPORTS, "static_energy_prices", "df"
         )[["Metric", "Year", "Value"]]
         static_energy_prices.set_index(["Metric", "Year"], inplace=True)
-        static_energy_prices["Value"] = static_energy_prices["Value"] / USD_TO_EUR_CONVERSION_DEFAULT
+        static_energy_prices["Value"] = (
+            static_energy_prices["Value"] / USD_TO_EUR_CONVERSION_DEFAULT
+        )
         feedstock_dict = generate_feedstock_dict(
             eur_to_usd_rate, project_dir=project_dir
         )
@@ -205,7 +214,7 @@ class PlantVariableCostsInput:
         ]
         df = pd.DataFrame(pgp_ref_list, columns=("year", "country_code", "price"))
         df["material_category"] = "Electricity"
-        return df,
+        return (df,)
 
     def get_hydrogen_prices(self):
         h2_ref_list = [
@@ -213,7 +222,7 @@ class PlantVariableCostsInput:
         ]
         df = pd.DataFrame(h2_ref_list, columns=("year", "country_code", "price"))
         df["material_category"] = "Hydrogen"
-        return df,
+        return (df,)
 
     def get_bio_model_prices(self):
         df_mass = pd.DataFrame(
@@ -270,16 +279,18 @@ class PlantVariableCostsInput:
         )
 
     def get_gas_prices(self):
-        return pd.DataFrame(
-            ((*key, price) for key, price in self.fossil_fuel_ref.items()),
-            columns=["year", "country_code", "material_category", "price"]
-        ),
+        return (
+            pd.DataFrame(
+                ((*key, price) for key, price in self.fossil_fuel_ref.items()),
+                columns=["year", "country_code", "material_category", "price"],
+            ),
+        )
 
     def get_plastic_waste(self):
         df = self.create_df_from_years_and_country_codes()
         df["price"] = self.feedstock_dict["Plastic waste"]
         df["material_category"] = "Plastic waste"
-        return df,
+        return (df,)
 
     def get_fossil_category_prices(self, category):
         fossil_prices = self.static_energy_prices.loc[category].reset_index().copy()
@@ -301,7 +312,8 @@ class PlantVariableCostsInput:
         fossil_categories = [
             k
             for k, v in self.resource_category_mapper.items()
-            if v == "Fossil Fuels" and k not in ("Natural gas", "Plastic waste", "Met coal", "Thermal coal")
+            if v == "Fossil Fuels"
+            and k not in ("Natural gas", "Plastic waste", "Met coal", "Thermal coal")
         ]
         fossil_price_dfs = []
         for category in fossil_categories:
@@ -332,7 +344,7 @@ class PlantVariableCostsInput:
     def get_steam_prices(self):
         df_steam = self.get_gas_prices_per_country_and_year("Steam", self.country_codes)
         df_steam["material_category"] = "Steam"
-        return df_steam,
+        return (df_steam,)
 
     def get_price_lookup_df(self):
         price_lookup_dfs = [
@@ -371,7 +383,9 @@ def build_variable_cost_df(input_data: PlantVariableCostsInput) -> pd.DataFrame:
     return df
 
 
-def plant_variable_costs_vectorized(input_data: PlantVariableCostsInput) -> pd.DataFrame:
+def plant_variable_costs_vectorized(
+    input_data: PlantVariableCostsInput,
+) -> pd.DataFrame:
     """
     Creates a dataframe with the variable costs of the plants.
 
@@ -400,7 +414,7 @@ def plant_variable_costs_vectorized(input_data: PlantVariableCostsInput) -> pd.D
         lambda material: input_data.resource_category_mapper[material]
     )
     dm["cost_type"] = dm["cost_type"].astype("category")
-    
+
     return dm
 
 
@@ -434,13 +448,13 @@ def format_variable_costs(
     df_c = variable_cost_df.copy()
     df_c.reset_index(drop=True, inplace=True)
     df_em = df_c[df_c["material_category"] != "Emissivity"]
-    assert_series_equal(df_em["cost"], df_em["value"] * df_em["price"], check_names=False)
+    assert_series_equal(
+        df_em["cost"], df_em["value"] * df_em["price"], check_names=False
+    )
     if group_data:
-        prices_columns = [col for col in df_c.columns if 'price' in col]
+        prices_columns = [col for col in df_c.columns if "price" in col]
         non_price_columns_to_drop = ["material_category", "unit", "cost_type", "value"]
-        df_c.drop(
-            prices_columns + non_price_columns_to_drop, axis=1, inplace=True
-        )
+        df_c.drop(prices_columns + non_price_columns_to_drop, axis=1, inplace=True)
         df_c = (
             df_c.groupby(by=["country_code", "year", "technology"])
             .sum()
@@ -449,6 +463,7 @@ def format_variable_costs(
         df_c["cost"] = df_c["cost"].apply(lambda x: cast_to_float(x))
 
     return df_c
+
 
 @timer_func
 def generate_variable_plant_summary(
@@ -464,8 +479,12 @@ def generate_variable_plant_summary(
     Returns:
         pd.DataFrame: A DataFrame containing the variable plant results.
     """
-    _, intermediate_path, _ = return_pkl_paths(scenario_name=scenario_dict["scenario_name"], paths=pkl_paths)
-    input_data = PlantVariableCostsInput.from_filesystem(scenario_dict, intermediate_path)
+    _, intermediate_path, _ = return_pkl_paths(
+        scenario_name=scenario_dict["scenario_name"], paths=pkl_paths
+    )
+    input_data = PlantVariableCostsInput.from_filesystem(
+        scenario_dict, intermediate_path
+    )
     variable_costs = plant_variable_costs(input_data)
     variable_costs_summary = format_variable_costs(variable_costs)
     variable_costs_summary_material_breakdown = format_variable_costs(

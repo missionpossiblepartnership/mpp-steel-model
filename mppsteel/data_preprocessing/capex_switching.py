@@ -9,10 +9,7 @@ from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize_file
 from mppsteel.utility.log_utility import get_logger
 
-from mppsteel.config.model_config import (
-    MODEL_YEAR_RANGE,
-    PKL_DATA_FORMATTED
-)
+from mppsteel.config.model_config import MODEL_YEAR_RANGE, PKL_DATA_FORMATTED
 
 from mppsteel.config.reference_lists import (
     FURNACE_GROUP_DICT,
@@ -66,7 +63,9 @@ def get_capex_values(
     df_dict_c = df_switching_dict.copy()
 
     year_list = []
-    for year in tqdm(MODEL_YEAR_RANGE, total=len(MODEL_YEAR_RANGE), desc="Get Capex Values"):
+    for year in tqdm(
+        MODEL_YEAR_RANGE, total=len(MODEL_YEAR_RANGE), desc="Get Capex Values"
+    ):
         tech_list = []
         for technology in SWITCH_DICT:
             df_temp = df_dict_c[technology].copy()

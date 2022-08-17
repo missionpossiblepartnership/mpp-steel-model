@@ -40,7 +40,7 @@ def read_pickle_folder(
 
     if pkl_file:
         mode = "df"
-    
+
     if mode == "df":
         if log:
             logger.info(f"||| Loading pickle file {pkl_file} from path {data_path}")
@@ -157,15 +157,23 @@ def create_folder_if_nonexist(folder_path: str) -> None:
 
 
 def get_scenario_pkl_path(
-    scenario: str = None, pkl_folder_type: str = None, 
-    default_path: bool = False, model_run: str = "", 
-    iteration_run: bool = False
+    scenario: str = None,
+    pkl_folder_type: str = None,
+    default_path: bool = False,
+    model_run: str = "",
+    iteration_run: bool = False,
 ) -> str:
     if pkl_folder_type == "combined":
         return f"{PKL_FOLDER}/{COMBINED_OUTPUT_FOLDER_NAME}"
 
-    pkl_folder_type_ext = INTERMEDIATE_DATA_OUTPUT_NAME if pkl_folder_type == "intermediate" else FINAL_DATA_OUTPUT_NAME
-    default_path_ext = PKL_DATA_INTERMEDIATE if pkl_folder_type == "intermediate" else PKL_DATA_FINAL
+    pkl_folder_type_ext = (
+        INTERMEDIATE_DATA_OUTPUT_NAME
+        if pkl_folder_type == "intermediate"
+        else FINAL_DATA_OUTPUT_NAME
+    )
+    default_path_ext = (
+        PKL_DATA_INTERMEDIATE if pkl_folder_type == "intermediate" else PKL_DATA_FINAL
+    )
     full_path = f"{PKL_FOLDER}/{scenario}/{pkl_folder_type_ext}"
 
     if default_path:
@@ -178,9 +186,12 @@ def get_scenario_pkl_path(
     return full_path
 
 
-def return_pkl_paths(scenario_name: str, paths: Union[dict, None] = None, model_run: str = "") -> tuple:
+def return_pkl_paths(
+    scenario_name: str, paths: Union[dict, None] = None, model_run: str = ""
+) -> tuple:
     intermediate_path_preprocessing = get_scenario_pkl_path(
-        scenario=scenario_name, pkl_folder_type="intermediate",
+        scenario=scenario_name,
+        pkl_folder_type="intermediate",
     )
     intermediate_path = get_scenario_pkl_path(
         scenario=scenario_name, pkl_folder_type="intermediate", model_run=model_run
@@ -198,19 +209,26 @@ def return_pkl_paths(scenario_name: str, paths: Union[dict, None] = None, model_
 
     return intermediate_path_preprocessing, intermediate_path, final_path
 
-def create_scenario_paths(scenario_name: str):
-    intermediate_path = get_scenario_pkl_path(
-        scenario_name, "intermediate"
-    )
-    final_path = get_scenario_pkl_path(
-        scenario_name, "final"
-    )
+
+def create_scenario_paths(scenario_name: str) -> None:
+    intermediate_path = get_scenario_pkl_path(scenario_name, "intermediate")
+    final_path = get_scenario_pkl_path(scenario_name, "final")
     create_folders_if_nonexistant([intermediate_path, final_path])
 
-def generate_files_to_path_dict(scenarios: list, pkl_paths: Union[dict, None] = None, model_run: str = "", create_path: bool = False):
+
+def generate_files_to_path_dict(
+    scenarios: list,
+    pkl_paths: Union[dict, None] = None,
+    model_run: str = "",
+    create_path: bool = False,
+) -> dict:
     files_to_path = {scenario: {} for scenario in scenarios}
     for scenario_name in scenarios:
-        intermediate_path_preprocessing, intermediate_path, final_path = return_pkl_paths(scenario_name, pkl_paths, model_run)
+        (
+            intermediate_path_preprocessing,
+            intermediate_path,
+            final_path,
+        ) = return_pkl_paths(scenario_name, pkl_paths, model_run)
         if create_path:
             create_folders_if_nonexistant([intermediate_path, final_path])
         files_to_path[scenario_name] = {
@@ -221,6 +239,6 @@ def generate_files_to_path_dict(scenarios: list, pkl_paths: Union[dict, None] = 
             "full_trade_summary": intermediate_path,
             "plant_result_df": intermediate_path,
             "levelized_cost_standardized": intermediate_path_preprocessing,
-            "calculated_emissivity_combined": intermediate_path_preprocessing
+            "calculated_emissivity_combined": intermediate_path_preprocessing,
         }
     return files_to_path

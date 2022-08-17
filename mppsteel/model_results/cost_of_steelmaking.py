@@ -13,7 +13,7 @@ from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
     return_pkl_paths,
-    serialize_file
+    serialize_file,
 )
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.config.model_config import (
@@ -403,7 +403,10 @@ def create_cost_of_steelmaking_data(
 
 @timer_func
 def generate_cost_of_steelmaking_results(
-    scenario_dict: dict, pkl_paths: Union[dict, None] = None, serialize: bool = False, model_run: str = ""
+    scenario_dict: dict,
+    pkl_paths: Union[dict, None] = None,
+    serialize: bool = False,
+    model_run: str = "",
 ) -> dict:
     """Full flow to create the Cost of Steelmaking and the Levelized Cost of Steelmaking DataFrames.
 

@@ -120,7 +120,7 @@ def cast_to_float(val: Union[float, int, Iterable[float]]) -> float:
 
 
 def create_bin_rank_dict(
-    data: np.array, number_of_items: int,  reverse: bool = False, rounding: int = 3
+    data: np.array, number_of_items: int, reverse: bool = False, rounding: int = 3
 ) -> dict:
     """Create a dictionary of bin value: bin rank key: value pairs.
 
@@ -191,20 +191,25 @@ def join_list_as_string(list_object: list) -> str:
 
 
 def decades_between_dates(year_range: range, include_final_year: bool = False) -> set:
-    decades_set = [year - (year%10) for year in list(year_range)]
+    decades_set = [year - (year % 10) for year in list(year_range)]
     if include_final_year:
         decades_set.append(year_range[-1])
     return set(decades_set)
 
 
 def get_closest_number_in_list(my_list: list, my_number: int) -> Union[int, None]:
-    return min(my_list, key = lambda x: abs(x - my_number)) if my_list else None
+    return min(my_list, key=lambda x: abs(x - my_number)) if my_list else None
+
 
 def split_list_into_chunks(lst: list, n: int):
-    return [lst[i:i + n] for i in range(0, len(lst), n)]
+    return [lst[i : i + n] for i in range(0, len(lst), n)]
 
-def get_intersection_of_ordered_list(ordered_list: Iterable, mapping_list: Iterable) -> list:
-    return [x for x in mapping_list if x in frozenset(ordered_list)] 
+
+def get_intersection_of_ordered_list(
+    ordered_list: Iterable, mapping_list: Iterable
+) -> list:
+    return [x for x in mapping_list if x in frozenset(ordered_list)]
+
 
 def reverse_dict_with_list_elements(dict_to_reverse: dict) -> dict:
     new_dict = {}
@@ -213,6 +218,10 @@ def reverse_dict_with_list_elements(dict_to_reverse: dict) -> dict:
             new_dict[elem] = key
     return new_dict
 
+
 def split_range_obj(range_obj: range, num_splits: int) -> list:
     k, m = divmod(len(range_obj), num_splits)
-    return (range_obj[i*k + min(i, m):(i+1)*k + min(i+1, m)] for i in range(num_splits))
+    return (
+        range_obj[i * k + min(i, m) : (i + 1) * k + min(i + 1, m)]
+        for i in range(num_splits)
+    )

@@ -16,6 +16,7 @@ from mppsteel.plant_classes.plant_investment_cycle_class import PlantInvestmentC
 
 logger = get_logger(__name__)
 
+
 @timer_func
 def investment_cycle_flow(scenario_dict: dict, serialize: bool = False) -> pd.DataFrame:
     """Inintiates the complete investment cycle flow and serializes the resulting DataFrame.
@@ -34,7 +35,9 @@ def investment_cycle_flow(scenario_dict: dict, serialize: bool = False) -> pd.Da
     PlantInvestmentCycles = PlantInvestmentCycle()
     steel_plant_names = steel_plant_df["plant_name"].to_list()
     start_plant_years = steel_plant_df["start_of_operation"].to_list()
-    PlantInvestmentCycles.instantiate_plants(steel_plant_names, start_plant_years, investment_cycle_randomness)
+    PlantInvestmentCycles.instantiate_plants(
+        steel_plant_names, start_plant_years, investment_cycle_randomness
+    )
     PlantInvestmentCycles.test_cycle_lengths()
 
     if serialize:

@@ -15,7 +15,7 @@ from mppsteel.config.model_config import (
     CARBON_TAX_START_YEAR,
     GREEN_PREMIUM_START_YEAR,
     CARBON_TAX_END_YEAR,
-    GREEN_PREMIUM_END_YEAR
+    GREEN_PREMIUM_END_YEAR,
 )
 
 from mppsteel.config.model_scenarios import (
@@ -36,7 +36,7 @@ def timeseries_generator(
     end_value: float,
     start_value: float = 0,
     units: str = "",
-    extension_year: int = None
+    extension_year: int = None,
 ) -> pd.DataFrame:
     """Function that generates a timeseries based on particular logic
 
@@ -111,7 +111,11 @@ def timeseries_generator(
 
 
 @timer_func
-def generate_timeseries(scenario_dict: dict = None, pkl_paths: Union[dict, None] = None, serialize: bool = False) -> dict:
+def generate_timeseries(
+    scenario_dict: dict = None,
+    pkl_paths: Union[dict, None] = None,
+    serialize: bool = False,
+) -> dict:
     """Generates timeseries for biomass, carbon taxes and electricity.
 
     Args:
@@ -122,7 +126,9 @@ def generate_timeseries(scenario_dict: dict = None, pkl_paths: Union[dict, None]
     Returns:
         dict: A dict containing dataframes with the following keys: 'biomass', 'carbon_tax', 'electricity'.
     """
-    _, intermediate_path, _ = return_pkl_paths(scenario_name=scenario_dict["scenario_name"], paths=pkl_paths)
+    _, intermediate_path, _ = return_pkl_paths(
+        scenario_name=scenario_dict["scenario_name"], paths=pkl_paths
+    )
     carbon_tax_scenario_values = CARBON_TAX_SCENARIOS[
         scenario_dict["carbon_tax_scenario"]
     ]
@@ -137,7 +143,7 @@ def generate_timeseries(scenario_dict: dict = None, pkl_paths: Union[dict, None]
         series_start_year=CARBON_TAX_START_YEAR,
         end_value=carbon_tax_scenario_values[1],
         start_value=carbon_tax_scenario_values[0],
-        extension_year=MODEL_YEAR_END
+        extension_year=MODEL_YEAR_END,
     )
     carbon_tax_timeseries = convert_currency_col(
         carbon_tax_timeseries, "value", scenario_dict["eur_to_usd"]
@@ -150,7 +156,7 @@ def generate_timeseries(scenario_dict: dict = None, pkl_paths: Union[dict, None]
         series_start_year=GREEN_PREMIUM_START_YEAR,
         end_value=green_premium_scenario_values[1],
         start_value=green_premium_scenario_values[0],
-        extension_year=MODEL_YEAR_END
+        extension_year=MODEL_YEAR_END,
     )
     green_premium_timeseries = convert_currency_col(
         green_premium_timeseries, "value", scenario_dict["eur_to_usd"]

@@ -11,7 +11,7 @@ from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
     return_pkl_paths,
-    serialize_file
+    serialize_file,
 )
 from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.utility.log_utility import get_logger
@@ -21,7 +21,7 @@ from mppsteel.config.model_config import (
     INVESTMENT_CYCLE_DURATION_YEARS,
     MODEL_YEAR_RANGE,
     PKL_DATA_FORMATTED,
-    DISCOUNT_RATE
+    DISCOUNT_RATE,
 )
 from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
 
@@ -51,7 +51,9 @@ def create_lcox_cost_reference(
     country_code = row.country_code
     technology = row.technology
     greenfield_value = capex_ref["greenfield"][(year, technology)]
-    total_opex_value = total_opex_reference[(year, country_code)].loc[technology].values[0]
+    total_opex_value = (
+        total_opex_reference[(year, country_code)].loc[technology].values[0]
+    )
     row.greenfield_capex = greenfield_value
     row.total_opex = total_opex_value
     return row
@@ -100,8 +102,10 @@ def summarise_levelized_cost(plant_lev_cost_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def create_levelized_cost(
-    total_opex_reference: dict, capex_ref: dict,
-    plant_df: pd.DataFrame, standard_plant_ref: bool = True
+    total_opex_reference: dict,
+    capex_ref: dict,
+    plant_df: pd.DataFrame,
+    standard_plant_ref: bool = True,
 ) -> pd.DataFrame:
     """Generate a DataFrame with Levelized Cost values.
     Args:
@@ -128,12 +132,14 @@ def create_levelized_cost(
     )
     combined_capex_ref = {
         "brownfield": brownfield_capex_ref,
-        "greenfield": greenfield_capex_ref
+        "greenfield": greenfield_capex_ref,
     }
 
     country_codes = list(plant_df["country_code"].unique())
     rmi_mapper = create_country_mapper()
-    df_reference = create_df_reference(country_codes, ["greenfield_capex", "total_opex"])
+    df_reference = create_df_reference(
+        country_codes, ["greenfield_capex", "total_opex"]
+    )
     acc = acc_calculator(DISCOUNT_RATE, INVESTMENT_CYCLE_DURATION_YEARS)
 
     tqdma.pandas(desc="LCOS Cost Columns population")
@@ -143,33 +149,46 @@ def create_levelized_cost(
         capex_ref=combined_capex_ref,
         axis=1,
     )
-    lev_cost_reference["region"] = lev_cost_reference["country_code"].apply(lambda x: rmi_mapper[x])
-    lev_cost_reference = lev_cost_reference.set_index(["year", "country_code", "technology"]).sort_index()
+    lev_cost_reference["region"] = lev_cost_reference["country_code"].apply(
+        lambda x: rmi_mapper[x]
+    )
+    lev_cost_reference = lev_cost_reference.set_index(
+        ["year", "country_code", "technology"]
+    ).sort_index()
 
     def levelized_cost_calculation(row: pd.DataFrame, acc: float):
-        return ((row.greenfield_capex * row.capacity * acc) + (row.total_opex * row.capacity * row.cuf)) / (row.capacity * row.cuf)
+        return (
+            (row.greenfield_capex * row.capacity * acc)
+            + (row.total_opex * row.capacity * row.cuf)
+        ) / (row.capacity * row.cuf)
 
     tqdma.pandas(desc="Creating Levelized cost values")
     if standard_plant_ref:
         lev_cost_reference["capacity"] = AVERAGE_CAPACITY_MT
         lev_cost_reference["cuf"] = AVERAGE_CUF
-        lev_cost_reference["levelized_cost"] = lev_cost_reference.progress_apply(levelized_cost_calculation, acc=acc, axis=1)
+        lev_cost_reference["levelized_cost"] = lev_cost_reference.progress_apply(
+            levelized_cost_calculation, acc=acc, axis=1
+        )
 
     else:
         index_cols = ["year", "region", "country_code", "technology"]
         plant_df_c = plant_df.set_index(index_cols).copy()
         lev_cost_reference = lev_cost_reference.reset_index().set_index(index_cols)
         lev_cost_reference = plant_df_c.join(lev_cost_reference)
-        lev_cost_reference["levelized_cost"] = lev_cost_reference.progress_apply(levelized_cost_calculation, acc=acc, axis=1)
+        lev_cost_reference["levelized_cost"] = lev_cost_reference.progress_apply(
+            levelized_cost_calculation, acc=acc, axis=1
+        )
 
     return lev_cost_reference.reset_index()
 
 
 @timer_func
 def generate_levelized_cost_results(
-    scenario_dict: dict, pkl_paths: Union[dict, None] = None, serialize: bool = False, 
-    standard_plant_ref: bool = False, steel_plant_df=None
-    
+    scenario_dict: dict,
+    pkl_paths: Union[dict, None] = None,
+    serialize: bool = False,
+    standard_plant_ref: bool = False,
+    steel_plant_df=None,
 ) -> dict:
     """Full flow to create the Levelized Cost DataFrame.
 
@@ -194,10 +213,10 @@ def generate_levelized_cost_results(
             PKL_DATA_FORMATTED, "steel_plants_processed", "df"
         )
     lcos_data = create_levelized_cost(
-        total_opex_reference, 
-        capex_dict, 
+        total_opex_reference,
+        capex_dict,
         steel_plant_df,
-        standard_plant_ref=standard_plant_ref
+        standard_plant_ref=standard_plant_ref,
     )
 
     if serialize:

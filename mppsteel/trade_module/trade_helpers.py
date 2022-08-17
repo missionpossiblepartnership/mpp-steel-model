@@ -9,7 +9,7 @@ from mppsteel.config.model_config import (
     MAIN_REGIONAL_SCHEMA,
     MODEL_YEAR_START,
     TRADE_ROUNDING_NUMBER,
-    UTILIZATION_ROUNDING_NUMBER
+    UTILIZATION_ROUNDING_NUMBER,
 )
 from mppsteel.plant_classes.capacity_container_class import CapacityContainerClass
 from mppsteel.model_solver.market_container_class import MarketContainerClass
@@ -18,6 +18,7 @@ from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.utils import join_list_as_string
 
 logger = get_logger(__name__)
+
 
 class TradeStatus(Enum):
     DOMESTIC = "Domestic"
@@ -49,21 +50,28 @@ def check_relative_production_cost(
     Returns:
         pd.DataFrame: The COS DataFrame with new columns `relative_cost_below_avg` and `relative_cost_close_to_mean`
     """
-    def apply_upper_boundary(row: pd.DataFrame, mean_value: float, pct_boundary_dict: dict):
-        return mean_value * (1 + (pct_boundary_dict[row['rmi_region']]))
+
+    def apply_upper_boundary(
+        row: pd.DataFrame, mean_value: float, pct_boundary_dict: dict
+    ):
+        return mean_value * (1 + (pct_boundary_dict[row["rmi_region"]]))
 
     def close_to_mean_test(row: pd.DataFrame):
-        return row['cost_of_steelmaking'] < row['upper_boundary']
+        return row["cost_of_steelmaking"] < row["upper_boundary"]
 
     df_c = cos_df.copy()
     mean_val = df_c[value_col].mean()
     df_c.reset_index(inplace=True)
-    df_c['upper_boundary'] = df_c.apply(
-        apply_upper_boundary, mean_value=mean_val, pct_boundary_dict=pct_boundary_dict, axis=1)
+    df_c["upper_boundary"] = df_c.apply(
+        apply_upper_boundary,
+        mean_value=mean_val,
+        pct_boundary_dict=pct_boundary_dict,
+        axis=1,
+    )
     df_c["relative_cost_below_avg"] = df_c[value_col].apply(lambda x: x <= mean_val)
     df_c["relative_cost_close_to_mean"] = df_c.apply(close_to_mean_test, axis=1)
     df_c["year"] = year
-    return df_c.set_index('rmi_region')
+    return df_c.set_index("rmi_region")
 
 
 def single_year_cos(
@@ -88,7 +96,7 @@ def single_year_cos(
     return (
         0
         if utilization_rate == 0
-        else (plant_capacity * utilization_rate * (variable_cost + other_opex_cost)) 
+        else (plant_capacity * utilization_rate * (variable_cost + other_opex_cost))
     )
 
 
@@ -117,7 +125,9 @@ def cos_value_generator(
     """
     technology = tech_choices[year][row.plant_name]
     plant_capacity = capacity_dict[row.plant_name]
-    utilization_rate = utilization_container.get_utilization_values(year, row.rmi_region)
+    utilization_rate = utilization_container.get_utilization_values(
+        year, row.rmi_region
+    )
     variable_cost = v_costs.loc[row.country_code, year, technology]["cost"]
     other_opex_cost = capex_costs["other_opex"].loc[technology, year]["value"]
     return single_year_cos(
@@ -162,7 +172,9 @@ def calculate_cos(
         axis=1,
     )
     regional_capacity_dict = capacity_container.return_regional_capacity(reference_year)
-    regional_utilization_dict = utilization_container.get_utilization_values(reference_year)
+    regional_utilization_dict = utilization_container.get_utilization_values(
+        reference_year
+    )
     cos_df = (
         plant_df_c[[MAIN_REGIONAL_SCHEMA, "cost_of_steelmaking"]]
         .groupby([MAIN_REGIONAL_SCHEMA])
@@ -171,13 +183,25 @@ def calculate_cos(
         .reset_index()
         .copy()
     )
+
     def final_cos_adjustment(row):
-        return row.cost_of_steelmaking / (regional_capacity_dict[row.rmi_region] * regional_utilization_dict[row.rmi_region])
+        return row.cost_of_steelmaking / (
+            regional_capacity_dict[row.rmi_region]
+            * regional_utilization_dict[row.rmi_region]
+        )
+
     cos_df["cost_of_steelmaking"] = cos_df.apply(final_cos_adjustment, axis=1)
     return cos_df.set_index(MAIN_REGIONAL_SCHEMA)
 
-def get_initial_utilization(utilization_container: UtilizationContainerClass, year: int, region: str) -> float:
-    return utilization_container.get_utilization_values(year, region) if year == MODEL_YEAR_START else utilization_container.get_utilization_values(year - 1, region)
+
+def get_initial_utilization(
+    utilization_container: UtilizationContainerClass, year: int, region: str
+) -> float:
+    return (
+        utilization_container.get_utilization_values(year, region)
+        if year == MODEL_YEAR_START
+        else utilization_container.get_utilization_values(year - 1, region)
+    )
 
 
 def modify_production_demand_dict(
@@ -199,23 +223,38 @@ def modify_production_demand_dict(
         production_demand_dict_c[region][dict_key] = data_entry_dict[dict_key]
     return production_demand_dict_c
 
-def utilization_boundary(utilization_figure: float, util_min: float, util_max: float) -> float:
+
+def utilization_boundary(
+    utilization_figure: float, util_min: float, util_max: float
+) -> float:
     return max(min(utilization_figure, util_max), util_min)
+
 
 def concat_region_year(year: int, region: str) -> str:
     return f"{region.replace(' ', '').replace(',', '')}_{year}"
 
+
 def merge_trade_status_col_to_rpc_df(
-    rpc_df: pd.DataFrame, trade_status_container: dict, initial_overproduction_container: dict
+    rpc_df: pd.DataFrame,
+    trade_status_container: dict,
+    initial_overproduction_container: dict,
 ) -> pd.DataFrame:
     rpc_df.reset_index(inplace=True)
-    rpc_df["initial_overproduction"] = rpc_df[MAIN_REGIONAL_SCHEMA].apply(lambda region: initial_overproduction_container[region])
-    rpc_df["initial_trade_status"] = rpc_df[MAIN_REGIONAL_SCHEMA].apply(lambda region: trade_status_container[region])
+    rpc_df["initial_overproduction"] = rpc_df[MAIN_REGIONAL_SCHEMA].apply(
+        lambda region: initial_overproduction_container[region]
+    )
+    rpc_df["initial_trade_status"] = rpc_df[MAIN_REGIONAL_SCHEMA].apply(
+        lambda region: trade_status_container[region]
+    )
     return rpc_df.set_index(MAIN_REGIONAL_SCHEMA)
 
+
 def create_empty_market_dict(
-    year: int, region: str, capacity: float, 
-    demand: float, initial_utilization: float,
+    year: int,
+    region: str,
+    capacity: float,
+    demand: float,
+    initial_utilization: float,
     initial_balance: float,
     avg_plant_capacity_value: float,
 ) -> dict:
@@ -236,67 +275,148 @@ def create_empty_market_dict(
         "new_balance": 0,
         "new_utilization": 0,
         "unit": "Mt",
-        "cases": []
+        "cases": [],
     }
 
+
 def test_market_dict_output(plant_change_dict: dict, util_min: float, util_max: float):
-    assert round(plant_change_dict["new_total_capacity"], TRADE_ROUNDING_NUMBER) > 0, plant_change_dict
-    assert round(plant_change_dict["new_utilized_capacity"], TRADE_ROUNDING_NUMBER) > 0, plant_change_dict
-    assert util_min <= round(plant_change_dict["new_utilization"], UTILIZATION_ROUNDING_NUMBER) <= util_max, plant_change_dict
+    assert (
+        round(plant_change_dict["new_total_capacity"], TRADE_ROUNDING_NUMBER) > 0
+    ), plant_change_dict
+    assert (
+        round(plant_change_dict["new_utilized_capacity"], TRADE_ROUNDING_NUMBER) > 0
+    ), plant_change_dict
+    assert (
+        util_min
+        <= round(plant_change_dict["new_utilization"], UTILIZATION_ROUNDING_NUMBER)
+        <= util_max
+    ), plant_change_dict
 
     if plant_change_dict["new_capacity_required"] > 0:
         assert plant_change_dict["plants_required"] > 0, plant_change_dict
 
     if plant_change_dict["plants_to_close"] > 0:
-        assert plant_change_dict["capacity"] > plant_change_dict["new_total_capacity"], plant_change_dict
+        assert (
+            plant_change_dict["capacity"] > plant_change_dict["new_total_capacity"]
+        ), plant_change_dict
+
 
 def test_capacity_values(results_container: dict, capacity_dict: dict, cases: dict):
     for region in results_container:
         results_container_value = results_container[region]["new_total_capacity"]
         capacity_dict_value = capacity_dict[region]
-        if round(results_container_value, TRADE_ROUNDING_NUMBER) != round(capacity_dict_value, TRADE_ROUNDING_NUMBER):
-            raise AssertionError(f"Capacity Value Test | Region: {region} - container_result (capacity_dict_result): {results_container_value: .2f} ({capacity_dict_value: .2f}) Cases: {cases[region]}")
+        if round(results_container_value, TRADE_ROUNDING_NUMBER) != round(
+            capacity_dict_value, TRADE_ROUNDING_NUMBER
+        ):
+            raise AssertionError(
+                f"Capacity Value Test | Region: {region} - container_result (capacity_dict_result): {results_container_value: .2f} ({capacity_dict_value: .2f}) Cases: {cases[region]}"
+            )
+
 
 def test_production_equals_demand(global_production: float, global_demand: float):
-    assert round(global_production, TRADE_ROUNDING_NUMBER) == round(global_demand, TRADE_ROUNDING_NUMBER), f"global_production: {global_production} | global_demand: {global_demand}"
+    assert round(global_production, TRADE_ROUNDING_NUMBER) == round(
+        global_demand, TRADE_ROUNDING_NUMBER
+    ), f"global_production: {global_production} | global_demand: {global_demand}"
 
-def test_production_values(results_container: dict, market_container: MarketContainerClass, cases: dict, year: int):
+
+def test_production_values(
+    results_container: dict,
+    market_container: MarketContainerClass,
+    cases: dict,
+    year: int,
+):
     for region in results_container:
         dict_result = results_container[region]["new_utilized_capacity"]
-        container_result = market_container.return_trade_balance(year, region, account_type="production")
-        if round(dict_result, TRADE_ROUNDING_NUMBER) != round(container_result, TRADE_ROUNDING_NUMBER):
-            raise AssertionError(f"Production Value Test | Year: {year} | Region: {region} | Dict Value (Container Value): {dict_result} ({container_result: .2f}) | Cases: {cases[region]}")
+        container_result = market_container.return_trade_balance(
+            year, region, account_type="production"
+        )
+        if round(dict_result, TRADE_ROUNDING_NUMBER) != round(
+            container_result, TRADE_ROUNDING_NUMBER
+        ):
+            raise AssertionError(
+                f"Production Value Test | Year: {year} | Region: {region} | Dict Value (Container Value): {dict_result} ({container_result: .2f}) | Cases: {cases[region]}"
+            )
 
-def test_utilization_values(utilization_container: UtilizationContainerClass, results_container: dict, year: int, util_min: float, util_max: float, cases: dict = None):
+
+def test_utilization_values(
+    utilization_container: UtilizationContainerClass,
+    results_container: dict,
+    year: int,
+    util_min: float,
+    util_max: float,
+    cases: dict = None,
+):
     util_container = utilization_container.get_utilization_values(year)
-    overutilized_regions = [key for key in util_container if round(util_container[key], TRADE_ROUNDING_NUMBER) > util_max]
-    underutilized_regions = [key for key in util_container if round(util_container[key], TRADE_ROUNDING_NUMBER) < util_min]
+    overutilized_regions = [
+        key
+        for key in util_container
+        if round(util_container[key], TRADE_ROUNDING_NUMBER) > util_max
+    ]
+    underutilized_regions = [
+        key
+        for key in util_container
+        if round(util_container[key], TRADE_ROUNDING_NUMBER) < util_min
+    ]
     cases = cases or {region: "" for region in util_container}
     if overutilized_regions:
         for region in overutilized_regions:
             print(f"{region}: {util_container[region]} -> {cases[region]}")
-        raise AssertionError(f"Regions Overutilized in {year}: {util_container} {overutilized_regions}")
+        raise AssertionError(
+            f"Regions Overutilized in {year}: {util_container} {overutilized_regions}"
+        )
     if underutilized_regions:
         for region in underutilized_regions:
             print(f"{region}: {util_container[region]} -> {cases[region]}")
-        raise AssertionError(f"Regions Underutilized in {year}: {underutilized_regions}")
+        raise AssertionError(
+            f"Regions Underutilized in {year}: {underutilized_regions}"
+        )
+
 
 def test_open_close_plants(results_container: dict, cases: dict):
-    incorrect_open_plants = [region for region in results_container if results_container[region]["plants_required"] < 0]
-    incorrect_close_plants = [region for region in results_container if results_container[region]["plants_to_close"] < 0]
+    incorrect_open_plants = [
+        region
+        for region in results_container
+        if results_container[region]["plants_required"] < 0
+    ]
+    incorrect_close_plants = [
+        region
+        for region in results_container
+        if results_container[region]["plants_to_close"] < 0
+    ]
     if incorrect_open_plants:
-        string_container = [f"{region}: {results_container[region]['plants_required']} - {cases[region]}" for region in incorrect_open_plants]
-        raise AssertionError(f"Incorrect number of plants_required {join_list_as_string(string_container)}")
+        string_container = [
+            f"{region}: {results_container[region]['plants_required']} - {cases[region]}"
+            for region in incorrect_open_plants
+        ]
+        raise AssertionError(
+            f"Incorrect number of plants_required {join_list_as_string(string_container)}"
+        )
     if incorrect_close_plants:
-        string_container = [f"{region}: {results_container[region]['plants_to_close']} - {cases[region]}" for region in incorrect_close_plants]
-        raise AssertionError(f"Incorrect number of plants_to_close in: {join_list_as_string(string_container)}")
+        string_container = [
+            f"{region}: {results_container[region]['plants_to_close']} - {cases[region]}"
+            for region in incorrect_close_plants
+        ]
+        raise AssertionError(
+            f"Incorrect number of plants_to_close in: {join_list_as_string(string_container)}"
+        )
 
-def print_demand_production_balance(market_container: MarketContainerClass, demand_dict: dict, year) -> None:
+
+def print_demand_production_balance(
+    market_container: MarketContainerClass, demand_dict: dict, year
+) -> None:
     for region, demand in demand_dict.items():
         production = market_container.return_trade_balance(year, region, "production")
-        print(f"region: {region} | demand: {demand} | production: {production} | trade_balance: {production - demand}")
+        print(
+            f"region: {region} | demand: {demand} | production: {production} | trade_balance: {production - demand}"
+        )
 
-def test_regional_production(results_container: dict, rpc_df: pd.DataFrame, cases: dict):
+
+def test_regional_production(
+    results_container: dict, rpc_df: pd.DataFrame, cases: dict
+):
     for region in results_container:
         summary_dict = results_container[region]
-        assert round(summary_dict["new_utilized_capacity"], UTILIZATION_ROUNDING_NUMBER) > 0, f"Production > 0 test failed for {region} -> cases: {cases[region]} -> summary dictionary: {summary_dict}, rpc: {rpc_df.loc[region]}"
+        assert (
+            round(summary_dict["new_utilized_capacity"], UTILIZATION_ROUNDING_NUMBER)
+            > 0
+        ), f"Production > 0 test failed for {region} -> cases: {cases[region]} -> summary dictionary: {summary_dict}, rpc: {rpc_df.loc[region]}"

@@ -13,7 +13,7 @@ from mppsteel.utility.dataframe_utility import move_cols_to_front
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
     return_pkl_paths,
-    serialize_file
+    serialize_file,
 )
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.location_utility import create_country_mapper
@@ -333,7 +333,9 @@ def generate_emissions_flow(
     Returns:
         pd.DataFrame: The combined S1, S2 & S3 emissions DataFrame reference.
     """
-    _, intermediate_path, _ = return_pkl_paths(scenario_name=scenario_dict["scenario_name"], paths=pkl_paths)
+    _, intermediate_path, _ = return_pkl_paths(
+        scenario_name=scenario_dict["scenario_name"], paths=pkl_paths
+    )
     business_cases_summary = read_pickle_folder(
         PKL_DATA_FORMATTED, "standardised_business_cases", "df"
     ).reset_index()

@@ -5,7 +5,12 @@ from typing import Union
 import pandas as pd
 import pandera as pa
 
-from mppsteel.config.model_config import IMPORT_DATA_PATH, MODEL_YEAR_END, PKL_DATA_IMPORTS, PROJECT_PATH
+from mppsteel.config.model_config import (
+    IMPORT_DATA_PATH,
+    MODEL_YEAR_END,
+    PKL_DATA_IMPORTS,
+    PROJECT_PATH,
+)
 from mppsteel.config.model_scenarios import STEEL_DEMAND_SCENARIO_MAPPER
 from mppsteel.utility.dataframe_utility import extend_df_years
 from mppsteel.utility.function_timer_utility import timer_func
@@ -17,7 +22,7 @@ from mppsteel.utility.file_handling_utility import (
     extract_data,
     read_pickle_folder,
     return_pkl_paths,
-    serialize_file
+    serialize_file,
 )
 from mppsteel.data_validation.data_import_tests import REGIONAL_STEEL_DEMAND_SCHEMA
 from mppsteel.utility.log_utility import get_logger
@@ -50,7 +55,9 @@ def steel_demand_region_assignor(
 
 
 @pa.check_input(REGIONAL_STEEL_DEMAND_SCHEMA)
-def steel_demand_creator(df: pd.DataFrame, rmi_matcher: dict, index_cols: list) -> pd.DataFrame:
+def steel_demand_creator(
+    df: pd.DataFrame, rmi_matcher: dict, index_cols: list
+) -> pd.DataFrame:
     """Formats the Steel Demand data. Assigns country codes to the regions, and melt and indexes them.
 
     Args:
@@ -71,7 +78,7 @@ def steel_demand_creator(df: pd.DataFrame, rmi_matcher: dict, index_cols: list) 
     df_c = pd.melt(
         frame=df_c,
         id_vars=["metric", "region", "scenario", "country_code"],
-        var_name=["year"]
+        var_name=["year"],
     )
     df_c["year"] = df_c["year"].astype(int)
     return df_c.set_index(index_cols)
@@ -96,29 +103,42 @@ def add_average_values(df: pd.DataFrame) -> pd.DataFrame:
     average_base["value"] = average_values
     return pd.concat([df_c, average_base])
 
+
 def replace_2020_steel_demand_values_with_wsa_production(
-    demand_df: pd.DataFrame, 
-    index_cols: list, 
-    year_to_replace: int = 2020, 
-    project_dir=PROJECT_PATH
+    demand_df: pd.DataFrame,
+    index_cols: list,
+    year_to_replace: int = 2020,
+    project_dir=PROJECT_PATH,
 ) -> pd.DataFrame:
 
-    wsa_production = read_pickle_folder(project_dir / PKL_DATA_IMPORTS, "wsa_production", "df")
+    wsa_production = read_pickle_folder(
+        project_dir / PKL_DATA_IMPORTS, "wsa_production", "df"
+    )
     wsa_production.set_index("Region", inplace=True)
     demand_df_c = demand_df.copy()
     demand_df_c.reset_index(inplace=True)
     scenarios = demand_df_c["scenario"].unique()
     demand_df_c.set_index(["year", "metric", "scenario", "region"], inplace=True)
     for region, scenario in list(itertools.product(wsa_production.index, scenarios)):
-        demand_df_c.loc[(year_to_replace, "Crude steel demand", scenario, region), "value"] = wsa_production.loc[region, "Value"]
+        demand_df_c.loc[
+            (year_to_replace, "Crude steel demand", scenario, region), "value"
+        ] = wsa_production.loc[region, "Value"]
     for scenario in scenarios:
-        demand_df_c.loc[(year_to_replace, "Crude steel demand", scenario, "World"), "value"] = wsa_production["Value"].sum()
+        demand_df_c.loc[
+            (year_to_replace, "Crude steel demand", scenario, "World"), "value"
+        ] = wsa_production["Value"].sum()
     demand_df_c = demand_df_c.reset_index().set_index(index_cols)
     assert not demand_df.equals(demand_df_c)
     return demand_df_c
 
+
 @timer_func
-def get_steel_demand(scenario_dict: dict, pkl_paths: Union[dict, None] = None, serialize: bool = False, from_csv: bool = False) -> pd.DataFrame:
+def get_steel_demand(
+    scenario_dict: dict,
+    pkl_paths: Union[dict, None] = None,
+    serialize: bool = False,
+    from_csv: bool = False,
+) -> pd.DataFrame:
     """Complete preprocessing flow for the regional steel demand data.
 
     Args:
@@ -129,21 +149,27 @@ def get_steel_demand(scenario_dict: dict, pkl_paths: Union[dict, None] = None, s
     Returns:
         pd.DataFrame: The formatted DataFrame of regional Steel Demand data.
     """
-    _, intermediate_path, _ = return_pkl_paths(scenario_name=scenario_dict["scenario_name"], paths=pkl_paths)
+    _, intermediate_path, _ = return_pkl_paths(
+        scenario_name=scenario_dict["scenario_name"], paths=pkl_paths
+    )
     if from_csv:
-        steel_demand = extract_data(
-            IMPORT_DATA_PATH, "Regional Steel Demand", "csv"
-        )
+        steel_demand = extract_data(IMPORT_DATA_PATH, "Regional Steel Demand", "csv")
     else:
-        steel_demand = read_pickle_folder(PKL_DATA_IMPORTS, "regional_steel_demand", "df")
+        steel_demand = read_pickle_folder(
+            PKL_DATA_IMPORTS, "regional_steel_demand", "df"
+        )
     index_cols = ["year", "scenario", "metric"]
     steel_demand_f = steel_demand_creator(steel_demand, RMI_MATCHER, index_cols)
-    steel_demand_f = replace_2020_steel_demand_values_with_wsa_production(steel_demand_f, index_cols)
+    steel_demand_f = replace_2020_steel_demand_values_with_wsa_production(
+        steel_demand_f, index_cols
+    )
     steel_demand_f = add_average_values(steel_demand_f)
     scenario_entry = STEEL_DEMAND_SCENARIO_MAPPER[
         scenario_dict["steel_demand_scenario"]
     ]
-    steel_demand_f = steel_demand_f.loc[(slice(None), scenario_entry, slice(None))].copy()
+    steel_demand_f = steel_demand_f.loc[
+        (slice(None), scenario_entry, slice(None))
+    ].copy()
     index_cols = ["year", "metric"]
     steel_demand_f.reset_index().set_index(index_cols)
     steel_demand_f = extend_df_years(steel_demand_f, "year", MODEL_YEAR_END, index_cols)

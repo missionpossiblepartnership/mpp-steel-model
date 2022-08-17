@@ -11,7 +11,7 @@ from mppsteel.config.model_config import (
     MODEL_YEAR_START,
     INVESTMENT_OFFCYCLE_BUFFER_TOP,
     INVESTMENT_OFFCYCLE_BUFFER_TAIL,
-    TECH_MORATORIUM_DATE
+    TECH_MORATORIUM_DATE,
 )
 from mppsteel.config.model_scenarios import TECH_SWITCH_SCENARIOS, SOLVER_LOGICS
 from mppsteel.config.reference_lists import (
@@ -195,8 +195,10 @@ def return_best_tech(
     )
 
     if best_choice != base_tech:
-        capacity_transaction_result = capacity_constraint_container.subtract_capacity_from_balance(
-            year, plant_name
+        capacity_transaction_result = (
+            capacity_constraint_container.subtract_capacity_from_balance(
+                year, plant_name
+            )
         )
         if not capacity_transaction_result:
             best_choice = base_tech
@@ -215,7 +217,7 @@ def return_best_tech(
             best_choice,
             regional_scrap=regional_scrap,
             override_constraint=True,
-            apply_transaction=True
+            apply_transaction=True,
         )
 
     return best_choice
@@ -257,12 +259,19 @@ def active_check_results(
         return active_check
 
 
-
-def resort_primary_switchers(primary_switchers_df: pd.DataFrame, waiting_list_dict: dict) -> pd.DataFrame:
+def resort_primary_switchers(
+    primary_switchers_df: pd.DataFrame, waiting_list_dict: dict
+) -> pd.DataFrame:
     waiting_list_plants = waiting_list_dict.keys()
-    just_waiting_list_plant_df = primary_switchers_df[primary_switchers_df["plant_name"].isin(waiting_list_plants)]
-    not_waiting_list_plant_df = primary_switchers_df[~primary_switchers_df["plant_name"].isin(waiting_list_plants)]
-    return pd.concat([just_waiting_list_plant_df, not_waiting_list_plant_df]).reset_index(drop=True)
+    just_waiting_list_plant_df = primary_switchers_df[
+        primary_switchers_df["plant_name"].isin(waiting_list_plants)
+    ]
+    not_waiting_list_plant_df = primary_switchers_df[
+        ~primary_switchers_df["plant_name"].isin(waiting_list_plants)
+    ]
+    return pd.concat(
+        [just_waiting_list_plant_df, not_waiting_list_plant_df]
+    ).reset_index(drop=True)
 
 
 def get_current_technology(
@@ -270,7 +279,7 @@ def get_current_technology(
     year: int,
     plant_name: str,
     year_founded: int,
-    initial_technology: str
+    initial_technology: str,
 ) -> str:
     current_tech = ""
     if (year == MODEL_YEAR_START) or (year == year_founded):
@@ -281,15 +290,21 @@ def get_current_technology(
 
 
 def create_solver_entry_dict(
-    PlantChoiceContainer: PlantChoices, year: int, plant_name: str, current_tech: str,
-    switch_tech: str, switch_type: str, update_record: bool = True, update_choice: bool = True
+    PlantChoiceContainer: PlantChoices,
+    year: int,
+    plant_name: str,
+    current_tech: str,
+    switch_tech: str,
+    switch_type: str,
+    update_record: bool = True,
+    update_choice: bool = True,
 ) -> dict:
     entry = {
         "year": year,
         "plant_name": plant_name,
         "current_tech": current_tech,
         "switch_tech": switch_tech,
-        "switch_type": switch_type
+        "switch_type": switch_type,
     }
     if update_record:
         PlantChoiceContainer.update_records("choice", entry)
@@ -297,14 +312,16 @@ def create_solver_entry_dict(
         PlantChoiceContainer.update_choice(year, plant_name, switch_tech)
     return entry
 
+
 def return_initial_tech(initial_tech_ref: dict, plant_name: str) -> str:
     return initial_tech_ref[plant_name]
+
 
 def split_primary_plant_switchers(
     primary_switchers_df: pd.DataFrame,
     PlantInvestmentCycleContainer: PlantInvestmentCycle,
     PlantChoiceContainer: PlantChoices,
-    year: int
+    year: int,
 ) -> Tuple[dict, dict, dict, dict]:
     closed_plants_current_techs = {}
     new_open_plants = {}
@@ -316,7 +333,11 @@ def split_primary_plant_switchers(
             row.plant_name, year
         )
         current_tech = get_current_technology(
-            PlantChoiceContainer, year, row.plant_name, year_founded, row.initial_technology
+            PlantChoiceContainer,
+            year,
+            row.plant_name,
+            year_founded,
+            row.initial_technology,
         )
         if current_tech == "Close plant":
             closed_plants_current_techs[row.plant_name] = current_tech
@@ -326,15 +347,21 @@ def split_primary_plant_switchers(
             main_cycle_plants[row.plant_name] = {
                 "current_tech": current_tech,
                 "country_code": row.country_code,
-                "region": row.rmi_region
+                "region": row.rmi_region,
             }
         elif switch_type == "trans switch":
             trans_switch_plants[row.plant_name] = {
                 "current_tech": current_tech,
                 "country_code": row.country_code,
-                "region": row.rmi_region
+                "region": row.rmi_region,
             }
-    return closed_plants_current_techs, new_open_plants, main_cycle_plants, trans_switch_plants
+    return (
+        closed_plants_current_techs,
+        new_open_plants,
+        main_cycle_plants,
+        trans_switch_plants,
+    )
+
 
 def map_technology_state(tech: str) -> str:
     """Returns the technology phase according to a technology phases dictionary.

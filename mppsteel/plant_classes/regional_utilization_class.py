@@ -7,10 +7,12 @@ from mppsteel.config.model_config import (
     IMPORT_DATA_PATH,
     PKL_DATA_IMPORTS,
     PKL_DATA_FORMATTED,
-    PROJECT_PATH
+    PROJECT_PATH,
 )
 from mppsteel.utility.file_handling_utility import extract_data, read_pickle_folder
-from mppsteel.plant_classes.capacity_container_class import create_regional_capacity_dict
+from mppsteel.plant_classes.capacity_container_class import (
+    create_regional_capacity_dict,
+)
 
 from mppsteel.utility.log_utility import get_logger
 
@@ -110,7 +112,9 @@ def return_utilization(
     return util_dict
 
 
-def create_wsa_2020_utilization_dict(project_dir=PROJECT_PATH, from_csv: bool = False, utilization_cap: int = 1) -> dict:
+def create_wsa_2020_utilization_dict(
+    project_dir=PROJECT_PATH, from_csv: bool = False, utilization_cap: int = 1
+) -> dict:
     """Creates the initial utilization dictionary for 2020 based on data from the World Steel Association (WSA).
 
     Returns:
@@ -118,12 +122,18 @@ def create_wsa_2020_utilization_dict(project_dir=PROJECT_PATH, from_csv: bool = 
     """
     logger.info("Creating the utilization dictionary for 2020.")
     if from_csv:
-        wsa_production = extract_data(IMPORT_DATA_PATH, "WSA World Steel in Figures 2021", "xlsx", 1)
+        wsa_production = extract_data(
+            IMPORT_DATA_PATH, "WSA World Steel in Figures 2021", "xlsx", 1
+        )
     else:
-        wsa_production = read_pickle_folder(project_dir / PKL_DATA_IMPORTS, "wsa_production", "df")
+        wsa_production = read_pickle_folder(
+            project_dir / PKL_DATA_IMPORTS, "wsa_production", "df"
+        )
     steel_plants_processed = read_pickle_folder(
         project_dir / PKL_DATA_FORMATTED, "steel_plants_processed", "df"
     )
     wsa_2020_production_dict = format_wsa_production_data(wsa_production, as_dict=True)
     capacity_dict = create_regional_capacity_dict(steel_plants_processed, as_mt=True)
-    return return_utilization(wsa_2020_production_dict, capacity_dict, utilization_cap=utilization_cap)
+    return return_utilization(
+        wsa_2020_production_dict, capacity_dict, utilization_cap=utilization_cap
+    )

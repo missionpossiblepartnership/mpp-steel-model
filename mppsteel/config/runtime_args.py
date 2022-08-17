@@ -148,39 +148,33 @@ parser.add_argument(
     action="store_true",
     help="Runs script to create investment cycles",
 )  # investment_cycles
-parser.add_argument(
-    "--pe_models",
-    action="store_true",
-    help="Runs the PE Model script"
-)
+parser.add_argument("--pe_models", action="store_true", help="Runs the PE Model script")
 parser.add_argument(
     "--multi_run_full",
     action="store_true",
-    help="Runs a full model scenario multiple times (from solver stage) and stores aggregated results"
+    help="Runs a full model scenario multiple times (from solver stage) and stores aggregated results",
 )
 parser.add_argument(
     "--multi_run_half",
     action="store_true",
-    help="Runs a half model scenario multiple times (from solver stage) and stores aggregated results"
+    help="Runs a half model scenario multiple times (from solver stage) and stores aggregated results",
 )
 parser.add_argument(
     "--half_model_run",
     action="store_true",
-    help="Runs a half model (from solver stage onwards) and stores results"
+    help="Runs a half model (from solver stage onwards) and stores results",
 )
 parser.add_argument(
     "--multi_run_multi_scenario",
     action="store_true",
-    help="Runs the model multiple times for multiple scenarios"
+    help="Runs the model multiple times for multiple scenarios",
 )
 parser.add_argument(
-    "--steel_plants",
-    action="store_true",
-    help="Runs the steel plant formatter"
-) # steel_plant_processor
+    "--steel_plants", action="store_true", help="Runs the steel plant formatter"
+)  # steel_plant_processor
 
 parser.add_argument(
     "--model_iterations_run",
     action="store_true",
-    help="Runs the multiple iterations of each scenario"
+    help="Runs the multiple iterations of each scenario",
 )

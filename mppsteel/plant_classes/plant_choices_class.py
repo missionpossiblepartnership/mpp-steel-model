@@ -59,15 +59,16 @@ class PlantChoices:
     def output_records_to_df(self, record_type: str):
         if record_type == "choice":
             df = pd.DataFrame(self.choice_records).reset_index(drop=True)
-            return df.drop_duplicates(keep='last')
+            return df.drop_duplicates(keep="last")
         elif record_type == "rank":
             df = pd.DataFrame(self.rank_records).reset_index(drop=True)
             df = df[~df.index.duplicated(keep="first")]
             return combine_tech_ranks(df)
+
 
 def combine_tech_ranks(tr_df: pd.DataFrame):
     container = [pd.concat(tr_df.values[count]) for count in range(len(tr_df.values))]
     if len(container) == 0:
         return pd.DataFrame(columns=["year", "start_tech"])
     df = pd.concat(container)
-    return df.sort_values(by=['year','start_tech'], ascending=True).reset_index()
+    return df.sort_values(by=["year", "start_tech"], ascending=True).reset_index()

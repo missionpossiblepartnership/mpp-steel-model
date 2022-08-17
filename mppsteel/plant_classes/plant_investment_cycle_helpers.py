@@ -27,7 +27,7 @@ def calculate_investment_years(
     op_start_year: int,
     cycle_length: int,
     cutoff_start_year: int = MODEL_YEAR_START,
-    cutoff_end_year: int = MODEL_YEAR_END
+    cutoff_end_year: int = MODEL_YEAR_END,
 ) -> list:
     """Creates a list of investment decision years for a plant based on inputted parameters that determine the decision years.
 
@@ -50,7 +50,9 @@ def calculate_investment_years(
     return decision_years
 
 
-def return_cycle_length(inv_intervals, investment_cycle_randomness: bool = False) -> int:
+def return_cycle_length(
+    inv_intervals, investment_cycle_randomness: bool = False
+) -> int:
     """Returns a new cycle length based on a fixed value and a random value within a predefined inveral.
 
     Args:
@@ -125,7 +127,7 @@ def add_off_cycle_investment_years(
         list: An enhanced investment decision cycle list including off-cycle range objects representing potential off-cycle switches.
     """
     inv_cycle_length = len(main_investment_cycle)
-    range_list = list() # List[int, range]
+    range_list = list()  # List[int, range]
 
     # For inv_cycle_length = 0
     if inv_cycle_length == 0:
@@ -199,7 +201,9 @@ def create_investment_cycle_reference(plant_investment_year_dict: dict) -> pd.Da
                 }
                 df_list.append(entry)
     if len(df_list) == 0:
-        return pd.DataFrame(columns=["year", "plant_name"]).set_index(["year", "plant_name"])
+        return pd.DataFrame(columns=["year", "plant_name"]).set_index(
+            ["year", "plant_name"]
+        )
     return pd.DataFrame(df_list).set_index(["year", "plant_name"])
 
 
@@ -251,7 +255,9 @@ def extract_tech_plant_switchers(
     )
 
 
-def adjust_transitional_switch_in_investment_cycle(cycle_years: list, rebase_year: int) -> list:
+def adjust_transitional_switch_in_investment_cycle(
+    cycle_years: list, rebase_year: int
+) -> list:
     """Adjusts the investment cycle when a plan decides to undertake a transitional switch away from its base technology.
     The adjustment removes the possibility of an additional transitional switch before its next main investment cycle.
 
@@ -312,7 +318,9 @@ def adjust_cycles_for_first_year(plant_cycles: dict) -> dict:
     return new_plant_cycles
 
 
-def increment_investment_cycle_year(cycle_years: list, rebase_year: int, increment_amount: int = 1) -> list:
+def increment_investment_cycle_year(
+    cycle_years: list, rebase_year: int, increment_amount: int = 1
+) -> list:
     """Adjusts the investment cycle when a plant has to postpone its investment year. Every year in the cycle is incremented by `increment_amount`.
 
     Args:
@@ -323,24 +331,27 @@ def increment_investment_cycle_year(cycle_years: list, rebase_year: int, increme
     Returns:
         list: The rebased investment cycle.
     """
-    years = [
-        year_obj for year_obj in cycle_years if isinstance(year_obj, int) 
-    ]
+    years = [year_obj for year_obj in cycle_years if isinstance(year_obj, int)]
     if years:
         years = [
-            net_zero_year_bring_forward(year + increment_amount) if year >= rebase_year else year for year in years 
+            net_zero_year_bring_forward(year + increment_amount)
+            if year >= rebase_year
+            else year
+            for year in years
         ]
-    ranges = [
-        year_obj for year_obj in cycle_years if isinstance(year_obj, range)
-    ]
+    ranges = [year_obj for year_obj in cycle_years if isinstance(year_obj, range)]
     if not ranges:
         return years
     new_range_list = []
     for range_obj in ranges:
         first_year = range_obj[0]
         last_year = range_obj[-1]
-        first_year_incremented = net_zero_year_bring_forward(first_year + increment_amount)
-        last_year_incremented = net_zero_year_bring_forward(last_year + increment_amount + 1)
+        first_year_incremented = net_zero_year_bring_forward(
+            first_year + increment_amount
+        )
+        last_year_incremented = net_zero_year_bring_forward(
+            last_year + increment_amount + 1
+        )
         new_range_obj = range_obj
         if last_year < rebase_year:
             new_range_list.append(range_obj)
@@ -350,6 +361,7 @@ def increment_investment_cycle_year(cycle_years: list, rebase_year: int, increme
             new_range_obj = range(first_year, last_year_incremented)
         new_range_list.append(new_range_obj)
     return combine_two_lists_maintain_order(years, new_range_list)
+
 
 def combine_two_lists_maintain_order(years: list, range_list: list):
     year_dict = {year: year for year in years}

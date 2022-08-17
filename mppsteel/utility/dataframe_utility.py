@@ -73,7 +73,9 @@ def move_cols_to_front(df: pd.DataFrame, cols_at_front: list[str]) -> list:
     return cols_at_front + non_abatement_columns
 
 
-def expand_dataset_year_pairs(df: pd.DataFrame, year_pairs: Sequence[tuple[int, int]]) -> pd.DataFrame:
+def expand_dataset_year_pairs(
+    df: pd.DataFrame, year_pairs: Sequence[tuple[int, int]]
+) -> pd.DataFrame:
     """Expands the number of years contained in a DataFrame where the current timeseries is in intervals.
 
     Args:
@@ -204,6 +206,7 @@ def return_furnace_group(furnace_dict: dict, tech: str) -> str:
         if tech in furnace_dict[key]:
             return value
 
+
 def melt_and_index(
     df: pd.DataFrame, id_vars: list[str], var_name: str, index: list[str]
 ) -> pd.DataFrame:
@@ -259,14 +262,18 @@ def change_cols_to_numeric(df: pd.DataFrame, numeric_cols: list) -> pd.DataFrame
     return df_c
 
 
-def extend_df_years(df: pd.DataFrame, year_column: str, year_end: int, index: list = None) -> pd.DataFrame:
-    df_c = df.reset_index().copy() if index else df.copy()    
+def extend_df_years(
+    df: pd.DataFrame, year_column: str, year_end: int, index: list = None
+) -> pd.DataFrame:
+    df_c = df.reset_index().copy() if index else df.copy()
     max_year = df_c[year_column].max()
     new_rows_full_df = pd.DataFrame().reindex_like(df_c)
     if max_year == year_end:
         return df
     if max_year > year_end:
-        logger.warn(f"You entered {year_end}, but it is smaller than the max year of the model {max_year}. Returning original DataFrame")
+        logger.warn(
+            f"You entered {year_end}, but it is smaller than the max year of the model {max_year}. Returning original DataFrame"
+        )
         return df
     if max_year != year_end:
         new_row_container = []
@@ -280,17 +287,28 @@ def extend_df_years(df: pd.DataFrame, year_column: str, year_end: int, index: li
     return final_df.set_index(index) if index else final_df
 
 
-def test_dataframes_equal(df1: pd.DataFrame, df2: pd.DataFrame, common_col: str, df1_index: int, df2_index: int):
+def test_dataframes_equal(
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+    common_col: str,
+    df1_index: int,
+    df2_index: int,
+):
     df1_f = df1[df1[common_col] == df1_index].drop(common_col, axis=1)
     df2_f = df2[df2[common_col] == df2_index].drop(common_col, axis=1)
-    assert df1_f.equals(df2_f), f"DataFrames not equal | common column: {common_col} | Indexes: {df1_index} and {df2_index} -> {df1_f} {df2_f}"
+    assert df1_f.equals(
+        df2_f
+    ), f"DataFrames not equal | common column: {common_col} | Indexes: {df1_index} and {df2_index} -> {df1_f} {df2_f}"
 
 
 def move_columns_to_front(column_list: list, columns_to_move: list) -> list:
     non_moved_columns = list(set(column_list).difference(set(columns_to_move)))
     return columns_to_move + non_moved_columns
 
-def change_col_type(df: pd.DataFrame, columns_to_change: list, new_col_type: str) -> pd.DataFrame:
+
+def change_col_type(
+    df: pd.DataFrame, columns_to_change: list, new_col_type: str
+) -> pd.DataFrame:
     for col in columns_to_change:
         df[col] = df[col].astype(new_col_type)
     return df

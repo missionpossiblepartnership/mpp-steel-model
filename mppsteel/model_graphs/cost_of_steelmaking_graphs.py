@@ -68,10 +68,13 @@ def assign_country_deltas(df: pd.DataFrame, delta_dict: dict) -> pd.DataFrame:
         df_c.loc[technology, "LCOS delta"] = delta_dict[technology]
     return df_c
 
+
 def melt_and_subset(df: pd.DataFrame, cost_types: list):
     df_c = df.copy()
     df_c = df_c.reset_index().melt(
-        id_vars=["technology"], var_name="cost_type", value_name="cost",
+        id_vars=["technology"],
+        var_name="cost_type",
+        value_name="cost",
     )
     return df_c[df_c["cost_type"].isin(cost_types)].copy()
 

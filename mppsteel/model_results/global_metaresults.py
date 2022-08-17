@@ -13,7 +13,7 @@ from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
     return_pkl_paths,
-    serialize_file
+    serialize_file,
 )
 from mppsteel.utility.log_utility import get_logger
 
@@ -69,7 +69,8 @@ def global_metaresults_calculator(
         df["year"].apply(lambda year: utilization_results[year]["World"]).round(3)
     )
     df["steel_production"] = (
-        df["year"].apply(lambda year: sum(capacity_results[year].values())) * df["year"].apply(lambda year: utilization_results[year]["World"])
+        df["year"].apply(lambda year: sum(capacity_results[year].values()))
+        * df["year"].apply(lambda year: utilization_results[year]["World"])
     ).round(
         rounding
     )  # Mt
@@ -113,7 +114,12 @@ def global_metaresults_calculator(
 
 
 @timer_func
-def metaresults_flow(scenario_dict: dict, pkl_paths: Union[dict, None] = None, serialize: bool = False, model_run: str = "") -> pd.DataFrame:
+def metaresults_flow(
+    scenario_dict: dict,
+    pkl_paths: Union[dict, None] = None,
+    serialize: bool = False,
+    model_run: str = "",
+) -> pd.DataFrame:
     """Complete Metaresults flow to generate the Investment Results references DataFrame.
 
     Args:

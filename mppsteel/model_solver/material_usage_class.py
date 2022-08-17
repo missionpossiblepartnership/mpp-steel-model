@@ -6,12 +6,13 @@ import pandas as pd
 
 from mppsteel.config.model_config import (
     CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
-    SCRAP_CONSTRAINT_TOLERANCE_FACTOR
+    SCRAP_CONSTRAINT_TOLERANCE_FACTOR,
 )
 from mppsteel.config.reference_lists import RESOURCE_CONTAINER_REF
 from mppsteel.utility.log_utility import get_logger
 
 logger = get_logger(__name__)
+
 
 class MaterialUsage:
     """Description
@@ -155,21 +156,22 @@ class MaterialUsage:
         region: str = None,
         override_constraint: bool = False,
         apply_transaction: bool = True,
-        regional_scrap: bool = False
+        regional_scrap: bool = False,
     ):
-
         def function_to_apply_transaction(
             self,
             current_balance: float,
             current_usage: float,
             current_balance_regional: float,
-            current_usage_regional: float
+            current_usage_regional: float,
         ) -> None:
             if model_type == "scrap" and regional_scrap:
                 self.balance[year][model_type][region] = current_balance - amount
                 self.usage[year][model_type][region] = current_usage + amount
             elif model_type == "scrap" and not regional_scrap:
-                self.balance[year][model_type][region] = current_balance_regional - amount
+                self.balance[year][model_type][region] = (
+                    current_balance_regional - amount
+                )
                 self.usage[year][model_type][region] = current_usage_regional + amount
             else:
                 self.balance[year][model_type] = current_balance - amount
@@ -196,7 +198,12 @@ class MaterialUsage:
         # CASE 1: Apply and override
         if apply_transaction and override_constraint:
             function_to_apply_transaction(
-                self, current_balance, current_usage, current_balance_regional, current_usage_regional)
+                self,
+                current_balance,
+                current_usage,
+                current_balance_regional,
+                current_usage_regional,
+            )
             return True
 
         # CASE 2: Apply, but don't override
@@ -206,7 +213,12 @@ class MaterialUsage:
                 return False
             else:
                 function_to_apply_transaction(
-                    self, current_balance, current_usage, current_balance_regional, current_usage_regional)
+                    self,
+                    current_balance,
+                    current_usage,
+                    current_balance_regional,
+                    current_usage_regional,
+                )
                 return True
 
         # CASE 3: Don't apply, but and override
@@ -232,7 +244,7 @@ def create_material_usage_dict(
     capacity_value: float = None,
     override_constraint: bool = False,
     apply_transaction: bool = False,
-    negative_amount: bool = False
+    negative_amount: bool = False,
 ) -> dict:
     """Creates a material checking dictionary that contains checks on every resource that has a constraint.
     The function will assign True if the resource passes the constraint check and False if the resource doesn't pass this constraint.
@@ -274,7 +286,7 @@ def create_material_usage_dict(
             region=region,
             override_constraint=override_constraint,
             apply_transaction=apply_transaction,
-            regional_scrap=regional_scrap
+            regional_scrap=regional_scrap,
         )
     return material_check_container
 
@@ -330,16 +342,10 @@ def create_scrap_constraints(model: pd.DataFrame) -> dict:
     """
     rsd = model[model["region"] != "World"].copy()
     rsd = rsd[rsd.index.get_level_values("metric") == "Scrap availability"]
-    rsd = (
-        rsd[["region", "value"]]
-        .reset_index()
-        .set_index(["year", "region"])
-        .copy()
-    )
+    rsd = rsd[["region", "value"]].reset_index().set_index(["year", "region"]).copy()
     rsd["value"] = rsd["value"] * (1 + SCRAP_CONSTRAINT_TOLERANCE_FACTOR)
     return {
-        year: rsd.loc[year].to_dict()["value"]
-        for year in rsd.index.get_level_values(0)
+        year: rsd.loc[year].to_dict()["value"] for year in rsd.index.get_level_values(0)
     }
 
 

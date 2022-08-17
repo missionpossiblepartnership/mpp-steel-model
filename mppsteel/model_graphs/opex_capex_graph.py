@@ -67,12 +67,13 @@ def return_capex_values(
     )
     return combined_values
 
+
 def add_new_index_to_df(vdf: pd.DataFrame, value_columns: list) -> pd.DataFrame:
     vdf_c = vdf.copy()
     country_values = vdf_c.index.get_level_values(2).unique()
     new_index = pd.MultiIndex.from_product(
-        [TECH_REFERENCE_LIST, value_columns, country_values], 
-        names=["technology", "cost_type", "country_code"]
+        [TECH_REFERENCE_LIST, value_columns, country_values],
+        names=["technology", "cost_type", "country_code"],
     )
     new_df = pd.DataFrame(index=new_index, columns=vdf_c.columns)
     return pd.concat([vdf_c, new_df]).sort_index(ascending=True)

@@ -18,7 +18,7 @@ from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
     return_pkl_paths,
-    serialize_file
+    serialize_file,
 )
 from mppsteel.model_solver.solver_summary import get_tech_choice
 from mppsteel.utility.log_utility import get_logger
@@ -248,7 +248,12 @@ def get_investment_capital_costs(
 
 
 @timer_func
-def investment_results(scenario_dict: dict, pkl_paths: Union[dict, None] = None, serialize: bool = False, model_run: str = "") -> pd.DataFrame:
+def investment_results(
+    scenario_dict: dict,
+    pkl_paths: Union[dict, None] = None,
+    serialize: bool = False,
+    model_run: str = "",
+) -> pd.DataFrame:
     """Complete Investment Results Flow to generate the Investment Results References DataFrame.
 
     Args:

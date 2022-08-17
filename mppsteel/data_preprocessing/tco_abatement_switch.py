@@ -11,22 +11,26 @@ from tqdm import tqdm
 from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.data_preprocessing.tco_calculation_functions import (
     get_discounted_opex_values,
-    calculate_capex
+    calculate_capex,
 )
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
     return_pkl_paths,
-    serialize_file
+    serialize_file,
 )
-from mppsteel.config.reference_lists import SWITCH_DICT, TECH_REFERENCE_LIST, TECHNOLOGIES_TO_DROP
+from mppsteel.config.reference_lists import (
+    SWITCH_DICT,
+    TECH_REFERENCE_LIST,
+    TECHNOLOGIES_TO_DROP,
+)
 from mppsteel.config.model_config import (
     MODEL_YEAR_END,
     MODEL_YEAR_RANGE,
     PKL_DATA_FORMATTED,
     INVESTMENT_CYCLE_DURATION_YEARS,
-    DISCOUNT_RATE
+    DISCOUNT_RATE,
 )
 
 from mppsteel.utility.log_utility import get_logger
@@ -291,7 +295,9 @@ def tco_presolver_reference(
         pd.DataFrame: A DataFrame containing the complete TCO reference DataFrame (including green premium values).
     """
     logger.info("Running TCO Reference Sheet")
-    _, intermediate_path, _ = return_pkl_paths(scenario_name=scenario_dict["scenario_name"], paths=pkl_paths)
+    _, intermediate_path, _ = return_pkl_paths(
+        scenario_name=scenario_dict["scenario_name"], paths=pkl_paths
+    )
     greenfield_switching_df = read_pickle_folder(
         PKL_DATA_FORMATTED, "greenfield_switching_df", "df"
     )
@@ -324,8 +330,10 @@ def abatement_presolver_reference(
         pd.DataFrame: A DataFrame containing the emissivity abatement values.
     """
     logger.info("Running Abatement Reference Sheet")
-    
-    _, intermediate_path, _ = return_pkl_paths(scenario_name=scenario_dict["scenario_name"], paths=pkl_paths)
+
+    _, intermediate_path, _ = return_pkl_paths(
+        scenario_name=scenario_dict["scenario_name"], paths=pkl_paths
+    )
     calculated_emissivity_combined = read_pickle_folder(
         intermediate_path, "calculated_emissivity_combined", "df"
     )

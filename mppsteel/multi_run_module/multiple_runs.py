@@ -19,10 +19,15 @@ from mppsteel.config.model_config import (
     PKL_DATA_COMBINED,
     PKL_FOLDER,
 )
-from mppsteel.multi_run_module.multiprocessing_functions import manager_run, multi_run_function
+from mppsteel.multi_run_module.multiprocessing_functions import (
+    manager_run,
+    multi_run_function,
+)
 from mppsteel.model_results.multiple_model_run_summary import summarise_combined_data
 from mppsteel.model_graphs.graph_production import create_combined_scenario_graphs
-from mppsteel.model_results.resource_demand_summary import create_resource_demand_summary
+from mppsteel.model_results.resource_demand_summary import (
+    create_resource_demand_summary,
+)
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.file_handling_utility import (
     create_folder_if_nonexist,
@@ -30,7 +35,7 @@ from mppsteel.utility.file_handling_utility import (
     pickle_to_csv,
     read_pickle_folder,
     serialize_file,
-    get_scenario_pkl_path
+    get_scenario_pkl_path,
 )
 
 from mppsteel.utility.log_utility import get_logger
@@ -40,14 +45,18 @@ logger = get_logger(__name__)
 
 
 def make_multiple_model_runs(
-    scenario_dict: dict, number_of_runs: int = DEFAULT_NUMBER_OF_RUNS, remove_run_folders: bool = False
+    scenario_dict: dict,
+    number_of_runs: int = DEFAULT_NUMBER_OF_RUNS,
+    remove_run_folders: bool = False,
 ) -> None:
 
     scenario_name = scenario_dict["scenario_name"]
     logger.info(f"Generating the scenario data for {scenario_name}")
     pkl_output_folder = pkl_folder_filepath_creation(scenario_name, create_folder=True)
     run_range = range(1, number_of_runs + 1)
-    run_range_chunks = split_list_into_chunks(run_range, math.ceil(len(run_range) / mp.cpu_count()))
+    run_range_chunks = split_list_into_chunks(
+        run_range, math.ceil(len(run_range) / mp.cpu_count())
+    )
     for run_range_chunk in run_range_chunks:
         multi_run_function(run_range_chunk, scenario_dict)
     run_container = aggregate_results(
@@ -58,14 +67,17 @@ def make_multiple_model_runs(
 
 
 def multiprocessing_scenarios_multiple_scenarios_multiple_runs(
-    scenario_options: list, number_of_runs: int, remove_run_folders: bool = False,
-):
+    scenario_options: list,
+    number_of_runs: int,
+    remove_run_folders: bool = False,
+) -> None:
     for scenario in scenario_options:
         make_multiple_model_runs(
             scenario_dict=scenario_options[scenario],
             number_of_runs=number_of_runs,
-            remove_run_folders=remove_run_folders
+            remove_run_folders=remove_run_folders,
         )
+
 
 @timer_func
 def join_scenario_data(
@@ -73,7 +85,7 @@ def join_scenario_data(
     new_folder: bool = True,
     timestamp: str = "",
     final_outputs_only: bool = True,
-):
+) -> None:
     logger.info(f"Joining the Following Scenario Data {scenario_options}")
     combined_output_pkl_folder = f"{PKL_FOLDER}/{COMBINED_OUTPUT_FOLDER_NAME}"
     create_folder_if_nonexist(combined_output_pkl_folder)
@@ -111,57 +123,86 @@ def join_scenario_data(
         combined_output.to_csv(f"{output_save_path}/{output_file}.csv", index=False)
 
     resource_demand_summary = create_resource_demand_summary(
-        output_folder_path=PKL_DATA_COMBINED,
-        serialize=True
+        output_folder_path=PKL_DATA_COMBINED, serialize=True
     )
-    resource_demand_summary.to_csv(f"{output_save_path}/resource_demand_summary.csv", index=False)
+    resource_demand_summary.to_csv(
+        f"{output_save_path}/resource_demand_summary.csv", index=False
+    )
 
     create_combined_scenario_graphs(filepath=output_save_path_graphs)
 
-def aggregate_results(scenario_name: str, run_range: range, number_of_runs: int, remove_run_folders: bool = False):
-    generic_files_to_path_dict = generate_files_to_path_dict([scenario_name,])[scenario_name]
+
+def aggregate_results(
+    scenario_name: str,
+    run_range: range,
+    number_of_runs: int,
+    remove_run_folders: bool = False,
+) -> dict:
+    generic_files_to_path_dict = generate_files_to_path_dict(
+        [
+            scenario_name,
+        ]
+    )[scenario_name]
     run_container = {filename: [] for filename in generic_files_to_path_dict}
     for model_run in run_range:
-        model_run_files_to_path = generate_files_to_path_dict(scenarios=[scenario_name,], model_run=model_run)
+        model_run_files_to_path = generate_files_to_path_dict(
+            scenarios=[
+                scenario_name,
+            ],
+            model_run=model_run,
+        )
         for filename in run_container:
             store_result_to_container(
-                run_container=run_container, 
-                scenario_name=scenario_name, 
-                filename=filename, 
-                pkl_path=model_run_files_to_path[scenario_name][filename], 
-                model_run=model_run, 
-                number_of_runs=number_of_runs
+                run_container=run_container,
+                scenario_name=scenario_name,
+                filename=filename,
+                pkl_path=model_run_files_to_path[scenario_name][filename],
+                model_run=model_run,
+                number_of_runs=number_of_runs,
             )
 
     if remove_run_folders:
         for model_run in run_range:
             intermediate_path = get_scenario_pkl_path(
-                scenario=scenario_name, pkl_folder_type="intermediate", model_run=model_run
+                scenario=scenario_name,
+                pkl_folder_type="intermediate",
+                model_run=model_run,
             )
             final_path = get_scenario_pkl_path(
                 scenario=scenario_name, pkl_folder_type="final", model_run=model_run
             )
             shutil.rmtree(intermediate_path)
             shutil.rmtree(final_path)
-    
+
     return run_container
+
 
 def aggregate_multi_run_scenarios(
     scenario_options: dict,
     single_scenario: bool = False,
     dated_output_folder: bool = True,
     timestamp: str = "",
-):
+) -> None:
     combined_pkl_path = pkl_folder_filepath_creation("combined", create_folder=True)
     output_save_path = output_folder_path_creation(dated_output_folder, timestamp)
     if single_scenario:
-        output_save_path = output_folder_path_creation(dated_output_folder, timestamp, return_single_scenario(scenario_options))
+        output_save_path = output_folder_path_creation(
+            dated_output_folder, timestamp, return_single_scenario(scenario_options)
+        )
     else:
         output_save_path = output_folder_path_creation(dated_output_folder, timestamp)
-    files_to_aggregate =  list(generate_files_to_path_dict(scenario_options.keys())[return_single_scenario(scenario_options)].keys())
+    files_to_aggregate = list(
+        generate_files_to_path_dict(scenario_options.keys())[
+            return_single_scenario(scenario_options)
+        ].keys()
+    )
 
     results_dict = {}
-    for filename in tqdm(files_to_aggregate, total=len(files_to_aggregate), desc="Running pkl scenario data merge"):
+    for filename in tqdm(
+        files_to_aggregate,
+        total=len(files_to_aggregate),
+        desc="Running pkl scenario data merge",
+    ):
         logger.info(f"Running through summary flow for {filename}")
         filename_list = manager_run(
             process_function=append_to_list,
@@ -178,8 +219,10 @@ def aggregate_multi_run_scenarios(
         serialize_file(results_dict[filename], combined_pkl_path, filename)
         pickle_to_csv(output_save_path, combined_pkl_path, filename, reset_index=False)
 
+
 def add_model_run_metadata_columns(
-    df: pd.DataFrame, scenario_name: str, order_of_run: int, total_runs: int) -> pd.DataFrame:
+    df: pd.DataFrame, scenario_name: str, order_of_run: int, total_runs: int
+) -> pd.DataFrame:
     df_c = df.copy()
     if "scenario" not in df_c.columns:
         df_c["scenario"] = scenario_name
@@ -189,13 +232,13 @@ def add_model_run_metadata_columns(
 
 
 def store_result_to_container(
-    run_container: dict, 
+    run_container: dict,
     scenario_name: str,
-    filename: str, 
+    filename: str,
     pkl_path: str,
-    model_run: int, 
-    number_of_runs: int
-) -> dict:
+    model_run: int,
+    number_of_runs: int,
+) -> None:
     df = read_pickle_folder(pkl_path, filename, "df")
     df = add_model_run_metadata_columns(df, scenario_name, model_run, number_of_runs)
     run_container[filename].append(df)
@@ -209,19 +252,27 @@ def store_run_container_to_pkl(
         df = mpd.concat(run_container[filename]).reset_index(drop=True)
         serialize_file(df._to_pandas(), pkl_path, filename)
 
-def pkl_folder_filepath_creation(scenario_name: str, create_folder: bool = False) -> str:
-    pkl_output_folder = f"{PKL_FOLDER}/{MULTIPLE_RUN_SCENARIO_FOLDER_NAME}/{scenario_name}"
+
+def pkl_folder_filepath_creation(
+    scenario_name: str, create_folder: bool = False
+) -> str:
+    pkl_output_folder = (
+        f"{PKL_FOLDER}/{MULTIPLE_RUN_SCENARIO_FOLDER_NAME}/{scenario_name}"
+    )
     if create_folder:
         create_folder_if_nonexist(pkl_output_folder)
     return pkl_output_folder
 
+
 def output_folder_path_creation(
-    dated_output_folder: bool = True,
-    timestamp: str = "",
-    single_scenario: str = ""
-):
+    dated_output_folder: bool = True, timestamp: str = "", single_scenario: str = ""
+) -> str:
     output_save_path = OUTPUT_FOLDER
-    output_folder_name = f"{MULTIPLE_RUN_SCENARIO_FOLDER_NAME} {single_scenario} {timestamp}" if single_scenario else f"{MULTIPLE_RUN_SCENARIO_FOLDER_NAME} {timestamp}"
+    output_folder_name = (
+        f"{MULTIPLE_RUN_SCENARIO_FOLDER_NAME} {single_scenario} {timestamp}"
+        if single_scenario
+        else f"{MULTIPLE_RUN_SCENARIO_FOLDER_NAME} {timestamp}"
+    )
     output_folder_filepath = "/"
     if dated_output_folder:
         output_folder_filepath = f"{OUTPUT_FOLDER}/{output_folder_name}"
@@ -229,13 +280,20 @@ def output_folder_path_creation(
         output_save_path = output_folder_filepath
     return output_save_path
 
-def append_to_list(appending_list, filename: str, scenario: str):
-    appending_list.append(read_pickle_folder(pkl_folder_filepath_creation(scenario), filename, "df"))
 
-def return_single_scenario(scenario_options: dict):
+def append_to_list(appending_list, filename: str, scenario: str) -> None:
+    appending_list.append(
+        read_pickle_folder(pkl_folder_filepath_creation(scenario), filename, "df")
+    )
+
+
+def return_single_scenario(scenario_options: dict) -> list:
     return list(scenario_options.keys())[0]
 
-def create_process_function_kwargs_scenario_agg(appending_list, filename, scenario):
+
+def create_process_function_kwargs_scenario_agg(
+    appending_list, filename, scenario
+) -> dict:
     return dict(
         appending_list=appending_list,
         filename=filename,

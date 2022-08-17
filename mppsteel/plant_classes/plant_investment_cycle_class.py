@@ -34,7 +34,12 @@ class PlantInvestmentCycle:
         self.plant_cycles = {}
         self.plant_cycles_with_off_cycle = {}
 
-    def instantiate_plants(self, plant_names: list, plant_start_years: list, investment_cycle_randomness: bool) -> None:
+    def instantiate_plants(
+        self,
+        plant_names: list,
+        plant_start_years: list,
+        investment_cycle_randomness: bool,
+    ) -> None:
         self.plant_names = plant_names
         start_year_dict = dict(zip(plant_names, plant_start_years))
         for plant_name in self.plant_names:
@@ -53,7 +58,12 @@ class PlantInvestmentCycle:
             self.plant_cycles_with_off_cycle
         )
 
-    def add_new_plants(self, plant_names: list, plant_start_years: list, investment_cycle_randomness: bool) -> None:
+    def add_new_plants(
+        self,
+        plant_names: list,
+        plant_start_years: list,
+        investment_cycle_randomness: bool,
+    ) -> None:
         new_dict = dict(zip(plant_names, plant_start_years))
         for plant_name in plant_names:
             self.plant_names.append(plant_name)
@@ -69,13 +79,17 @@ class PlantInvestmentCycle:
                 plant_name
             ] = add_off_cycle_investment_years(self.plant_cycles[plant_name])
 
-    def adjust_cycle_for_transitional_switch(self, plant_name: str, rebase_year: int) -> None:
+    def adjust_cycle_for_transitional_switch(
+        self, plant_name: str, rebase_year: int
+    ) -> None:
         new_cycle = adjust_transitional_switch_in_investment_cycle(
             self.plant_cycles_with_off_cycle[plant_name], rebase_year
         )
         self.plant_cycles_with_off_cycle[plant_name] = new_cycle
 
-    def adjust_cycle_for_deferred_investment(self, plant_name: str, rebase_year: int) -> None:
+    def adjust_cycle_for_deferred_investment(
+        self, plant_name: str, rebase_year: int
+    ) -> None:
         new_cycle = increment_investment_cycle_year(
             self.plant_cycles_with_off_cycle[plant_name], rebase_year
         )
@@ -102,9 +116,13 @@ class PlantInvestmentCycle:
             entry = self.plant_cycles_with_off_cycle[plant_name]
             cycle_length = self.plant_investment_cycle_length[plant_name]
             if len(entry) == 1:
-                assert entry[0] + cycle_length > MODEL_YEAR_END, f"Only one entry for {plant_name}. Initial year: {entry[0]} | Cycle length {cycle_length} | Next investment cycle {entry[0] + cycle_length}"
+                assert (
+                    entry[0] + cycle_length > MODEL_YEAR_END
+                ), f"Only one entry for {plant_name}. Initial year: {entry[0]} | Cycle length {cycle_length} | Next investment cycle {entry[0] + cycle_length}"
 
-    def return_plant_switchers(self, active_plants: list, year: int, value_type: str) -> list:
+    def return_plant_switchers(
+        self, active_plants: list, year: int, value_type: str
+    ) -> list:
         (
             main_cycle_switchers,
             trans_cycle_switchers,

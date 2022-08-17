@@ -393,7 +393,7 @@ EU_COUNTRIES = [
     "SVK",
     "SVN",
     "ESP",
-    "SWE"
+    "SWE",
 ]
 
 CIS_COUNTRIES = [
@@ -454,7 +454,12 @@ NORTH_ASIA_COUNTRIES = ["CHN", "HKG", "MAC", "MNG", "KOR", "TWN"]
 
 JAPAN_SOUTHKOREA_TAIWAN = ["JPN", "PRK", "TWN"]
 
-ALL_ASIA_COUNTRIES = CENTRAL_ASIA_COUNTRIES + SOUTH_ASIA_COUNTRIES + NORTH_ASIA_COUNTRIES + JAPAN_SOUTHKOREA_TAIWAN
+ALL_ASIA_COUNTRIES = (
+    CENTRAL_ASIA_COUNTRIES
+    + SOUTH_ASIA_COUNTRIES
+    + NORTH_ASIA_COUNTRIES
+    + JAPAN_SOUTHKOREA_TAIWAN
+)
 
 ALL_EUROPE_COUNTRIES = WESTERN_EUROPE_COUNTRIES + EASTERN_EUROPE_COUNTRIES
 
@@ -474,11 +479,19 @@ REGION_LIST = [
 
 PKL_FILE_RESULTS_REFERENCE = {
     "intermediate_data": [
-        "tco_summary_data", "emissivity_abatement_switches", "variable_costs_regional", "calculated_emissivity_combined"
+        "tco_summary_data",
+        "emissivity_abatement_switches",
+        "variable_costs_regional",
+        "calculated_emissivity_combined",
     ],
     "final_data": [
-        "cost_of_steelmaking", "cumulative_investment_results", "global_metaresults", 
-        "green_capacity_ratio", "investment_results", "levelized_cost_results", 
-        "production_emissions", "production_resource_usage"
-    ]
+        "cost_of_steelmaking",
+        "cumulative_investment_results",
+        "global_metaresults",
+        "green_capacity_ratio",
+        "investment_results",
+        "levelized_cost_results",
+        "production_emissions",
+        "production_resource_usage",
+    ],
 }

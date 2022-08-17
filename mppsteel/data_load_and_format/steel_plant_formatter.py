@@ -215,7 +215,7 @@ def apply_countries_to_steel_plants(
     return df_c
 
 
-class PlantStartYearAssignor():
+class PlantStartYearAssignor:
     def __init__(self):
         self.years_assigned = []
 
@@ -230,7 +230,11 @@ class PlantStartYearAssignor():
         return plant_start_year
 
 
-def convert_start_year(row, steel_plant_start_year_assignor: PlantStartYearAssignor, start_year_randomness: bool = False) -> int:
+def convert_start_year(
+    row,
+    steel_plant_start_year_assignor: PlantStartYearAssignor,
+    start_year_randomness: bool = False,
+) -> int:
     """Converts a string or int year value to an int year value.
     If the initial year value is the value `unknown`, return a integer within a range set by configurable parameters.
 
@@ -266,7 +270,9 @@ def create_active_check_col(row: pd.Series, year: int) -> bool:
 
 
 @timer_func
-def steel_plant_processor(scenario_dict: dict, serialize: bool = False, from_csv: bool = False) -> pd.DataFrame:
+def steel_plant_processor(
+    scenario_dict: dict, serialize: bool = False, from_csv: bool = False
+) -> pd.DataFrame:
     """Generates a fully preprocessed Steel Plant DataFrame.
 
     Args:
@@ -284,15 +290,17 @@ def steel_plant_processor(scenario_dict: dict, serialize: bool = False, from_csv
     steel_plants = steel_plant_formatter(steel_plants)
     steel_plants = apply_countries_to_steel_plants(steel_plants)
 
-    plants_to_assign_start_years = len(steel_plants[steel_plants["start_of_operation"] == "unknown"])
+    plants_to_assign_start_years = len(
+        steel_plants[steel_plants["start_of_operation"] == "unknown"]
+    )
     steel_plant_start_year_assignor = PlantStartYearAssignor()
     steel_plant_start_year_assignor.initiate_model(plants_to_assign_start_years)
     start_year_randomness = scenario_dict["start_year_randomness"]
     steel_plants["start_of_operation"] = steel_plants.apply(
-        convert_start_year, 
-        start_year_randomness=start_year_randomness, 
-        steel_plant_start_year_assignor=steel_plant_start_year_assignor, 
-        axis=1
+        convert_start_year,
+        start_year_randomness=start_year_randomness,
+        steel_plant_start_year_assignor=steel_plant_start_year_assignor,
+        axis=1,
     )
     steel_plants["end_of_operation"] = ""
     steel_plants["active_check"] = steel_plants.apply(

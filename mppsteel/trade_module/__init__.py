@@ -4,5 +4,5 @@ from . import (
     trade_helpers_test,
     trade_logic_test,
     trade_logic,
-    trade_helpers
+    trade_helpers,
 )
