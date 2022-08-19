@@ -332,7 +332,7 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
     steel_plant_abatement_switches = cti.steel_plant_abatement_switches
     abatement_slim = cti.abatement_slim
     wsa_dict = cti.wsa_dict
-    model_year_range = cti.model_year_range
+    model_year_range: range = cti.model_year_range
 
     # Initialize plant container
     PlantIDC = PlantIdContainer()
@@ -363,7 +363,7 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
     }
     MaterialUsageContainer = MaterialUsage()
     MaterialUsageContainer.initiate_years_and_regions(
-        model_year_range, resource_list=resource_models.keys(), region_list=region_list
+        model_year_range, resource_list=list(resource_models.keys()), region_list=region_list
     )
 
     for resource in resource_models:

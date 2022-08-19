@@ -5,7 +5,7 @@ import pickle
 
 from pathlib import Path
 import re
-from typing import Union
+from typing import AnyStr, Dict, Mapping, MutableMapping, Optional, Sequence, Union
 
 import pandas as pd
 from mppsteel.config.model_config import (
@@ -45,18 +45,18 @@ def read_pickle_folder(
         if log:
             logger.info(f"||| Loading pickle file {pkl_file} from path {data_path}")
         with open(fr"{data_path}/{pkl_file}.pickle", "rb") as f:
-            data = pickle.load(f)
+            data: pd.DataFrame = pickle.load(f)
 
     elif mode == "dict":
         if log:
             logger.info(f"||| Loading pickle files from path {data_path}")
-        new_data_dict = {}
+        new_data_dict: Dict[str, pd.DataFrame] = {}
         for pkl_file in os.listdir(data_path):
             if log:
                 logger.info(f"|||| Loading {pkl_file}")
             with open(fr"{data_path}/{pkl_file}", "rb") as f:
                 new_data_dict[pkl_file.split(".")[0]] = pickle.load(f)
-        data = new_data_dict
+        data: dict = new_data_dict
     return data
 
 
@@ -139,7 +139,7 @@ def pickle_to_csv(
         pickle_filename (str): The name of the pickle file you want to load. (No .pkl/.pickle extension necessary).
         csv_filename (str, optional): The name of the newly created csv file. (No .csv extension necessary). If none, defaults to pickle_filename. Defaults to "".
     """
-    df = read_pickle_folder(pkl_folder, pickle_filename)
+    df = read_pickle_folder(pkl_folder, pickle_filename, "df")
     if reset_index:
         df.reset_index(inplace=True)
 
@@ -186,7 +186,7 @@ def get_scenario_pkl_path(
     elif model_run:
         return f"{full_path}/run_{model_run}"
     elif iteration_run:
-        base_scenario = re.sub(UNDERSCORE_NUMBER_REGEX, "", scenario)
+        base_scenario: Union[AnyStr, Optional[str]] = re.sub(UNDERSCORE_NUMBER_REGEX, "", scenario)
         return f"{PKL_FOLDER}/iteration_runs/{base_scenario}/{scenario}/{pkl_folder_type_ext}"
     return full_path
 
@@ -237,7 +237,7 @@ def create_scenario_paths(scenario_name: str) -> None:
 
 
 def generate_files_to_path_dict(
-    scenarios: list,
+    scenarios: Sequence,
     pkl_paths: Union[dict, None] = None,
     model_run: str = "",
     create_path: bool = False,
@@ -247,7 +247,7 @@ def generate_files_to_path_dict(
     Each path is optionally created using tue create_path boolean flag.
 
     Args:
-        scenarios (list): The list of scenarios that form the keys of the filepath dictionary.
+        scenarios (Sequence): The list of scenarios that form the keys of the filepath dictionary.
         pkl_paths (Union[dict, None], optional): Specific pkl paths to override the default paths. Defaults to None.
         model_run (str, optional): The iteration run of the model. Defaults to "".
         create_path (bool, optional): Flag to determine whether new folders should be generated. Defaults to False.
@@ -255,7 +255,7 @@ def generate_files_to_path_dict(
     Returns:
         dict: A nested filepath dictionary with scenario as key, file as second key, and each path as the value.
     """
-    files_to_path = {scenario: {} for scenario in scenarios}
+    files_to_path: MutableMapping[str, Dict[str, str]] = {scenario: {} for scenario in scenarios}
     for scenario_name in scenarios:
         (
             intermediate_path_preprocessing,

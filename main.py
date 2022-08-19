@@ -2,6 +2,7 @@
 
 import math
 from datetime import datetime
+from typing import Dict
 from distributed import Client
 from mppsteel.multi_run_module.multiple_runs import (
     aggregate_multi_run_scenarios,
@@ -70,9 +71,9 @@ if __name__ == "__main__":
             logger.info(f"CORRECT SCENARIO CHOSEN: {args.choose_scenario}")
             scenario_args = SCENARIO_OPTIONS[args.choose_scenario]
         else:
-            scenario_options = list(SCENARIO_OPTIONS.keys())
+            scenario_name_options = list(SCENARIO_OPTIONS.keys())
             logger.info(
-                f"INVALID SCENARIO INPUT: {args.choose_scenario}, please choose from {scenario_options}"
+                f"INVALID SCENARIO INPUT: {args.choose_scenario}, please choose from {scenario_name_options}"
             )
 
     if args.custom_scenario:
@@ -82,14 +83,15 @@ if __name__ == "__main__":
         )
 
     # SCENARIO CUSTOMIZATION
-    scenario_args = add_currency_rates_to_scenarios(scenario_args)
+    scenario_args: MYPY_SCENARIO_TYPE = add_currency_rates_to_scenarios(scenario_args)
+    scenario_name: str = scenario_args["scenario_name"]
 
     timestamp = datetime.now().strftime(DATETIME_FORMAT)
     logger.info(f"Model running at {timestamp}")
     model_output_folder = f"{scenario_args['scenario_name']} {timestamp}"
 
     intermediate_path = get_scenario_pkl_path(
-        scenario_args["scenario_name"], "intermediate"
+        scenario_name, "intermediate"
     )
     final_path = get_scenario_pkl_path(scenario_args["scenario_name"], "final")
     create_folders_if_nonexistant(FOLDERS_TO_CHECK_IN_ORDER)
@@ -101,11 +103,11 @@ if __name__ == "__main__":
         for scenario_name in MAIN_SCENARIO_RUNS:
             create_scenario_paths(scenario_name)
         data_import_and_preprocessing_refresh(SCENARIO_OPTIONS[MAIN_SCENARIO_RUNS[0]])
-        scenario_options = [
+        scenario_options_main_scenario = [
             SCENARIO_OPTIONS[scenario_name] for scenario_name in MAIN_SCENARIO_RUNS
         ]
         multiprocessing_scenarios_single_run(
-            scenario_options=scenario_options,
+            scenario_options=scenario_options_main_scenario,
             func=scenario_batch_run,
             dated_output_folder=True,
             iteration_run=False,
@@ -121,7 +123,7 @@ if __name__ == "__main__":
         logger.info(
             f"Running the model {number_of_runs} times for {len(MAIN_SCENARIO_RUNS)} scenarios"
         )
-        scenario_options = {
+        scenario_options: MYPY_SCENARIO_TYPE = {
             scenario: add_currency_rates_to_scenarios(SCENARIO_OPTIONS[scenario])
             for scenario in MAIN_SCENARIO_RUNS
         }
@@ -140,7 +142,7 @@ if __name__ == "__main__":
         aggregate_multi_run_scenarios(
             scenario_options=scenario_options,
             single_scenario=False,
-            dated_output_folder=True,
+            new_folder=True,
             timestamp=timestamp,
         )
 
@@ -156,6 +158,7 @@ if __name__ == "__main__":
         scenario_iteration_reference = generate_scenario_iterations_reference(
             BATCH_ITERATION_SCENARIOS, SCENARIO_OPTIONS, SCENARIO_SETTINGS
         )
+        """
         scenario_iteration_reference.to_csv(
             f"{output_iteration_path}/scenario_iteration_reference.csv", index=False
         )
@@ -177,14 +180,14 @@ if __name__ == "__main__":
                     iteration_run=True,
                     include_outputs=False,
                 )
-
+        """
         files_to_aggregate = [
             "production_resource_usage",
             "production_emissions",
-            "investment_results",
-            "cost_of_steelmaking",
-            "calculated_emissivity_combined",
-            "tco_summary_data",
+            #"investment_results",
+            #"cost_of_steelmaking",
+            #"calculated_emissivity_combined",
+            #"tco_summary_data",
         ]
         combine_files_iteration_run(
             scenarios_to_iterate=BATCH_ITERATION_SCENARIOS,
@@ -201,15 +204,15 @@ if __name__ == "__main__":
     if args.full_model:
         full_flow(
             scenario_dict=scenario_args,
-            pkl_paths=None,
-            dated_output_folder=True,
-            model_output_folder=model_output_folder,
+            new_folder=True,
+            output_folder=model_output_folder,
+            pkl_paths=None
         )
 
     if args.multi_run_full:
-        scenario_name = scenario_args["scenario_name"]
+        scenario_name_multi_run_full = scenario_args["scenario_name"]
         logger.info(
-            f"Running model in full {number_of_runs} times for {scenario_name} scenario"
+            f"Running model in full {number_of_runs} times for {scenario_name_multi_run_full} scenario"
         )
         data_import_and_preprocessing_refresh(scenario_dict=scenario_args)
         scenario_preprocessing_phase(scenario_dict=scenario_args)
@@ -219,17 +222,16 @@ if __name__ == "__main__":
             remove_run_folders=False,
         )
         aggregate_multi_run_scenarios(
-            scenario_options={scenario_name: scenario_args},
+            scenario_options={scenario_name_multi_run_full: scenario_args},
             single_scenario=True,
-            dated_output_folder=True,
+            new_folder=True,
             timestamp=timestamp,
         )
 
     if args.multi_run_half:
-        scenario_name = scenario_args["scenario_name"]
-        scenario_options = {scenario_name: scenario_args}
+        scenario_name_multi_run_half = scenario_args["scenario_name"]
         logger.info(
-            f"Running half-model {number_of_runs} times for {scenario_name} scenario"
+            f"Running half-model {number_of_runs} times for {scenario_name_multi_run_half} scenario"
         )
         make_multiple_model_runs(
             scenario_dict=scenario_args,
@@ -237,9 +239,9 @@ if __name__ == "__main__":
             remove_run_folders=True,
         )
         aggregate_multi_run_scenarios(
-            scenario_options={scenario_name: scenario_args},
+            scenario_options={scenario_name_multi_run_half: scenario_args},
             single_scenario=True,
-            dated_output_folder=True,
+            new_folder=True,
             timestamp=timestamp,
         )
 
@@ -249,24 +251,24 @@ if __name__ == "__main__":
     if args.output:
         outputs_only(
             scenario_dict=scenario_args,
-            dated_output_folder=True,
-            model_output_folder=model_output_folder,
+            new_folder=True,
+            output_folder=model_output_folder,
         )
 
     if args.scenario_model_run:
         scenario_model_run(
             scenario_dict=scenario_args,
             pkl_paths=None,
-            dated_output_folder=True,
-            model_output_folder=model_output_folder,
+            new_folder=True,
+            output_folder=model_output_folder,
         )
 
     if args.half_model_run:
         main_solver_flow(scenario_dict=scenario_args, serialize=True)
         results_and_output(
             scenario_dict=scenario_args,
-            dated_output_folder=True,
-            model_output_folder=model_output_folder,
+            new_folder=True,
+            output_folder=model_output_folder,
         )
 
     if args.data_import:
@@ -294,15 +296,15 @@ if __name__ == "__main__":
     if args.results_and_output:
         results_and_output(
             scenario_dict=scenario_args,
-            dated_output_folder=True,
-            model_output_folder=model_output_folder,
+            new_folder=True,
+            output_folder=model_output_folder,
         )
 
     if args.graphs:
         graphs_only(
             scenario_dict=scenario_args,
-            model_output_folder=model_output_folder,
-            dated_output_folder=True,
+            new_folder=True,
+            output_folder=model_output_folder,
         )
 
     if args.total_opex:

@@ -61,9 +61,6 @@ class CapacityContainerClass:
         # return all years and regions
         return capacity_dict
 
-    def update_region(self, year: int, region: str, value: float):
-        self.utilization_container[year][region] = value
-
     def return_avg_capacity_value(self):
         return self.average_plant_capacity
 

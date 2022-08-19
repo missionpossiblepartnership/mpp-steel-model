@@ -49,7 +49,7 @@ logger = get_logger(__name__)
 def open_real_plants(
     production_demand_gap_analysis: pd.DataFrame,
     plant_id_container: PlantIdContainer,
-    material_container: MarketContainerClass,
+    material_container: MaterialUsage,
     capacity_container: CapacityContainerClass,
     capacity_constraint_container: PlantCapacityConstraint,
     tech_choices_container: PlantChoices,
@@ -167,7 +167,7 @@ def close_real_plants(
     production_demand_gap_analysis: pd.DataFrame,
     utilization_container: UtilizationContainerClass,
     investment_container: PlantInvestmentCycle,
-    material_container: MarketContainerClass,
+    material_container: MaterialUsage,
     capacity_container: CapacityContainerClass,
     capacity_constraint_container: PlantCapacityConstraint,
     tech_choices_container: PlantChoices,
@@ -321,7 +321,7 @@ def open_close_plants(
     variable_costs_df: pd.DataFrame,
     capex_dict: dict,
     capacity_container: CapacityContainerClass,
-    capacity_constraint_container: CapacityContainerClass,
+    capacity_constraint_container: PlantCapacityConstraint,
     utilization_container: UtilizationContainerClass,
     material_container: MaterialUsage,
     tech_choices_container: PlantChoices,
@@ -399,8 +399,8 @@ def open_close_plants(
             capacity_container=capacity_container,
             utilization_container=utilization_container,
             year=year,
-            capacity_util_max=util_max,
-            capacity_util_min=util_min,
+            util_max=util_max,
+            util_min=util_min,
         )
 
     updated_steel_plant_df = open_real_plants(

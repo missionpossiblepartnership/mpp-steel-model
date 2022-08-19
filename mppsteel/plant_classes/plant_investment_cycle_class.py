@@ -1,5 +1,6 @@
 """Script for the PlantInvestmentCycle class."""
 
+from typing import Dict, List, Sequence, Union
 import pandas as pd
 
 from mppsteel.config.model_config import (
@@ -28,11 +29,11 @@ class PlantInvestmentCycle:
     """Class for managing the the investment cycles for plants."""
 
     def __init__(self) -> None:
-        self.plant_names = []
-        self.plant_start_years = {}
-        self.plant_investment_cycle_length = {}
-        self.plant_cycles = {}
-        self.plant_cycles_with_off_cycle = {}
+        self.plant_names: List[str] = []
+        self.plant_start_years: Dict[str, int] = {}
+        self.plant_investment_cycle_length: Dict[str, int] = {}
+        self.plant_cycles: Dict[str, Sequence[Union[int, range]]] = {}
+        self.plant_cycles_with_off_cycle: Dict[str, Sequence[Union[int, range]]] = {}
 
     def instantiate_plants(
         self,
@@ -111,7 +112,7 @@ class PlantInvestmentCycle:
             else self.plant_investment_cycle_length
         )
 
-    def test_cycle_lengths(self):
+    def test_cycle_lengths(self) -> None:
         for plant_name in self.plant_cycles_with_off_cycle:
             entry = self.plant_cycles_with_off_cycle[plant_name]
             cycle_length = self.plant_investment_cycle_length[plant_name]
@@ -137,5 +138,4 @@ class PlantInvestmentCycle:
             return trans_cycle_switchers
         elif value_type == "no switch":
             return non_switchers
-        elif value_type == "combined":
-            return combined_switchers
+        return combined_switchers # value_type == "combined"

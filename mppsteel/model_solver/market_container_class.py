@@ -6,6 +6,7 @@ import pandas as pd
 from mppsteel.config.model_config import (
     TRADE_ROUNDING_NUMBER,
 )
+from mppsteel.config.mypy_config_settings import MYPY_DICT_STR_DICT
 
 from mppsteel.data_load_and_format.reg_steel_demand_formatter import steel_demand_getter
 
@@ -30,6 +31,7 @@ class MarketContainerClass:
     def __init__(self):
         self.trade_container = {}
         self.market_results = {}
+        self.regional_competitiveness = {}
         self.account_dictionary = {
             "all": ["regional_demand_minus_imports", "exports", "imports"],
             "trade": ["exports", "imports"],
@@ -108,9 +110,11 @@ class MarketContainerClass:
             return regional_demand_minus_imports + imports
         elif account_type == "production":
             return regional_demand_minus_imports + exports
+        return regional_demand_minus_imports + exports + imports # defaults to all
+        
 
     def trade_container_aggregator(
-        self, year: int, agg_type: bool, region: str = None
+        self, year: int, agg_type: str, region: str = None
     ) -> float:
         if region:
             return self.return_trade_balance(year, region, agg_type)
@@ -120,7 +124,7 @@ class MarketContainerClass:
         ]
         return sum(container)
 
-    def list_regional_types(self, year: int, account_type: bool) -> list:
+    def list_regional_types(self, year: int, account_type: str) -> list:
         return [
             region
             for region in self.trade_container[year]

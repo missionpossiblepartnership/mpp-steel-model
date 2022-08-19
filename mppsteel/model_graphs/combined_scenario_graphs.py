@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 
 
 def scenario_resource_usage(
-    df: pd.DataFrame, resource: str, save_filepath: str = None, ext: str = "png"
+    df: pd.DataFrame, resource: str, save_filepath: str = "", ext: str = "png"
 ) -> px.line:
     """Creates a plotly line chart that compares different scenarios usage of a specified `resource`.
 
@@ -65,13 +65,13 @@ def scenario_resource_usage(
 
 
 def combined_scenario_investment_chart(
-    df: pd.DataFrame, save_filepath: str = None, ext: str = "png"
+    df: pd.DataFrame, save_filepath: str = "", ext: str = "png"
 ) -> px.line:
     """Creates a plotly line chart that compares different scenarios investment amounts.
 
     Args:
         df (pd.DataFrame): The combined investment DataFrame.
-        save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
+        save_filepath (str, optional): The filepath that you save the graph to. Defaults to "".
         ext (str, optional): The extension of the image you are creating. Defaults to "png".
 
     Returns:
@@ -128,13 +128,13 @@ def create_total_energy_usage_df(
 
 
 def combined_scenario_energy_usage_chart(
-    df: pd.DataFrame, save_filepath: str = None, ext: str = "png"
+    df: pd.DataFrame, save_filepath: str = "", ext: str = "png"
 ) -> px.line:
     """Creates a plotly line chart that compares different energy amounts.
 
     Args:
         df (pd.DataFrame): The combined energy chart DataFrame.
-        save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
+        save_filepath (str, optional): The filepath that you save the graph to. Defaults to "".
         ext (str, optional): The extension of the image you are creating. Defaults to "png".
 
     Returns:
@@ -163,7 +163,7 @@ def combined_scenario_energy_usage_chart(
 def combined_scenario_emissions_chart(
     df: pd.DataFrame,
     cumulative: bool = False,
-    save_filepath: str = None,
+    save_filepath: str = "",
     ext: str = "png",
 ) -> px.line:
     """Creates a plotly line chart that compares different emissions of the various scenarios.
@@ -171,7 +171,7 @@ def combined_scenario_emissions_chart(
     Args:
         df (pd.DataFrame): The combined emissions usages DataFrame.
         cumulative (bool): A boolean that optionally creates a cumulative dataset.
-        save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
+        save_filepath (str, optional): The filepath that you save the graph to. Defaults to "".
         ext (str, optional): The extension of the image you are creating. Defaults to "png".
 
     Returns:
@@ -219,13 +219,13 @@ def combined_scenario_emissions_chart(
 
 
 def create_combined_investment_chart(
-    investment_df: pd.DataFrame, filepath: str = None
+    investment_df: pd.DataFrame, filepath: str = ""
 ) -> px.line:
     """Handler function that takes the combined investment DataFrame and a filepath string and outputs a line graph.
 
     Args:
         investment_df (pd.DataFrame): The combined investment DataFrame.
-        filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
+        filepath (str, optional): The folder path you want to save the chart to. Defaults to "".
 
     Returns:
         px.line: A plotly express line graph figure.
@@ -238,14 +238,14 @@ def create_combined_investment_chart(
 
 
 def create_combined_emissions_chart(
-    emissions_df: pd.DataFrame, cumulative: bool = False, filepath: str = None
+    emissions_df: pd.DataFrame, cumulative: bool = False, filepath: str = ""
 ) -> px.line:
     """Handler function that takes the combined emissions DataFrame and a filepath string and outputs a line graph.
 
     Args:
         emissions_df (pd.DataFrame): The combined investment DataFrame.
         cumulative (bool): A boolean that optionally creates a cumulative dataset.
-        filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
+        filepath (str, optional): The folder path you want to save the chart to. Defaults to "".
 
     Returns:
         px.line: A plotly express line graph figure.
@@ -262,14 +262,14 @@ def create_combined_emissions_chart(
 
 
 def create_combined_resource_chart(
-    production_df: pd.DataFrame, resource: str, filepath: str = None
+    production_df: pd.DataFrame, resource: str, filepath: str = ""
 ) -> px.line:
     """Creates a line graph for a specified resource across scenarios.
 
     Args:
         production_df (pd.DataFrame): The combined production resource usage DataFrame.
         resource (str): The resource to subset the combined production resource usage DataFrame.
-        filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
+        filepath (str, optional): The folder path you want to save the chart to. Defaults to "".
 
     Returns:
         px.line: A plotly express line graph figure.
@@ -283,13 +283,13 @@ def create_combined_resource_chart(
 
 
 def create_total_energy_usage_chart(
-    production_df: pd.DataFrame, filepath: str = None
+    production_df: pd.DataFrame, filepath: str = ""
 ) -> px.line:
     """Creates a line graph for combined scenario energy consumption.
 
     Args:
         production_df (pd.DataFrame): The combined production resource usage DataFrame.
-        filepath (str, optional): The folder path you want to save the chart to. Defaults to None.
+        filepath (str, optional): The folder path you want to save the chart to. Defaults to "".
 
     Returns:
         px.line: A plotly express line graph figure.

@@ -2,7 +2,7 @@
 
 import itertools
 from functools import lru_cache
-from typing import Union
+from typing import List, Union
 from tqdm.auto import tqdm as tqdma
 import pandas as pd
 
@@ -166,15 +166,15 @@ def get_abatement_difference(
         return float(base_tech_sum - switch_tech_sum)
 
     year_range = range(year, year + date_span)
-    year_range = [
+    year_range_list: List[int] = [
         year if (year <= MODEL_YEAR_END) else min(MODEL_YEAR_END, year)
         for year in year_range
     ]
     base_tech_list = [
-        emissions_ref[(year, country_code, base_tech)] for year in year_range
+        emissions_ref[(year, country_code, base_tech)] for year in year_range_list
     ]
     switch_tech_list = [
-        emissions_ref[(year, country_code, switch_tech)] for year in year_range
+        emissions_ref[(year, country_code, switch_tech)] for year in year_range_list
     ]
     return return_abatement_value(sum(base_tech_list), sum(switch_tech_list))
 

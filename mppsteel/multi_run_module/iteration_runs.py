@@ -150,13 +150,17 @@ def combine_multiple_iterations(
             df = consumption_summary_iterations(
                 df,
                 grouping_cols=[
+                    "year",
+                    "plant_name",
+                    "plant_id",
+                    "technology",
+                    "low_carbon_tech",
                     "base_scenario",
                     "iteration",
-                    "year",
-                    "region_rmi",
-                    "technology",
+                    "country_code",
+                    "region_rmi"
                 ],
-                unit_list=["_gt", "_mt", "_gj", "_pj"],
+                unit_list=["capacity", "production", "_gt", "_mt", "_gj", "_pj"],
             )
         if filename in {
             "production_resource_usage",

@@ -6,6 +6,7 @@ from typing import Tuple
 
 import pandas as pd
 import numpy as np
+import numpy.typing as npt
 from mppsteel.plant_classes.plant_choices_class import PlantChoices
 from mppsteel.model_solver.material_usage_class import (
     MaterialUsage,
@@ -31,19 +32,19 @@ from mppsteel.config.model_config import (
 logger = get_logger(__name__)
 
 
-def normalise_data(arr: np.array) -> np.array:
+def normalise_data(arr: np.ndarray) -> np.ndarray:
     """Given an array, normalise it by subtracting the minimum value and dividing by the range.
 
     Args:
-        arr (np.array): The array to normalise.
+        arr (np.ndarray): The array to normalise.
 
     Returns:
-        np.array: The normalised data.
+        np.ndarray: The normalised data.
     """
     return arr / np.linalg.norm(arr)
 
 
-def scale_data(df: pd.DataFrame, reverse: bool = False) -> pd.DataFrame:
+def scale_data(df: pd.DataFrame, reverse: bool = False) -> np.ndarray:
     """It normalises the data.
 
     Args:
@@ -51,7 +52,7 @@ def scale_data(df: pd.DataFrame, reverse: bool = False) -> pd.DataFrame:
         reverse (bool, optional): If True, reverse the normalization. Defaults to False.
 
     Returns:
-        pd.DataFrame: A dataframe with the same shape as the input dataframe, but with values scaled between 0 and 1.
+        np.ndarray: An array with the same shape as the input dataframe, but with values scaled between 0 and 1.
     """
     df_c = df.copy()
     if reverse:
@@ -366,7 +367,7 @@ def get_best_choice(
     enforce_constraints: bool,
     business_case_ref: dict,
     plant_capacities: dict,
-    material_usage_dict_container: dict,
+    material_usage_dict_container: MaterialUsage,
     plant_name: str,
     region: str,
 ) -> str:
@@ -388,7 +389,7 @@ def get_best_choice(
         enforce_constraints (bool): Boolen flag to determine if constraints should affect technology availability.
         business_case_ref (dict): Standardised Business Cases.
         plant_capacities (dict): A dictionary containing plant: capacity/inital tech key:value pairs.
-        material_usage_dict_container (dict, optional): Dictionary container object that is used to track the material usage within the application. Defaults to None.
+        material_usage_dict_container (MaterialUsage): Container class object that is used to track the material usage within the application. Defaults to None.
         plant_name (str): The plant name.
         region (str): The plant's region.
 

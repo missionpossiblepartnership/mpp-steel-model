@@ -24,13 +24,13 @@ logger = get_logger(__name__)
 
 
 def carbon_tax_estimate(
-    s1_emissions_value: float, s2_emissions_value: float, carbon_tax_value: float
-) -> float:
+    s1_emissions_value: pd.DataFrame, s2_emissions_value: pd.DataFrame, carbon_tax_value: float
+) -> pd.DataFrame:
     """Creates a carbon tax based on the scope 1 & 2 emissivity as a standardised unit and a technology and a carbon tax value per ton of steel.
 
     Args:
-        s1_emissions_value (float): Scope 1 emissivity as a standarised unit.
-        s2_emissions_value (float): Scope 2 emissivity as a standarised unit.
+        s1_emissions_value (pd.DataFrame): Scope 1 emissivity as a standarised unit.
+        s2_emissions_value (pd.DataFrame): Scope 2 emissivity as a standarised unit.
         carbon_tax_value (float): A carbon tax value per standardised unit.
 
     Returns:
@@ -45,7 +45,7 @@ def carbon_tax_estimate_handler(
     carbon_tax_timeseries: dict,
     year: int,
     country_code: str,
-) -> float:
+) -> pd.DataFrame:
     return carbon_tax_estimate(
         s1_emissions_ref.loc[year],
         s2_emissions_value=s2_emissions_ref.loc[year, country_code],

@@ -103,7 +103,7 @@ def single_year_cos(
 def cos_value_generator(
     row: pd.Series,
     year: int,
-    utilization_container: float,
+    utilization_container: UtilizationContainerClass,
     v_costs: pd.DataFrame,
     capacity_dict: dict,
     tech_choices: dict,
@@ -413,10 +413,10 @@ def print_demand_production_balance(
 
 def test_regional_production(
     results_container: dict, rpc_df: pd.DataFrame, cases: dict
-):
-    for region in results_container:
-        summary_dict = results_container[region]
+) -> None:
+    for region, summary_dict in results_container.items():
         assert (
             round(summary_dict["new_utilized_capacity"], UTILIZATION_ROUNDING_NUMBER)
             > 0
         ), f"Production > 0 test failed for {region} -> cases: {cases[region]} -> summary dictionary: {summary_dict}, rpc: {rpc_df.loc[region]}"
+    return None

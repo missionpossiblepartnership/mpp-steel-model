@@ -1,5 +1,6 @@
 """TCO Calculations used to derive the Total Cost of Ownership"""
 
+from typing import List
 import pandas as pd
 import numpy_financial as npf
 from tqdm import tqdm
@@ -49,12 +50,12 @@ def calculate_green_premium(
             plant_capacity * MEGATON_TO_TON
         )  # ts
 
-    year_range = range(year, year + INVESTMENT_CYCLE_DURATION_YEARS + 1)
-    year_range = [
+    year_range: range = range(year, year + INVESTMENT_CYCLE_DURATION_YEARS + 1)
+    year_range_values: List[int] = [
         year if (year <= MODEL_YEAR_END) else min(MODEL_YEAR_END, year)
         for year in year_range
     ]
-    df_list = [green_premium_calc(loop_year) for loop_year in year_range]
+    df_list = [green_premium_calc(loop_year) for loop_year in year_range_values]
     df_combined = pd.concat(df_list)
     technologies = df_combined.index.unique()
     return {

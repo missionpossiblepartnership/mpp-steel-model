@@ -184,8 +184,8 @@ def steel_demand_getter(
     df: pd.DataFrame,
     year: int,
     metric: str,
-    region: str = None,
-    country_code: str = None,
+    region: str = "",
+    country_code: str = "",
     force_default: bool = True,
     default_region: str = "RoW",
     default_country: str = "GBL",
@@ -197,8 +197,8 @@ def steel_demand_getter(
         year (int): The year of the demand data you want.
         scenario (str): The scenario you want to access (BAU or High Circ or average).
         metric (str): The metric you want to access (crude or scrap).
-        region (str): The region you want to get the data for. Either region OR country_code should be entered, not both. Defaults to None.
-        country_code (str): The country code you want to get the data for. Either region OR country_code should be entered, not both. Defaults to None.
+        region (str, optional): The region you want to get the data for. Either region OR country_code should be entered, not both. Defaults to "".
+        country_code (str, optional): The country code you want to get the data for. Either region OR country_code should be entered, not both. Defaults to "".
         force_default (bool): If True, will defer to defaults if incorrect region or country codes are entered. If False, invalid entries will raise an error. Defaults to True.
         default_region (str, optional): The default region you want to get the data for. Defaults to "World" for global.
         default_country (str, optional): The default country you want to get the data for. Defaults to "GBL" for global.

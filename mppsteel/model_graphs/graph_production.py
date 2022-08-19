@@ -333,12 +333,13 @@ def create_investment_line_graph(
     Returns:
         px.line: A plotly express line graph.
     """
+    global_results = True if group == "global" else False
     filename = f"investment_graph_{group}_{operation}"
     logger.info(f"Regional Investment Graph Output: {filename}")
     if filepath:
         filename = f"{filepath}/{filename}"
     return investment_line_chart(
-        investment_results, group=group, operation=operation, save_filepath=filename
+        investment_results, global_results=global_results, operation=operation, save_filepath=filename
     )
 
 

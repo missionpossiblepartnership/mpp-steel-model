@@ -115,15 +115,21 @@ def investment_row_calculator(
         "capital_cost": actual_capex,
     }
 
+def create_global_stats(df, operation: str = "sum") -> pd.DataFrame:
+    calc = df.groupby(["year"]).sum()
+    if operation == "cumsum":
+        calc = calc.cumsum()
+    return calc
+
 
 def create_inv_stats(
-    df: pd.DataFrame, results: str = "global", agg: bool = False, operation: str = "sum"
-) -> Union[pd.DataFrame, dict]:
+    df: pd.DataFrame, global_results: bool = True, agg: bool = False, operation: str = "sum"
+) -> Union[float, dict]:
     """Generates an statistics column for an Investment DataFrame according to parameters set in the function arguments.
 
     Args:
         df (pd.DataFrame): The initial Investments DataFrame.
-        results (str, optional): Specifies the desired regional results [`regional` or `global`]. Defaults to "global".
+        global_results (bool, optional): Specifies if the results should be global -> float value if set to True. Else results will be regional. Defaults to True.
         agg (bool, optional): Determines whether to aggregate regional results as a DataFrame. Defaults to False.
         operation (str, optional): Determines the type of operation to be conducted for the new stats column [`sum` or `cumsum` for cumulative sum]. Defaults to "sum".
 
@@ -144,34 +150,26 @@ def create_inv_stats(
         ]
     ].copy()
 
-    def create_global_stats(df, operation: str = "sum"):
-        calc = df.groupby(["year"]).sum()
-        if operation == "sum":
-            return calc
-        if operation == "cumsum":
-            return calc.cumsum()
-
-    if results == "global":
+    if global_results:
         return create_global_stats(df_c, operation).reset_index()
 
-    if results == "regional":
-        regions = df_c["region_rmi"].unique()
-        region_dict = {}
-        for region in regions:
-            calc = df_c[df_c["region_rmi"] == region].groupby(["year"]).sum()
-            if operation == "sum":
-                pass
-            if operation == "cumsum":
-                calc = calc.cumsum()
-            region_dict[region] = calc
-        if agg:
-            df_list = []
-            for region_key in region_dict:
-                df_r = region_dict[region_key]
-                df_r["region"] = region_key
-                df_list.append(df_r[["region", "capital_cost"]])
-            return pd.concat(df_list).reset_index()
-        return region_dict
+    regions = df_c["region_rmi"].unique()
+    region_dict = {}
+    for region in regions:
+        calc = df_c[df_c["region_rmi"] == region].groupby(["year"]).sum()
+        if operation == "sum":
+            pass
+        if operation == "cumsum":
+            calc = calc.cumsum()
+        region_dict[region] = calc
+    if agg:
+        df_list = []
+        for region_key in region_dict:
+            df_r = region_dict[region_key]
+            df_r["region"] = region_key
+            df_list.append(df_r[["region", "capital_cost"]])
+        return pd.concat(df_list).reset_index()
+    return region_dict
 
 
 def get_plant_cycle(
@@ -334,7 +332,7 @@ def investment_results(
         investment_results, scenario_dict, single_line=True, scenario_name=True
     )
     cumulative_investment_results = create_inv_stats(
-        investment_results, results="regional", agg=True, operation="cumsum"
+        investment_results, global_results=False, agg=True, operation="cumsum"
     )
     cumulative_investment_results = add_results_metadata(
         cumulative_investment_results,

@@ -2,11 +2,12 @@
 
 from copy import deepcopy
 import math
-from typing import Union
+from typing import Dict, Sequence, Union
 
 import pandas as pd
 
 import random
+from mppsteel.config.mypy_config_settings import MYPY_DICT_STR_LIST
 
 from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
 from mppsteel.model_solver.solver_flow_helpers import tech_availability_check
@@ -320,15 +321,18 @@ def return_oldest_plant(
     plant_start_years: dict,
     plant_cycle_lengths: dict,
     current_year: int,
-    plant_list: list = None,
+    plant_list: Sequence,
 ) -> str:
     """Gets the oldest plant from `plant_list` based on their respective investment cycles in `investment dict` and the `current_year`.
     If multiple plants have the same oldest age, then a plant is chosen at random.
 
     Args:
         investment_dict (pd.DataFrame): Dictionary with plant names as keys and main investment cycles as values.
+        plant_start_years (pd.DataFrame): 
+        plant_start_years (dict): 
+        plant_cycle_lengths (dict): 
         current_year (int): The current model year.
-        plant_list (list, optional): A list of plant names. Defaults to None.
+        plant_list (Sequence): A list of plant names. Defaults to None.
 
     Returns:
         str: The name of the oldest plant.
@@ -438,7 +442,7 @@ def production_demand_gap(
 
     results_container = {}
     region_list = capacity_container.regional_capacities_agg[year]
-    cases = {region: [] for region in region_list}
+    cases: MYPY_DICT_STR_LIST = {region: [] for region in region_list}
 
     for region in region_list:
 
@@ -541,7 +545,7 @@ def production_demand_gap(
 
 def market_balance_test(
     production_supply_df: pd.DataFrame, year: int, rounding: int = 0
-) -> bool:
+) -> None:
     """A test function that checks whether the following inequality holds within the Open Close DataFrame.
     Capacity > Production >= Demand
 

@@ -1,6 +1,6 @@
 """Model flow functions for the main script"""
 
-from typing import Union
+from typing import Any, MutableMapping, Union
 from datetime import datetime
 
 from mppsteel.utility.utils import stdout_query, get_currency_rate
@@ -59,11 +59,11 @@ from mppsteel.config.model_config import (
     DATETIME_FORMAT,
     PKL_DATA_FORMATTED,
     USD_TO_EUR_CONVERSION_DEFAULT,
-    OUTPUT_FOLDER,
-    INTERMEDIATE_RESULT_PKL_FILES,
-    FINAL_RESULT_PKL_FILES,
+    OUTPUT_FOLDER
 )
+from mppsteel.config.reference_lists import INTERMEDIATE_RESULT_PKL_FILES, FINAL_RESULT_PKL_FILES
 from mppsteel.config.model_scenarios import SCENARIO_OPTIONS
+from mppsteel.config.mypy_config_settings import MYPY_PKL_PATH_OPTIONAL, MYPY_SCENARIO_TYPE, MYPY_SCENARIO_TYPE_OR_NONE
 
 logger = get_logger(__name__)
 
@@ -89,7 +89,7 @@ def get_inputted_scenarios(scenario_options: dict, default_scenario: dict) -> di
     return inputted_scenario_args
 
 
-def add_currency_rates_to_scenarios(scenario_dict: dict, live: bool = False) -> dict:
+def add_currency_rates_to_scenarios(scenario_dict: MYPY_SCENARIO_TYPE, live: bool = False) -> dict:
     eur_to_usd = 1 / USD_TO_EUR_CONVERSION_DEFAULT
     usd_to_eur = USD_TO_EUR_CONVERSION_DEFAULT
     if live:
@@ -121,7 +121,7 @@ def data_preprocessing_generic_2(scenario_dict):
 
 
 def data_preprocessing_scenarios(
-    scenario_dict: dict, pkl_paths: Union[dict, None] = None
+    scenario_dict: MYPY_SCENARIO_TYPE, pkl_paths: MYPY_PKL_PATH_OPTIONAL = None
 ) -> None:
     get_steel_demand(scenario_dict=scenario_dict, pkl_paths=pkl_paths, serialize=True)
     generate_timeseries(
@@ -152,7 +152,7 @@ def data_preprocessing_scenarios(
 
 
 def total_opex_calculations(
-    scenario_dict: dict, pkl_paths: Union[dict, None] = None
+    scenario_dict: MYPY_SCENARIO_TYPE, pkl_paths: MYPY_PKL_PATH_OPTIONAL = None
 ) -> None:
     generate_variable_plant_summary(scenario_dict, pkl_paths=pkl_paths, serialize=True)
     generate_carbon_tax_reference(scenario_dict, pkl_paths=pkl_paths, serialize=True)
@@ -172,20 +172,20 @@ def investment_cycles() -> None:
     investment_cycle_flow(serialize=True)
 
 
-def model_presolver(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> None:
+def model_presolver(scenario_dict: MYPY_SCENARIO_TYPE, pkl_paths: MYPY_PKL_PATH_OPTIONAL = None) -> None:
     tco_presolver_reference(scenario_dict, pkl_paths=pkl_paths, serialize=True)
     abatement_presolver_reference(scenario_dict, pkl_paths=pkl_paths, serialize=True)
 
 
 def scenario_preprocessing_phase(
-    scenario_dict: dict, pkl_paths: Union[dict, None] = None
+    scenario_dict: MYPY_SCENARIO_TYPE, pkl_paths: MYPY_PKL_PATH_OPTIONAL = None
 ) -> None:
-    data_preprocessing_scenarios(scenario_dict, pkl_paths=pkl_paths)
+    data_preprocessing_scenarios(scenario_dict, pkl_paths)
 
 
 # model_run (str, optional): The run of the model to customize pkl folder paths. Defaults to "".
 def model_results_phase(
-    scenario_dict: dict, pkl_paths: Union[dict, None] = None, model_run: str = ""
+    scenario_dict: MYPY_SCENARIO_TYPE, pkl_paths: MYPY_PKL_PATH_OPTIONAL = None, model_run: str = ""
 ) -> None:
     production_results_flow(
         scenario_dict, pkl_paths=pkl_paths, serialize=True, model_run=model_run
@@ -205,11 +205,12 @@ def model_results_phase(
 
 
 def model_outputs_phase(
-    scenario_dict: dict,
-    pkl_paths: Union[dict, None] = None,
+    scenario_dict: MYPY_SCENARIO_TYPE,
+    pkl_paths: MYPY_PKL_PATH_OPTIONAL = None,
     new_folder: bool = False,
     output_folder: str = "",
 ) -> None:
+    scenario_name: str = scenario_dict["scenario_name"]
     save_path = OUTPUT_FOLDER
     if new_folder:
         folder_filepath = f"{OUTPUT_FOLDER}/{output_folder}"
@@ -218,7 +219,7 @@ def model_outputs_phase(
 
     # Save Intermediate Pickle Files
     _, intermediate_path, final_path = return_pkl_paths(
-        scenario_name=scenario_dict["scenario_name"], paths=pkl_paths
+        scenario_name=scenario_name, paths=pkl_paths
     )
 
     pickle_to_csv(save_path, PKL_DATA_FORMATTED, "capex_switching_df", reset_index=True)
@@ -232,14 +233,14 @@ def model_outputs_phase(
 
 
 def model_graphs_phase(
-    scenario_dict: dict,
-    pkl_paths: Union[dict, None] = None,
+    scenario_dict: MYPY_SCENARIO_TYPE,
+    pkl_paths: MYPY_PKL_PATH_OPTIONAL = None,
     new_folder: bool = False,
-    model_output_folder: str = "",
+    output_folder: str = "",
 ) -> None:
     save_path = OUTPUT_FOLDER
     if new_folder:
-        folder_filepath = f"{OUTPUT_FOLDER}/{model_output_folder}/graphs"
+        folder_filepath = f"{OUTPUT_FOLDER}/{output_folder}/graphs"
         create_folder_if_nonexist(folder_filepath)
         save_path = folder_filepath
     create_graphs(filepath=save_path, scenario_dict=scenario_dict, pkl_paths=pkl_paths)
@@ -251,7 +252,7 @@ def data_import_refresh() -> None:
 
 
 def data_preprocessing_refresh(
-    scenario_dict: dict, pkl_paths: Union[dict, None] = None
+    scenario_dict: MYPY_SCENARIO_TYPE, pkl_paths:MYPY_SCENARIO_TYPE_OR_NONE = None
 ) -> None:
     data_preprocessing_generic_1()
     data_preprocessing_generic_2(scenario_dict)
@@ -265,13 +266,13 @@ def data_import_and_preprocessing_refresh(scenario_dict) -> None:
 
 
 def tco_and_abatement_calculations(
-    scenario_dict: dict, pkl_paths: Union[dict, None] = None
+    scenario_dict: MYPY_SCENARIO_TYPE, pkl_paths:MYPY_SCENARIO_TYPE_OR_NONE = None
 ) -> None:
     model_presolver(scenario_dict, pkl_paths=pkl_paths)
 
 
 def scenario_batch_run(
-    scenario_dict: dict,
+    scenario_dict: MYPY_SCENARIO_TYPE,
     dated_output_folder: bool = False,
     iteration_run: bool = False,
     include_outputs: bool = True,
@@ -298,18 +299,18 @@ def scenario_batch_run(
     scenario_model_run(
         scenario_dict=scenario_args,
         pkl_paths=pkl_paths,
-        dated_output_folder=dated_output_folder,
-        model_output_folder=model_output_folder,
+        new_folder=dated_output_folder,
+        output_folder=model_output_folder,
         include_outputs=include_outputs,
     )
 
 
 def scenario_model_run(
-    scenario_dict: dict,
-    pkl_paths: dict,
-    dated_output_folder: bool,
-    model_output_folder: str,
+    scenario_dict: MYPY_SCENARIO_TYPE,
+    new_folder: bool,
+    output_folder: str,
     include_outputs: bool = True,
+    pkl_paths: MYPY_PKL_PATH_OPTIONAL = None,
 ) -> None:
     scenario_preprocessing_phase(scenario_dict, pkl_paths=pkl_paths)
     main_solver_flow(scenario_dict, pkl_paths=pkl_paths, serialize=True)
@@ -318,119 +319,128 @@ def scenario_model_run(
         model_outputs_phase(
             scenario_dict,
             pkl_paths=pkl_paths,
-            dated_output_folder=dated_output_folder,
-            model_output_folder=model_output_folder,
+            new_folder=new_folder,
+            output_folder=output_folder,
         )
         model_graphs_phase(
             scenario_dict,
             pkl_paths=pkl_paths,
-            dated_output_folder=dated_output_folder,
-            model_output_folder=model_output_folder,
+            new_folder=new_folder,
+            output_folder=output_folder,
         )
 
 
 def results_and_output(
-    scenario_dict: dict,
-    pkl_paths: dict,
-    dated_output_folder: bool,
-    model_output_folder: str,
+    scenario_dict: MYPY_SCENARIO_TYPE,
+    new_folder: bool,
+    output_folder: str,
+    pkl_paths: MYPY_PKL_PATH_OPTIONAL = None
 ) -> None:
     model_results_phase(scenario_dict, pkl_paths=pkl_paths)
     model_outputs_phase(
         scenario_dict,
         pkl_paths=pkl_paths,
-        dated_output_folder=dated_output_folder,
-        model_output_folder=model_output_folder,
+        new_folder=new_folder,
+        output_folder=output_folder,
     )
     model_graphs_phase(
         scenario_dict,
         pkl_paths=pkl_paths,
-        dated_output_folder=dated_output_folder,
-        model_output_folder=model_output_folder,
+        new_folder=new_folder,
+        output_folder=output_folder,
     )
 
 
 def outputs_only(
-    scenario_dict: dict,
-    pkl_paths: dict,
-    dated_output_folder: bool,
-    model_output_folder: str,
+    scenario_dict: MYPY_SCENARIO_TYPE,
+    new_folder: bool,
+    output_folder: str,
+    pkl_paths: MYPY_PKL_PATH_OPTIONAL = None
 ) -> None:
     model_outputs_phase(
-        scenario_dict, pkl_paths, dated_output_folder, model_output_folder
+        scenario_dict,
+        pkl_paths=pkl_paths,
+        new_folder=new_folder,
+        output_folder=output_folder,
     )
     model_graphs_phase(
-        scenario_dict, pkl_paths, dated_output_folder, model_output_folder
+        scenario_dict,
+        pkl_paths=pkl_paths,
+        new_folder=new_folder,
+        output_folder=output_folder,
     )
 
 
 def graphs_only(
-    scenario_dict: dict,
-    pkl_paths: dict,
-    model_output_folder: str,
-    dated_output_folder: bool,
+    scenario_dict: MYPY_SCENARIO_TYPE,
+    output_folder: str,
+    new_folder: bool,
+    pkl_paths: MYPY_PKL_PATH_OPTIONAL = None
 ) -> None:
     model_graphs_phase(
-        scenario_dict, pkl_paths, dated_output_folder, model_output_folder
+        scenario_dict,
+        pkl_paths=pkl_paths,
+        new_folder=new_folder,
+        output_folder=output_folder,
     )
 
 
 def full_flow(
-    scenario_dict: dict,
-    pkl_paths: dict,
-    dated_output_folder: bool,
-    model_output_folder: str,
+    scenario_dict: MYPY_SCENARIO_TYPE,
+    new_folder: bool,
+    output_folder: str,
+    pkl_paths: MYPY_PKL_PATH_OPTIONAL = None
 ) -> None:
     data_import_and_preprocessing_refresh(scenario_dict)
     scenario_model_run(
         scenario_dict,
         pkl_paths=pkl_paths,
-        dated_output_folder=dated_output_folder,
-        model_output_folder=model_output_folder,
+        new_folder=new_folder,
+        output_folder=output_folder,
     )
 
 
 def generate_minimodels(
-    scenario_dict: dict, pkl_paths: Union[dict, None] = None
+    scenario_dict: MYPY_SCENARIO_TYPE, pkl_paths: MYPY_PKL_PATH_OPTIONAL = None
 ) -> None:
     generate_timeseries(scenario_dict, pkl_paths=pkl_paths, serialize=True)
 
 
 def tco_switch_reference(
-    scenario_dict: dict, pkl_paths: Union[dict, None] = None
+    scenario_dict: MYPY_SCENARIO_TYPE, pkl_paths: MYPY_PKL_PATH_OPTIONAL = None
 ) -> None:
     tco_presolver_reference(scenario_dict, pkl_paths=pkl_paths, serialize=True)
 
 
 def abatement_switch_reference(
-    scenario_dict: dict, pkl_paths: Union[dict, None] = None
+    scenario_dict: MYPY_SCENARIO_TYPE, pkl_paths: MYPY_PKL_PATH_OPTIONAL = None
 ) -> None:
     abatement_presolver_reference(scenario_dict, pkl_paths=pkl_paths, serialize=True)
 
 
-def production_flow(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> None:
+def production_flow(scenario_dict: MYPY_SCENARIO_TYPE, pkl_paths: MYPY_PKL_PATH_OPTIONAL = None) -> None:
     production_results_flow(scenario_dict, pkl_paths=pkl_paths, serialize=True)
 
 
-def cos_flow(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> None:
+def cos_flow(scenario_dict: MYPY_SCENARIO_TYPE, pkl_paths: MYPY_PKL_PATH_OPTIONAL = None) -> None:
     generate_cost_of_steelmaking_results(
         scenario_dict, pkl_paths=pkl_paths, serialize=True
     )
 
 
-def global_metaresults_flow(scenario_dict: dict, pkl_paths: Union[dict, None] = None):
+def global_metaresults_flow(scenario_dict: MYPY_SCENARIO_TYPE, pkl_paths: MYPY_PKL_PATH_OPTIONAL = None):
     metaresults_flow(scenario_dict, pkl_paths=pkl_paths, serialize=True)
 
 
-def investment_flow(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> None:
+def investment_flow(scenario_dict: MYPY_SCENARIO_TYPE, pkl_paths: MYPY_PKL_PATH_OPTIONAL = None) -> None:
     investment_results(scenario_dict, pkl_paths=pkl_paths, serialize=True)
 
 
-def get_emissivity(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> None:
+def get_emissivity(scenario_dict: MYPY_SCENARIO_TYPE, pkl_paths: MYPY_PKL_PATH_OPTIONAL = None) -> None:
     generate_emissions_flow(scenario_dict, pkl_paths=pkl_paths, serialize=True)
 
 
-def lcost_flow(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> None:
+def lcost_flow(scenario_dict: MYPY_SCENARIO_TYPE, pkl_paths: MYPY_PKL_PATH_OPTIONAL = None) -> None:
     generate_levelized_cost_results(
         scenario_dict=scenario_dict,
         pkl_paths=pkl_paths,
@@ -439,5 +449,5 @@ def lcost_flow(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> None
     )
 
 
-def gcr_flow(scenario_dict: dict, pkl_paths: Union[dict, None] = None) -> None:
+def gcr_flow(scenario_dict: MYPY_SCENARIO_TYPE, pkl_paths: MYPY_PKL_PATH_OPTIONAL = None) -> None:
     generate_gcr_df(scenario_dict, pkl_paths=pkl_paths, serialize=True)

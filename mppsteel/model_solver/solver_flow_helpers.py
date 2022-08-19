@@ -48,13 +48,13 @@ def return_best_tech(
     investment_container: PlantInvestmentCycle,
     plant_choice_container: PlantChoices,
     capacity_constraint_container: PlantCapacityConstraint,
+    material_usage_dict_container: MaterialUsage,
     year: int,
     plant_name: str,
     region: str,
     country_code: str,
     base_tech: str = None,
-    transitional_switch_mode: bool = False,
-    material_usage_dict_container: MaterialUsage = None,
+    transitional_switch_mode: bool = False
 ) -> str:
     """Function generates the best technology choice from a number of key data and scenario inputs.
 
@@ -70,13 +70,13 @@ def return_best_tech(
         scenario_dict (dict): Scenario dictionary containing the model run's scenario settings.
         investment_container (PlantInvestmentCycle): The PlantInvestmentCycle Instance containing each plant's investment cycle.
         plant_choice_container (PlantChoices): The PlantChoices Instance containing each plant's choices.
+        material_usage_dict_container (MaterialUsage): Container class object that is used to track the material usage within the application.
         year (int): The current model year to get the best technology for.
         plant_name (str): The plant name.
         region (str): The plant's region.
         country_code (str): The country code related to the plant.
         base_tech (str, optional): The current base technology. Defaults to None.
         transitional_switch_mode (bool, optional): Boolean flag that determines if transitional switch logic is active. Defaults to False.
-        material_usage_dict_container (dict, optional): Dictionary container object that is used to track the material usage within the application. Defaults to None.
 
     Raises:
         ValueError: If there is no base technology selected, a ValueError is raised because this provides the foundation for choosing a switch technology.
@@ -375,6 +375,7 @@ def map_technology_state(tech: str) -> str:
     for tech_state in TECHNOLOGY_PHASES.keys():
         if tech in TECHNOLOGY_PHASES[tech_state]:
             return tech_state
+    return ""
 
 
 def read_and_format_tech_availability(df: pd.DataFrame) -> pd.DataFrame:
@@ -441,3 +442,4 @@ def tech_availability_check(
     if int(year) > int(year_available_until):
         # Will become unavailable
         return False
+    return False

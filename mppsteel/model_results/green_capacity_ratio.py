@@ -52,6 +52,7 @@ def green_capacity_ratio_predata(
             return True
         elif tech_choice in TECHNOLOGY_PHASES["initial"]:
             return False
+        return False
 
     def fix_start_year(start_year) -> int:
         if pd.isna(start_year):

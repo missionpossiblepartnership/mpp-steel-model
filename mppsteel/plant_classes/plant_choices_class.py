@@ -37,7 +37,7 @@ class PlantChoices:
             self.active_check[year][plant] = False
 
     def remove_choice(self, year: int, plant: str):
-        del self[year][plant]
+        del self.choices[year][plant]
 
     def get_choice(self, year: int, plant: str):
         return self.choices[year][plant]

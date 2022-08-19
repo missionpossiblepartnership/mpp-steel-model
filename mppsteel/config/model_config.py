@@ -142,28 +142,6 @@ UTILIZATION_ROUNDING_NUMBER = 2
 DEFAULT_NUMBER_OF_RUNS = 10
 MULTIPLE_MODEL_RUN_EVALUATION_YEARS = [2050]
 
-# OUTPUT FILE NAMES
-INTERMEDIATE_RESULT_PKL_FILES = [
-    "plant_result_df",
-    "calculated_emissivity_combined",
-    "levelized_cost_standardized",
-    "emissivity_abatement_switches",
-    "tco_summary_data",
-    "full_trade_summary",
-    "tech_choice_records",
-    "tech_rank_records",
-]
-
-FINAL_RESULT_PKL_FILES = [
-    "production_resource_usage",
-    "production_emissions",
-    "global_metaresults",
-    "investment_results",
-    "green_capacity_ratio",
-    "cost_of_steelmaking",
-    "levelized_cost_results",
-]
-
 TRADE_PCT_BOUNDARY_FACTOR_DICT = {
     "Middle East": 0.05,
     "Europe": 0,

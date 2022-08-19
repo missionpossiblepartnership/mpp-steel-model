@@ -75,13 +75,13 @@ def format_scope3_ef_2(df: pd.DataFrame, emissions_factor_slag: float) -> pd.Dat
 
 @pa.check_input(SCOPE3_EF_SCHEMA_1)
 def modify_scope3_ef_1(
-    df: pd.DataFrame, slag_values: npt.ArrayLike, met_coal_density: float
+    df: pd.DataFrame, slag_values: np.ndarray, met_coal_density: float
 ) -> pd.DataFrame:
     """Formatting steps for the Scope 3 Emissions Factors.
 
     Args:
         df (pd.DataFrame): A DataFrame of Scope 3 Emission Energy Factors
-        slag_values (npt.array): An array of values for slag
+        slag_values (np.ndarray): An array of values for slag
         met_coal_density (float): A singular value representing the density of met coal.
 
     Returns:

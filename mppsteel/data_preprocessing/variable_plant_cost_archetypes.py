@@ -140,7 +140,7 @@ class PlantVariableCostsInput:
     def from_filesystem(
         cls,
         scenario_dict: dict,
-        intermediate_path: str = None,
+        intermediate_path: str = "", # was None
         project_dir: str = PROJECT_PATH,
         resource_category_mapper: dict = RESOURCE_CATEGORY_MAPPER,
         year_range: range = MODEL_YEAR_RANGE,

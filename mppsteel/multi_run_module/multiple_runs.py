@@ -4,7 +4,7 @@ import math
 import shutil
 
 import multiprocessing as mp
-from typing import Mapping
+from typing import Dict, Mapping
 
 import pandas as pd
 import modin.pandas as mpd
@@ -13,14 +13,17 @@ from tqdm import tqdm
 from mppsteel.config.model_config import (
     COMBINED_OUTPUT_FOLDER_NAME,
     DEFAULT_NUMBER_OF_RUNS,
-    FINAL_RESULT_PKL_FILES,
-    INTERMEDIATE_RESULT_PKL_FILES,
     MULTIPLE_RUN_SCENARIO_FOLDER_NAME,
     OUTPUT_FOLDER,
     PKL_DATA_COMBINED,
     PKL_FOLDER,
 )
-from mppsteel.config.reference_lists import MULTI_RUN_MULTI_SCENARIO_SUMMARY_FILENAMES
+from mppsteel.config.reference_lists import (
+    MULTI_RUN_MULTI_SCENARIO_SUMMARY_FILENAMES,
+    FINAL_RESULT_PKL_FILES,
+    INTERMEDIATE_RESULT_PKL_FILES,
+)
+from mppsteel.config.mypy_config_settings import MYPY_DICT_STR_LIST, MYPY_SCENARIO_TYPE
 from mppsteel.multi_run_module.multiprocessing_functions import multi_run_function
 from mppsteel.model_results.multiple_model_run_summary import summarise_combined_data
 from mppsteel.model_graphs.graph_production import create_combined_scenario_graphs
@@ -44,7 +47,7 @@ logger = get_logger(__name__)
 
 
 def make_multiple_model_runs(
-    scenario_dict: Mapping,
+    scenario_dict: MYPY_SCENARIO_TYPE,
     number_of_runs: int = DEFAULT_NUMBER_OF_RUNS,
     remove_run_folders: bool = False,
 ) -> None:
@@ -142,13 +145,13 @@ def aggregate_results(
             scenario_name,
         ]
     )[scenario_name]
-    run_container = {filename: [] for filename in generic_files_to_path_dict}
+    run_container: MYPY_DICT_STR_LIST = {filename: [] for filename in generic_files_to_path_dict}
     for model_run in run_range:
         model_run_files_to_path = generate_files_to_path_dict(
             scenarios=[
                 scenario_name,
             ],
-            model_run=model_run,
+            model_run=str(model_run),
         )
         for filename in run_container:
             store_result_to_container(
@@ -165,10 +168,10 @@ def aggregate_results(
             intermediate_path = get_scenario_pkl_path(
                 scenario=scenario_name,
                 pkl_folder_type="intermediate",
-                model_run=model_run,
+                model_run=str(model_run),
             )
             final_path = get_scenario_pkl_path(
-                scenario=scenario_name, pkl_folder_type="final", model_run=model_run
+                scenario=scenario_name, pkl_folder_type="final", model_run=str(model_run)
             )
             shutil.rmtree(intermediate_path)
             shutil.rmtree(final_path)
@@ -179,14 +182,14 @@ def aggregate_results(
 def aggregate_multi_run_scenarios(
     scenario_options: Mapping,
     single_scenario: bool = False,
-    dated_output_folder: bool = True,
+    new_folder: bool = True,
     timestamp: str = "",
 ) -> None:
     combined_pkl_path = pkl_folder_filepath_creation("combined", create_folder=True)
-    output_save_path = output_folder_path_creation(dated_output_folder, timestamp)
+    output_save_path = output_folder_path_creation(new_folder, timestamp)
     if single_scenario:
         output_save_path = output_folder_path_creation(
-            dated_output_folder, timestamp, return_single_scenario(scenario_options)
+            new_folder, timestamp, return_single_scenario(scenario_options)
         )
     files_to_aggregate = list(
         generate_files_to_path_dict(scenario_options.keys())[
@@ -201,11 +204,11 @@ def aggregate_multi_run_scenarios(
         desc="Running pkl scenario data merge",
     ):
         logger.info(f"Running through summary flow for {filename}")
-        filename_dict = {}
+        filename_dict: Dict[str, pd.DataFrame] = {}
         for scenario in tqdm(scenario_set, total=len(scenario_set), desc="Scenario loop"):
             assign_to_dict(filename_dict, filename, scenario)
         logger.info(f"Creating summary data for {filename}")
-        results_dict = {file: [] for file in MULTI_RUN_MULTI_SCENARIO_SUMMARY_FILENAMES}
+        results_dict: MYPY_DICT_STR_LIST = {file: [] for file in MULTI_RUN_MULTI_SCENARIO_SUMMARY_FILENAMES}
         scenarios_present = filename_dict.keys()
         for scenario in scenarios_present:
             subset = filename_dict[scenario]
@@ -287,5 +290,5 @@ def assign_to_dict(assigning_dict, filename: str, scenario: str) -> None:
     assigning_dict[scenario] = read_pickle_folder(pkl_folder_filepath_creation(scenario), filename, "df")
 
 
-def return_single_scenario(scenario_options: Mapping) -> list:
+def return_single_scenario(scenario_options: Mapping) -> str:
     return list(scenario_options.keys())[0]

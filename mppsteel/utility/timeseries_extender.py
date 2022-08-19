@@ -79,7 +79,7 @@ def create_timeseries_extension_array(
     growth_type: "str",
     value_change: float = 0,
     first_value: bool = False,
-) -> npt.ArrayLike:
+) -> np.ndarray:
     """Creates a numpy array that represents the values in the new portion of the timeseries.
 
     Args:
@@ -91,7 +91,7 @@ def create_timeseries_extension_array(
         first_value (bool, optional): Boolean that determines whether to include the first value. Defaults to False.
 
     Returns:
-        np.array: The array of values that will form the extended time series portion.
+        np.ndarray: The array of values that will form the extended time series portion.
     """
     logger.info(
         f"Creating the timeseries extension array. Series Type: {series_type} | Growth Type: {growth_type} | Value Change: {value_change}"
@@ -162,7 +162,7 @@ def create_dict_mapper(
 def combine_timeseries(
     df: pd.DataFrame,
     added_date_range: pd.DatetimeIndex,
-    values: npt.ArrayLike,
+    values: np.ndarray,
     year_value_col_dict: dict,
     static_col_mapper: dict,
 ) -> pd.DataFrame:
@@ -171,7 +171,7 @@ def combine_timeseries(
     Args:
         df (pd.DataFrame): The original timeseries
         added_date_range (pd.DatetimeIndex): The daterange for the new timeseries
-        values (np.array): The values for the new timeseries
+        values (np.ndarray): The values for the new timeseries
         static_col_mapper (dict): The dictionary containing the static value mapping for the new timeseries
 
     Returns:

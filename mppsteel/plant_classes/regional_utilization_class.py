@@ -56,7 +56,7 @@ class UtilizationContainerClass:
             # return a year valye time series for a region
             return {
                 year_val: self.utilization_container[year_val][region]
-                for year_val in self.regional_capacities
+                for year_val in self.utilization_container
             }
 
         if year and not region:

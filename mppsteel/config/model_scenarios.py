@@ -1,5 +1,9 @@
 """Scenario references for model runs"""
 
+from typing import Dict, Sequence
+from mppsteel.config.mypy_config_settings import MYPY_SCENARIO_TYPE
+
+
 COST_SCENARIO_MAPPER = {
     "low": "Min",
     "average": "Baseline",
@@ -47,29 +51,29 @@ CCS_CAPACITY_SCENARIOS = {"low": "Low", "high": "High"}
 
 SOLVER_LOGICS = {"rank": "ranked", "scale": "scaled", "bins": "scaled_bins"}
 
-SCENARIO_SETTINGS = {
+SCENARIO_SETTINGS: Dict[str, Sequence] = {
     "tech_moratorium": [True, False],
     "enforce_constraints": [True, False],
     "transitional_switch": [True, False],
-    "carbon_tax_scenario": CARBON_TAX_SCENARIOS.keys(),
-    "green_premium_scenario": GREEN_PREMIUM_SCENARIOS.keys(),
-    "electricity_cost_scenario": COST_SCENARIO_MAPPER.keys(),
-    "grid_scenario": GRID_DECARBONISATION_SCENARIOS.keys(),
-    "hydrogen_cost_scenario": COST_SCENARIO_MAPPER.keys(),
-    "biomass_cost_scenario": BIOMASS_SCENARIOS.keys(),
-    "ccs_cost_scenario": CCS_SCENARIOS.keys(),
-    "ccs_capacity_scenario": CCS_CAPACITY_SCENARIOS.keys(),
-    "fossil_fuel_scenario": FOSSIL_FUEL_SCENARIOS.keys(),
-    "steel_demand_scenario": STEEL_DEMAND_SCENARIO_MAPPER.keys(),
-    "tech_switch_scenario": TECH_SWITCH_SCENARIOS.keys(),
-    "solver_logic": SOLVER_LOGICS.keys(),
+    "carbon_tax_scenario": list(CARBON_TAX_SCENARIOS.keys()),
+    "green_premium_scenario": list(GREEN_PREMIUM_SCENARIOS.keys()),
+    "electricity_cost_scenario": list(COST_SCENARIO_MAPPER.keys()),
+    "grid_scenario": list(GRID_DECARBONISATION_SCENARIOS.keys()),
+    "hydrogen_cost_scenario": list(COST_SCENARIO_MAPPER.keys()),
+    "biomass_cost_scenario": list(BIOMASS_SCENARIOS.keys()),
+    "ccs_cost_scenario": list(CCS_SCENARIOS.keys()),
+    "ccs_capacity_scenario": list(CCS_CAPACITY_SCENARIOS.keys()),
+    "fossil_fuel_scenario": list(FOSSIL_FUEL_SCENARIOS.keys()),
+    "steel_demand_scenario": list(STEEL_DEMAND_SCENARIO_MAPPER.keys()),
+    "tech_switch_scenario": list(TECH_SWITCH_SCENARIOS.keys()),
+    "solver_logic": list(SOLVER_LOGICS.keys()),
     "trade_active": [True, False],
     "regional_scrap_constraint": [True, False],
     "investment_cycle_randomness": [True, False],
     "start_year_randomness": [True, False],
 }
 
-DEFAULT_SCENARIO = {
+DEFAULT_SCENARIO: MYPY_SCENARIO_TYPE = {
     "scenario_name": "default",
     "tech_moratorium": True,  # bool
     "enforce_constraints": True,  # bool
@@ -91,7 +95,7 @@ DEFAULT_SCENARIO = {
     "investment_cycle_randomness": False,  # bool
     "start_year_randomness": False,  # bool
 }
-TECH_MORATORIUM = {
+TECH_MORATORIUM: MYPY_SCENARIO_TYPE = {
     "scenario_name": "tech_moratorium",
     "tech_moratorium": True,
     "enforce_constraints": True,
@@ -113,7 +117,7 @@ TECH_MORATORIUM = {
     "investment_cycle_randomness": False,
     "start_year_randomness": False,
 }
-CARBON_COST = {
+CARBON_COST: MYPY_SCENARIO_TYPE = {
     "scenario_name": "carbon_cost",
     "tech_moratorium": False,
     "enforce_constraints": True,
@@ -135,7 +139,7 @@ CARBON_COST = {
     "investment_cycle_randomness": False,
     "start_year_randomness": False,
 }
-BAU_SCENARIO = {
+BAU_SCENARIO: MYPY_SCENARIO_TYPE = {
     "scenario_name": "baseline",
     "tech_moratorium": False,
     "enforce_constraints": True,
@@ -157,7 +161,7 @@ BAU_SCENARIO = {
     "investment_cycle_randomness": False,
     "start_year_randomness": False,
 }
-BAU_HIGH_CIRC_SCENARIO = {
+BAU_HIGH_CIRC_SCENARIO: MYPY_SCENARIO_TYPE = {
     "scenario_name": "baseline_high_circ",
     "tech_moratorium": False,
     "enforce_constraints": True,
@@ -179,7 +183,7 @@ BAU_HIGH_CIRC_SCENARIO = {
     "investment_cycle_randomness": False,
     "start_year_randomness": False,
 }
-ABATEMENT_SCENARIO = {
+ABATEMENT_SCENARIO: MYPY_SCENARIO_TYPE = {
     "scenario_name": "abatement",
     "tech_moratorium": False,
     "enforce_constraints": True,
@@ -201,7 +205,7 @@ ABATEMENT_SCENARIO = {
     "investment_cycle_randomness": False,
     "start_year_randomness": False,
 }
-ABATEMENT_HIGH_CIRC_SCENARIO = {
+ABATEMENT_HIGH_CIRC_SCENARIO: MYPY_SCENARIO_TYPE = {
     "scenario_name": "fastest_abatement",
     "tech_moratorium": False,
     "enforce_constraints": True,
@@ -224,7 +228,7 @@ ABATEMENT_HIGH_CIRC_SCENARIO = {
     "start_year_randomness": False,
 }
 
-SCENARIO_OPTIONS = {
+SCENARIO_OPTIONS: Dict[str, MYPY_SCENARIO_TYPE] = {
     "default": DEFAULT_SCENARIO,
     "tech_moratorium": TECH_MORATORIUM,
     "carbon_cost": CARBON_COST,
@@ -243,4 +247,4 @@ MAIN_SCENARIO_RUNS = [
     "tech_moratorium",
 ]
 
-BATCH_ITERATION_SCENARIOS = ["baseline", "carbon_cost" "tech_moratorium"]
+BATCH_ITERATION_SCENARIOS = ["baseline", "carbon_cost", "tech_moratorium"]

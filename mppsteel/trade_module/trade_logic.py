@@ -21,10 +21,10 @@ logger = get_logger(__name__)
 
 
 MarketBalanceContainer = namedtuple(
-    "MarketBalance", ["mkt_balance", "import_adjusted_demand", "imports", "exports"]
+    "MarketBalanceContainer", ["mkt_balance", "import_adjusted_demand", "imports", "exports"]
 )
 ClosePlantsContainer = namedtuple(
-    "ClosePlants",
+    "ClosePlantsContainer",
     [
         "plants_to_close",
         "new_total_capacity",
@@ -34,7 +34,7 @@ ClosePlantsContainer = namedtuple(
     ],
 )
 OpenPlantsContainer = namedtuple(
-    "OpenPlants",
+    "OpenPlantsContainer",
     [
         "new_plants_required",
         "new_total_capacity",

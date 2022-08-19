@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 
 def investment_line_chart(
     investment_df: pd.DataFrame,
-    group: str = "global",
+    global_results: bool = True,
     operation: str = "cumsum",
     save_filepath: str = None,
     ext: str = "png",
@@ -25,7 +25,7 @@ def investment_line_chart(
 
     Args:
         investment_df (pd.DataFrame): The investment DataFrame.
-        group (str, optional): The group you want: 'global' OR 'regional'. Defaults to "global".
+        global_results (bool, optional): Specifies if the results should be global -> float value if set to True. Else results will be regional. Defaults to True.
         operation (str, optional): The operation you want to perform on the DataFrame 'sum' or 'cumsum'. Defaults to "cumsum".
         save_filepath (str, optional): The filepath that you save the graph to. Defaults to None.
         ext (str, optional): The extension of the image you are creating. Defaults to "png".
@@ -34,7 +34,7 @@ def investment_line_chart(
         px.line: A plotly express line graph.
     """
     data = create_inv_stats(
-        investment_df, results=group, operation=operation, agg=False
+        investment_df, global_results=global_results, operation=operation, agg=False
     )
 
     fig_ = line_chart(

@@ -1,7 +1,7 @@
 """Script with function to manipulate the PlantInvestmentCycle Class."""
 
 import random
-from typing import Tuple, Union
+from typing import List, Sequence, Tuple, Union
 
 import pandas as pd
 from copy import deepcopy
@@ -112,14 +112,14 @@ def net_zero_year_bring_forward(year: int) -> int:
 
 
 def add_off_cycle_investment_years(
-    main_investment_cycle: list,
+    main_investment_cycle: Sequence,
     start_buff: int = INVESTMENT_OFFCYCLE_BUFFER_TOP,
     end_buff: int = INVESTMENT_OFFCYCLE_BUFFER_TAIL,
 ) -> list:
     """Adds a set of off-cycle investment years to an investment decision list.
 
     Args:
-        main_investment_cycle (list): The list of main investment decision years.
+        main_investment_cycle (Sequence): The list of main investment decision years.
         start_buff (int): Determines the minimum number of years after a main investment decision until an off-cycle investment can be made.
         end_buff (int): Determines the number of years prior to the next investment decision that signifies the cutoff point that off-cycle investment decisions can no longer be made.
 
@@ -127,7 +127,7 @@ def add_off_cycle_investment_years(
         list: An enhanced investment decision cycle list including off-cycle range objects representing potential off-cycle switches.
     """
     inv_cycle_length = len(main_investment_cycle)
-    range_list = list()  # List[int, range]
+    range_list: List[Union[int, range]] = []
 
     # For inv_cycle_length = 0
     if inv_cycle_length == 0:

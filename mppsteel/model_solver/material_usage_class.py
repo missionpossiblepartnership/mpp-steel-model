@@ -1,6 +1,7 @@
 """Class and functions to manage Material Usage"""
 
 import itertools
+from typing import Sequence, Union
 
 import pandas as pd
 
@@ -38,7 +39,7 @@ class MaterialUsage:
         self.resources = ["biomass", "scrap", "ccs", "co2"]
 
     def initiate_years_and_regions(
-        self, year_range: range, resource_list: list, region_list: list
+        self, year_range: range, resource_list: Sequence, region_list: Sequence
     ):
         for year in year_range:
             self.usage[year] = {resource: 0 for resource in resource_list}
@@ -91,7 +92,7 @@ class MaterialUsage:
                 constraint = self.constraint[model_type][year]
                 usage = self.usage[year][model_type]
                 balance = self.balance[year][model_type]
-            pct_used = 100
+            pct_used: Union[int, float] = 100
             pct_remaining = 0
             try:
                 pct_used = (usage / constraint) * 100

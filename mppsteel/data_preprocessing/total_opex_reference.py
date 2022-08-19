@@ -87,11 +87,11 @@ def generate_total_opex_cost_reference(
     _, intermediate_path, _ = return_pkl_paths(
         scenario_name=scenario_dict["scenario_name"], paths=pkl_paths
     )
-    carbon_tax_reference = read_pickle_folder(
+    carbon_tax_reference: pd.DataFrame = read_pickle_folder(
         intermediate_path, "carbon_tax_reference", "df"
     )
     # Variable Cost Preprocessing
-    variable_costs_regional = read_pickle_folder(
+    variable_costs_regional: pd.DataFrame = read_pickle_folder(
         intermediate_path, "variable_costs_regional", "df"
     )
     variable_cost_summary = variable_costs_regional.rename(
@@ -101,12 +101,12 @@ def generate_total_opex_cost_reference(
     test_negative_df_values(variable_cost_summary)
 
     # Other opex processing
-    opex_values_dict = read_pickle_folder(PKL_DATA_FORMATTED, "capex_dict", "df")
+    opex_values_dict: pd.DataFrame = read_pickle_folder(PKL_DATA_FORMATTED, "capex_dict", "df")
     other_opex_df = opex_values_dict["other_opex"].swaplevel().copy()
     other_opex_df.drop(TECHNOLOGIES_TO_DROP, level="Technology", inplace=True)
 
     # Get iteration loop
-    steel_plants = read_pickle_folder(
+    steel_plants: pd.DataFrame = read_pickle_folder(
         PKL_DATA_FORMATTED, "steel_plants_processed", "df"
     )
     product_range_year_country = list(

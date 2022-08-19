@@ -202,9 +202,11 @@ def return_furnace_group(furnace_dict: dict, tech: str) -> str:
     Returns:
         str: The Furnace Group of the technology
     """
+    return_value = ""
     for key, value in furnace_dict.items():
         if tech in furnace_dict[key]:
-            return value
+            return_value = value
+    return return_value
 
 
 def melt_and_index(

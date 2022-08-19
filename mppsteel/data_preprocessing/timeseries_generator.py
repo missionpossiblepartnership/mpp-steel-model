@@ -2,6 +2,7 @@
 # For Data Manipulation
 from typing import Union
 import pandas as pd
+from mppsteel.config.mypy_config_settings import MYPY_SCENARIO_TYPE
 from mppsteel.utility.dataframe_utility import convert_currency_col, extend_df_years
 
 # For logger and units dict
@@ -112,7 +113,7 @@ def timeseries_generator(
 
 @timer_func
 def generate_timeseries(
-    scenario_dict: dict = None,
+    scenario_dict: MYPY_SCENARIO_TYPE = None,
     pkl_paths: Union[dict, None] = None,
     serialize: bool = False,
 ) -> dict:
@@ -126,6 +127,7 @@ def generate_timeseries(
     Returns:
         dict: A dict containing dataframes with the following keys: 'biomass', 'carbon_tax', 'electricity'.
     """
+    scenario_dict = dict(scenario_dict) if scenario_dict else scenario_dict
     _, intermediate_path, _ = return_pkl_paths(
         scenario_name=scenario_dict["scenario_name"], paths=pkl_paths
     )

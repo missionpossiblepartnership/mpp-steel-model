@@ -1,5 +1,6 @@
 """Module that contains the trade functions"""
 
+from typing import List, Sequence
 import pandas as pd
 
 from mppsteel.config.model_config import (
@@ -8,6 +9,7 @@ from mppsteel.config.model_config import (
     TRADE_PCT_BOUNDARY_FACTOR_DICT,
     TRADE_ROUNDING_NUMBER,
 )
+from mppsteel.config.mypy_config_settings import MYPY_DICT_STR_LIST
 from mppsteel.config.reference_lists import REGION_LIST
 from mppsteel.plant_classes.capacity_container_class import CapacityContainerClass
 from mppsteel.model_solver.market_container_class import MarketContainerClass
@@ -98,7 +100,7 @@ def trade_flow(
     results_container = {}
     region_list = REGION_LIST
     regional_capacity_dict = {region: 0 for region in region_list}
-    cases = {region: [] for region in region_list}
+    cases: MYPY_DICT_STR_LIST = {region: [] for region in region_list}
     demand_dict = {
         region: steel_demand_getter(
             steel_demand_df, year=year, metric="crude", region=region
@@ -491,9 +493,6 @@ def trade_flow(
 
 
 def return_region_stack(
-    market_container: MarketContainerClass, cases: dict, regions: list, year: int
-) -> None:
-    for region in regions:
-        print(
-            f"Region: {region} | trade_balance: {market_container.return_container()[year][region]} | cases: {cases[region]}"
-        )
+    market_container: MarketContainerClass, cases: dict, regions: Sequence, year: int
+) -> List[str]:
+    return [f"Region: {region} | trade_balance: {market_container.return_container()[year][region]} | cases: {cases[region]}" for region in regions]

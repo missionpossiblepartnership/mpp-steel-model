@@ -31,16 +31,15 @@ logger = get_logger(__name__)
 
 def generate_s1_s3_emissions(
     business_cases: pd.DataFrame,
-    single_year: int = None,
-    s1_emissivity_factors: pd.DataFrame = None,
-    s3_emissivity_factors: pd.DataFrame = None,
+    s1_emissivity_factors: pd.DataFrame,
+    s3_emissivity_factors: pd.DataFrame
+
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Creates a DataFrame with emissivity for S1, S2 & S3 for each technology.
     Multiples the emissivity values by the standardized business cases.
 
     Args:
         df (pd.DataFrame): The standardised business cases DataFrame.
-        single_year (int, optional): A single year that you want to calculate emissivity for. Defaults to None.
         s1_emissivity_factors (pd.DataFrame, optional): Emissions Factors for S1. Defaults to None.
         s3_emissivity_factors (pd.DataFrame, optional): Emissions Factors for S3. Defaults to None.
 
@@ -57,12 +56,10 @@ def generate_s1_s3_emissions(
 
     # Create a year range
     year_range = MODEL_YEAR_RANGE
-    if single_year:
-        year_range = [single_year]
 
     df_list = []
 
-    logger.info(f"calculating emissions reference tables")
+    logger.info("calculating emissions reference tables")
 
     def s1_s2_emissions_mapper(row):
         if row.material_category in s1_emissivity_resources:  # tCO2 / GJ

@@ -3,10 +3,11 @@ import itertools
 import sys
 
 import numpy as np
+import numpy.typing as npt
 from collections.abc import Iterable
 from copy import deepcopy
 from datetime import datetime
-from typing import Any, List, Union, Iterable as it
+from typing import Any, List, Sequence, Sized, Union
 
 from currency_converter import CurrencyConverter
 from mppsteel.config.model_config import NUMBER_OF_TECHNOLOGIES_PER_BIN_GROUP
@@ -69,7 +70,7 @@ def stdout_query(question: str, default: str, options: str) -> str:
             sys.stdout.write(f"Please respond with a choice from {options}.\n")
 
 
-def get_currency_rate(base: str, target: str) -> None:
+def get_currency_rate(base: str, target: str) -> float:
     """Gets a currency rate exchange between two currencies using the CurrencyConverter library.
 
     Args:
@@ -80,23 +81,23 @@ def get_currency_rate(base: str, target: str) -> None:
         None: A None object
     """
     logger.info(f"Getting currency exchange rate for {base}")
-
+    conversion_rate = 1
     if (len(base) == 3) & (len(target) == 3):
         try:
             curr = CurrencyConverter()
-            return curr.convert(1, base.upper(), target.upper())
+            conversion_rate = curr.convert(1, base.upper(), target.upper())
         except:
             raise ValueError(
                 f"You entered an incorrect currency, either {base} or {target}"
             )
-    return None
+    return conversion_rate
 
 
-def enumerate_iterable(iterable: it) -> dict:
+def enumerate_iterable(iterable: Sized) -> dict:
     """Enumerates an iterable as dictionary with the iterable value as the key and the order number as the value.
 
     Args:
-        iterable (Iterable): The iterable you want to enumerate
+        iterable (Sized): The iterable you want to enumerate
 
     Returns:
         dict: A dictionary with the the iterable value as the key and the order number as the value.
@@ -104,7 +105,7 @@ def enumerate_iterable(iterable: it) -> dict:
     return dict(zip(iterable, range(len(iterable))))
 
 
-def cast_to_float(val: Union[float, int, Iterable[float]]) -> float:
+def cast_to_float(val: Union[float, int, Iterable]) -> float:
     """Casts a numerical object to a float if not a float already.
 
     Args:
@@ -113,19 +114,16 @@ def cast_to_float(val: Union[float, int, Iterable[float]]) -> float:
     Returns:
         float: The float value.
     """
-    if isinstance(val, float):
-        return val
-    elif isinstance(val, Iterable):
-        return float(val.sum())
+    return float(val.sum()) if isinstance(val, Iterable) else val
 
 
 def create_bin_rank_dict(
-    data: np.array, number_of_items: int, reverse: bool = False, rounding: int = 3
+    data: np.ndarray, number_of_items: int, reverse: bool = False, rounding: int = 3
 ) -> dict:
     """Create a dictionary of bin value: bin rank key: value pairs.
 
     Args:
-        data (np.array): The data that you want to create bins for.
+        data (np.ndarray): The data that you want to create bins for.
         number_of_items: The number of items that determines the minium number of bins you want to create.
         reverse (bool, optional): Reverse the enumeration of the bins (descending rather than ascending order). Defaults to False.
         rounding (int, optional): Optionally round the numbers for the bin groups. Defaults to 3.
@@ -136,16 +134,16 @@ def create_bin_rank_dict(
     # max_bin_size = math.floor(number_of_items / NUMBER_OF_TECHNOLOGIES_PER_BIN_GROUP)
     max_bin_size = 3
     bins = min(number_of_items, max_bin_size)
-    bins = np.linspace(data.min(), data.max(), bins)
-    digitized = np.digitize(data, bins)
-    new_data_list = [data[digitized == i].mean() for i in range(1, len(bins))]
+    bins_linspaced: Sized = np.linspace(start=data.min(), stop=data.max(), num=bins)
+    digitized = np.digitize(data, bins_linspaced)
+    new_data_list = [data[digitized == i].mean() for i in range(1, len(bins_linspaced))]
     new_data_list = [round(x, rounding) for x in new_data_list]
     if reverse:
         new_data_list.reverse()
     return enumerate_iterable(new_data_list)
 
 
-def return_bin_rank(x: float, bin_dict: dict) -> float:
+def return_bin_rank(x: float, bin_dict: dict) -> Union[float, None]:
     """Return the matching bin rank from a bin_rank dictionary created in the `bin_rank_dict` function.
 
     Args:
@@ -156,7 +154,7 @@ def return_bin_rank(x: float, bin_dict: dict) -> float:
         ValueError: Raises error if the value entered if the value `x` is outside of the bin_dict range.
 
     Returns:
-        float: Returns a float of the rank value.
+        Union[float, None]: Returns a float of the rank value, else None.
     """
     bin_dict_vals = list(bin_dict.keys())
     if x < bin_dict_vals[0]:
@@ -167,10 +165,10 @@ def return_bin_rank(x: float, bin_dict: dict) -> float:
         raise ValueError(
             f"Value provided {x} is bigger than the last bin size {bin_dict_vals[-1]}"
         )
-    else:
-        for val in bin_dict_vals:
+    for val in bin_dict_vals:
             if x <= val:
                 return bin_dict[val]
+    return None
 
 
 def replace_dict_items(base_dict: dict, replacement_dict: dict) -> dict:
@@ -261,17 +259,17 @@ def get_closest_number_in_list(my_list: list, my_number: int) -> Union[int, None
     return min(my_list, key=lambda x: abs(x - my_number)) if my_list else None
 
 
-def split_list_into_chunks(lst: List[Any], n: int) -> list:
+def split_list_into_chunks(seq: Sequence[Any], n: int) -> list:
     """Splits a list into smaller lists of predetermined length.
 
     Args:
-        lst (list): A list with any elements.
+        seq (Sequence): A sequence with any elements.
         n (int): The predetermined size of each smaller list chunk.
 
     Returns:
         list: A list of length n, with each element as a smaller lists.
     """
-    return [lst[i : i + n] for i in range(0, len(lst), n)]
+    return [seq[i : i + n] for i in range(0, len(seq), n)]
 
 
 def get_intersection_of_ordered_list(
