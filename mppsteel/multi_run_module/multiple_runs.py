@@ -4,6 +4,7 @@ import math
 import shutil
 
 import multiprocessing as mp
+from typing import Mapping
 
 import pandas as pd
 import modin.pandas as mpd
@@ -19,10 +20,8 @@ from mppsteel.config.model_config import (
     PKL_DATA_COMBINED,
     PKL_FOLDER,
 )
-from mppsteel.multi_run_module.multiprocessing_functions import (
-    manager_run,
-    multi_run_function,
-)
+from mppsteel.config.reference_lists import MULTI_RUN_MULTI_SCENARIO_SUMMARY_FILENAMES
+from mppsteel.multi_run_module.multiprocessing_functions import multi_run_function
 from mppsteel.model_results.multiple_model_run_summary import summarise_combined_data
 from mppsteel.model_graphs.graph_production import create_combined_scenario_graphs
 from mppsteel.model_results.resource_demand_summary import (
@@ -45,7 +44,7 @@ logger = get_logger(__name__)
 
 
 def make_multiple_model_runs(
-    scenario_dict: dict,
+    scenario_dict: Mapping,
     number_of_runs: int = DEFAULT_NUMBER_OF_RUNS,
     remove_run_folders: bool = False,
 ) -> None:
@@ -178,7 +177,7 @@ def aggregate_results(
 
 
 def aggregate_multi_run_scenarios(
-    scenario_options: dict,
+    scenario_options: Mapping,
     single_scenario: bool = False,
     dated_output_folder: bool = True,
     timestamp: str = "",
@@ -189,35 +188,38 @@ def aggregate_multi_run_scenarios(
         output_save_path = output_folder_path_creation(
             dated_output_folder, timestamp, return_single_scenario(scenario_options)
         )
-    else:
-        output_save_path = output_folder_path_creation(dated_output_folder, timestamp)
     files_to_aggregate = list(
         generate_files_to_path_dict(scenario_options.keys())[
             return_single_scenario(scenario_options)
         ].keys()
     )
+    scenario_set = set(scenario_options.keys())
 
-    results_dict = {}
     for filename in tqdm(
         files_to_aggregate,
         total=len(files_to_aggregate),
         desc="Running pkl scenario data merge",
     ):
         logger.info(f"Running through summary flow for {filename}")
-        filename_list = manager_run(
-            process_function=append_to_list,
-            process_kwargs_function=create_process_function_kwargs_scenario_agg,
-            process_iterable_dict=scenario_options,
-            filename=filename,
-        )
+        filename_dict = {}
+        for scenario in tqdm(scenario_set, total=len(scenario_set), desc="Scenario loop"):
+            assign_to_dict(filename_dict, filename, scenario)
         logger.info(f"Creating summary data for {filename}")
-        results_dict = summarise_combined_data(
-            mpd.concat(filename_list).reset_index(drop=True), results_dict, filename
-        )
+        results_dict = {file: [] for file in MULTI_RUN_MULTI_SCENARIO_SUMMARY_FILENAMES}
+        scenarios_present = filename_dict.keys()
+        for scenario in scenarios_present:
+            subset = filename_dict[scenario]
+            print(f"{scenario} -> rows: {len(subset)}")
+            summarise_combined_data(subset, results_dict, filename)
 
-    for filename in results_dict:
-        serialize_file(results_dict[filename], combined_pkl_path, filename)
-        pickle_to_csv(output_save_path, combined_pkl_path, filename, reset_index=False)
+        scenarios_present_set = set(scenarios_present)
+        assert scenarios_present_set == scenario_set, f"Not all scenarios in df. Difference: {scenario_set.difference(scenarios_present_set)}."
+
+        for summary_filename in results_dict:
+            if results_dict[summary_filename]:
+                summary_df = pd.concat(list(results_dict[summary_filename])).reset_index(drop=True)
+                serialize_file(summary_df, combined_pkl_path, summary_filename)
+                pickle_to_csv(output_save_path, combined_pkl_path, summary_filename, reset_index=False)
 
 
 def add_model_run_metadata_columns(
@@ -232,7 +234,7 @@ def add_model_run_metadata_columns(
 
 
 def store_result_to_container(
-    run_container: dict,
+    run_container: Mapping,
     scenario_name: str,
     filename: str,
     pkl_path: str,
@@ -245,7 +247,7 @@ def store_result_to_container(
 
 
 def store_run_container_to_pkl(
-    run_container: dict,
+    run_container: Mapping,
     pkl_path: str,
 ) -> None:
     for filename in run_container:
@@ -281,21 +283,9 @@ def output_folder_path_creation(
     return output_save_path
 
 
-def append_to_list(appending_list, filename: str, scenario: str) -> None:
-    appending_list.append(
-        read_pickle_folder(pkl_folder_filepath_creation(scenario), filename, "df")
-    )
+def assign_to_dict(assigning_dict, filename: str, scenario: str) -> None:
+    assigning_dict[scenario] = read_pickle_folder(pkl_folder_filepath_creation(scenario), filename, "df")
 
 
-def return_single_scenario(scenario_options: dict) -> list:
+def return_single_scenario(scenario_options: Mapping) -> list:
     return list(scenario_options.keys())[0]
-
-
-def create_process_function_kwargs_scenario_agg(
-    appending_list, filename, scenario
-) -> dict:
-    return dict(
-        appending_list=appending_list,
-        filename=filename,
-        scenario=scenario,
-    )

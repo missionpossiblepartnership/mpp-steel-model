@@ -495,3 +495,16 @@ PKL_FILE_RESULTS_REFERENCE = {
         "production_resource_usage",
     ],
 }
+
+MULTI_RUN_MULTI_SCENARIO_SUMMARY_FILENAMES = [
+    "production_emissions_summary", 
+    "production_resource_usage_summary",
+    "plant_capacity_summary",
+    "plant_capacity_summary_country_breakdown",
+    "cost_of_steelmaking_summary",
+    "investment_results_summary",
+    "levelized_cost_standardized_summary",
+    "calculated_emissivity_combined_summary",
+    "full_trade_summary",
+    "plant_result_df"
+]

@@ -1,8 +1,8 @@
 """Script containing functions that include multiprocessing"""
 
-import math
 import multiprocessing as mp
-from typing import Callable, Iterable, List, Union
+import time
+from typing import Callable, Iterable, Mapping, MutableMapping, Union, Sequence
 
 
 from mppsteel.model_solver.solver_flow import main_solver_flow
@@ -30,7 +30,7 @@ def create_pool(processes_to_run: Iterable) -> mp.Pool:
 
 
 def multiprocessing_scenarios_single_run(
-    scenario_options: List[dict],
+    scenario_options: Sequence[Mapping],
     func: Callable,
     dated_output_folder: bool = False,
     iteration_run: bool = False,
@@ -39,7 +39,7 @@ def multiprocessing_scenarios_single_run(
     """Multiprocessing function that creates a pool to run a function for multiple scenarios at once.
 
     Args:
-        scenario_options (List[dict]): Dictionary containing the scenarios you want to run.
+        scenario_options (Sequence[Mapping]): Dictionary containing the scenarios you want to run.
         func (Callable): Function to run for each scenario in scenario_options.
         dated_output_folder (bool, optional): Boolean flag to determine if the create a new folder for the results. Defaults to False.
         iteration_run (bool, optional): Boolean flag to determine whether there will be multiple iterations for each scenario. Defaults to False.
@@ -65,12 +65,12 @@ def multiprocessing_scenarios_single_run(
 
 
 def multiprocessing_scenarios_preprocessing(
-    scenario_options: dict, preprocessing_function: Callable
+    scenario_options: Mapping, preprocessing_function: Callable
 ) -> None:
     """Multiprocessing function that creates a pool to run a function for multiple scenarios at once.
 
     Args:
-        scenario_options (dict): Dictionary containing the scenarios you want to run.
+        scenario_options (Mapping): Dictionary containing the scenarios you want to run.
         preprocessing_function (Callable): Function containing the logic you want to run for each scenario in scenario_options.
     """
     # POOL 1: PREPROCESSING
@@ -86,49 +86,13 @@ def multiprocessing_scenarios_preprocessing(
     pool.close()
     pool.join()
 
-
-def manager_run(
-    process_function: Callable,
-    process_kwargs_function: Callable,
-    process_iterable_dict: dict,
-    filename: str = "",
-) -> list:
-    """Multiprocessing function that uses a Manager to append items to a list in parallel.
-
-    Args:
-        process_function (Callable): The function you want to run in parallel.
-        process_kwargs_function (Callable): The functon that creates the kwargs for the process_function.
-        process_iterable_dict (dict): The file containing the iterations that will be looped into the process_kwargs_function.
-        filename (str, optional): The name of the file to run in parallel. Defaults to "".
-
-    Returns:
-        list: A list containing the parallelized runs.
-    """
-    logger.info(f"Combining scenario data into one for {filename}")
-    with mp.Manager() as manager:
-        L = manager.list()
-        processes = []
-        for iter in process_iterable_dict:
-            p = mp.Process(
-                target=process_function,
-                kwargs=process_kwargs_function(L, filename, iter),
-            )
-            p.start()
-            processes.append(p)
-
-        for p in processes:
-            p.join()
-
-        return list(L)
-
-
 def core_run_function(
-    scenario_dict: dict, model_run: int, pkl_paths: Union[dict, None] = None
+    scenario_dict: Mapping, model_run: int, pkl_paths: Union[dict, None] = None
 ) -> None:
     """Function to run the section of the model that runs multiple times.
 
     Args:
-        scenario_dict (dict): The scenario to run.
+        scenario_dict (Mapping): The scenario to run.
         model_run (int): The number of the scenario run.
         pkl_paths (Union[dict, None], optional): The path where the multiple runs will be stored. Defaults to None.
     """
@@ -156,12 +120,12 @@ def async_error_handler(e):
     logger.info(f"-->{e.__cause__}<--")
 
 
-def multi_run_function(run_range: range, scenario_dict: dict) -> None:
+def multi_run_function(run_range: range, scenario_dict: Mapping) -> None:
     """Multiprocessing function that uses a pool to run the model multiple times.
 
     Args:
         run_range (range): A range representing the number of times to run the model.
-        scenario_dict (dict): The scenario you want to run multiple times.
+        scenario_dict (Mapping): The scenario you want to run multiple times.
     """
     pool = create_pool(run_range)
     for model_run in run_range:

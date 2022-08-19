@@ -1,4 +1,4 @@
-++"""Script to manage making iteration model runs"""
+"""Script to manage making iteration model runs"""
 
 import itertools
 import os
