@@ -1,6 +1,6 @@
 """Model flow functions for the main script"""
 
-from typing import Any, MutableMapping, Union
+from typing import Any, Dict, MutableMapping, Union
 from datetime import datetime
 
 from mppsteel.utility.utils import stdout_query, get_currency_rate
@@ -63,13 +63,13 @@ from mppsteel.config.model_config import (
 )
 from mppsteel.config.reference_lists import INTERMEDIATE_RESULT_PKL_FILES, FINAL_RESULT_PKL_FILES
 from mppsteel.config.model_scenarios import SCENARIO_OPTIONS
-from mppsteel.config.mypy_config_settings import MYPY_PKL_PATH_OPTIONAL, MYPY_SCENARIO_TYPE, MYPY_SCENARIO_TYPE_OR_NONE
+from mppsteel.config.mypy_config_settings import MYPY_PKL_PATH_OPTIONAL, MYPY_SCENARIO_ENTRY_TYPE, MYPY_SCENARIO_SETTINGS_SEQUENCE, MYPY_SCENARIO_TYPE, MYPY_SCENARIO_TYPE_OR_NONE
 
 logger = get_logger(__name__)
 
 
 def stdout_question(
-    count_iter: int, scenario_type: str, scenario_options: dict, default_dict: dict
+    count_iter: int, scenario_type: str, scenario_options: MYPY_SCENARIO_SETTINGS_SEQUENCE, default_dict: MYPY_SCENARIO_TYPE
 ) -> str:
     return f"""
     Scenario Option {count_iter+1}/{len(scenario_options)}: {scenario_type}
@@ -79,17 +79,17 @@ def stdout_question(
     """
 
 
-def get_inputted_scenarios(scenario_options: dict, default_scenario: dict) -> dict:
+def get_inputted_scenarios(scenario_options: MYPY_SCENARIO_SETTINGS_SEQUENCE, default_scenario: MYPY_SCENARIO_TYPE) -> Dict[str, MYPY_SCENARIO_ENTRY_TYPE]:
     inputted_scenario_args = {}
-    for count, scenario in enumerate(scenario_options.keys()):
-        question = stdout_question(count, scenario, scenario_options, default_scenario)
-        inputted_scenario_args[scenario] = stdout_query(
-            question, default_scenario[scenario], scenario_options[scenario]
+    for count, scenario_option in enumerate(scenario_options.keys()):
+        question = stdout_question(count, scenario_option, scenario_options, default_scenario)
+        inputted_scenario_args[scenario_option] = stdout_query(
+            question, default_scenario[scenario_option], scenario_options[scenario_option]
         )
     return inputted_scenario_args
 
 
-def add_currency_rates_to_scenarios(scenario_dict: MYPY_SCENARIO_TYPE, live: bool = False) -> dict:
+def add_currency_rates_to_scenarios(scenario_dict: MYPY_SCENARIO_TYPE, live: bool = False) -> MYPY_SCENARIO_TYPE:
     eur_to_usd = 1 / USD_TO_EUR_CONVERSION_DEFAULT
     usd_to_eur = USD_TO_EUR_CONVERSION_DEFAULT
     if live:
@@ -210,7 +210,7 @@ def model_outputs_phase(
     new_folder: bool = False,
     output_folder: str = "",
 ) -> None:
-    scenario_name: str = scenario_dict["scenario_name"]
+    scenario_name = str(scenario_dict["scenario_name"])
     save_path = OUTPUT_FOLDER
     if new_folder:
         folder_filepath = f"{OUTPUT_FOLDER}/{output_folder}"
@@ -252,7 +252,7 @@ def data_import_refresh() -> None:
 
 
 def data_preprocessing_refresh(
-    scenario_dict: MYPY_SCENARIO_TYPE, pkl_paths:MYPY_SCENARIO_TYPE_OR_NONE = None
+    scenario_dict: MYPY_SCENARIO_TYPE, pkl_paths: MYPY_PKL_PATH_OPTIONAL = None
 ) -> None:
     data_preprocessing_generic_1()
     data_preprocessing_generic_2(scenario_dict)
@@ -266,7 +266,7 @@ def data_import_and_preprocessing_refresh(scenario_dict) -> None:
 
 
 def tco_and_abatement_calculations(
-    scenario_dict: MYPY_SCENARIO_TYPE, pkl_paths:MYPY_SCENARIO_TYPE_OR_NONE = None
+    scenario_dict: MYPY_SCENARIO_TYPE, pkl_paths: MYPY_PKL_PATH_OPTIONAL = None
 ) -> None:
     model_presolver(scenario_dict, pkl_paths=pkl_paths)
 
@@ -277,7 +277,7 @@ def scenario_batch_run(
     iteration_run: bool = False,
     include_outputs: bool = True,
 ) -> None:
-    scenario_name = scenario_dict["scenario_name"]
+    scenario_name = str(scenario_dict["scenario_name"])
     # create new folders for path
     intermediate_path = get_scenario_pkl_path(
         scenario=scenario_name,
@@ -290,7 +290,7 @@ def scenario_batch_run(
     pkl_paths = {"intermediate_path": intermediate_path, "final_path": final_path}
     create_folders_if_nonexistant([intermediate_path, final_path])
     # Set up scenario and metadata
-    scenario_args = dict(scenario_dict)
+    scenario_args = scenario_dict
     scenario_args = add_currency_rates_to_scenarios(scenario_args)
     timestamp = datetime.now().strftime(DATETIME_FORMAT)
     model_output_folder = f"{scenario_name} {timestamp}"

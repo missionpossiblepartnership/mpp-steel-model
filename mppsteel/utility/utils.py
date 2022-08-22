@@ -46,7 +46,7 @@ def create_list_permutations(list1: list, list2: list) -> list:
     return list(itertools.chain(*comb))
 
 
-def stdout_query(question: str, default: str, options: str) -> str:
+def stdout_query(question: str, default: Union[bool, str, float], options: Sequence) -> Union[bool, str, float]:
     """Ask a yes/no question via raw_input() and return their answer.
 
     "question" is a string that is presented to the user.
@@ -105,16 +105,16 @@ def enumerate_iterable(iterable: Sized) -> dict:
     return dict(zip(iterable, range(len(iterable))))
 
 
-def cast_to_float(val: Union[float, int, Iterable]) -> float:
+def cast_to_float(val: Union[float, int, Sequence[Union[int, float]]]) -> float:
     """Casts a numerical object to a float if not a float already.
 
     Args:
-        val Union[float, int, Iterable[float]]): The numerical value you want to be a float. Can be an iterable containing a numberical value(s), that will be summated as a float.
+        val Union[float, int, Sequence[Union[int, float]]]): The numerical value you want to be a float. Can be an iterable containing a numberical value(s), that will be summated as a float.
 
     Returns:
         float: The float value.
     """
-    return float(val.sum()) if isinstance(val, Iterable) else val
+    return float(sum(val)) if isinstance(val, Iterable) else val # was .sum()
 
 
 def create_bin_rank_dict(

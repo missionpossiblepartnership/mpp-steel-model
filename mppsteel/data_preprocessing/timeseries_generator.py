@@ -2,7 +2,7 @@
 # For Data Manipulation
 from typing import Union
 import pandas as pd
-from mppsteel.config.mypy_config_settings import MYPY_SCENARIO_TYPE
+from mppsteel.config.mypy_config_settings import MYPY_PKL_PATH_OPTIONAL, MYPY_SCENARIO_TYPE, MYPY_SCENARIO_TYPE_OR_NONE
 from mppsteel.utility.dataframe_utility import convert_currency_col, extend_df_years
 
 # For logger and units dict
@@ -113,8 +113,8 @@ def timeseries_generator(
 
 @timer_func
 def generate_timeseries(
-    scenario_dict: MYPY_SCENARIO_TYPE = None,
-    pkl_paths: Union[dict, None] = None,
+    scenario_dict: MYPY_SCENARIO_TYPE,
+    pkl_paths: MYPY_PKL_PATH_OPTIONAL = None,
     serialize: bool = False,
 ) -> dict:
     """Generates timeseries for biomass, carbon taxes and electricity.
@@ -127,15 +127,14 @@ def generate_timeseries(
     Returns:
         dict: A dict containing dataframes with the following keys: 'biomass', 'carbon_tax', 'electricity'.
     """
-    scenario_dict = dict(scenario_dict) if scenario_dict else scenario_dict
     _, intermediate_path, _ = return_pkl_paths(
-        scenario_name=scenario_dict["scenario_name"], paths=pkl_paths
+        scenario_name=str(scenario_dict["scenario_name"]), paths=pkl_paths
     )
     carbon_tax_scenario_values = CARBON_TAX_SCENARIOS[
-        scenario_dict["carbon_tax_scenario"]
+        str(scenario_dict["carbon_tax_scenario"])
     ]
     green_premium_scenario_values = GREEN_PREMIUM_SCENARIOS[
-        scenario_dict["green_premium_scenario"]
+        str(scenario_dict["green_premium_scenario"])
     ]
     # Create Carbon Tax timeseries
     carbon_tax_timeseries = timeseries_generator(
@@ -148,7 +147,7 @@ def generate_timeseries(
         extension_year=MODEL_YEAR_END,
     )
     carbon_tax_timeseries = convert_currency_col(
-        carbon_tax_timeseries, "value", scenario_dict["eur_to_usd"]
+        carbon_tax_timeseries, "value", float(scenario_dict["eur_to_usd"])
     )
 
     green_premium_timeseries = timeseries_generator(
@@ -161,7 +160,7 @@ def generate_timeseries(
         extension_year=MODEL_YEAR_END,
     )
     green_premium_timeseries = convert_currency_col(
-        green_premium_timeseries, "value", scenario_dict["eur_to_usd"]
+        green_premium_timeseries, "value", float(scenario_dict["eur_to_usd"])
     )
 
     if serialize:

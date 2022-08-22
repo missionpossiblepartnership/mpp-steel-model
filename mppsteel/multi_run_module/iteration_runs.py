@@ -14,6 +14,7 @@ from mppsteel.config.model_config import (
     PKL_FOLDER,
     UNDERSCORE_NUMBER_REGEX,
 )
+from mppsteel.config.mypy_config_settings import MYPY_SCENARIO_SETTINGS_SEQUENCE, MYPY_SCENARIO_TYPE
 from mppsteel.config.reference_lists import PKL_FILE_RESULTS_REFERENCE
 from mppsteel.utility.dataframe_utility import change_col_type, move_elements_to_front_of_list
 from mppsteel.utility.utils import reverse_dict_with_list_elements
@@ -27,7 +28,7 @@ from mppsteel.utility.log_utility import get_logger
 logger = get_logger(__name__)
 
 
-def make_scenario_iterations(base_scenario: dict, scenario_settings: dict) -> list:
+def make_scenario_iterations(base_scenario: MYPY_SCENARIO_TYPE, scenario_settings: MYPY_SCENARIO_SETTINGS_SEQUENCE) -> list:
     """Creates a list of dictionary scenarios based on a core base scenario dict iterations of scenario settings.
 
     Args:
@@ -136,7 +137,7 @@ def combine_multiple_iterations(
     folders = [x[0] for x in os.walk(f"{PKL_FOLDER}/iteration_runs/{base_scenario}")]
     folders = [path for path in folders if path.count("/") == 5]
     for folder_path in tqdm(folders, total=len(folders), desc="Iteration loop"):
-        df = read_pickle_folder(
+        df: pd.DataFrame = read_pickle_folder(
             f"{folder_path}/{results_path_ref_dict[filename]}", filename, "df"
         )
         df["full_scenario_ref"] = os.path.basename(os.path.normpath(folder_path))
@@ -232,10 +233,6 @@ def combine_files_iteration_run(
             df = combine_multiple_iterations(
                 base_scenario, iterations_file_dict, filename
             )
-            # clearing memory from combine_multiple_iterations function
-            if "base_scenario_list" in globals():
-                del base_scenario_list
-
             scenario_path = f"{output_path}/{base_scenario}"
             create_folder_if_nonexist(scenario_path)
 

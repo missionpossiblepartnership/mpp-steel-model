@@ -53,7 +53,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # INITAL SCENARIO ARGUMENTS
-    scenario_args = DEFAULT_SCENARIO
+    scenario_args: MYPY_SCENARIO_TYPE = DEFAULT_SCENARIO
     number_of_runs = DEFAULT_NUMBER_OF_RUNS
     if args.number_of_runs:
         number_of_runs = int(args.number_of_runs)
@@ -83,8 +83,8 @@ if __name__ == "__main__":
         )
 
     # SCENARIO CUSTOMIZATION
-    scenario_args: MYPY_SCENARIO_TYPE = add_currency_rates_to_scenarios(scenario_args)
-    scenario_name: str = scenario_args["scenario_name"]
+    scenario_args = add_currency_rates_to_scenarios(scenario_args)
+    scenario_name = str(scenario_args["scenario_name"])
 
     timestamp = datetime.now().strftime(DATETIME_FORMAT)
     logger.info(f"Model running at {timestamp}")
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     intermediate_path = get_scenario_pkl_path(
         scenario_name, "intermediate"
     )
-    final_path = get_scenario_pkl_path(scenario_args["scenario_name"], "final")
+    final_path = get_scenario_pkl_path(scenario_name, "final")
     create_folders_if_nonexistant(FOLDERS_TO_CHECK_IN_ORDER)
     create_folders_if_nonexistant([intermediate_path, final_path])
 
@@ -123,7 +123,7 @@ if __name__ == "__main__":
         logger.info(
             f"Running the model {number_of_runs} times for {len(MAIN_SCENARIO_RUNS)} scenarios"
         )
-        scenario_options: MYPY_SCENARIO_TYPE = {
+        scenario_options: Dict[str, MYPY_SCENARIO_TYPE] = {
             scenario: add_currency_rates_to_scenarios(SCENARIO_OPTIONS[scenario])
             for scenario in MAIN_SCENARIO_RUNS
         }
@@ -158,7 +158,6 @@ if __name__ == "__main__":
         scenario_iteration_reference = generate_scenario_iterations_reference(
             BATCH_ITERATION_SCENARIOS, SCENARIO_OPTIONS, SCENARIO_SETTINGS
         )
-        """
         scenario_iteration_reference.to_csv(
             f"{output_iteration_path}/scenario_iteration_reference.csv", index=False
         )
@@ -180,14 +179,13 @@ if __name__ == "__main__":
                     iteration_run=True,
                     include_outputs=False,
                 )
-        """
         files_to_aggregate = [
             "production_resource_usage",
             "production_emissions",
-            #"investment_results",
-            #"cost_of_steelmaking",
-            #"calculated_emissivity_combined",
-            #"tco_summary_data",
+            "investment_results",
+            "cost_of_steelmaking",
+            "calculated_emissivity_combined",
+            "tco_summary_data",
         ]
         combine_files_iteration_run(
             scenarios_to_iterate=BATCH_ITERATION_SCENARIOS,
@@ -210,7 +208,7 @@ if __name__ == "__main__":
         )
 
     if args.multi_run_full:
-        scenario_name_multi_run_full = scenario_args["scenario_name"]
+        scenario_name_multi_run_full = str(scenario_args["scenario_name"])
         logger.info(
             f"Running model in full {number_of_runs} times for {scenario_name_multi_run_full} scenario"
         )
@@ -229,7 +227,7 @@ if __name__ == "__main__":
         )
 
     if args.multi_run_half:
-        scenario_name_multi_run_half = scenario_args["scenario_name"]
+        scenario_name_multi_run_half = str(scenario_args["scenario_name"])
         logger.info(
             f"Running half-model {number_of_runs} times for {scenario_name_multi_run_half} scenario"
         )

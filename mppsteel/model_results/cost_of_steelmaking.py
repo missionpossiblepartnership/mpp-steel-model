@@ -1,5 +1,5 @@
 """Calculation Functions used to derive various forms of Cost of Steelmaking."""
-from typing import Iterable, Union
+from typing import Dict, Iterable, List, Union
 
 import pandas as pd
 import numpy_financial as npf
@@ -64,7 +64,7 @@ def extract_dict_values(
 def calculate_cc(
     capex_ref: dict,
     year: int,
-    year_span: range,
+    year_span: int,
     technology: str,
     discount_rate: float,
 ) -> float:
@@ -73,7 +73,7 @@ def calculate_cc(
     Args:
         capex_dict (dict): A dictionary containing the Capex values for Greenfield, Brownfield and Other Opex values.
         year (int): The year you want to calculate the capital charge for.
-        year_span (range): The year span for the capital charge values (used in the PV calculation).
+        year_span (int): The year span for the capital charge values (used in the PV calculation).
         technology (str): The technology you want to calculate the capital charge for.
         discount_rate (float): The discount rate to apply to the capital charge amounts.
 
@@ -195,7 +195,7 @@ def cost_of_steelmaking(
     years = production_df["year"].unique()
     production_stats_modified = production_df[cols_to_keep].set_index("year").copy()
 
-    cos_year_list = []
+    cos_year_list: List[Union[Dict[str, float], float]] = []
 
     def calculate_cos(df, region_ref=None) -> float:
         df_c = df.copy()

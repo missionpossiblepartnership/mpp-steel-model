@@ -111,7 +111,7 @@ def replace_2020_steel_demand_values_with_wsa_production(
     project_dir=PROJECT_PATH,
 ) -> pd.DataFrame:
 
-    wsa_production = read_pickle_folder(
+    wsa_production: pd.DataFrame = read_pickle_folder(
         project_dir / PKL_DATA_IMPORTS, "wsa_production", "df"
     )
     wsa_production.set_index("Region", inplace=True)

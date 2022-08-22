@@ -3,6 +3,7 @@
 import multiprocessing as mp
 import time
 from typing import Any, Callable, Iterable, Mapping, MutableMapping, Sized, Union, Sequence
+from mppsteel.config.mypy_config_settings import MYPY_SCENARIO_TYPE, MYPY_SCENARIO_TYPE_DICT
 
 
 from mppsteel.model_solver.solver_flow import main_solver_flow
@@ -65,7 +66,7 @@ def multiprocessing_scenarios_single_run(
 
 
 def multiprocessing_scenarios_preprocessing(
-    scenario_options: MutableMapping, preprocessing_function: Callable
+    scenario_options: MYPY_SCENARIO_TYPE_DICT, preprocessing_function: Callable
 ) -> None:
     """Multiprocessing function that creates a pool to run a function for multiple scenarios at once.
 

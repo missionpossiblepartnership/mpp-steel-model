@@ -1,6 +1,7 @@
 """Script to determine the variable plant cost types dependent on regions."""
 
 import itertools
+from pathlib import Path
 import pandas as pd
 from typing import Iterable, Union
 from pandas.testing import assert_series_equal
@@ -13,6 +14,7 @@ from mppsteel.config.model_config import (
     PROJECT_PATH,
     USD_TO_EUR_CONVERSION_DEFAULT,
 )
+from mppsteel.config.mypy_config_settings import MYPY_PKL_PATH_OPTIONAL, MYPY_SCENARIO_TYPE
 from mppsteel.config.reference_lists import RESOURCE_CATEGORY_MAPPER
 from mppsteel.utility.utils import cast_to_float
 from mppsteel.utility.function_timer_utility import timer_func
@@ -139,15 +141,15 @@ class PlantVariableCostsInput:
     @classmethod
     def from_filesystem(
         cls,
-        scenario_dict: dict,
-        intermediate_path: str = "", # was None
-        project_dir: str = PROJECT_PATH,
+        scenario_dict: MYPY_SCENARIO_TYPE,
+        intermediate_path: str = "",
+        project_dir: Path = PROJECT_PATH,
         resource_category_mapper: dict = RESOURCE_CATEGORY_MAPPER,
         year_range: range = MODEL_YEAR_RANGE,
     ):
 
         intermediate_path = project_dir / intermediate_path
-        eur_to_usd_rate = scenario_dict["eur_to_usd"]
+        eur_to_usd_rate = float(scenario_dict["eur_to_usd"])
 
         steel_plants = read_pickle_folder(
             project_dir / PKL_DATA_FORMATTED, "steel_plants_processed", "df"
@@ -167,9 +169,9 @@ class PlantVariableCostsInput:
             intermediate_path, "ccs_model_storage_ref", "df"
         )
         fossil_fuel_ref = read_pickle_folder(intermediate_path, "fossil_fuel_ref", "df")
-        business_cases = read_pickle_folder(
+        business_cases: pd.DataFrame = read_pickle_folder(
             project_dir / PKL_DATA_FORMATTED, "standardised_business_cases", "df"
-        ).reset_index()
+        )
         static_energy_prices = read_pickle_folder(
             project_dir / PKL_DATA_IMPORTS, "static_energy_prices", "df"
         )[["Metric", "Year", "Value"]]
@@ -185,7 +187,7 @@ class PlantVariableCostsInput:
         return cls(
             product_range_year_country=product_range_year_country,
             resource_category_mapper=resource_category_mapper,
-            business_cases=business_cases,
+            business_cases=business_cases.reset_index(),
             power_grid_prices_ref=power_grid_prices_ref,
             h2_prices_ref=h2_prices_ref,
             bio_model_prices_ref=bio_model_prices_ref,
@@ -467,7 +469,7 @@ def format_variable_costs(
 
 @timer_func
 def generate_variable_plant_summary(
-    scenario_dict: dict, pkl_paths: Union[dict, None] = None, serialize: bool = False
+    scenario_dict: dict, pkl_paths: MYPY_PKL_PATH_OPTIONAL = None, serialize: bool = False
 ) -> pd.DataFrame:
     """The complete flow for creating variable costs.
 

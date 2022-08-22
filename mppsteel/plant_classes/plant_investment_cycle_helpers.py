@@ -1,7 +1,7 @@
 """Script with function to manipulate the PlantInvestmentCycle Class."""
 
 import random
-from typing import List, Sequence, Tuple, Union
+from typing import Dict, List, Sequence, Tuple, Union
 
 import pandas as pd
 from copy import deepcopy
@@ -16,6 +16,7 @@ from mppsteel.config.model_config import (
     INVESTMENT_OFFCYCLE_BUFFER_TOP,
     INVESTMENT_OFFCYCLE_BUFFER_TAIL,
 )
+from mppsteel.config.mypy_config_settings import MYPY_NUMERICAL, MYPY_NUMERICAL_AND_RANGE, MYPY_NUMERICAL_SEQUENCE
 
 from mppsteel.utility.log_utility import get_logger
 
@@ -256,8 +257,8 @@ def extract_tech_plant_switchers(
 
 
 def adjust_transitional_switch_in_investment_cycle(
-    cycle_years: list, rebase_year: int
-) -> list:
+    cycle_years: MYPY_NUMERICAL_AND_RANGE, rebase_year: int
+) -> MYPY_NUMERICAL_AND_RANGE:
     """Adjusts the investment cycle when a plan decides to undertake a transitional switch away from its base technology.
     The adjustment removes the possibility of an additional transitional switch before its next main investment cycle.
 
@@ -268,19 +269,19 @@ def adjust_transitional_switch_in_investment_cycle(
     Returns:
         list: The rebased investment cycle.
     """
-    inv_ranges_list = [
+    inv_ranges_list: List[range] = [
         year_obj for year_obj in cycle_years if isinstance(year_obj, range)
     ]
     if not inv_ranges_list:
         return cycle_years
-    inv_range_match = [
+    inv_range_match: List[range] = [
         matching_range
         for matching_range in inv_ranges_list
         if rebase_year in matching_range
     ]
     if not inv_range_match:
         return cycle_years
-    matching_range = inv_range_match[0]
+    matching_range: range = inv_range_match[0]
     index_position = cycle_years.index(matching_range)
     new_list = deepcopy(cycle_years)
     new_list[index_position] = range(list(matching_range)[0], rebase_year)
@@ -296,9 +297,9 @@ def adjust_cycles_for_first_year(plant_cycles: dict) -> dict:
     Returns:
         dict: A dictionary containing the updated plant cycles.
     """
-    new_plant_cycles = {}
+    new_plant_cycles: Dict[str, MYPY_NUMERICAL_AND_RANGE] = {}
     for plant_name, plant_cycle in plant_cycles.items():
-        new_cycle = []
+        new_cycle: MYPY_NUMERICAL_AND_RANGE = []
         for obj in plant_cycle:
             if isinstance(obj, int):
                 if obj == MODEL_YEAR_START:

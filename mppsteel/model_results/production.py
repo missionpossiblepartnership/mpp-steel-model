@@ -281,10 +281,10 @@ def production_results_flow(
     plant_capacity_results = read_pickle_folder(
         intermediate_path, "plant_capacity_results", "df"
     )
-    business_cases = read_pickle_folder(
+    business_cases: pd.DataFrame = read_pickle_folder(
         PKL_DATA_FORMATTED, "standardised_business_cases", "df"
     )
-    carbon_tax_timeseries = read_pickle_folder(
+    carbon_tax_timeseries: pd.DataFrame = read_pickle_folder(
         intermediate_path_preprocessing, "carbon_tax_timeseries", "df"
     )
     active_check_results_dict = read_pickle_folder(

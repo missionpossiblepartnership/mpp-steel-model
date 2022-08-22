@@ -1,6 +1,6 @@
 """Script for the CapacityConstraint class."""
 
-from typing import Union
+from typing import Dict, Union
 from mppsteel.config.model_config import (
     MAX_WAITING_LIST_YEARS,
     MODEL_YEAR_END,
@@ -25,10 +25,10 @@ SwitchingPlant = namedtuple(
 
 class PlantCapacityConstraint:
     def __init__(self) -> None:
-        self.annual_capacity_turnover_limit = {}
-        self.capacity_balance = {}
-        self.potential_plant_switchers = {}
-        self.waiting_list_counter = {}
+        self.annual_capacity_turnover_limit: Dict = {}
+        self.capacity_balance: Dict = {}
+        self.potential_plant_switchers: Dict = {}
+        self.waiting_list_counter: Dict = {}
 
     def instantiate_container(self, year_range: range) -> None:
         self.annual_capacity_turnover_limit = {year: 0 for year in year_range}

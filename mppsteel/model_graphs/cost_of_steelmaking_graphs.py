@@ -1,5 +1,5 @@
 """Graph for Levelized Cost"""
-from typing import Union
+from typing import Sequence, Union
 
 import pandas as pd
 import plotly.express as px
@@ -69,7 +69,7 @@ def assign_country_deltas(df: pd.DataFrame, delta_dict: dict) -> pd.DataFrame:
     return df_c
 
 
-def melt_and_subset(df: pd.DataFrame, cost_types: list):
+def melt_and_subset(df: pd.DataFrame, cost_types: Sequence):
     df_c = df.copy()
     df_c = df_c.reset_index().melt(
         id_vars=["technology"],
@@ -101,7 +101,7 @@ def lcost_graph(
 
     bar_chart_order = {"LCOS": "#E76B67", "LCOS delta": "#1E3B63"}
 
-    lcost_c = melt_and_subset(lcost_c, bar_chart_order.keys())
+    lcost_c = melt_and_subset(lcost_c, list(bar_chart_order.keys()))
 
     fig_ = bar_chart(
         data=lcost_c,

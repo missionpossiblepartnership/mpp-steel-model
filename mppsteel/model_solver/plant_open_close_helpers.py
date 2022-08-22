@@ -300,7 +300,7 @@ def new_plant_metadata(
     if region in country_specific_mapper:
         assigned_country = country_specific_mapper[region]
     else:
-        assigned_country = pick_random_country_from_region_subset(plant_df, region)
+        assigned_country = pick_random_country_from_region_subset(plant_df, str(region))
     return {
         "plant_id": new_id,
         "plant_name": f"{new_id} - {assigned_country}",
@@ -338,7 +338,7 @@ def return_oldest_plant(
         str: The name of the oldest plant.
     """
     if not plant_list:
-        plant_list = investment_dict.keys()
+        plant_list = list(investment_dict.keys())
     plant_age_dict = {
         plant_name: current_plant_year(
             investment_dict,

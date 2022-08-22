@@ -5,7 +5,7 @@ import pickle
 
 from pathlib import Path
 import re
-from typing import AnyStr, Dict, Mapping, MutableMapping, Optional, Sequence, Union
+from typing import AnyStr, Dict, MutableMapping, Optional, Sequence, Union
 
 import pandas as pd
 from mppsteel.config.model_config import (
@@ -17,6 +17,7 @@ from mppsteel.config.model_config import (
     PKL_FOLDER,
     UNDERSCORE_NUMBER_REGEX,
 )
+from mppsteel.config.mypy_config_settings import MYPY_DOUBLE_STR_DICT, MYPY_PKL_PATH_OPTIONAL
 
 from mppsteel.utility.log_utility import get_logger
 
@@ -24,12 +25,12 @@ logger = get_logger(__name__)
 
 
 def read_pickle_folder(
-    data_path: str, pkl_file: str = "", mode: str = "dict", log: bool = False
+    data_path: Union[str, Path], pkl_file: str = "", mode: str = "dict", log: bool = False
 ) -> Union[pd.DataFrame, dict]:
     """Reads a path where pickle files are stores and saves them to a dictionary
 
     Args:
-        data_path (str): A path in the repository where pickle files are stored
+        data_path (Union[str, Path]): A path in the repository where pickle files are stored
         pkl_file (str, optional): The file you want to unpickle. Defaults to "".
         mode (str, optional): Describes the unpickled format: A dictionary (dict) or a DataFrame (df). Defaults to "dict".
         log (bool, optional): Optional flag to log file read. Defaults to False.
@@ -45,7 +46,7 @@ def read_pickle_folder(
         if log:
             logger.info(f"||| Loading pickle file {pkl_file} from path {data_path}")
         with open(fr"{data_path}/{pkl_file}.pickle", "rb") as f:
-            data: pd.DataFrame = pickle.load(f)
+            df: pd.DataFrame = pickle.load(f)
 
     elif mode == "dict":
         if log:
@@ -56,8 +57,8 @@ def read_pickle_folder(
                 logger.info(f"|||| Loading {pkl_file}")
             with open(fr"{data_path}/{pkl_file}", "rb") as f:
                 new_data_dict[pkl_file.split(".")[0]] = pickle.load(f)
-        data: dict = new_data_dict
-    return data
+        data_dict: dict = new_data_dict
+    return df if mode == "df" else data_dict
 
 
 def extract_data(
@@ -139,7 +140,7 @@ def pickle_to_csv(
         pickle_filename (str): The name of the pickle file you want to load. (No .pkl/.pickle extension necessary).
         csv_filename (str, optional): The name of the newly created csv file. (No .csv extension necessary). If none, defaults to pickle_filename. Defaults to "".
     """
-    df = read_pickle_folder(pkl_folder, pickle_filename, "df")
+    df: pd.DataFrame = read_pickle_folder(pkl_folder, pickle_filename, "df")
     if reset_index:
         df.reset_index(inplace=True)
 
@@ -186,13 +187,13 @@ def get_scenario_pkl_path(
     elif model_run:
         return f"{full_path}/run_{model_run}"
     elif iteration_run:
-        base_scenario: Union[AnyStr, Optional[str]] = re.sub(UNDERSCORE_NUMBER_REGEX, "", scenario)
+        base_scenario: str = re.sub(UNDERSCORE_NUMBER_REGEX, "", scenario)
         return f"{PKL_FOLDER}/iteration_runs/{base_scenario}/{scenario}/{pkl_folder_type_ext}"
     return full_path
 
 
 def return_pkl_paths(
-    scenario_name: str, paths: Union[dict, None] = None, model_run: str = ""
+    scenario_name: str, paths: MYPY_PKL_PATH_OPTIONAL = None, model_run: str = ""
 ) -> tuple:
     """Returns the paths for a scenario and customises the extension depening on the base path given to it and whether it is a specific model run.
 
@@ -241,7 +242,7 @@ def generate_files_to_path_dict(
     pkl_paths: Union[dict, None] = None,
     model_run: str = "",
     create_path: bool = False,
-) -> dict:
+) -> MYPY_DOUBLE_STR_DICT:
     """Creates a filepath dictionary for each scenario in scenarios. Each filepath is based on pkl_paths and
     is customized in the return_pkl_paths with the optional model_run parameter.
     Each path is optionally created using tue create_path boolean flag.
@@ -255,7 +256,7 @@ def generate_files_to_path_dict(
     Returns:
         dict: A nested filepath dictionary with scenario as key, file as second key, and each path as the value.
     """
-    files_to_path: MutableMapping[str, Dict[str, str]] = {scenario: {} for scenario in scenarios}
+    files_to_path: MYPY_DOUBLE_STR_DICT = {scenario: {} for scenario in scenarios}
     for scenario_name in scenarios:
         (
             intermediate_path_preprocessing,

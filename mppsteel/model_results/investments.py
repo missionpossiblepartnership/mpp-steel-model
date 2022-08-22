@@ -275,7 +275,7 @@ def investment_results(
     )
     plant_result_df = read_pickle_folder(intermediate_path, "plant_result_df", "df")
     plant_names = plant_result_df["plant_name"].unique()
-    capex_switching_df = read_pickle_folder(
+    capex_switching_df: pd.DataFrame = read_pickle_folder(
         PKL_DATA_FORMATTED, "capex_switching_df", "df"
     )
     capex_ref = (

@@ -336,7 +336,7 @@ def record_ranking(
         plant_choice_container.update_records("rank", records)
 
 
-def return_best_choice(best_values: list, start_tech: str, potential_techs: list):
+def return_best_choice(best_values: pd.DataFrame, start_tech: str, potential_techs: list):
     # pick random choice if there is more than one option
     if len(best_values) > 1:
         potential_techs = best_values.index.to_list()

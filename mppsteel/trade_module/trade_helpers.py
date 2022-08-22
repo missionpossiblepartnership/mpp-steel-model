@@ -2,6 +2,7 @@
 
 from copy import deepcopy
 from enum import Enum
+from typing import List
 
 import pandas as pd
 
@@ -403,12 +404,13 @@ def test_open_close_plants(results_container: dict, cases: dict):
 
 def print_demand_production_balance(
     market_container: MarketContainerClass, demand_dict: dict, year
-) -> None:
+) -> str:
+    result_string_list: List[str] = []
     for region, demand in demand_dict.items():
         production = market_container.return_trade_balance(year, region, "production")
-        print(
-            f"region: {region} | demand: {demand} | production: {production} | trade_balance: {production - demand}"
-        )
+        results_string = f"region: {region} | demand: {demand} | production: {production} | trade_balance: {production - demand} |||| "
+        result_string_list.append(results_string)
+    return join_list_as_string(result_string_list)
 
 
 def test_regional_production(

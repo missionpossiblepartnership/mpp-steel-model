@@ -4,6 +4,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from typing import Iterable, Union
+from mppsteel.config.mypy_config_settings import MYPY_SCENARIO_TYPE
 from mppsteel.utility.dataframe_utility import extend_df_years
 
 from mppsteel.model_solver.solver_summary import (
@@ -143,9 +144,9 @@ class ChooseTechnologyInput:
         levelized_cost: pd.DataFrame = pd.DataFrame(),
         steel_plant_abatement_switches: pd.DataFrame = pd.DataFrame(),
         abatement_slim: pd.DataFrame = pd.DataFrame(),
-        scenario_dict: dict[str, any] = {},
+        scenario_dict: MYPY_SCENARIO_TYPE = {},
         wsa_dict: dict[str, float] = {},
-        model_year_range: Iterable[int] = range(2020, 2021),
+        model_year_range: range = range(2020, 2021),
     ):
         self.original_plant_df = original_plant_df
         self.year_range = year_range

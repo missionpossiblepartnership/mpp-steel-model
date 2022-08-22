@@ -1,7 +1,7 @@
 """Class and functions to manage Material Usage"""
 
 import itertools
-from typing import Sequence, Union
+from typing import Sequence
 
 import pandas as pd
 
@@ -9,6 +9,7 @@ from mppsteel.config.model_config import (
     CAPACITY_UTILIZATION_CUTOFF_FOR_NEW_PLANT_DECISION,
     SCRAP_CONSTRAINT_TOLERANCE_FACTOR,
 )
+from mppsteel.config.mypy_config_settings import MYPY_NUMERICAL
 from mppsteel.config.reference_lists import RESOURCE_CONTAINER_REF
 from mppsteel.utility.log_utility import get_logger
 
@@ -85,15 +86,15 @@ class MaterialUsage:
     def print_year_summary(self, year: int, regional_scrap: bool):
         for model_type in self.resources:
             if model_type == "scrap":
-                constraint = sum(self.constraint[model_type][year].values())
-                usage = sum(self.usage[year][model_type].values())
-                balance = sum(self.balance[year][model_type].values())
+                constraint: MYPY_NUMERICAL = sum(self.constraint[model_type][year].values())
+                usage: MYPY_NUMERICAL = sum(self.usage[year][model_type].values())
+                balance: MYPY_NUMERICAL = sum(self.balance[year][model_type].values())
             else:
                 constraint = self.constraint[model_type][year]
                 usage = self.usage[year][model_type]
                 balance = self.balance[year][model_type]
-            pct_used: Union[int, float] = 100
-            pct_remaining = 0
+            pct_used: MYPY_NUMERICAL = 100
+            pct_remaining: MYPY_NUMERICAL  = 0
             try:
                 pct_used = (usage / constraint) * 100
                 pct_remaining = (balance / constraint) * 100

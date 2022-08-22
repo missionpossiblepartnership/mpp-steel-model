@@ -93,15 +93,15 @@ def generate_carbon_tax_reference(
         scenario_name=scenario_dict["scenario_name"], paths=pkl_paths
     )
     # Carbon Tax preprocessing
-    carbon_tax_df = read_pickle_folder(intermediate_path, "carbon_tax_timeseries", "df")
+    carbon_tax_df: pd.DataFrame = read_pickle_folder(intermediate_path, "carbon_tax_timeseries", "df")
     carbon_tax_df = carbon_tax_df.set_index("year")
     carbon_tax_ref = carbon_tax_df.to_dict()["value"]
 
     # Emissivity preprocessing
-    calculated_s1_emissivity = read_pickle_folder(
+    calculated_s1_emissivity: pd.DataFrame = read_pickle_folder(
         intermediate_path, "calculated_s1_emissivity", "df"
     )
-    calculated_s2_emissivity = read_pickle_folder(
+    calculated_s2_emissivity: pd.DataFrame = read_pickle_folder(
         intermediate_path, "calculated_s2_emissivity", "df"
     )
     calculated_s2_emissivity.set_index(

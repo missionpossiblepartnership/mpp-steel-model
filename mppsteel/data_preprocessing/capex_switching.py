@@ -1,6 +1,7 @@
 """Script for establishing capex switching values"""
 
 # For Data Manipulation
+from typing import Dict
 import pandas as pd
 from tqdm import tqdm
 
@@ -335,17 +336,17 @@ def create_greenfield_switching_df(
     for year in tqdm(year_range, total=len(year_range), desc="Greenfield Switch Dict"):
         df = gf_df.loc[year].copy()
         ref_dict = dict(zip(df["base_tech"], df["value"]))
-        technology_df_ref = {
+        technology_df_ref: Dict[str, pd.DataFrame] = {
             tech: pd.DataFrame(
                 {"year": year, "base_tech": tech, "switch_tech": SWITCH_DICT[tech]}
             )
             for tech in TECH_REFERENCE_LIST
         }
-        technology_df_ref = pd.concat(technology_df_ref.values())
-        technology_df_ref["switch_value"] = technology_df_ref.apply(
+        technology_df_combined = pd.concat(technology_df_ref.values())
+        technology_df_ref["switch_value"] = technology_df_combined.apply(
             switch_mapper, ref_dict=ref_dict, axis=1
         )
-        technology_df_ref.set_index(["year", "base_tech", "switch_tech"], inplace=True)
+        technology_df_combined.set_index(["year", "base_tech", "switch_tech"], inplace=True)
         df_container.append(technology_df_ref)
     return pd.concat(df_container)
 

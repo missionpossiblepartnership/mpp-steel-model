@@ -533,8 +533,8 @@ def create_graphs(
         intermediate_path, "levelized_cost_standardized", "df"
     )
     investment_results = read_pickle_folder(final_path, "investment_results", "df")
-    capex_dict = read_pickle_folder(PKL_DATA_FORMATTED, "capex_dict", "df")
-    variable_cost_df = read_pickle_folder(
+    capex_dict: dict = read_pickle_folder(PKL_DATA_FORMATTED, "capex_dict", "df")
+    variable_cost_df: pd.DataFrame = read_pickle_folder(
         intermediate_path, "variable_costs_regional_material_breakdown", "df"
     )
     variable_cost_df.sort_index(ascending=True, inplace=True)

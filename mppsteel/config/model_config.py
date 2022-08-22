@@ -3,7 +3,7 @@
 from pathlib import Path
 
 # PATH NAMES
-PROJECT_PATH = Path(__file__).parent.parent.parent
+PROJECT_PATH: Path = Path(__file__).parent.parent.parent
 
 INTERMEDIATE_DATA_OUTPUT_NAME = "intermediate_data"
 FINAL_DATA_OUTPUT_NAME = "final_data"

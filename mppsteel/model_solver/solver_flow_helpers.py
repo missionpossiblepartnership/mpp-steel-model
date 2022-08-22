@@ -2,7 +2,8 @@
 
 import pandas as pd
 
-from typing import Tuple
+from typing import Dict, List, Set, Tuple, Union
+from mppsteel.config.mypy_config_settings import MYPY_SCENARIO_TYPE
 
 from mppsteel.plant_classes.plant_investment_cycle_class import PlantInvestmentCycle
 from mppsteel.plant_classes.capacity_constraint_class import PlantCapacityConstraint
@@ -44,7 +45,7 @@ def return_best_tech(
     tech_availability: pd.DataFrame,
     tech_avail_from_dict: dict,
     plant_capacities: dict,
-    scenario_dict: dict,
+    scenario_dict: MYPY_SCENARIO_TYPE,
     investment_container: PlantInvestmentCycle,
     plant_choice_container: PlantChoices,
     capacity_constraint_container: PlantCapacityConstraint,
@@ -84,18 +85,18 @@ def return_best_tech(
     Returns:
         str: Returns the best technology as a string.
     """
-    proportions_dict = TECH_SWITCH_SCENARIOS[scenario_dict["tech_switch_scenario"]]
-    solver_logic = SOLVER_LOGICS[scenario_dict["solver_logic"]]
-    tech_moratorium = scenario_dict["tech_moratorium"]
-    enforce_constraints = scenario_dict["enforce_constraints"]
-    green_premium_scenario = scenario_dict["green_premium_scenario"]
-    scenario_name = scenario_dict["scenario_name"]
-    regional_scrap = scenario_dict["regional_scrap_constraint"]
+    proportions_dict = TECH_SWITCH_SCENARIOS[str(scenario_dict["tech_switch_scenario"])]
+    solver_logic = SOLVER_LOGICS[str(scenario_dict["solver_logic"])]
+    tech_moratorium = bool(scenario_dict["tech_moratorium"])
+    enforce_constraints = bool(scenario_dict["enforce_constraints"])
+    green_premium_scenario = bool(scenario_dict["green_premium_scenario"])
+    scenario_name = str(scenario_dict["scenario_name"])
+    regional_scrap = bool(scenario_dict["regional_scrap_constraint"])
 
     tco_ref_data = tco_reference_data.copy()
 
     if green_premium_scenario != "off":
-        usd_to_eur_rate = scenario_dict["usd_to_eur"]
+        usd_to_eur_rate = float(scenario_dict["usd_to_eur"])
         discounted_green_premium_values = calculate_green_premium(
             variable_costs_df,
             plant_capacities,
@@ -122,7 +123,7 @@ def return_best_tech(
         )
 
     # Valid Switches
-    combined_available_list = [
+    combined_available_list: List[str] = [
         tech for tech in SWITCH_DICT if tech in SWITCH_DICT[base_tech]
     ]
 
@@ -131,7 +132,8 @@ def return_best_tech(
         # Cannot downgrade tech
         # Must be current or transitional tech
         # Must be within the furnace group
-        combined_available_list = set(combined_available_list).intersection(
+        combined_available_set: Set[str] = set(combined_available_list)
+        combined_available_list = combined_available_set.intersection(
             set(return_furnace_group(FURNACE_GROUP_DICT, base_tech))
         )
 
@@ -244,7 +246,7 @@ def active_check_results(
             return False
         return True
 
-    active_check = {}
+    active_check: Dict[Union[int, str], Dict[Union[int, str], bool]] = {}
     if inverse:
         for year in year_range:
             active_check[year] = {}

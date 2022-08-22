@@ -1,10 +1,9 @@
 """Function that extends a timeseries beyond its boundaries flexible assumptions."""
 
-from typing import Tuple
+from typing import Tuple, Union
 
 import pandas as pd
 import numpy as np
-import numpy.typing as npt
 
 from mppsteel.utility.log_utility import get_logger
 
@@ -76,8 +75,8 @@ def create_timeseries_extension_array(
     series_length: int,
     start_value: float,
     series_type: str,
-    growth_type: "str",
-    value_change: float = 0,
+    growth_type: str,
+    value_change: Union[int, float] = 0,
     first_value: bool = False,
 ) -> np.ndarray:
     """Creates a numpy array that represents the values in the new portion of the timeseries.
@@ -103,7 +102,7 @@ def create_timeseries_extension_array(
 
     series_length += 1
 
-    terminal_value = 0  # empty variable for real value
+    terminal_value: Union[int, float] = 0  # empty variable for real value
     generated_series = np.array([])  # empty variable for real series
 
     if growth_type == "pct":
@@ -211,7 +210,7 @@ def full_model_flow(
     growth_type: str,
     value_change: float = 0,
     plot_dfs: bool = False,
-    year_only: bool = True,  # change this!!!!
+    year_only: bool = True,
 ) -> pd.DataFrame:
     """A full run through the complete cycle to produce an extended timeseries.
 
@@ -257,7 +256,7 @@ def full_model_flow(
             year_value_col_dict["year"],
             year_value_col_dict["value"],
         )
-    if year_only:  # Change this!!!
+    if year_only:
         combined_df[year_value_col_dict["year"]] = pd.DatetimeIndex(
             combined_df[year_value_col_dict["year"]]
         ).year

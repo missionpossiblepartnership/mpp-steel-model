@@ -2,8 +2,8 @@
 
 # For Data Manipulation
 import pandas as pd
+import numpy as np
 import pandera as pa
-import numpy.typing as npt
 
 from typing import Tuple, Union
 
@@ -342,7 +342,7 @@ def bc_unit_adjustments(row: pd.Series) -> pd.Series:
 @timer_func
 def create_business_case_reference(
     serialize: bool = True, from_csv: bool = False
-) -> dict:
+) -> tuple:
     """Turns the business cases into a reference dictionary for fast access. But saves a dataframe version and dict as pickle file depending on the `serialize` boolean flag.
 
     Args:

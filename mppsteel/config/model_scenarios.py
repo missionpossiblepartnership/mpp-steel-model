@@ -1,7 +1,13 @@
 """Scenario references for model runs"""
 
-from typing import Dict, Sequence
-from mppsteel.config.mypy_config_settings import MYPY_SCENARIO_TYPE
+from typing import Dict, List, MutableMapping, Sequence, Tuple, Union
+from mppsteel.config.mypy_config_settings import (
+    MYPY_SCENARIO_SETTINGS_DICT,
+    MYPY_SCENARIO_SETTINGS_SEQUENCE, 
+    MYPY_SCENARIO_SETTINGS_TUPLE, 
+    MYPY_SCENARIO_TYPE,
+    MYPY_STR_DICT
+)
 
 
 COST_SCENARIO_MAPPER = {
@@ -12,46 +18,46 @@ COST_SCENARIO_MAPPER = {
 
 STEEL_DEMAND_SCENARIO_MAPPER = {"bau": "BAU", "high": "High Circ", "average": "Average"}
 
-TECH_SWITCH_SCENARIOS = {
+TECH_SWITCH_SCENARIOS: MYPY_SCENARIO_SETTINGS_DICT = {
     "max_abatement": {"tco": 0, "emissions": 1},
     "lowest_cost": {"tco": 1, "emissions": 0},
     "equal_weight": {"tco": 0.5, "emissions": 0.5},
 }
 
-GREEN_PREMIUM_SCENARIOS = {
+GREEN_PREMIUM_SCENARIOS: MYPY_SCENARIO_SETTINGS_TUPLE = {
     "off": (0, 0),
     "low": (0.01, 0.03),
     "average": (0.025, 0.05),
     "high": (0.05, 0.08),
 }
 
-CARBON_TAX_SCENARIOS = {
+CARBON_TAX_SCENARIOS: MYPY_SCENARIO_SETTINGS_TUPLE = {
     "off": (0, 0),
     "low": (0, 30),
     "average": (0, 100),
     "high": (0, 200),
 }
 
-GRID_DECARBONISATION_SCENARIOS = {
+GRID_DECARBONISATION_SCENARIOS: MYPY_STR_DICT = {
     "low": "Decarbonized",
     "high": "BAU",
 }
 
-FOSSIL_FUEL_SCENARIOS = {
+FOSSIL_FUEL_SCENARIOS: MYPY_STR_DICT = {
     "low": "Decarbonized",
     "high": "BAU",
 }
 
-BIOMASS_SCENARIOS = {
+BIOMASS_SCENARIOS: MYPY_STR_DICT = {
     "average": "Medium",
 }
 
-CCS_SCENARIOS = {"high": "high", "low": "low"}
-CCS_CAPACITY_SCENARIOS = {"low": "Low", "high": "High"}
+CCS_SCENARIOS: MYPY_STR_DICT = {"high": "high", "low": "low"}
+CCS_CAPACITY_SCENARIOS: MYPY_STR_DICT = {"low": "Low", "high": "High"}
 
-SOLVER_LOGICS = {"rank": "ranked", "scale": "scaled", "bins": "scaled_bins"}
+SOLVER_LOGICS: MYPY_STR_DICT = {"rank": "ranked", "scale": "scaled", "bins": "scaled_bins"}
 
-SCENARIO_SETTINGS: Dict[str, Sequence] = {
+SCENARIO_SETTINGS: MYPY_SCENARIO_SETTINGS_SEQUENCE = {
     "tech_moratorium": [True, False],
     "enforce_constraints": [True, False],
     "transitional_switch": [True, False],
@@ -238,7 +244,7 @@ SCENARIO_OPTIONS: Dict[str, MYPY_SCENARIO_TYPE] = {
     "fastest_abatement": ABATEMENT_HIGH_CIRC_SCENARIO,
 }
 
-MAIN_SCENARIO_RUNS = [
+MAIN_SCENARIO_RUNS: List[str] = [
     "baseline",
     "baseline_high_circ",
     "abatement",
@@ -247,4 +253,4 @@ MAIN_SCENARIO_RUNS = [
     "tech_moratorium",
 ]
 
-BATCH_ITERATION_SCENARIOS = ["baseline", "carbon_cost", "tech_moratorium"]
+BATCH_ITERATION_SCENARIOS: List[str] = ["baseline", "carbon_cost", "tech_moratorium"]

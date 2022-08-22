@@ -307,7 +307,7 @@ def trade_flow(
         intersection_regions = set(regions_close_mean).intersection(
             set(exporting_regions)
         )
-        different_regions = set(exporting_regions).difference(set(regions_close_mean))
+        different_regions = list(set(exporting_regions).difference(set(regions_close_mean)))
         assert (
             export_regions_check
         ), f"Not all items in {exporting_regions} are in {regions_close_mean} | {return_region_stack(market_container, cases, different_regions, year)}"

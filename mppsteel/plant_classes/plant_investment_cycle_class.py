@@ -7,6 +7,7 @@ from mppsteel.config.model_config import (
     MODEL_YEAR_END,
     INVESTMENT_CYCLE_DURATION_YEARS,
 )
+from mppsteel.config.mypy_config_settings import MYPY_NUMERICAL_AND_RANGE, MYPY_NUMERICAL_SEQUENCE
 
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.plant_classes.plant_investment_cycle_helpers import (
@@ -32,8 +33,8 @@ class PlantInvestmentCycle:
         self.plant_names: List[str] = []
         self.plant_start_years: Dict[str, int] = {}
         self.plant_investment_cycle_length: Dict[str, int] = {}
-        self.plant_cycles: Dict[str, Sequence[Union[int, range]]] = {}
-        self.plant_cycles_with_off_cycle: Dict[str, Sequence[Union[int, range]]] = {}
+        self.plant_cycles: Dict[str, MYPY_NUMERICAL_AND_RANGE] = {}
+        self.plant_cycles_with_off_cycle: Dict[str, MYPY_NUMERICAL_AND_RANGE] = {}
 
     def instantiate_plants(
         self,
@@ -116,9 +117,10 @@ class PlantInvestmentCycle:
         for plant_name in self.plant_cycles_with_off_cycle:
             entry = self.plant_cycles_with_off_cycle[plant_name]
             cycle_length = self.plant_investment_cycle_length[plant_name]
-            if len(entry) == 1:
+            if len(entry) == 1: # range object
+                start_year = entry[0]
                 assert (
-                    entry[0] + cycle_length > MODEL_YEAR_END
+                    start_year + cycle_length > MODEL_YEAR_END
                 ), f"Only one entry for {plant_name}. Initial year: {entry[0]} | Cycle length {cycle_length} | Next investment cycle {entry[0] + cycle_length}"
 
     def return_plant_switchers(

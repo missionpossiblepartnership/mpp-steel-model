@@ -333,9 +333,9 @@ def generate_emissions_flow(
     _, intermediate_path, _ = return_pkl_paths(
         scenario_name=scenario_dict["scenario_name"], paths=pkl_paths
     )
-    business_cases_summary = read_pickle_folder(
+    business_cases_summary: pd.DataFrame = read_pickle_folder(
         PKL_DATA_FORMATTED, "standardised_business_cases", "df"
-    ).reset_index()
+    )
     business_case_ref = read_pickle_folder(
         PKL_DATA_FORMATTED, "business_case_reference", "df"
     )
@@ -347,7 +347,7 @@ def generate_emissions_flow(
         PKL_DATA_FORMATTED, "steel_plants_processed", "df"
     )
     steel_plant_country_codes = list(steel_plants["country_code"].unique())
-    emissions = generate_emissions_dataframe(business_cases_summary)
+    emissions = generate_emissions_dataframe(business_cases_summary.reset_index())
     emissions_s1_summary = emissions[emissions["scope"] == "S1"]
     s1_emissivity = (
         emissions_s1_summary[["technology", "year", "emissions"]]

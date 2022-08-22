@@ -23,7 +23,7 @@ from mppsteel.config.reference_lists import (
     FINAL_RESULT_PKL_FILES,
     INTERMEDIATE_RESULT_PKL_FILES,
 )
-from mppsteel.config.mypy_config_settings import MYPY_DICT_STR_LIST, MYPY_SCENARIO_TYPE
+from mppsteel.config.mypy_config_settings import MYPY_DICT_STR_LIST, MYPY_SCENARIO_TYPE, MYPY_SCENARIO_TYPE_DICT
 from mppsteel.multi_run_module.multiprocessing_functions import multi_run_function
 from mppsteel.model_results.multiple_model_run_summary import summarise_combined_data
 from mppsteel.model_graphs.graph_production import create_combined_scenario_graphs
@@ -52,7 +52,7 @@ def make_multiple_model_runs(
     remove_run_folders: bool = False,
 ) -> None:
 
-    scenario_name = scenario_dict["scenario_name"]
+    scenario_name = str(scenario_dict["scenario_name"])
     logger.info(f"Generating the scenario data for {scenario_name}")
     pkl_output_folder = pkl_folder_filepath_creation(scenario_name, create_folder=True)
     run_range = range(1, number_of_runs + 1)
@@ -69,7 +69,7 @@ def make_multiple_model_runs(
 
 
 def multiprocessing_scenarios_multiple_scenarios_multiple_runs(
-    scenario_options: list,
+    scenario_options: MYPY_SCENARIO_TYPE_DICT,
     number_of_runs: int,
     remove_run_folders: bool = False,
 ) -> None:
@@ -180,7 +180,7 @@ def aggregate_results(
 
 
 def aggregate_multi_run_scenarios(
-    scenario_options: Mapping,
+    scenario_options: MYPY_SCENARIO_TYPE_DICT,
     single_scenario: bool = False,
     new_folder: bool = True,
     timestamp: str = "",
@@ -192,7 +192,7 @@ def aggregate_multi_run_scenarios(
             new_folder, timestamp, return_single_scenario(scenario_options)
         )
     files_to_aggregate = list(
-        generate_files_to_path_dict(scenario_options.keys())[
+        generate_files_to_path_dict(list(scenario_options.keys()))[
             return_single_scenario(scenario_options)
         ].keys()
     )
