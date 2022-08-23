@@ -5,7 +5,7 @@ import pickle
 
 from pathlib import Path
 import re
-from typing import AnyStr, Dict, Generic, MutableMapping, Optional, Sequence, Union
+from typing import Dict, Sequence, Union
 
 import pandas as pd
 from mppsteel.config.model_config import (

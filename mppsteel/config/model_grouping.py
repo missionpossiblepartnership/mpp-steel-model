@@ -1,6 +1,6 @@
 """Model flow functions for the main script"""
 
-from typing import Any, Dict, MutableMapping, Union
+from typing import Dict
 from datetime import datetime
 
 from mppsteel.utility.utils import stdout_query, get_currency_rate
@@ -62,8 +62,7 @@ from mppsteel.config.model_config import (
     OUTPUT_FOLDER
 )
 from mppsteel.config.reference_lists import INTERMEDIATE_RESULT_PKL_FILES, FINAL_RESULT_PKL_FILES
-from mppsteel.config.model_scenarios import SCENARIO_OPTIONS
-from mppsteel.config.mypy_config_settings import MYPY_PKL_PATH_OPTIONAL, MYPY_SCENARIO_ENTRY_TYPE, MYPY_SCENARIO_SETTINGS_SEQUENCE, MYPY_SCENARIO_TYPE, MYPY_SCENARIO_TYPE_OR_NONE
+from mppsteel.config.mypy_config_settings import MYPY_PKL_PATH_OPTIONAL, MYPY_SCENARIO_ENTRY_TYPE, MYPY_SCENARIO_SETTINGS_SEQUENCE, MYPY_SCENARIO_TYPE
 
 logger = get_logger(__name__)
 

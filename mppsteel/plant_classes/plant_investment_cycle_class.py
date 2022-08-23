@@ -1,13 +1,13 @@
 """Script for the PlantInvestmentCycle class."""
 
-from typing import Dict, List, Sequence, Union
+from typing import Dict, List
 import pandas as pd
 
 from mppsteel.config.model_config import (
     MODEL_YEAR_END,
     INVESTMENT_CYCLE_DURATION_YEARS,
 )
-from mppsteel.config.mypy_config_settings import MYPY_NUMERICAL_AND_RANGE, MYPY_NUMERICAL_SEQUENCE
+from mppsteel.config.mypy_config_settings import MYPY_NUMERICAL_AND_RANGE
 
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.plant_classes.plant_investment_cycle_helpers import (

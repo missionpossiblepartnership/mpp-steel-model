@@ -6,7 +6,6 @@ import pandas as pd
 from mppsteel.config.model_config import (
     TRADE_ROUNDING_NUMBER,
 )
-from mppsteel.config.mypy_config_settings import MYPY_DICT_STR_DICT
 
 from mppsteel.data_load_and_format.reg_steel_demand_formatter import steel_demand_getter
 

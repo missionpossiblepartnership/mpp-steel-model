@@ -16,7 +16,7 @@ from mppsteel.config.model_config import (
     INVESTMENT_OFFCYCLE_BUFFER_TOP,
     INVESTMENT_OFFCYCLE_BUFFER_TAIL,
 )
-from mppsteel.config.mypy_config_settings import MYPY_NUMERICAL, MYPY_NUMERICAL_AND_RANGE, MYPY_NUMERICAL_SEQUENCE
+from mppsteel.config.mypy_config_settings import MYPY_NUMERICAL_AND_RANGE
 
 from mppsteel.utility.log_utility import get_logger
 

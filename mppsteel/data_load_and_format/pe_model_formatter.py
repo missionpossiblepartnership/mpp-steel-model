@@ -30,17 +30,9 @@ from mppsteel.config.model_scenarios import (
     CCS_SCENARIOS,
 )
 from mppsteel.config.reference_lists import (
-    ALL_EUROPE_COUNTRIES,
-    CENTRAL_ASIA_COUNTRIES,
-    CIS_COUNTRIES,
-    EASTERN_EUROPE_COUNTRIES,
-    EU_COUNTRIES,
     JAPAN_SOUTHKOREA_TAIWAN,
     NAFTA_COUNTRIES,
     NORTH_ASIA_COUNTRIES,
-    SOUTH_ASIA_COUNTRIES,
-    SOUTHEAST_ASIA_COUNTRIES,
-    WESTERN_EUROPE_COUNTRIES,
 )
 from mppsteel.utility.dataframe_utility import extend_df_years
 from mppsteel.utility.function_timer_utility import timer_func

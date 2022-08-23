@@ -6,7 +6,6 @@ from typing import Tuple
 
 import pandas as pd
 import numpy as np
-import numpy.typing as npt
 from mppsteel.plant_classes.plant_choices_class import PlantChoices
 from mppsteel.model_solver.material_usage_class import (
     MaterialUsage,

@@ -1,8 +1,7 @@
 """Module that generates a timeseries for various purposes"""
 # For Data Manipulation
-from typing import Union
 import pandas as pd
-from mppsteel.config.mypy_config_settings import MYPY_PKL_PATH_OPTIONAL, MYPY_SCENARIO_TYPE, MYPY_SCENARIO_TYPE_OR_NONE
+from mppsteel.config.mypy_config_settings import MYPY_PKL_PATH_OPTIONAL, MYPY_SCENARIO_TYPE
 from mppsteel.utility.dataframe_utility import convert_currency_col, extend_df_years
 
 # For logger and units dict

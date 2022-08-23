@@ -1,13 +1,10 @@
 """Contains types for mypy"""
 from typing import (
     Any,
-    Dict, 
-    MutableMapping, 
-    Mapping, 
-    List, 
-    Sequence, 
-    Iterable, 
-    Sized,
+    Dict,
+    MutableMapping,
+    List,
+    Sequence,
     Tuple,
     Union
 )

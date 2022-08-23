@@ -3,7 +3,6 @@ import itertools
 import sys
 
 import numpy as np
-import numpy.typing as npt
 from collections.abc import Iterable
 from copy import deepcopy
 from datetime import datetime

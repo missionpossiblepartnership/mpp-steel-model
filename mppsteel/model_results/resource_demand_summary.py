@@ -1,6 +1,5 @@
 """Creates summary of combined dataset for resource usage"""
 
-from math import prod
 import pandas as pd
 from copy import deepcopy
 from tqdm import tqdm

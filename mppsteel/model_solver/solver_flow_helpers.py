@@ -2,7 +2,7 @@
 
 import pandas as pd
 
-from typing import Dict, List, Set, Tuple, Union
+from typing import Dict, List, Tuple, Union
 from mppsteel.config.mypy_config_settings import MYPY_SCENARIO_TYPE
 
 from mppsteel.plant_classes.plant_investment_cycle_class import PlantInvestmentCycle
