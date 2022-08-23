@@ -93,7 +93,7 @@ def get_currency_rate(base: str, target: str) -> float:
     return conversion_rate
 
 
-def enumerate_iterable(iterable: Sized) -> dict:
+def enumerate_iterable(iterable: Sequence) -> dict:
     """Enumerates an iterable as dictionary with the iterable value as the key and the order number as the value.
 
     Args:
@@ -136,7 +136,7 @@ def create_bin_rank_dict(
     bins = min(number_of_items, max_bin_size)
     bins_linspaced: Sized = np.linspace(start=data.min(), stop=data.max(), num=bins)
     digitized = np.digitize(data, bins_linspaced)
-    new_data_list = [data[digitized == i].mean() for i in range(1, len(bins_linspaced))]
+    new_data_list: List = [data[digitized == i].mean() for i in range(1, len(bins_linspaced))]
     new_data_list = [round(x, rounding) for x in new_data_list]
     if reverse:
         new_data_list.reverse()

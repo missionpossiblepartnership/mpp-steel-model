@@ -34,7 +34,7 @@ def generate_s1_s3_emissions(
     s1_emissivity_factors: pd.DataFrame,
     s3_emissivity_factors: pd.DataFrame
 
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> pd.DataFrame:
     """Creates a DataFrame with emissivity for S1, S2 & S3 for each technology.
     Multiples the emissivity values by the standardized business cases.
 
@@ -44,7 +44,7 @@ def generate_s1_s3_emissions(
         s3_emissivity_factors (pd.DataFrame, optional): Emissions Factors for S3. Defaults to None.
 
     Returns:
-        Tuple[pd.DataFrame, pd.DataFrame]: A DataFrame of the emissivity per scope.
+        pd.DataFrame: A DataFrame of the emissivity per scope.
     """
 
     # Create resources reference list
@@ -132,15 +132,13 @@ def scope1_emissions_calculator(
     return df_c
 
 
-def generate_emissions_dataframe(
-    business_cases: pd.DataFrame,
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def generate_emissions_dataframe(business_cases: pd.DataFrame) -> pd.DataFrame:
     """Creates the base of an emissions DataFrame based on S1 and S3 emissions.
     Args:
         business_cases (pd.DataFrame): The standardised business cases DataFrame.
 
     Returns:
-        Tuple[pd.DataFrame, pd.DataFrame]: A DataFrame of the emissivity per scope and a carbon tax DataFrame.
+        pd.DataFrame: A DataFrame of the emissivity per scope and a carbon tax DataFrame.
     """
 
     # S1 emissions covers the Green House Gas (GHG) emissions that a company makes directly.

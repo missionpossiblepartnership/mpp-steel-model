@@ -1,9 +1,10 @@
 """Utility script to manipulate DataFrames"""
 
-from typing import Iterable, Sequence
+from typing import Iterable, List, Sequence
 
 import pandas as pd
 import numpy as np
+from mppsteel.config.mypy_config_settings import MYPY_DICT_STR_LIST
 from mppsteel.utility.log_utility import get_logger
 
 from mppsteel.utility.file_handling_utility import read_pickle_folder
@@ -42,6 +43,7 @@ def create_line_through_points(
     values = list(year_value_dict.values())
     year_pairs = create_value_pairings(years)
     value_pairs = create_value_pairings(values)
+    values_array = np.array(values)
 
     # Create dataframes for every pairing
     df_list = []
@@ -50,8 +52,8 @@ def create_line_through_points(
         start_value = value_pair[0]
         end_value = value_pair[1] + 1
         if line_shape == "straight":
-            values = np.linspace(start=start_value, stop=end_value, num=len(year_range))
-        df = pd.DataFrame(data={"year": year_range, "values": values})
+            values_array = np.linspace(start=start_value, stop=end_value, num=len(year_range))
+        df = pd.DataFrame(data={"year": year_range, "values": values_array})
         df_list.append(df)
     # Combine pair DataFrames into one DataFrame
     combined_df = pd.concat(df_list)
@@ -192,7 +194,7 @@ def add_results_metadata(
     return df_c
 
 
-def return_furnace_group(furnace_dict: dict, tech: str) -> str:
+def return_furnace_group(furnace_dict: MYPY_DICT_STR_LIST, tech: str) -> List[str]:
     """Returns the Furnace Group of a technology if the technology is in a furnace group list of technologies.
 
     Args:
@@ -200,12 +202,12 @@ def return_furnace_group(furnace_dict: dict, tech: str) -> str:
         tech (str): The technology you would like to map.
 
     Returns:
-        str: The Furnace Group of the technology
+        list: The Furnace Group of the technology
     """
-    return_value = ""
-    for key, value in furnace_dict.items():
+    return_value: list = []
+    for key, value_list in furnace_dict.items():
         if tech in furnace_dict[key]:
-            return_value = value
+            return_value = value_list
     return return_value
 
 

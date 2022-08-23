@@ -67,7 +67,7 @@ def least_consuming_tech(
     year: int,
     tech_moratorium: bool = False,
 ):
-    keys = [key for key in business_case_ref if f"{resource_to_optimize}" in key]
+    techs = [tech for tech in business_case_ref if f"{resource_to_optimize}" in tech]
     combined_available_list = [
         tech
         for tech in TECH_REFERENCE_LIST
@@ -76,9 +76,9 @@ def least_consuming_tech(
         )
     ]
     resource_value_dict = {
-        k[0]: business_case_ref[k] for k in keys if k[0] in combined_available_list
+        tech[0]: business_case_ref[tech] for tech in techs if tech[0] in combined_available_list
     }
-    return min(resource_value_dict, key=resource_value_dict.get)
+    return min(resource_value_dict.keys(), key=(lambda tech: resource_value_dict[tech]))
 
 
 def get_min_cost_tech_for_region(

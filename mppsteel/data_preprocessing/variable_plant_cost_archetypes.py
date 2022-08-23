@@ -148,7 +148,7 @@ class PlantVariableCostsInput:
         year_range: range = MODEL_YEAR_RANGE,
     ):
 
-        intermediate_path = project_dir / intermediate_path
+        intermediate_path_ref: Path = project_dir / intermediate_path
         eur_to_usd_rate = float(scenario_dict["eur_to_usd"])
 
         steel_plants = read_pickle_folder(
@@ -156,19 +156,19 @@ class PlantVariableCostsInput:
         )
 
         power_grid_prices_ref = read_pickle_folder(
-            intermediate_path, "power_grid_prices_ref", "df"
+            intermediate_path_ref, "power_grid_prices_ref", "df"
         )
-        h2_prices_ref = read_pickle_folder(intermediate_path, "h2_prices_ref", "df")
+        h2_prices_ref = read_pickle_folder(intermediate_path_ref, "h2_prices_ref", "df")
         bio_model_prices_ref = read_pickle_folder(
-            intermediate_path, "bio_model_prices_ref", "df"
+            intermediate_path_ref, "bio_model_prices_ref", "df"
         )
         ccs_model_transport_ref = read_pickle_folder(
-            intermediate_path, "ccs_model_transport_ref", "df"
+            intermediate_path_ref, "ccs_model_transport_ref", "df"
         )
         ccs_model_storage_ref = read_pickle_folder(
-            intermediate_path, "ccs_model_storage_ref", "df"
+            intermediate_path_ref, "ccs_model_storage_ref", "df"
         )
-        fossil_fuel_ref = read_pickle_folder(intermediate_path, "fossil_fuel_ref", "df")
+        fossil_fuel_ref = read_pickle_folder(intermediate_path_ref, "fossil_fuel_ref", "df")
         business_cases: pd.DataFrame = read_pickle_folder(
             project_dir / PKL_DATA_FORMATTED, "standardised_business_cases", "df"
         )

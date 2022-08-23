@@ -5,7 +5,7 @@ import pickle
 
 from pathlib import Path
 import re
-from typing import AnyStr, Dict, MutableMapping, Optional, Sequence, Union
+from typing import AnyStr, Dict, Generic, MutableMapping, Optional, Sequence, Union
 
 import pandas as pd
 from mppsteel.config.model_config import (
@@ -163,8 +163,8 @@ def create_folder_if_nonexist(folder_path: str) -> None:
 
 
 def get_scenario_pkl_path(
-    scenario: str = None,
-    pkl_folder_type: str = None,
+    scenario: str = "",
+    pkl_folder_type: str = "",
     default_path: bool = False,
     model_run: str = "",
     iteration_run: bool = False,
@@ -187,7 +187,9 @@ def get_scenario_pkl_path(
     elif model_run:
         return f"{full_path}/run_{model_run}"
     elif iteration_run:
-        base_scenario: str = re.sub(UNDERSCORE_NUMBER_REGEX, "", scenario)
+        base_scenario = re.sub(UNDERSCORE_NUMBER_REGEX, "", scenario)
+        if base_scenario is None:
+            base_scenario = ""
         return f"{PKL_FOLDER}/iteration_runs/{base_scenario}/{scenario}/{pkl_folder_type_ext}"
     return full_path
 

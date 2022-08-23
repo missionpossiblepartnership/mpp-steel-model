@@ -132,9 +132,8 @@ def return_best_tech(
         # Cannot downgrade tech
         # Must be current or transitional tech
         # Must be within the furnace group
-        combined_available_set: Set[str] = set(combined_available_list)
-        combined_available_list = combined_available_set.intersection(
-            set(return_furnace_group(FURNACE_GROUP_DICT, base_tech))
+        combined_available_list = list(
+            set(combined_available_list).intersection(set(return_furnace_group(FURNACE_GROUP_DICT, base_tech)))
         )
 
     # Availability checks

@@ -398,7 +398,8 @@ def get_best_choice(
     """
     cost_value_col = "tco_gf_capex" if transitional_switch_mode else "tco_regular_capex"
     updated_tech_availability = technology_list
-    # Scaling algorithm
+    return_tech: str = "" # Initiate
+
     if solver_logic in {"scaled", "scaled_bins"}:
         # Calculate minimum scaled values
         tco_values, abatement_values, tco_reference_tech = get_tco_and_abatement_values(
@@ -436,100 +437,101 @@ def get_best_choice(
 
         # Simply return current technology if no other options
         if len(tco_values) < 2:
-            return start_tech
-        # Scale the data
-        tco_values_scaled = tco_values.copy()
+            return_tech = start_tech
+        else:
+            # Scale the data
+            tco_values_scaled = tco_values.copy()
 
-        if solver_logic == "scaled":
-            tco_values_scaled["tco_scaled"] = scale_data(
-                tco_values_scaled[cost_value_col]
+            if solver_logic == "scaled":
+                tco_values_scaled["tco_scaled"] = scale_data(
+                    tco_values_scaled[cost_value_col]
+                )
+                tco_values_scaled.drop(
+                    columns=tco_values_scaled.columns.difference(["tco_scaled"]),
+                    axis=1,
+                    inplace=True,
+                )
+                abatement_values_scaled = abatement_values.copy()
+                abatement_values_scaled["abatement_scaled"] = scale_data(
+                    abatement_values_scaled["abated_combined_emissivity"], reverse=True
+                )
+                abatement_values_scaled.drop(
+                    columns=abatement_values_scaled.columns.difference(
+                        ["abatement_scaled"]
+                    ),
+                    axis=1,
+                    inplace=True,
+                )
+
+            elif solver_logic == "scaled_bins":
+                binned_rank_dict = create_bin_rank_dict(
+                    tco_values_scaled[cost_value_col],
+                    number_of_items=len(technology_list),
+                )
+                tco_values_scaled["tco_scaled"] = tco_values_scaled[cost_value_col].apply(
+                    lambda x: return_bin_rank(x, bin_dict=binned_rank_dict)
+                )
+                tco_values_scaled.drop(
+                    columns=tco_values_scaled.columns.difference(["tco_scaled"]),
+                    axis=1,
+                    inplace=True,
+                )
+                abatement_values_scaled = abatement_values.copy()
+                binned_rank_dict = create_bin_rank_dict(
+                    tco_values_scaled["abated_combined_emissivity"],
+                    number_of_items=len(technology_list),
+                    reverse=True,
+                )
+                tco_values_scaled["abatement_scaled"] = tco_values_scaled[
+                    "abated_combined_emissivity"
+                ].apply(lambda x: return_bin_rank(x, bin_dict=binned_rank_dict))
+                abatement_values_scaled.drop(
+                    columns=abatement_values_scaled.columns.difference(
+                        ["abatement_scaled"]
+                    ),
+                    axis=1,
+                    inplace=True,
+                )
+
+            # Join the abatement and tco data and calculate an overall score using the weightings
+            combined_scales = tco_values_scaled.join(abatement_values_scaled)
+            combined_scales["overall_score"] = (
+                combined_scales["tco_scaled"] * weighting_dict["tco"]
+            ) + (combined_scales["abatement_scaled"] * weighting_dict["emissions"])
+            record_ranking(
+                combined_scales,
+                technology_list,
+                updated_tech_availability,
+                plant_choice_container,
+                year,
+                region,
+                plant_name,
+                start_tech,
+                tco_reference_tech,
+                solver_logic,
+                weighting_dict,
+                scenario_name,
+                transitional_switch_mode,
             )
-            tco_values_scaled.drop(
-                columns=tco_values_scaled.columns.difference(["tco_scaled"]),
-                axis=1,
+            combined_scales.drop(
+                labels=combined_scales.index.difference(updated_tech_availability),
                 inplace=True,
             )
-            abatement_values_scaled = abatement_values.copy()
-            abatement_values_scaled["abatement_scaled"] = scale_data(
-                abatement_values_scaled["abated_combined_emissivity"], reverse=True
-            )
-            abatement_values_scaled.drop(
-                columns=abatement_values_scaled.columns.difference(
-                    ["abatement_scaled"]
-                ),
-                axis=1,
-                inplace=True,
-            )
+            combined_scales.sort_values("overall_score", axis=0, inplace=True)
 
-        elif solver_logic == "scaled_bins":
-            binned_rank_dict = create_bin_rank_dict(
-                tco_values_scaled[cost_value_col],
-                number_of_items=len(technology_list),
-            )
-            tco_values_scaled["tco_scaled"] = tco_values_scaled[cost_value_col].apply(
-                lambda x: return_bin_rank(x, bin_dict=binned_rank_dict)
-            )
-            tco_values_scaled.drop(
-                columns=tco_values_scaled.columns.difference(["tco_scaled"]),
-                axis=1,
-                inplace=True,
-            )
-            abatement_values_scaled = abatement_values.copy()
-            binned_rank_dict = create_bin_rank_dict(
-                tco_values_scaled["abated_combined_emissivity"],
-                number_of_items=len(technology_list),
-                reverse=True,
-            )
-            tco_values_scaled["abatement_scaled"] = tco_values_scaled[
-                "abated_combined_emissivity"
-            ].apply(lambda x: return_bin_rank(x, bin_dict=binned_rank_dict))
-            abatement_values_scaled.drop(
-                columns=abatement_values_scaled.columns.difference(
-                    ["abatement_scaled"]
-                ),
-                axis=1,
-                inplace=True,
-            )
+            if solver_logic == "scaled":
+                return_tech = combined_scales.idxmin()["overall_score"]
 
-        # Join the abatement and tco data and calculate an overall score using the weightings
-        combined_scales = tco_values_scaled.join(abatement_values_scaled)
-        combined_scales["overall_score"] = (
-            combined_scales["tco_scaled"] * weighting_dict["tco"]
-        ) + (combined_scales["abatement_scaled"] * weighting_dict["emissions"])
-        record_ranking(
-            combined_scales,
-            technology_list,
-            updated_tech_availability,
-            plant_choice_container,
-            year,
-            region,
-            plant_name,
-            start_tech,
-            tco_reference_tech,
-            solver_logic,
-            weighting_dict,
-            scenario_name,
-            transitional_switch_mode,
-        )
-        combined_scales.drop(
-            labels=combined_scales.index.difference(updated_tech_availability),
-            inplace=True,
-        )
-        combined_scales.sort_values("overall_score", axis=0, inplace=True)
+            elif solver_logic == "scaled_bins":
+                min_value = combined_scales["overall_score"].min()
+                best_values = combined_scales[combined_scales["overall_rank"] == min_value]
 
-        if solver_logic == "scaled":
-            return combined_scales.idxmin()["overall_score"]
-
-        elif solver_logic == "scaled_bins":
-            min_value = combined_scales["overall_score"].min()
-            best_values = combined_scales[combined_scales["overall_rank"] == min_value]
-
-            return return_best_choice(
-                best_values, start_tech, updated_tech_availability
-            )
+                return_tech = return_best_choice(
+                    best_values, start_tech, updated_tech_availability
+                )
 
     # Ranking algorithm
-    if solver_logic == "ranked":
+    elif solver_logic == "ranked":
 
         tco_values, abatement_values, tco_reference_tech = get_tco_and_abatement_values(
             tco_df,
@@ -606,7 +608,9 @@ def get_best_choice(
         combined_ranks.sort_values("overall_rank", axis=0, inplace=True)
         min_value = combined_ranks["overall_rank"].min()
         best_values = combined_ranks[combined_ranks["overall_rank"] == min_value]
-        return return_best_choice(best_values, start_tech, updated_tech_availability)
+        return_tech = return_best_choice(best_values, start_tech, updated_tech_availability)
+
+    return return_tech
 
 
 def subset_presolver_df(df: pd.DataFrame, subset_type: str) -> pd.DataFrame:

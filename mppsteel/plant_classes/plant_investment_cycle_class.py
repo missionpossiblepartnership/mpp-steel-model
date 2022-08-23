@@ -106,7 +106,7 @@ class PlantInvestmentCycle:
     def return_investment_dict(self) -> dict:
         return self.plant_cycles_with_off_cycle
 
-    def return_cycle_lengths(self, plant_name: str = None):
+    def return_cycle_lengths(self, plant_name: str = ""):
         return (
             self.plant_investment_cycle_length[plant_name]
             if plant_name
@@ -115,13 +115,14 @@ class PlantInvestmentCycle:
 
     def test_cycle_lengths(self) -> None:
         for plant_name in self.plant_cycles_with_off_cycle:
-            entry = self.plant_cycles_with_off_cycle[plant_name]
-            cycle_length = self.plant_investment_cycle_length[plant_name]
-            if len(entry) == 1: # range object
-                start_year = entry[0]
+            plant_cycle: list = self.plant_cycles_with_off_cycle[plant_name]
+            cycle_length: int = self.plant_investment_cycle_length[plant_name]
+            range_list: List[range] = [range_object for range_object in plant_cycle if isinstance(range_object, range)]
+            if (len(plant_cycle) == 1) and (len(range_list) == 1): # range object
+                start_year: int = range_list[0][0]
                 assert (
                     start_year + cycle_length > MODEL_YEAR_END
-                ), f"Only one entry for {plant_name}. Initial year: {entry[0]} | Cycle length {cycle_length} | Next investment cycle {entry[0] + cycle_length}"
+                ), f"Only one entry for {plant_name}. Initial year: {start_year} | Cycle length {cycle_length} | Next investment cycle {start_year + cycle_length}"
 
     def return_plant_switchers(
         self, active_plants: list, year: int, value_type: str

@@ -1,7 +1,10 @@
 """Reference Lists for the Application"""
 
 # RESOURCE GROUPINGS
-RESOURCE_CATEGORY_MAPPER = {
+from mppsteel.config.mypy_config_settings import MYPY_DICT_STR_LIST, MYPY_STR_DICT
+
+
+RESOURCE_CATEGORY_MAPPER: MYPY_STR_DICT = {
     "Iron ore": "Feedstock",
     "Scrap": "Feedstock",
     "DRI": "Feedstock",
@@ -27,7 +30,7 @@ RESOURCE_CATEGORY_MAPPER = {
     "Emissivity": "Carbon Cost",
 }
 
-RESOURCE_CONTAINER_REF = {
+RESOURCE_CONTAINER_REF: MYPY_DICT_STR_LIST = {
     "scrap": ["Scrap"],
     "biomass": ["Biomass", "Biomethane"],
     "ccs": ["Captured CO2"],
@@ -35,7 +38,7 @@ RESOURCE_CONTAINER_REF = {
 }
 
 # TECHNOLOGY GROUPINGS
-FURNACE_GROUP_DICT = {
+FURNACE_GROUP_DICT: MYPY_DICT_STR_LIST = {
     "blast_furnace": [
         "Avg BF-BOF",
         "BAT BF-BOF",
@@ -72,7 +75,7 @@ FURNACE_GROUP_DICT["eaf-all"] = (
     FURNACE_GROUP_DICT["eaf-basic"] + FURNACE_GROUP_DICT["eaf-advanced"]
 )
 
-SWITCH_DICT = {
+SWITCH_DICT: MYPY_DICT_STR_LIST = {
     "Avg BF-BOF": [
         "Avg BF-BOF",
         "BAT BF-BOF",
@@ -193,7 +196,7 @@ SWITCH_DICT = {
 
 TECH_REFERENCE_LIST = list(SWITCH_DICT.keys())
 
-TECHNOLOGY_PHASES = {
+TECHNOLOGY_PHASES: MYPY_DICT_STR_LIST = {
     "initial": ["Avg BF-BOF"],
     "transitional": [
         "BAT BF-BOF",
@@ -237,7 +240,7 @@ MPP_COLOR_LIST = [
     "#F2F2F2",
 ]
 
-GRAPH_CAPEX_OPEX_DICT_SPLIT = {
+GRAPH_CAPEX_OPEX_DICT_SPLIT: MYPY_DICT_STR_LIST = {
     "Feedstock": ["Iron Ore", "Scrap", "DRI"],
     "Fossil Fuels": [
         "Met coal",
