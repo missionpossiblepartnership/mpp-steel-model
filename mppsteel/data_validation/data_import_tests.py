@@ -85,7 +85,7 @@ STEEL_PLANT_DATA_SCHEMA = DataFrameSchema(
     }
 )
 
-ETHANOL_PLASTIC_CHARCOAL_SCHEMA = DataFrameSchema(
+PLASTIC_SCHEMA = DataFrameSchema(
     columns={
         "Classification": Column(str, Check.str_length(2)),
         "Year": Column(int, Check.greater_than_or_equal_to(2020)),
@@ -243,10 +243,10 @@ def import_data_tests():
     )
     SCOPE3_EF_SCHEMA_2.validate(s3_emissions_factors_2)
 
-    ethanol_plastic_charcoal = read_pickle_folder(
-        PKL_DATA_IMPORTS, "ethanol_plastic_charcoal"
+    plastic_prices = read_pickle_folder(
+        PKL_DATA_IMPORTS, "plastic_prices"
     )
-    ETHANOL_PLASTIC_CHARCOAL_SCHEMA.validate(ethanol_plastic_charcoal)
+    PLASTIC_SCHEMA.validate(plastic_prices)
 
     s1_emissions_factors = read_pickle_folder(PKL_DATA_IMPORTS, "s1_emissions_factors")
     SCOPE1_EF_SCHEMA.validate(s1_emissions_factors)

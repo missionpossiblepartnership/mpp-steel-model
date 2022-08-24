@@ -12,7 +12,7 @@ from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.dataframe_utility import extend_df_years
 
 from mppsteel.data_validation.data_import_tests import (
-    ETHANOL_PLASTIC_CHARCOAL_SCHEMA,
+    PLASTIC_SCHEMA,
     SCOPE3_EF_SCHEMA_1,
     SCOPE3_EF_SCHEMA_2,
     CAPEX_OPEX_PER_TECH_SCHEMA,
@@ -47,8 +47,6 @@ from mppsteel.config.reference_lists import KG_RESOURCES
 logger = get_logger(__name__)
 
 COMMODITY_MATERIAL_MAPPER = {
-    "4402": "charcoal",
-    "220710": "ethanol",
     "391510": "Plastic waste",
 }
 
@@ -182,7 +180,7 @@ def capex_dictionary_generator(
     }
 
 
-@pa.check_input(ETHANOL_PLASTIC_CHARCOAL_SCHEMA)
+@pa.check_input(PLASTIC_SCHEMA)
 def format_commodities_data(df: pd.DataFrame, material_mapper: dict) -> pd.DataFrame:
     """Formats the Commodities dataset.
 
@@ -194,7 +192,7 @@ def format_commodities_data(df: pd.DataFrame, material_mapper: dict) -> pd.DataF
         pd.DataFrame: A DataFrame of the formatted commmodities data.
     """
     df_c = df.copy()
-    logger.info("Formatting the ethanol_plastics_charcoal data")
+    logger.info("Formatting the plastic_prices data")
 
     def generate_implied_prices(row):
         return 0 if row.netenergy_gj == 0 else row.trade_value / row.netenergy_gj
@@ -297,11 +295,11 @@ def generate_preprocessed_emissions_data(
     Returns:
         Tuple[pd.DataFrame, pd.DataFrame]: A tuple of the commodities data and S3 emission factors data.
     """
-    ethanol_plastic_charcoal = read_pickle_folder(
-        PKL_DATA_IMPORTS, "ethanol_plastic_charcoal"
+    plastic_prices = read_pickle_folder(
+        PKL_DATA_IMPORTS, "plastic_prices"
     )
     commodities_df = format_commodities_data(
-        ethanol_plastic_charcoal, COMMODITY_MATERIAL_MAPPER
+        plastic_prices, COMMODITY_MATERIAL_MAPPER
     )
     s3_emissions_factors_2 = read_pickle_folder(
         PKL_DATA_IMPORTS, "s3_emissions_factors_2"

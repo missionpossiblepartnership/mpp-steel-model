@@ -283,7 +283,7 @@ def steel_plant_processor(
     logger.info("Preprocessing the Steel Plant Data")
     if from_csv:
         steel_plants = extract_data(
-            IMPORT_DATA_PATH, "Steel Plant Data Anon Latest", "xlsx"
+            IMPORT_DATA_PATH, "Steel Plant Data Anon", "xlsx"
         )
     else:
         steel_plants = read_pickle_folder(PKL_DATA_IMPORTS, "steel_plants")

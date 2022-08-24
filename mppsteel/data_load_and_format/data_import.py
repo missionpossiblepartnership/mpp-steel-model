@@ -83,65 +83,50 @@ def load_data(serialize: bool = False) -> dict:
     brownfield_capex = extract_data(
         IMPORT_DATA_PATH, "CAPEX OPEX Per Technology", "xlsx", 1
     )
-    other_opex = extract_data(IMPORT_DATA_PATH, "CAPEX OPEX Per Technology", "xlsx", 2)
-
+    other_opex = extract_data(
+        IMPORT_DATA_PATH, "CAPEX OPEX Per Technology", "xlsx", 2
+    )
     # Import ccs co2 capacity numbers
-    ccs_co2 = extract_data(IMPORT_DATA_PATH, "CO2 CCS Capacity", "csv")
-
+    ccs_co2 = extract_data(IMPORT_DATA_PATH, "CO2 CCU Capacity", "csv")
     # Import country reference
     country_ref = extract_data(IMPORT_DATA_PATH, "Country Reference", "xlsx").fillna("")
-
     # Import emissions factors
     s1_emissions_factors = extract_data(
         IMPORT_DATA_PATH, "Scope 1 Emissions Factors", "xlsx"
     )
-
     # Import scope 3 EF data
     s3_emissions_factors_1 = extract_data(
-        IMPORT_DATA_PATH, "Scope 3 Emissions Factors edit", "xlsx", 0
+        IMPORT_DATA_PATH, "Scope 3 Emissions Factors", "xlsx", 0
     )
     s3_emissions_factors_2 = pd.read_excel(
-        f"{IMPORT_DATA_PATH}/Scope 3 Emissions Factors edit.xlsx",
+        f"{IMPORT_DATA_PATH}/Scope 3 Emissions Factors.xlsx",
         sheet_name=1,
         skiprows=1,
     )
-
     # Import static energy prices
     static_energy_prices = extract_data(
         IMPORT_DATA_PATH, "Energy Prices - Static", "xlsx"
     )
-
     # Import feedstock prices
     feedstock_prices = extract_data(IMPORT_DATA_PATH, "Feedstock Prices", "xlsx")
-
     # Import steel plant data
     steel_plants = extract_data(
-        IMPORT_DATA_PATH, "Steel Plant Data Anon Latest", "xlsx"
+        IMPORT_DATA_PATH, "Steel Plant Data Anon", "xlsx"
     )
-
     # Import technology availability
     tech_availability = extract_data(IMPORT_DATA_PATH, "Technology Availability", "csv")
-
     # Import Commodities Data
-    ethanol_plastic_charcoal = extract_data(
-        IMPORT_DATA_PATH, "Ethanol Plastic Charcoal", "csv"
+    plastic_prices = extract_data(
+        IMPORT_DATA_PATH, "Plastic Prices", "csv"
     )
-
     # Import Regional Steel Demand Data
     regional_steel_demand = extract_data(
         IMPORT_DATA_PATH, "Regional Steel Demand", "csv"
     )
-    """
-    # WSA data
-    wsa_production = extract_data(
-        IMPORT_DATA_PATH, "WSA World Steel in Figures 2021", "xlsx", 1
-    )
-    """
     # WSA data
     wsa_production = extract_data(IMPORT_DATA_PATH, "WSA Production 2020", "csv")
     # Fossil Fuel Data
     fossil_fuel_model = extract_data(IMPORT_DATA_PATH, "Fossil Fuel Model", "csv")
-
     # Import Price and Emissions Models
     power_model = get_pe_model_data("power")
     hydrogen_model = get_pe_model_data("hydrogen")
@@ -167,7 +152,7 @@ def load_data(serialize: bool = False) -> dict:
         "s3_emissions_factors_1": s3_emissions_factors_1,
         "s3_emissions_factors_2": s3_emissions_factors_2,
         "technology_business_cases": technology_business_cases,
-        "ethanol_plastic_charcoal": ethanol_plastic_charcoal,
+        "plastic_prices": plastic_prices,
         "power_model": power_model,
         "hydrogen_model": hydrogen_model,
         "bio_model": bio_model,

@@ -122,9 +122,7 @@ def create_wsa_2020_utilization_dict(
     """
     logger.info("Creating the utilization dictionary for 2020.")
     if from_csv:
-        wsa_production = extract_data(
-            IMPORT_DATA_PATH, "WSA World Steel in Figures 2021", "xlsx", 1
-        )
+        wsa_production = extract_data(IMPORT_DATA_PATH, "WSA Production 2020", "csv")
     else:
         wsa_production = read_pickle_folder(
             project_dir / PKL_DATA_IMPORTS, "wsa_production", "df"

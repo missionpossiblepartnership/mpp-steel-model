@@ -1,0 +1,201 @@
+﻿Classification,Year,Period,Period Desc.,Aggregate Level,Is Leaf Code,Trade Flow Code,Trade Flow,Reporter Code,Reporter,Reporter ISO,Partner Code,Partner,Partner ISO,2nd Partner Code,2nd Partner,2nd Partner ISO,Customs Proc. Code,Customs,Mode of Transport Code,Mode of Transport,Commodity Code,Commodity,Qty Unit Code,Qty Unit,Qty,Alt Qty Unit Code,Alt Qty Unit,Alt Qty,Netweight (kg),Gross weight (kg),Trade Value (US$),CIF Trade Value (US$),FOB Trade Value (US$),Flag
+H5,2020,2020,2020,6,1,1,Import,31,Azerbaijan,AZE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3273535,,,,3273535,,1808137,,,0
+H5,2020,2020,2020,6,1,1,Import,36,Australia,AUS,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,905240,,,,905240,,680548,,,0
+H5,2020,2020,2020,6,1,2,Export,36,Australia,AUS,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,41014637,,,,41014637,,9665950,,,0
+H5,2020,2020,2020,6,1,1,Import,40,Austria,AUT,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,26045190,,,,26045190,,8375193,,,0
+H5,2020,2020,2020,6,1,2,Export,40,Austria,AUT,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,64513953,,,,64513953,,33237395,,,0
+H5,2020,2020,2020,6,1,1,Import,56,Belgium,BEL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,135226362,,,,135226362,,44624491,,,0
+H5,2020,2020,2020,6,1,2,Export,56,Belgium,BEL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,217650258,,,,217650258,,59500272,,,0
+H5,2020,2020,2020,6,1,1,Import,68,Bolivia (Plurinational State of),BOL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,27275,,,,27275,,46270,,,0
+H5,2020,2020,2020,6,1,2,Export,68,Bolivia (Plurinational State of),BOL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,647550,,,,647550,,107245,,,0
+H5,2020,2020,2020,6,1,1,Import,70,Bosnia Herzegovina,BIH,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1859020,,,,1859020,,296918,,,0
+H5,2020,2020,2020,6,1,2,Export,70,Bosnia Herzegovina,BIH,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3395577,,,,3395577,,814390,,,0
+H5,2020,2020,2020,6,1,2,Export,72,Botswana,BWA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,232074,,,,232074,,27047,,,0
+H5,2020,2020,2020,6,1,1,Import,76,Brazil,BRA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1077057,,,,1077057,,314259,,,0
+H5,2020,2020,2020,6,1,2,Export,76,Brazil,BRA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,10261,,,,10261,,13958,,,6
+H5,2020,2020,2020,6,1,2,Export,84,Belize,BLZ,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,122667,,,,122667,,12125,,,0
+H5,2020,2020,2020,6,1,1,Import,100,Bulgaria,BGR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,34564198,,,,34564198,,5588128,,,0
+H5,2020,2020,2020,6,1,2,Export,100,Bulgaria,BGR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,4573921,,,,4573921,,2354694,,,0
+H5,2020,2020,2020,6,1,1,Import,104,Myanmar,MMR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,334479,,,,334479,,350329,,,0
+H5,2020,2020,2020,6,1,2,Export,104,Myanmar,MMR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,2699000,,,,2699000,,1007250,,,0
+H5,2020,2020,2020,6,1,1,Import,112,Belarus,BLR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1938484,,,,1938484,,691200,,,0
+H5,2020,2020,2020,6,1,2,Export,112,Belarus,BLR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,6757093,,,,6757093,,1850300,,,0
+H5,2020,2020,2020,6,1,1,Import,116,Cambodia,KHM,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,15,,,,15,,22,,,0
+H5,2020,2020,2020,6,1,1,Import,124,Canada,CAN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,35280632,,,,35280632,,9374351,,,0
+H5,2020,2020,2020,6,1,2,Export,124,Canada,CAN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,45717648,,,,45717648,,16775698,,,0
+H5,2020,2020,2020,6,1,3,Re-Export,124,Canada,CAN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,264,,,,264,,563,,,0
+H5,2020,2020,2020,6,1,1,Import,144,Sri Lanka,LKA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1,,,,1,,2,,,0
+H5,2020,2020,2020,6,1,1,Import,152,Chile,CHL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,26499,,,6
+H5,2020,2020,2020,6,1,2,Export,152,Chile,CHL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,4258937,,,,4258937,,1256472,,,6
+H5,2020,2020,2020,6,1,2,Export,156,China,CHN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,213670,,,,213670,,440152,,,6
+H5,2020,2020,2020,6,1,1,Import,170,Colombia,COL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,4423984,,,,4423984,,562464,,,0
+H5,2020,2020,2020,6,1,2,Export,170,Colombia,COL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,340926,,,,340926,,141303,,,0
+H5,2020,2020,2020,6,1,1,Import,188,Costa Rica,CRI,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1115630,,,,1115630,,430043,,,0
+H5,2020,2020,2020,6,1,2,Export,188,Costa Rica,CRI,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,469197,,,,469197,,119535,,,0
+H5,2020,2020,2020,6,1,1,Import,191,Croatia,HRV,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,23670117,,,,23670117,,2493494,,,0
+H5,2020,2020,2020,6,1,2,Export,191,Croatia,HRV,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,19395987,,,,19395987,,4217981,,,0
+H5,2020,2020,2020,6,1,2,Export,196,Cyprus,CYP,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1447491,,,,1447491,,167522,,,0
+H5,2020,2020,2020,6,1,1,Import,203,Czechia,CZE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,1384881,,,6
+H5,2020,2020,2020,6,1,2,Export,203,Czechia,CZE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,25640654,,,,25640654,,6210422,,,0
+H5,2020,2020,2020,6,1,1,Import,204,Benin,BEN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,6,,,6
+H5,2020,2020,2020,6,1,1,Import,208,Denmark,DNK,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,8684216,,,,8684216,,4964111,,,0
+H5,2020,2020,2020,6,1,2,Export,208,Denmark,DNK,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,13050641,,,6
+H5,2020,2020,2020,6,1,1,Import,214,Dominican Rep.,DOM,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1520445,,,,1520445,,441018,,,0
+H5,2020,2020,2020,6,1,2,Export,214,Dominican Rep.,DOM,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,6062414,,,,6062414,,2426682,,,0
+H5,2020,2020,2020,6,1,1,Import,218,Ecuador,ECU,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,7110184,,,,7110184,,3653072,,,0
+H5,2020,2020,2020,6,1,2,Export,218,Ecuador,ECU,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,885018,,,,885018,,547995,,,0
+H5,2020,2020,2020,6,1,1,Import,222,El Salvador,SLV,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3829819,,,,3829819,,2054488,,,0
+H5,2020,2020,2020,6,1,2,Export,222,El Salvador,SLV,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,175032,,,,175032,,73378,,,0
+H5,2020,2020,2020,6,1,1,Import,231,Ethiopia,ETH,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,151775,,,,151775,,172589,,,0
+H5,2020,2020,2020,6,1,2,Export,231,Ethiopia,ETH,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,126000,,,,126000,,52551,,,0
+H5,2020,2020,2020,6,1,1,Import,233,Estonia,EST,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3409595,,,,3409595,,565624,,,0
+H5,2020,2020,2020,6,1,2,Export,233,Estonia,EST,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,10304554,,,,10304554,,4443441,,,0
+H5,2020,2020,2020,6,1,3,Re-Export,233,Estonia,EST,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,6500,,,,6500,,1087,,,0
+H5,2020,2020,2020,6,1,1,Import,246,Finland,FIN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,3552997,,,6
+H5,2020,2020,2020,6,1,2,Export,246,Finland,FIN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,4714152,,,6
+H5,2020,2020,2020,6,1,1,Import,251,France,FRA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,47377578,,,,47377578,,28870370,,,6
+H5,2020,2020,2020,6,1,2,Export,251,France,FRA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,159328724,,,,159328724,,38771658,,,0
+H5,2020,2020,2020,6,1,1,Import,268,Georgia,GEO,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,296355,,,,296355,,115723,,,0
+H5,2020,2020,2020,6,1,2,Export,268,Georgia,GEO,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,59000,,,,59000,,13691,,,0
+H5,2020,2020,2020,6,1,1,Import,276,Germany,DEU,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,220178087,,,,220178087,,70760419,,,6
+H5,2020,2020,2020,6,1,2,Export,276,Germany,DEU,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,586953675,,,,586953675,,192984769,,,6
+H5,2020,2020,2020,6,1,1,Import,300,Greece,GRC,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,4006874,,,,4006874,,1321380,,,0
+H5,2020,2020,2020,6,1,2,Export,300,Greece,GRC,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,15567111,,,,15567111,,3956095,,,0
+H5,2020,2020,2020,6,1,1,Import,320,Guatemala,GTM,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,49194,,,,49194,,30288,,,0
+H5,2020,2020,2020,6,1,2,Export,320,Guatemala,GTM,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,2724378,,,,2724378,,537388,,,0
+H5,2020,2020,2020,6,1,1,Import,328,Guyana,GUY,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1208,,,,1208,,12981,,,0
+H5,2020,2020,2020,6,1,1,Import,344,"China, Hong Kong SAR",HKG,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,59437333,,,,59437333,,18582262,,,0
+H5,2020,2020,2020,6,1,2,Export,344,"China, Hong Kong SAR",HKG,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,22866478,,,,22866478,,12649689,,,0
+H5,2020,2020,2020,6,1,1,Import,348,Hungary,HUN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,5981807,,,,5981807,,2134766,,,0
+H5,2020,2020,2020,6,1,2,Export,348,Hungary,HUN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,15513959,,,,15513959,,3664311,,,0
+H5,2020,2020,2020,6,1,1,Import,352,Iceland,ISL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,34,,,,34,,2788,,,6
+H5,2020,2020,2020,6,1,2,Export,352,Iceland,ISL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,1133,,,6
+H5,2020,2020,2020,6,1,1,Import,360,Indonesia,IDN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,162150990,,,,162150990,,55057593,,,0
+H5,2020,2020,2020,6,1,2,Export,360,Indonesia,IDN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3642259,,,,3642259,,2242268,,,0
+H5,2020,2020,2020,6,1,1,Import,372,Ireland,IRL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,3323079,,,6
+H5,2020,2020,2020,6,1,2,Export,372,Ireland,IRL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,7269826,,,6
+H5,2020,2020,2020,6,1,1,Import,376,Israel,ISR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1717198,,,,1717198,,582000,,,6
+H5,2020,2020,2020,6,1,2,Export,376,Israel,ISR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,2729229,,,,2729229,,853000,,,6
+H5,2020,2020,2020,6,1,1,Import,381,Italy,ITA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,56160707,,,,56160707,,29859800,,,0
+H5,2020,2020,2020,6,1,2,Export,381,Italy,ITA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,32566736,,,,32566736,,9551022,,,0
+H5,2020,2020,2020,6,1,1,Import,392,Japan,JPN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,946587,,,,946587,,447235,,,0
+H5,2020,2020,2020,6,1,2,Export,392,Japan,JPN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,142311421,,,,142311421,,42546857,,,0
+H5,2020,2020,2020,6,1,1,Import,400,Jordan,JOR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1562,,,,1562,,529,,,6
+H5,2020,2020,2020,6,1,2,Export,400,Jordan,JOR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,20188,,,,20188,,6309,,,6
+H5,2020,2020,2020,6,1,1,Import,404,Kenya,KEN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,303172,,,,303172,,283998,,,0
+H5,2020,2020,2020,6,1,1,Import,410,Rep. of Korea,KOR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,4798086,,,,4798086,,1929132,,,6
+H5,2020,2020,2020,6,1,2,Export,410,Rep. of Korea,KOR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,3532644,,,6
+H5,2020,2020,2020,6,1,1,Import,414,Kuwait,KWT,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,642,,,,642,,9720,,,0
+H5,2020,2020,2020,6,1,1,Import,417,Kyrgyzstan,KGZ,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,798700,,,,798700,,36551,,,0
+H5,2020,2020,2020,6,1,1,Import,422,Lebanon,LBN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,239150,,,,239150,,58609,,,0
+H5,2020,2020,2020,6,1,2,Export,422,Lebanon,LBN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,4265895,,,,4265895,,2223799,,,0
+H5,2020,2020,2020,6,1,1,Import,428,Latvia,LVA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,8251164,,,,8251164,,2427606,,,0
+H5,2020,2020,2020,6,1,2,Export,428,Latvia,LVA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,10115480,,,,10115480,,2829521,,,0
+H5,2020,2020,2020,6,1,1,Import,440,Lithuania,LTU,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,41448724,,,,41448724,,5653237,,,0
+H5,2020,2020,2020,6,1,2,Export,440,Lithuania,LTU,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3494116,,,,3494116,,557344,,,6
+H5,2020,2020,2020,6,1,1,Import,442,Luxembourg,LUX,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3051984,,,,3051984,,1915479,,,0
+H5,2020,2020,2020,6,1,2,Export,442,Luxembourg,LUX,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,9236496,,,,9236496,,2878829,,,0
+H5,2020,2020,2020,6,1,3,Re-Export,442,Luxembourg,LUX,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3244,,,,3244,,808,,,0
+H5,2020,2020,2020,6,1,4,Re-Import,442,Luxembourg,LUX,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,28538,,,,28538,,3678,,,0
+H5,2020,2020,2020,6,1,1,Import,454,Malawi,MWI,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,24140,,,,24140,,20334,,,0
+H5,2020,2020,2020,6,1,2,Export,454,Malawi,MWI,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,23350,,,,23350,,25736,,,0
+H5,2020,2020,2020,6,1,1,Import,458,Malaysia,MYS,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,382638485,,,,382638485,,120762620,,,0
+H5,2020,2020,2020,6,1,2,Export,458,Malaysia,MYS,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3787505,,,,3787505,,1291358,,,0
+H5,2020,2020,2020,6,1,1,Import,470,Malta,MLT,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,16545,,,,16545,,19392,,,0
+H5,2020,2020,2020,6,1,2,Export,470,Malta,MLT,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,305460,,,,305460,,89620,,,0
+H5,2020,2020,2020,6,1,2,Export,480,Mauritius,MUS,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,402983,,,,408840,,189891,,,0
+H5,2020,2020,2020,6,1,1,Import,490,"Other Asia, nes",,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,63935307,,,,63935307,,20131496,,,0
+H5,2020,2020,2020,6,1,2,Export,490,"Other Asia, nes",,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,2389024,,,,2389024,,758193,,,0
+H5,2020,2020,2020,6,1,2,Export,498,Rep. of Moldova,MDA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,158390,,,,158390,,55439,,,0
+H5,2020,2020,2020,6,1,1,Import,499,Montenegro,MNE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,453039,,,,453039,,145756,,,0
+H5,2020,2020,2020,6,1,2,Export,499,Montenegro,MNE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,120892,,,,120892,,25473,,,0
+H5,2020,2020,2020,6,1,1,Import,504,Morocco,MAR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,4256884,,,,4256884,,1639739,,,0
+H5,2020,2020,2020,6,1,2,Export,504,Morocco,MAR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,540,,,,540,,1055,,,0
+H5,2020,2020,2020,6,1,1,Import,508,Mozambique,MOZ,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,67681,,,6
+H5,2020,2020,2020,6,1,2,Export,516,Namibia,NAM,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1729556,,,,1729556,,322261,,,0
+H5,2020,2020,2020,6,1,3,Re-Export,516,Namibia,NAM,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,153984,,,,153984,,23827,,,0
+H5,2020,2020,2020,6,1,1,Import,528,Netherlands,NLD,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,352358958,,,,352358958,,76168666,,,0
+H5,2020,2020,2020,6,1,2,Export,528,Netherlands,NLD,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,238626167,,,,238626167,,72374587,,,0
+H5,2020,2020,2020,6,1,1,Import,554,New Zealand,NZL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,67358,,,,67358,,53672,,,0
+H5,2020,2020,2020,6,1,2,Export,554,New Zealand,NZL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,16372503,,,,16372503,,3043525,,,0
+H5,2020,2020,2020,6,1,3,Re-Export,554,New Zealand,NZL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,20070,,,,20070,,8976,,,0
+H5,2020,2020,2020,6,1,1,Import,558,Nicaragua,NIC,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,163708,,,,163708,,93322,,,0
+H5,2020,2020,2020,6,1,2,Export,558,Nicaragua,NIC,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,671733,,,,671733,,284414,,,0
+H5,2020,2020,2020,6,1,1,Import,579,Norway,NOR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,2372842,,,,2372842,,1505541,,,0
+H5,2020,2020,2020,6,1,2,Export,579,Norway,NOR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,33144110,,,,33144110,,5024102,,,0
+H5,2020,2020,2020,6,1,1,Import,586,Pakistan,PAK,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,2203186,,,,2203186,,737801,,,0
+H5,2020,2020,2020,6,1,2,Export,586,Pakistan,PAK,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,278873,,,,278873,,269701,,,0
+H5,2020,2020,2020,6,1,4,Re-Import,586,Pakistan,PAK,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,36270,,,,36270,,6693,,,0
+H5,2020,2020,2020,6,1,1,Import,600,Paraguay,PRY,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,456978,,,,456978,,127944,,,0
+H5,2020,2020,2020,6,1,2,Export,600,Paraguay,PRY,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,15000,,,,15000,,13400,,,0
+H5,2020,2020,2020,6,1,1,Import,604,Peru,PER,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,2108905,,,,2108905,,1056140,,,0
+H5,2020,2020,2020,6,1,2,Export,604,Peru,PER,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,52990,,,,52990,,6339,,,0
+H5,2020,2020,2020,6,1,1,Import,608,Philippines,PHL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,2749997,,,,2749997,,654562,,,6
+H5,2020,2020,2020,6,1,2,Export,608,Philippines,PHL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,50046524,,,,50046524,,43987713,,,0
+H5,2020,2020,2020,6,1,1,Import,616,Poland,POL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,54184755,,,,54184755,,21762064,,,0
+H5,2020,2020,2020,6,1,2,Export,616,Poland,POL,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,90971299,,,,90971299,,29645604,,,6
+H5,2020,2020,2020,6,1,1,Import,620,Portugal,PRT,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,11895621,,,,11895621,,3530331,,,0
+H5,2020,2020,2020,6,1,2,Export,620,Portugal,PRT,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,17533036,,,,17533036,,10385199,,,0
+H5,2020,2020,2020,6,1,1,Import,642,Romania,ROU,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3745963,,,,3745963,,1276703,,,0
+H5,2020,2020,2020,6,1,2,Export,642,Romania,ROU,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3800692,,,,3800692,,1760739,,,0
+H5,2020,2020,2020,6,1,1,Import,643,Russian Federation,RUS,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,9250625,,,,9250625,,2572357,,,0
+H5,2020,2020,2020,6,1,2,Export,643,Russian Federation,RUS,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,15978101,,,,15978101,,1683852,,,0
+H5,2020,2020,2020,6,1,1,Import,686,Senegal,SEN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,770219,,,,770219,,101531,,,0
+H5,2020,2020,2020,6,1,2,Export,686,Senegal,SEN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3461259,,,,3461259,,526814,,,0
+H5,2020,2020,2020,6,1,1,Import,688,Serbia,SRB,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,17474330,,,,17474330,,3404906,,,0
+H5,2020,2020,2020,6,1,2,Export,688,Serbia,SRB,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,2547715,,,,2547715,,579195,,,0
+H5,2020,2020,2020,6,1,1,Import,699,India,IND,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,338800,,,,338800,,119278,,,0
+H5,2020,2020,2020,6,1,2,Export,699,India,IND,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,27883,,,,27883,,14714,,,0
+H5,2020,2020,2020,6,1,1,Import,702,Singapore,SGP,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3371513,,,,3371513,,1142687,,,6
+H5,2020,2020,2020,6,1,2,Export,702,Singapore,SGP,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,24538162,,,,24538162,,7669216,,,6
+H5,2020,2020,2020,6,1,1,Import,703,Slovakia,SVK,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,6071957,,,,6071957,,513505,,,0
+H5,2020,2020,2020,6,1,2,Export,703,Slovakia,SVK,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,8832414,,,,8832414,,1749213,,,6
+H5,2020,2020,2020,6,1,1,Import,704,Viet Nam,VNM,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,117998545,,,,117998545,,39992564,,,6
+H5,2020,2020,2020,6,1,2,Export,704,Viet Nam,VNM,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,6231264,,,,6231264,,1947534,,,6
+H5,2020,2020,2020,6,1,1,Import,705,Slovenia,SVN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,56884300,,,,56884300,,9449526,,,0
+H5,2020,2020,2020,6,1,2,Export,705,Slovenia,SVN,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,56637369,,,,56637369,,12290759,,,0
+H5,2020,2020,2020,6,1,1,Import,710,South Africa,ZAF,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,3422718,,,,3422718,,574787,,,0
+H5,2020,2020,2020,6,1,2,Export,710,South Africa,ZAF,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,518086,,,,518086,,353673,,,0
+H5,2020,2020,2020,6,1,1,Import,716,Zimbabwe,ZWE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,406100,,,,406100,,308781,,,0
+H5,2020,2020,2020,6,1,1,Import,724,Spain,ESP,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,46519512,,,,46519512,,12627985,,,0
+H5,2020,2020,2020,6,1,2,Export,724,Spain,ESP,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,44603362,,,,44603362,,17559879,,,0
+H5,2020,2020,2020,6,1,2,Export,748,Eswatini,SWZ,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,36983,,,,36983,,4231,,,0
+H5,2020,2020,2020,6,1,1,Import,752,Sweden,SWE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,3748734,,,6
+H5,2020,2020,2020,6,1,2,Export,752,Sweden,SWE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,48469834,,,,48469834,,5738244,,,6
+H5,2020,2020,2020,6,1,1,Import,757,Switzerland,CHE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,12312430,,,,12312430,,3816593,,,0
+H5,2020,2020,2020,6,1,2,Export,757,Switzerland,CHE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,19431536,,,,19431536,,3109116,,,0
+H5,2020,2020,2020,6,1,4,Re-Import,757,Switzerland,CHE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,42082,,,,42082,,28787,,,0
+H5,2020,2020,2020,6,1,1,Import,764,Thailand,THA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,9610344,,,,9610344,,1188619,,,0
+H5,2020,2020,2020,6,1,2,Export,764,Thailand,THA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,4101709,,,,4101709,,1083089,,,6
+H5,2020,2020,2020,6,1,1,Import,768,Togo,TGO,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,11609,,,,167180,,98305,,,0
+H5,2020,2020,2020,6,1,2,Export,768,Togo,TGO,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1835,,,,27100,,22765,,,0
+H5,2020,2020,2020,6,1,1,Import,784,United Arab Emirates,ARE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,56297,,,6
+H5,2020,2020,2020,6,1,2,Export,784,United Arab Emirates,ARE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,377664,,,,377664,,242704,,,0
+H5,2020,2020,2020,6,1,3,Re-Export,784,United Arab Emirates,ARE,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,398,,,,398,,41445,,,0
+H5,2020,2020,2020,6,1,1,Import,792,Turkey,TUR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,438134962,,,,438134962,,72258760,,,0
+H5,2020,2020,2020,6,1,2,Export,792,Turkey,TUR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,577037,,,,577037,,291799,,,0
+H5,2020,2020,2020,6,1,1,Import,800,Uganda,UGA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,20119,,,,20119,,1560,,,0
+H5,2020,2020,2020,6,1,1,Import,804,Ukraine,UKR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,21210550,,,,21210550,,4017043,,,0
+H5,2020,2020,2020,6,1,2,Export,804,Ukraine,UKR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,13225,,,,13225,,7866,,,0
+H5,2020,2020,2020,6,1,1,Import,807,North Macedonia,MKD,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1572946,,,,1572946,,449981,,,0
+H5,2020,2020,2020,6,1,2,Export,807,North Macedonia,MKD,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,1275580,,,,1275580,,465779,,,0
+H5,2020,2020,2020,6,1,1,Import,826,United Kingdom,GBR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,32017446,,,6
+H5,2020,2020,2020,6,1,2,Export,826,United Kingdom,GBR,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,56069763,,,6
+H5,2020,2020,2020,6,1,1,Import,842,USA,USA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,29275586,,,6
+H5,2020,2020,2020,6,1,2,Export,842,USA,USA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,83497836,,,6
+H5,2020,2020,2020,6,1,3,Re-Export,842,USA,USA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,644030,,,,644030,,413314,,,0
+H5,2020,2020,2020,6,1,2,Export,854,Burkina Faso,BFA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,30000,,,,30000,,3494,,,0
+H5,2020,2020,2020,6,1,1,Import,858,Uruguay,URY,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,74910,,,,74910,,38103,,,0
+H5,2020,2020,2020,6,1,1,Import,860,Uzbekistan,UZB,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,23084340,,,,23084340,,3308330,,,0
+H5,2020,2020,2020,6,1,2,Export,860,Uzbekistan,UZB,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,19240,,,,19240,,12176,,,0
+H5,2020,2020,2020,6,1,1,Import,894,Zambia,ZMB,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,7190,,,,7190,,4922,,,0
+H4,2020,2020,2020,6,1,1,Import,270,Gambia,GMB,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,11223,,,,11223,,20293,,,0
+H4,2020,2020,2020,6,1,1,Import,484,Mexico,MEX,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",1,No Quantity,0,,,,,,4844058,,,0
+H4,2020,2020,2020,6,1,2,Export,484,Mexico,MEX,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,70249241,,,,70249241,,22640202,,,6
+H4,2020,2020,2020,6,1,1,Import,566,Nigeria,NGA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,6039005,,,,6039005,,5171486,,,0
+H4,2020,2020,2020,6,1,2,Export,566,Nigeria,NGA,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,74369350,,,,74369350,,348047,,,0
+H4,2020,2020,2020,6,1,1,Import,682,Saudi Arabia,SAU,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,122320,,,,122320,,102799,,,0
+H4,2020,2020,2020,6,1,2,Export,682,Saudi Arabia,SAU,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,20843415,,,,20843415,,11309538,,,0
+H4,2020,2020,2020,6,1,1,Import,762,Tajikistan,TJK,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,61003,,,,61003,,45355,,,0
+H4,2020,2020,2020,6,1,1,Import,818,Egypt,EGY,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,2423115,,,,2423115,,821252,,,6
+H4,2020,2020,2020,6,1,2,Export,818,Egypt,EGY,0,World,WLD,,,,,,,,391510,"Ethylene polymers; waste, parings and scrap",8,Weight in kilograms,6090,,,,6090,,1903,,,6
