@@ -342,12 +342,12 @@ def create_greenfield_switching_df(
             )
             for tech in TECH_REFERENCE_LIST
         }
-        technology_df_combined = pd.concat(technology_df_ref.values())
-        technology_df_ref["switch_value"] = technology_df_combined.apply(
+        technology_df_combined: pd.DataFrame = pd.concat(technology_df_ref.values())
+        technology_df_combined["switch_value"] = technology_df_combined.apply(
             switch_mapper, ref_dict=ref_dict, axis=1
         )
         technology_df_combined.set_index(["year", "base_tech", "switch_tech"], inplace=True)
-        df_container.append(technology_df_ref)
+        df_container.append(technology_df_combined)
     return pd.concat(df_container)
 
 

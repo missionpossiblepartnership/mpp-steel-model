@@ -89,7 +89,7 @@ def return_best_tech(
     solver_logic = SOLVER_LOGICS[str(scenario_dict["solver_logic"])]
     tech_moratorium = bool(scenario_dict["tech_moratorium"])
     enforce_constraints = bool(scenario_dict["enforce_constraints"])
-    green_premium_scenario = bool(scenario_dict["green_premium_scenario"])
+    green_premium_scenario = str(scenario_dict["green_premium_scenario"])
     scenario_name = str(scenario_dict["scenario_name"])
     regional_scrap = bool(scenario_dict["regional_scrap_constraint"])
 

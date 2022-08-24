@@ -102,7 +102,7 @@ def summarise_combined_data(
         production_emissions_summary = consumption_summary(
             df,
             grouping_cols=["scenario", "year", "region_rmi", "technology"],
-            unit_list=["_gt", "_mt"],
+            unit_list=["production", "_gt", "_mt"],
         )
         results_dict["production_emissions_summary"].append(production_emissions_summary)
 
@@ -110,7 +110,7 @@ def summarise_combined_data(
         production_resource_usage_summary = consumption_summary(
             df,
             grouping_cols=["scenario", "year", "region_rmi", "technology"],
-            unit_list=["_gt", "_mt", "_gj", "_pj"],
+            unit_list=["capacity", "production", "_gt", "_mt", "_gj", "_pj"],
         )
 
         plant_capacity_summary = generic_summary(
