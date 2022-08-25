@@ -1,6 +1,8 @@
 """Utility library for functions used throughout the module"""
 import itertools
 import sys
+import random
+import string
 
 import numpy as np
 from collections.abc import Iterable
@@ -284,3 +286,34 @@ def get_intersection_of_ordered_list(
         list: A list of ordered values at the intersection of ordered_list and mapping_list.
     """
     return [x for x in mapping_list if x in frozenset(ordered_list)]
+
+
+def generate_random_string_with_prefix(prefix: str = "MPP", chars: str = string.digits, n: int = 5) -> str:
+    """Generates a unique ID with an "MPP" prefix from the collection of characters.
+
+    Args:
+        chars (str, optional): The characters to select at random from. Defaults to string.digits.
+        n (int, optional): The number of characters in the random part of the ID. Defaults to 5.
+
+    Returns:
+        str: A randomised plant ID.
+    """
+    return f"{prefix}" + "".join(random.choice(chars) for _ in range(n))
+
+
+def combine_and_order_list_and_range(number_list: list, range_list: List[range]) -> list:
+    """Combine a list of numbers and a list of ranges into one.
+    Orders the list based on the the numbers in the number list and the start number of the range.
+
+    Args:
+        number_list (list): A list of numbers.
+        range_list (List[range]): A list of numerical range objects.
+
+    Returns:
+        list: An ordered combined list.
+    """
+    year_dict = {year: year for year in number_list}
+    range_dict = {range_obj.start: range_obj for range_obj in range_list}
+    combined_dict = {**year_dict, **range_dict}
+    sorted_list = sorted(list(combined_dict.keys()))
+    return [combined_dict[elem] for elem in sorted_list]

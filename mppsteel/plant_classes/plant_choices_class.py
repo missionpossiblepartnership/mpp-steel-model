@@ -14,7 +14,8 @@ class PlantChoices:
 
     Main Class attributes
         choices: Keeps track of each plants choice in every year. A dictionary in the form [year][plant_name] -> technology
-        records: A list of DataFrames that record why certain technologies were chosen or not chosen. The list can be outputted to a combined DataFrame.
+        choice_records: A list of DataFrames that record why certain technologies were chosen or not chosen. The list can be outputted to a combined DataFrame.
+        rank_records: A list of DataFrames that record the rankings of technologies prior to the selection. The list can be outputted to a combined DataFrame.
         active_check: A dictionary that keeps track of whether a plant is active or not. A dictionary in the form [year][plant_name] -> boolean check
     """
 
@@ -66,7 +67,15 @@ class PlantChoices:
             return combine_tech_ranks(df)
 
 
-def combine_tech_ranks(tr_df: pd.DataFrame):
+def combine_tech_ranks(tr_df: pd.DataFrame) -> pd.DataFrame:
+    """Formats a combined the tech ranks dataframe.
+
+    Args:
+        tr_df (pd.DataFrame): The unformatted Technology Ranks DataFrame.
+
+    Returns:
+        pd.DataFrame: A combined DataFrame of Technology Ranks.
+    """
     container = [pd.concat(tr_df.values[count]) for count in range(len(tr_df.values))]
     if len(container) == 0:
         return pd.DataFrame(columns=["year", "start_tech"])

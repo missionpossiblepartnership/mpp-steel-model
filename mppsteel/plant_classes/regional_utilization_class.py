@@ -24,7 +24,7 @@ class UtilizationContainerClass:
     Class for managing each region's utilization rates.
 
     Main Class Attirbutes
-        It maintains a dictionary structured as [year][region] -> value in the attribute called `utilization_container`
+        It maintains a dictionary called utilization_container structured as [year][region] -> value
         World Utilization rates are treated as a weighted average of all the region's utilizatoin rates
     """
 

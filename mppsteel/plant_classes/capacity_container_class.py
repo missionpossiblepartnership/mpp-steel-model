@@ -1,6 +1,6 @@
 """Classes to manage plant capacity"""
 
-from typing import Tuple
+from typing import Tuple, Union
 import pandas as pd
 
 from mppsteel.config.model_config import MEGATON_TO_KILOTON_FACTOR, MAIN_REGIONAL_SCHEMA
@@ -24,12 +24,12 @@ class CapacityContainerClass:
         self.plant_capacities = {}
         self.regional_capacities_agg = {}
 
-    def instantiate_container(self, year_range: range):
+    def instantiate_container(self, year_range: range) -> None:
         self.plant_capacities = {year: 0 for year in year_range}
         self.regional_capacities_agg = {year: 0 for year in year_range}
         self.regional_capacities_avg = {year: 0 for year in year_range}
 
-    def map_capacities(self, plant_df: pd.DataFrame, year: int):
+    def map_capacities(self, plant_df: pd.DataFrame, year: int) -> None:
         # Map capacities of plants that are still active for aggregates, else use averages
         plant_capacity_dict, regional_capacity_dict = create_annual_capacity_dict(
             plant_df, as_mt=True
@@ -37,7 +37,7 @@ class CapacityContainerClass:
         self.plant_capacities[year] = plant_capacity_dict
         self.regional_capacities_agg[year] = regional_capacity_dict
 
-    def set_average_plant_capacity(self, original_plant_df: pd.DataFrame):
+    def set_average_plant_capacity(self, original_plant_df: pd.DataFrame) -> None:
         self.average_plant_capacity = create_average_plant_capacity(
             original_plant_df, as_mt=True
         )
@@ -61,10 +61,10 @@ class CapacityContainerClass:
         # return all years and regions
         return capacity_dict
 
-    def return_avg_capacity_value(self):
+    def return_avg_capacity_value(self) -> Union[float, int]:
         return self.average_plant_capacity
 
-    def get_world_capacity_sum(self, year: int):
+    def get_world_capacity_sum(self, year: int) -> float:
         return sum(list(self.regional_capacities_agg[year].values()))
 
     def return_plant_capacity(self, year: int = None, plant: str = None):

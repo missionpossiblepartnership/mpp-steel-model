@@ -19,6 +19,7 @@ from mppsteel.config.model_config import (
 from mppsteel.config.mypy_config_settings import MYPY_NUMERICAL_AND_RANGE
 
 from mppsteel.utility.log_utility import get_logger
+from mppsteel.utility.utils import combine_and_order_list_and_range
 
 
 logger = get_logger(__name__)
@@ -361,12 +362,4 @@ def increment_investment_cycle_year(
         elif first_year <= rebase_year <= last_year:
             new_range_obj = range(first_year, last_year_incremented)
         new_range_list.append(new_range_obj)
-    return combine_two_lists_maintain_order(years, new_range_list)
-
-
-def combine_two_lists_maintain_order(years: list, range_list: list):
-    year_dict = {year: year for year in years}
-    range_dict = {range_obj.start: range_obj for range_obj in range_list}
-    combined_dict = {**year_dict, **range_dict}
-    sorted_list = sorted(list(combined_dict.keys()))
-    return [combined_dict[elem] for elem in sorted_list]
+    return combine_and_order_list_and_range(years, new_range_list)

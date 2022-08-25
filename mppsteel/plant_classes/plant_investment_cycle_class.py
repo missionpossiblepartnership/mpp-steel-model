@@ -27,7 +27,15 @@ logger = get_logger(__name__)
 
 
 class PlantInvestmentCycle:
-    """Class for managing the the investment cycles for plants."""
+    """Class for managing the the investment cycles for plants.
+    
+    The Data Structure has four main objects.
+    - plant_names: The name of the plants.
+    - plant_start_years: The start year of the plants.
+    - plant_investment_cycle_length: The length of the investment cycles of each plant.
+    - plant_cycles: The investment cycles of each plant, including main investment years only.
+    - plant_cycles_with_off_cycle: The investment cycles of each plant, including both main investment years and transitional switch years.
+    """
 
     def __init__(self) -> None:
         self.plant_names: List[str] = []

@@ -1,11 +1,13 @@
 """Class for the Plant ID container."""
 
-import random
-import string
 import pandas as pd
-
+from mppsteel.utility.utils import generate_random_string_with_prefix
 
 class PlantIdContainer:
+    """A class to manage the creation and track the existence of Plant IDs.
+    Plant Ids are stored in a list container. 
+    New plant Ids are generated and checked if they exist already in the list container before being added to the list.
+    """
     def __init__(self):
         self.id_container = []
 
@@ -29,7 +31,7 @@ class PlantIdContainer:
     def generate_plant_id(self, add_to_container: bool = False) -> str:
         unmatched = True
         while unmatched:
-            new_id = generate_plant_id()
+            new_id = generate_random_string_with_prefix()
             if new_id not in self.id_container:
                 if add_to_container:
                     self.add_id(new_id)
@@ -48,7 +50,3 @@ class PlantIdContainer:
 
     def add_steel_plant_ids(self, plant_df: pd.DataFrame) -> pd.DataFrame:
         plant_df["plant_id"].apply(lambda x: self.add_id(x))
-
-
-def generate_plant_id(chars: str = string.digits, n: int = 5) -> str:
-    return "MPP" + "".join(random.choice(chars) for _ in range(n))
