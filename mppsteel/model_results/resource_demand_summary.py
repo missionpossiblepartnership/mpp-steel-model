@@ -1,5 +1,6 @@
 """Creates summary of combined dataset for resource usage"""
 
+from typing import Dict, Union
 import pandas as pd
 from copy import deepcopy
 from tqdm import tqdm
@@ -20,7 +21,7 @@ from mppsteel.utility.file_handling_utility import read_pickle_folder, serialize
 
 logger = get_logger(__name__)
 
-RESULTS_METADATA = {
+RESULTS_METADATA: Dict[str, Union[str, Dict[str, Union[str, float, int]]]] = {
     "grid_power": {
         "old_value_column": "electricity_pj",
         "new_value_column": "grid_power_demand_twh",
@@ -71,7 +72,7 @@ RESULTS_METADATA = {
     },
 }
 
-REGION_COLUMN = "region_rmi"
+REGION_COLUMN: str = "region_rmi"
 
 
 def calculate_metric(
@@ -82,6 +83,23 @@ def calculate_metric(
     new_value_column: str,
     conversion_factor: float = 1,
 ) -> pd.DataFrame:
+    """Performas a number of operations on a DataFrame.
+    1) Subsets a DataFrame, 
+    2) Convert a column old_value_column to a new column new_value_column based on the conversion_factor.
+    3) Rename the region column name.
+    4) Groups the final DataFrame.
+
+    Args:
+        production_df (pd.DataFrame): The production resource usage DataFrame.
+        base_columns (list): The base columns that will be used not be altered during the operations.
+        merge_columns (list): The columns that will be used to group the final DataFrame.
+        old_value_column (str): The name of the column to be multipled by the conversion_factor.
+        new_value_column (str): The name of the column to replace old_value_column.
+        conversion_factor (float, optional): A float that will be multiplied by the old_value_column to create a new_value_column. Defaults to 1.
+
+    Returns:
+        pd.DataFrame: The modified DataFrame.
+    """
     # Column manipulation
     all_columns = base_columns + [old_value_column]
 
@@ -98,6 +116,16 @@ def calculate_metric(
 def model_residual_emissions(
     production_emissions: pd.DataFrame, base_columns: list, merge_columns: list
 ) -> pd.DataFrame:
+    """Function that generates a residual emissions column by combining s1_emissions_mt and s2_emissions_mt.
+
+    Args:
+        production_emissions (pd.DataFrame): The production emissions DataFrame.
+        base_columns (list): The base columns that will be used not be altered during the operations.
+        merge_columns (list): The columns that will be used to group the final DataFrame.
+
+    Returns:
+        pd.DataFrame: The modified DataFrame.
+    """
     # Column manipulation
     residual_emissions_columns = ["s1_emissions_mt", "s2_emissions_mt"]
     all_columns = base_columns + residual_emissions_columns
@@ -115,6 +143,19 @@ def model_residual_emissions(
 def model_primary_secondary_materials(
     production_df: pd.DataFrame, base_columns: list, merge_columns: list
 ) -> pd.DataFrame:
+    """Function that generates primary and secondary material related statistics.
+    - primary_plus_secondary_material = crude_steel_mt + scrap_steel_mt (outputted as sum)
+    - scrap_steel_pct = scrap_steel_mt + primary_plus_secondary_material (otuputted as mean)
+    - crude_steel_pct = crude_steel_mt / primary_plus_secondary_material (otuputted as mean)
+
+    Args:
+        production_df (pd.DataFrame): The production resource usage DataFrame.
+        base_columns (list): The base columns that will be used not be altered during the operations.
+        merge_columns (list): The columns that will be used to group the final DataFrame.
+
+    Returns:
+        pd.DataFrame: The modified DataFrame.
+    """
     # Column manipulation
     primary_secondary_materials = ["production", "scrap_mt"]
     all_columns = base_columns + primary_secondary_materials
@@ -157,6 +198,23 @@ def create_demand_summary(
     metadata_columns: list,
     final_metadata_columns: list,
 ) -> pd.DataFrame:
+    """Flow for generating the demand summary.
+    1) Generates results for each resource in results_metadata_dict using production_df
+    2) Generates results for residual_emissions
+    3) Generates results for primary_secondary_materials
+    4) Combines all the results into one DataFrame
+    5) Returns the combined DataFrame.
+
+    Args:
+        production_df (pd.DataFrame): The production resource usage DataFrame.
+        production_emissions (pd.DataFrame): The production emissions DataFrame.
+        results_metadata_dict (dict): A dictionary of resources that will be used to store the demand summary results.
+        metadata_columns (list): The base columns that will be used not be altered during the operations.
+        final_metadata_columns (list): The columns that will be used to group the final DataFrame.
+
+    Returns:
+        pd.DataFrame: A combined demand summary of production summary and emissions summary DataFrames. 
+    """
     dfs = []
     for resource in tqdm(
         results_metadata_dict,
@@ -198,7 +256,7 @@ def create_resource_demand_summary(
     """Production results flow to create the Production resource usage DataFrame and the Production Emissions DataFrame.
 
     Args:
-        scenario_dict (dict): A dictionary with scenarios key value mappings from the current model execution.
+        output_folder_path (dict): The ouput path to store the resource_demand_summary.
         serialize (bool, optional): Flag to only serialize the dict to a pickle file and not return a dict. Defaults to False.
 
     Returns:

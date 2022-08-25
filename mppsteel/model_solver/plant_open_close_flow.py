@@ -63,7 +63,28 @@ def open_real_plants(
     tech_moratorium: bool,
     enforce_constraints: bool,
 ) -> pd.DataFrame:
+    """Open plants based on cost competitiveness of technologies.
 
+    Args:
+        production_demand_gap_analysis (pd.DataFrame): A DataFrame containing the analysis of past state and current state of demand, capacity and trade data.
+        plant_id_container (PlantIdContainer): plant_container (PlantIdContainer): Plant Container class containing a track of plants and their unique IDs.
+        material_container (MaterialUsage): The MaterialUsage Instance containing the material usage state.
+        capacity_container (CapacityContainerClass): The CapacityContainerClass Instance containing the capacity state.
+        capacity_constraint_container (PlantCapacityConstraint): The PlantCapacityConstraint Instance containing the capacity constraint state.
+        tech_choices_container (PlantChoices): The PlantChoices Instance containing the Technology Choices state.
+        lev_cost_df (pd.DataFrame): A levelized cost reference DataFrame.
+        steel_plant_df (pd.DataFrame): The steel plant DataFrame.
+        tech_availability (pd.DataFrame): The technology availability reference.
+        country_df (pd.DataFrame): The Country Metadata DataFrame.
+        business_case_ref (dict): The business cases reference dictionary.
+        year (int): The current model year.
+        regional_scrap (bool): The scenario boolean value that determines whether there is a regional or global scrap constraints.
+        tech_moratorium (bool): The scenario boolean value that determines whether there is a technology moratorium.
+        enforce_constraints (bool): The scenario boolean value that determines if all constraints are enforced.
+
+    Returns:
+        pd.DataFrame: The modified Steel Plant DataFrame.
+    """
     if lev_cost_df.empty:
         lev_cost_df = pd.DataFrame(columns=["year", "region", "technology"])
     levelized_cost_for_regions = (
@@ -178,7 +199,26 @@ def close_real_plants(
     util_min: float,
     regional_scrap: bool,
 ) -> pd.DataFrame:
+    """Closes plants from a Steel Plant DataFrame based on capacity constraint considerations, regional cost competitveness and plant age.
 
+    Args:
+        production_demand_gap_analysis (pd.DataFrame): A DataFrame containing the analysis of past state and current state of demand, capacity and trade data.
+        utilization_container (UtilizationContainerClass): The UtilizationContainerClass Instance containing the utilization state.
+        investment_container (PlantInvestmentCycle): The PlantInvestmentCycle Instance containing the investment cycle state.
+        material_container (MaterialUsage): The MaterialUsage Instance containing the material usage state.
+        capacity_container (CapacityContainerClass): The CapacityContainerClass Instance containing the capacity state.
+        capacity_constraint_container (PlantCapacityConstraint): The PlantCapacityConstraint Instance containing the capacity constraint state.
+        tech_choices_container (PlantChoices): The PlantChoices Instance containing the Technology Choices state.
+        steel_plant_df (pd.DataFrame): The steel plant DataFrame.
+        business_case_ref (dict): The business cases reference dictionary.
+        year (int): The current model year.
+        util_max (float): The maximum capacity utilization that plants are allowed to reach before having to open new plants.
+        util_min (float): The minimum capacity utilization that plants are allowed to reach before having to close existing plants.
+        regional_scrap (bool): The scenario boolean value that determines whether there is a regional or global scrap constraints.
+
+    Returns:
+        pd.DataFrame: The modified Steel Plant DataFrame.
+    """
     investment_dict = investment_container.return_investment_dict()
     plant_start_years = investment_container.plant_start_years
     plant_cycle_lengths = investment_container.return_cycle_lengths()
@@ -352,6 +392,7 @@ def open_close_plants(
         variable_costs_df (pd.DataFrame): The variable costs reference DataFrame.
         capex_dict (dict): The capex reference dictionary.
         capacity_container (CapacityContainerClass): The CapacityContainerClass Instance containing the capacity state.
+        capacity_constraint_container (PlantCapacityConstraint): The PlantCapacityConstraint Instance containing the capacity constraint state.
         utilization_container (UtilizationContainerClass): The UtilizationContainerClass Instance containing the utilization state.
         material_container (MaterialUsage): The MaterialUsage Instance containing the material usage state.
         tech_choices_container (PlantChoices): The PlantChoices Instance containing the Technology Choices state.
