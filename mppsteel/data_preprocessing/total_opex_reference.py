@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 from mppsteel.config.model_config import MODEL_YEAR_RANGE
 from mppsteel.config.reference_lists import TECHNOLOGIES_TO_DROP
-from mppsteel.model_tests.df_tests import test_negative_df_values
+from mppsteel.utility.df_tests import test_negative_df_values
 
 from mppsteel.config.model_config import MODEL_YEAR_RANGE, PKL_DATA_FORMATTED
 

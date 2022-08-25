@@ -13,7 +13,7 @@ from mppsteel.config.model_config import (
 )
 from mppsteel.config.reference_lists import SWITCH_DICT
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.model_tests.df_tests import test_negative_df_values
+from mppsteel.utility.df_tests import test_negative_df_values
 
 logger = get_logger(__name__)
 
