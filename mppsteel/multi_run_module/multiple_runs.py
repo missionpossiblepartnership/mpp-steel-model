@@ -4,7 +4,7 @@ import math
 import shutil
 
 import multiprocessing as mp
-from typing import Dict, Mapping
+from typing import Dict, Mapping, MutableMapping
 
 import pandas as pd
 import modin.pandas as mpd
@@ -51,7 +51,19 @@ def make_multiple_model_runs(
     number_of_runs: int = DEFAULT_NUMBER_OF_RUNS,
     remove_run_folders: bool = False,
 ) -> None:
+    """Function used to make multiple model runs of a single scenario. 
+    Splits multiple model into chunks of predetermined length and passes list to multiprocessing function.
+    The chunk lenght is determined by the number_of_runs variable and the number of cpu's.
 
+    The function runs all of the model run's store the files to pkl, and then aggregates all of the runs 
+    (deleting the singular files if requested with remove_run_folders, and saves the file to pkl.
+
+
+    Args:
+        scenario_dict (MYPY_SCENARIO_TYPE): A mapping object with scenario settings.
+        number_of_runs (int, optional): The number of times to run the scenario. Defaults to DEFAULT_NUMBER_OF_RUNS.
+        remove_run_folders (bool, optional): Flag to determine whether tho remove the singular files once they have run. Defaults to False.
+    """
     scenario_name = str(scenario_dict["scenario_name"])
     logger.info(f"Generating the scenario data for {scenario_name}")
     pkl_output_folder = pkl_folder_filepath_creation(scenario_name, create_folder=True)
@@ -73,6 +85,13 @@ def multiprocessing_scenarios_multiple_scenarios_multiple_runs(
     number_of_runs: int,
     remove_run_folders: bool = False,
 ) -> None:
+    """Function used to make multiple model runs of multiple scenarios by passing each scenario to make_multiple_model_runs.
+
+    Args:
+        scenario_dict (MYPY_SCENARIO_TYPE): A mapping object with all the scenario settings.
+        number_of_runs (int, optional): The number of times to run the scenario. Defaults to DEFAULT_NUMBER_OF_RUNS.
+        remove_run_folders (bool, optional): Flag to determine whether tho remove the singular files once they have run. Defaults to False.
+    """
     for scenario in scenario_options:
         make_multiple_model_runs(
             scenario_dict=scenario_options[scenario],
@@ -88,6 +107,14 @@ def join_scenario_data(
     timestamp: str = "",
     final_outputs_only: bool = True,
 ) -> None:
+    """Joins the scenario data together from multiple scenario single run pkl data, saving the ouput as csv and generating summary csv files and graphs.
+
+    Args:
+        scenario_options (list): The list of scenarios to join together.
+        new_folder (bool, optional): Flag to determine whether output files should be saved in a new folder. Defaults to True.
+        timestamp (str, optional): A timestamp for the new folder name. Defaults to "".
+        final_outputs_only (bool, optional): Flag to determine whether intermdiate files should also be joined together and saved as csv. Defaults to True.
+    """
     logger.info(f"Joining the Following Scenario Data {scenario_options}")
     combined_output_pkl_folder = f"{PKL_FOLDER}/{COMBINED_OUTPUT_FOLDER_NAME}"
     create_folder_if_nonexist(combined_output_pkl_folder)
@@ -140,6 +167,17 @@ def aggregate_results(
     number_of_runs: int,
     remove_run_folders: bool = False,
 ) -> dict:
+    """A function that aggregates multiple model run pkl data together as a dictionary.
+
+    Args:
+        scenario_name (str): The name of a scenario.
+        run_range (range): A range object representing the number of runs in the model.
+        number_of_runs (int): The number of runs to aggregate.
+        remove_run_folders (bool, optional): Flag to determine whether tho remove the singular files once they have run. Defaults to False.
+
+    Returns:
+        dict: A dictionary containing each filename and the aggregated data from each model run.
+    """
     generic_files_to_path_dict = generate_files_to_path_dict(
         [
             scenario_name,
@@ -185,6 +223,14 @@ def aggregate_multi_run_scenarios(
     new_folder: bool = True,
     timestamp: str = "",
 ) -> None:
+    """Aggregates pkl data from multiple runs and multiple scenarios into a single file and saves combined file as a pkl.
+
+    Args:
+        scenario_options (MYPY_SCENARIO_TYPE): A mapping object with all the scenario settings.
+        single_scenario (bool, optional): A boolean flag to determine if only one scenario in scenario_options should be chosen. Defaults to False.
+        new_folder (bool, optional): Flag to determine whether output files should be saved in a new folder. Defaults to True.
+        timestamp (str, optional): A timestamp for the new folder name. Defaults to "".
+    """
     combined_pkl_path = pkl_folder_filepath_creation("combined", create_folder=True)
     output_save_path = output_folder_path_creation(new_folder, timestamp)
     if single_scenario:
@@ -206,7 +252,7 @@ def aggregate_multi_run_scenarios(
         logger.info(f"Running through summary flow for {filename}")
         filename_dict: Dict[str, pd.DataFrame] = {}
         for scenario in tqdm(scenario_set, total=len(scenario_set), desc="Scenario loop"):
-            assign_to_dict(filename_dict, filename, scenario)
+            assign_to_mapping_container(filename_dict, filename, scenario)
         logger.info(f"Creating summary data for {filename}")
         results_dict: MYPY_DICT_STR_LIST = {file: [] for file in MULTI_RUN_MULTI_SCENARIO_SUMMARY_FILENAMES}
         scenarios_present = filename_dict.keys()
@@ -228,6 +274,17 @@ def aggregate_multi_run_scenarios(
 def add_model_run_metadata_columns(
     df: pd.DataFrame, scenario_name: str, order_of_run: int, total_runs: int
 ) -> pd.DataFrame:
+    """Adds metadata as columns to summary DataFrame of multiple run models.
+
+    Args:
+        df (pd.DataFrame): The initial summary DataFrame.
+        scenario_name (str): The name of the scenario.
+        order_of_run (int): The order of the model run.
+        total_runs (int): The total number of model runs.
+
+    Returns:
+        pd.DataFrame: The modified DataFrame with the new columns.
+    """
     df_c = df.copy()
     if "scenario" not in df_c.columns:
         df_c["scenario"] = scenario_name
@@ -244,15 +301,31 @@ def store_result_to_container(
     model_run: int,
     number_of_runs: int,
 ) -> None:
+    """Reads a DataFrame from a pkl file. Adds metadata columns to to DataFrame. Adds the modified DataFrame to a dictionary list value.
+
+    Args:
+        run_container (Mapping): A container with filename as key, List[DataFrame] as value.
+        scenario_name (str): The name of the scenario.
+        filename (str): The name of the file to load from pkl and to save as the container key.
+        pkl_path (str): The pkl path whether the pkl files are stored.
+        model_run (int): The order of the model run.
+        number_of_runs (int): The total number of model runs.
+    """
     df = read_pickle_folder(pkl_path, filename, "df")
     df = add_model_run_metadata_columns(df, scenario_name, model_run, number_of_runs)
     run_container[filename].append(df)
 
 
 def store_run_container_to_pkl(
-    run_container: Mapping,
+    run_container: MutableMapping,
     pkl_path: str,
 ) -> None:
+    """Takes a container object and serializes its values as a Pandas DataFrame.
+
+    Args:
+        run_container (Mapping): A container with filename as key, List[modin DataFrame] as value.
+        pkl_path (str): The pkl path where the concatenated DataFrames should be stored.
+    """
     for filename in run_container:
         df = mpd.concat(run_container[filename]).reset_index(drop=True)
         serialize_file(df._to_pandas(), pkl_path, filename)
@@ -261,6 +334,15 @@ def store_run_container_to_pkl(
 def pkl_folder_filepath_creation(
     scenario_name: str, create_folder: bool = False
 ) -> str:
+    """Creates a pkl folder filepath to be used for multiple run outputs.
+
+    Args:
+        scenario_name (str): The name of the scenario to create the filepath.
+        create_folder (bool, optional): Flag to determine whether a new folder at the generated path should be created. Defaults to False.
+
+    Returns:
+        str: The generated folder path.
+    """
     pkl_output_folder = (
         f"{PKL_FOLDER}/{MULTIPLE_RUN_SCENARIO_FOLDER_NAME}/{scenario_name}"
     )
@@ -270,8 +352,18 @@ def pkl_folder_filepath_creation(
 
 
 def output_folder_path_creation(
-    dated_output_folder: bool = True, timestamp: str = "", single_scenario: str = ""
+    new_folder: bool = True, timestamp: str = "", single_scenario: str = ""
 ) -> str:
+    """Creates an output folder path where multiple run outputs will be saved.
+
+    Args:
+        new_folder (bool, optional): Flag to determine whether output files should be saved in a new folder. Defaults to True.
+        timestamp (str, optional): A timestamp for the new folder name. Defaults to "".
+        single_scenario (bool, optional): A boolean flag to determine if only one scenario in scenario_options should be chosen. Defaults to False.
+
+    Returns:
+        str: The output folder path.
+    """
     output_save_path = OUTPUT_FOLDER
     output_folder_name = (
         f"{MULTIPLE_RUN_SCENARIO_FOLDER_NAME} {single_scenario} {timestamp}"
@@ -279,16 +371,32 @@ def output_folder_path_creation(
         else f"{MULTIPLE_RUN_SCENARIO_FOLDER_NAME} {timestamp}"
     )
     output_folder_filepath = "/"
-    if dated_output_folder:
+    if new_folder:
         output_folder_filepath = f"{OUTPUT_FOLDER}/{output_folder_name}"
         create_folder_if_nonexist(output_folder_filepath)
         output_save_path = output_folder_filepath
     return output_save_path
 
 
-def assign_to_dict(assigning_dict, filename: str, scenario: str) -> None:
-    assigning_dict[scenario] = read_pickle_folder(pkl_folder_filepath_creation(scenario), filename, "df")
+def assign_to_mapping_container(assigning_dict: MutableMapping, filename: str, scenario: str) -> None:
+    """Loads a file from a pkl location and assigns it as a value of a Mapping object with a key of scenario.
+
+    Args:
+        assigning_dict (MutableMapping): The Mapping to store the loaded pkl files in.
+        filename (str): The name of the file to load.
+        scenario (str): The name of the scenario.
+    """
+    assigning_dict[scenario] = read_pickle_folder(
+        pkl_folder_filepath_creation(scenario), filename, "df")
 
 
 def return_single_scenario(scenario_options: Mapping) -> str:
+    """Return the first key in a mapping object.
+
+    Args:
+        scenario_options (Mapping): The mapping object.
+
+    Returns:
+        str: The str representation of the first mapping key.
+    """
     return list(scenario_options.keys())[0]
