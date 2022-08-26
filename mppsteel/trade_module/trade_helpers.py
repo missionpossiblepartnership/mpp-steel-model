@@ -27,7 +27,16 @@ class TradeStatus(Enum):
     IMPORTER = "Importer"
 
 
-def return_trade_status(cos_close_to_mean: bool, trade_balance: float):
+def return_trade_status(cos_close_to_mean: bool, trade_balance: float) -> TradeStatus:
+    """Returns the status type of a region depending on its characteristics passed to the function.
+
+    Args:
+        cos_close_to_mean (bool): Flag determining whether the region's cost of steelmaking is close the mean.
+        trade_balance (float): The pre-existing trade balance for a region.
+
+    Returns:
+        TradeStatus: An Enum object representing the region's initial trade status.
+    """
     has_overproduction = trade_balance > 0
     if not cos_close_to_mean and has_overproduction:
         return TradeStatus.DOMESTIC
@@ -54,10 +63,10 @@ def check_relative_production_cost(
 
     def apply_upper_boundary(
         row: pd.DataFrame, mean_value: float, pct_boundary_dict: dict
-    ):
+    ) -> float:
         return mean_value * (1 + (pct_boundary_dict[row["rmi_region"]]))
 
-    def close_to_mean_test(row: pd.DataFrame):
+    def close_to_mean_test(row: pd.DataFrame) -> bool:
         return row["cost_of_steelmaking"] < row["upper_boundary"]
 
     df_c = cos_df.copy()
@@ -198,6 +207,16 @@ def calculate_cos(
 def get_initial_utilization(
     utilization_container: UtilizationContainerClass, year: int, region: str
 ) -> float:
+    """Gets the initial utilization value for a particular region in a year based on the prior years value.
+
+    Args:
+        utilization_container (UtilizationContainerClass): The instance of UtilizationContainerClass containing a record of all utilization values.
+        year (int): The year to get utilization values for.
+        region (str): The region to get utilization values for.
+
+    Returns:
+        float: The utilization value.
+    """
     return (
         utilization_container.get_utilization_values(year, region)
         if year == MODEL_YEAR_START
@@ -228,6 +247,16 @@ def modify_production_demand_dict(
 def utilization_boundary(
     utilization_figure: float, util_min: float, util_max: float
 ) -> float:
+    """Sets the boundary for a variable based on a minimum value and a maxiumum value.
+
+    Args:
+        utilization_figure (float): The initial utilizatoin figure.
+        util_min (float): The minimum utilization value.
+        util_max (float): The maximum utilization value.
+
+    Returns:
+        float: The modified utilization value.
+    """
     return max(min(utilization_figure, util_max), util_min)
 
 
@@ -240,6 +269,16 @@ def merge_trade_status_col_to_rpc_df(
     trade_status_container: dict,
     initial_overproduction_container: dict,
 ) -> pd.DataFrame:
+    """Adds an initial_overproduction column and an initial_trade_status column to the DataFrame.
+
+    Args:
+        rpc_df (pd.DataFrame): The initial regional production cost DataFrame.
+        trade_status_container (dict): Dictionary containing the trade status of each region.
+        initial_overproduction_container (dict): Dictionary containing the initial overproduction of each region.
+
+    Returns:
+        pd.DataFrame: The modified DataFrame with the new columns.
+    """
     rpc_df.reset_index(inplace=True)
     rpc_df["initial_overproduction"] = rpc_df[MAIN_REGIONAL_SCHEMA].apply(
         lambda region: initial_overproduction_container[region]
@@ -259,6 +298,20 @@ def create_empty_market_dict(
     initial_balance: float,
     avg_plant_capacity_value: float,
 ) -> dict:
+    """Generates a base dictionary that holds data/metadata for each region for the trade module.
+
+    Args:
+        year (int): The current year of the model.
+        region (str): The region to optimise trade.
+        capacity (float): The capacity of the region selected.
+        demand (float): The combined demand of the region selected.
+        initial_utilization (float): The initial utilization of the region selected.
+        initial_balance (float): The initial balance of the region selected.
+        avg_plant_capacity_value (float): The average capacity of a plant.
+
+    Returns:
+        dict: The data/metatdata dictionary for a specific region.
+    """
     return {
         "year": year,
         "region": region,

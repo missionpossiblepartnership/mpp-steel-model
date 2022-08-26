@@ -68,7 +68,7 @@ def trade_flow(
     3) Engage in interregional trade until there is no imbalance remaining.
 
     Args:
-        material_container (MaterialUsage): The MaterialUsage Instance containing the material usage state.
+        market_container (MarketContainerClass): The MaterialUsage Instance containing the material usage state.
         utilization_container (UtilizationContainerClass): The UtilizationContainerClass Instance containing the utilization state.
         capacity_container (CapacityContainerClass): The CapacityContainerClass Instance containing the capacity state.
         steel_demand_df (pd.DataFrame): The steel demand DataFrame.
