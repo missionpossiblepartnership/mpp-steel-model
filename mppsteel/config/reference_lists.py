@@ -533,3 +533,12 @@ FINAL_RESULT_PKL_FILES = [
     "cost_of_steelmaking",
     "levelized_cost_results",
 ]
+
+ITERATION_FILES_TO_AGGREGATE = [
+    "production_resource_usage",
+    "production_emissions",
+    "investment_results",
+    "cost_of_steelmaking",
+    "calculated_emissivity_combined",
+    "tco_summary_data",
+]

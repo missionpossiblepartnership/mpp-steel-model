@@ -67,7 +67,7 @@ def get_pe_model_data(model_name: str) -> pd.DataFrame:
 
 
 @timer_func
-def load_data(serialize: bool = False) -> dict:
+def load_import_data(serialize: bool = False) -> dict:
     """Loads all the data you specify when the function is called.
 
     Args:

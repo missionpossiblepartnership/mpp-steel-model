@@ -59,7 +59,7 @@ parser.add_argument(
     "--data_import",
     action="store_true",
     help="Runs the data import scripts scripts directly",
-)  # data_import_refresh
+)  # load_import_data
 parser.add_argument(
     "-d",
     "--presolver",
@@ -89,7 +89,7 @@ parser.add_argument(
     "--levelized_cost",
     action="store_true",
     help="Runs the levelized cost script directly",
-)  # lcost_flow
+)  # generate_levelized_cost_results
 parser.add_argument(
     "-t",
     "--results_and_output",
@@ -103,25 +103,25 @@ parser.add_argument(
     "--total_opex",
     action="store_true",
     help="Runs the total_opex_calculations script grouping",
-)  # generate_minimodels
+)  # total_opex_calculations
 parser.add_argument(
     "-w",
     "--production",
     action="store_true",
     help="Runs the production script directly",
-)  # production_flow
+)  # production_results_flow
 parser.add_argument(
     "-e",
     "--investment",
     action="store_true",
     help="Runs the investments script directly",
-)  # investment_flow
+)  # investment_results
 parser.add_argument(
     "-u",
     "--cos",
     action="store_true",
     help="Runs the cost of steelmaking script directly",
-)  # cos_flow
+)  # generate_cost_of_steelmaking_results
 parser.add_argument(
     "-k",
     "--metaresults",
@@ -133,16 +133,16 @@ parser.add_argument(
     "--join_final_data",
     action="store_true",
     help="Joins final data sets from different scenarios",
-)  # tco_and_abatement_calculations
+)  # model_presolver
 parser.add_argument(
     "-y", "--tco", action="store_true", help="Runs the tco script only"
-)  # tco_switch_reference
+)  # tco_presolver_reference
 parser.add_argument(
     "-z", "--abatement", action="store_true", help="Runs the abatament script only"
-)  # abatement_switch_reference
+)  # abatement_presolver_reference
 parser.add_argument(
     "-j", "--emissivity", action="store_true", help="Runs the emissivity script only"
-)  # get_emissivity
+)  # generate_emissions_flow
 parser.add_argument(
     "--investment_cycles",
     action="store_true",

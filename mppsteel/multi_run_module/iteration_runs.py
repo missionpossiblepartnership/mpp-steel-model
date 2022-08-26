@@ -3,7 +3,6 @@
 import itertools
 import os
 import re
-from typing import Union
 
 import pandas as pd
 import modin.pandas as mpd
@@ -17,10 +16,11 @@ from mppsteel.config.model_config import (
 from mppsteel.config.mypy_config_settings import MYPY_SCENARIO_SETTINGS_SEQUENCE, MYPY_SCENARIO_TYPE
 from mppsteel.config.reference_lists import PKL_FILE_RESULTS_REFERENCE
 from mppsteel.utility.dataframe_utility import change_col_type, move_elements_to_front_of_list
+from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.utils import reverse_dict_with_list_elements
 from mppsteel.utility.file_handling_utility import (
     create_folder_if_nonexist,
-    read_pickle_folder,
+    read_pickle_folder
 )
 
 from mppsteel.utility.log_utility import get_logger
@@ -205,7 +205,7 @@ def serialize_iterations(
         logger.info(f"Writing complete for {filename}")
     return None
 
-
+@timer_func
 def combine_files_iteration_run(
     scenarios_to_iterate: list,
     filenames: list,

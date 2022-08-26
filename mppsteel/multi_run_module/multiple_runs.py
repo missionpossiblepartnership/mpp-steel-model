@@ -4,7 +4,7 @@ import math
 import shutil
 
 import multiprocessing as mp
-from typing import Dict, Mapping, MutableMapping
+from typing import Dict, MutableMapping
 
 import pandas as pd
 import modin.pandas as mpd
@@ -23,7 +23,11 @@ from mppsteel.config.reference_lists import (
     FINAL_RESULT_PKL_FILES,
     INTERMEDIATE_RESULT_PKL_FILES,
 )
-from mppsteel.config.mypy_config_settings import MYPY_DICT_STR_LIST, MYPY_SCENARIO_TYPE, MYPY_SCENARIO_TYPE_DICT
+from mppsteel.config.mypy_config_settings import (
+    MYPY_DICT_STR_LIST,
+    MYPY_SCENARIO_TYPE,
+    MYPY_SCENARIO_TYPE_DICT
+)
 from mppsteel.multi_run_module.multiprocessing_functions import multi_run_function
 from mppsteel.model_results.multiple_model_run_summary import summarise_combined_data
 from mppsteel.model_graphs.graph_production import create_combined_scenario_graphs
@@ -216,7 +220,7 @@ def aggregate_results(
 
     return run_container
 
-
+@timer_func
 def aggregate_multi_run_scenarios(
     scenario_options: MYPY_SCENARIO_TYPE_DICT,
     single_scenario: bool = False,
@@ -294,7 +298,7 @@ def add_model_run_metadata_columns(
 
 
 def store_result_to_container(
-    run_container: Mapping,
+    run_container: MutableMapping,
     scenario_name: str,
     filename: str,
     pkl_path: str,
@@ -304,7 +308,7 @@ def store_result_to_container(
     """Reads a DataFrame from a pkl file. Adds metadata columns to to DataFrame. Adds the modified DataFrame to a dictionary list value.
 
     Args:
-        run_container (Mapping): A container with filename as key, List[DataFrame] as value.
+        run_container (MutableMapping): A container with filename as key, List[DataFrame] as value.
         scenario_name (str): The name of the scenario.
         filename (str): The name of the file to load from pkl and to save as the container key.
         pkl_path (str): The pkl path whether the pkl files are stored.
@@ -323,7 +327,7 @@ def store_run_container_to_pkl(
     """Takes a container object and serializes its values as a Pandas DataFrame.
 
     Args:
-        run_container (Mapping): A container with filename as key, List[modin DataFrame] as value.
+        run_container (MutableMapping): A container with filename as key, List[modin DataFrame] as value.
         pkl_path (str): The pkl path where the concatenated DataFrames should be stored.
     """
     for filename in run_container:
@@ -390,11 +394,11 @@ def assign_to_mapping_container(assigning_dict: MutableMapping, filename: str, s
         pkl_folder_filepath_creation(scenario), filename, "df")
 
 
-def return_single_scenario(scenario_options: Mapping) -> str:
+def return_single_scenario(scenario_options: MutableMapping) -> str:
     """Return the first key in a mapping object.
 
     Args:
-        scenario_options (Mapping): The mapping object.
+        scenario_options (MutableMapping): The mapping object.
 
     Returns:
         str: The str representation of the first mapping key.
