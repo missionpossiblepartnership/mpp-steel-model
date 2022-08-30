@@ -14,7 +14,7 @@ from mppsteel.config.model_config import (
     UNDERSCORE_NUMBER_REGEX,
 )
 from mppsteel.config.mypy_config_settings import MYPY_SCENARIO_SETTINGS_SEQUENCE, MYPY_SCENARIO_TYPE
-from mppsteel.config.reference_lists import PKL_FILE_RESULTS_REFERENCE
+from mppsteel.config.reference_lists import PKL_FILE_RESULTS_REFERENCE, SCENARIO_SETTINGS_TO_ITERATE
 from mppsteel.utility.dataframe_utility import change_col_type, move_elements_to_front_of_list
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.utils import reverse_dict_with_list_elements
@@ -28,49 +28,43 @@ from mppsteel.utility.log_utility import get_logger
 logger = get_logger(__name__)
 
 
-def make_scenario_iterations(base_scenario: MYPY_SCENARIO_TYPE, scenario_settings: MYPY_SCENARIO_SETTINGS_SEQUENCE) -> list:
+def make_scenario_iterations(
+    base_scenario: MYPY_SCENARIO_TYPE, scenario_settings: MYPY_SCENARIO_SETTINGS_SEQUENCE, scenario_setting_to_iterate: list
+) -> list:
     """Creates a list of dictionary scenarios based on a core base scenario dict iterations of scenario settings.
 
     Args:
-        base_scenario (dict): The base scenario dictionary that the iterations will be based on.
-        scenario_settings (dict): The scenario settings that contain the iterations for each specific scenario parameter.
+        base_scenario (MYPY_SCENARIO_TYPE): The base scenario dictionary that the iterations will be based on.
+        scenario_settings (MYPY_SCENARIO_SETTINGS_SEQUENCE): The scenario settings that contain the iterations for each specific scenario parameter.
+        scenario_setting_to_iterate (list): The scenario settings that you will iterate through the values for.
 
     Returns:
         list: A list of scenario dictionary objects.
     """
     scenario_list = []
-    product_iteration = list(
-        itertools.product(
-            scenario_settings["carbon_tax_scenario"],
-            scenario_settings["hydrogen_cost_scenario"],
-            scenario_settings["electricity_cost_scenario"],
-            scenario_settings["steel_demand_scenario"],
-            scenario_settings["grid_scenario"],
-        )
-    )
+    scenario_iterations = [scenario_settings[scenario_setting] for scenario_setting in scenario_setting_to_iterate]
 
-    for iteration, (
-        carbon_cost_scenario,
-        hydrogen_cost_scenario,
-        electricity_cost_scenario,
-        steel_demand_scenario,
-        grid_scenario,
-    ) in enumerate(product_iteration):
+    product_iteration = list(itertools.product(scenario_iterations)) if len(scenario_setting_to_iterate) > 1 else scenario_settings[scenario_setting_to_iterate[0]]
+
+    for iteration, list_iter in enumerate(product_iteration):
+
         new_scenario_dict = dict(base_scenario)
-        new_scenario_dict[
-            "scenario_name"
-        ] = f"{base_scenario['scenario_name']}_{iteration + 1}"
-        new_scenario_dict["carbon_tax_scenario"] = carbon_cost_scenario
-        new_scenario_dict["electricity_cost_scenario"] = electricity_cost_scenario
-        new_scenario_dict["hydrogen_cost_scenario"] = hydrogen_cost_scenario
-        new_scenario_dict["steel_demand_scenario"] = steel_demand_scenario
-        new_scenario_dict["grid_scenario"] = grid_scenario
+        new_scenario_dict["scenario_name"] = f"{base_scenario['scenario_name']}_{iteration + 1}"
+
+        if isinstance(list_iter, str):
+            new_scenario_dict[scenario_setting_to_iterate[0]] = list_iter
+
+        elif isinstance(list_iter, list):
+            for scenario_setting, val in zip(scenario_setting_to_iterate, list_iter):
+                new_scenario_dict[scenario_setting] = val
+
         scenario_list.append(new_scenario_dict)
+
     return scenario_list
 
 
 def generate_scenario_iterations_reference(
-    scenarios_to_iterate: list, scenario_options: dict, scenario_settings: dict
+    scenarios_to_iterate: list, scenario_options: dict, scenario_settings: dict, scenario_setting_to_iterate: list
 ) -> pd.DataFrame:
     """Creates a DataFrame of all the scenario iterations for a list of scenarios to iterate.
 
@@ -78,6 +72,7 @@ def generate_scenario_iterations_reference(
         scenarios_to_iterate (list): The list of scenarios to to create iterations from.
         scenario_options (dict): Dictionary of all the possible scenario options.
         scenario_settings (dict): The scenario settings that contain the iterations for each specific scenario parameter.
+        scenario_setting_to_iterate (list): The scenario settings that you will iterate through the values for.
 
     Returns:
         pd.DataFrame: A table containing all scenario iterations.
@@ -86,7 +81,7 @@ def generate_scenario_iterations_reference(
 
     for scenario in scenarios_to_iterate:
         scenario_list = make_scenario_iterations(
-            scenario_options[scenario], scenario_settings
+            scenario_options[scenario], scenario_settings, scenario_setting_to_iterate
         )
         df_list.append(pd.DataFrame(scenario_list))
 

@@ -542,3 +542,11 @@ ITERATION_FILES_TO_AGGREGATE = [
     "calculated_emissivity_combined",
     "tco_summary_data",
 ]
+
+SCENARIO_SETTINGS_TO_ITERATE =[
+    "carbon_tax_scenario",
+    "hydrogen_cost_scenario",
+    "electricity_cost_scenario",
+    "steel_demand_scenario",
+    "grid_scenario"
+]

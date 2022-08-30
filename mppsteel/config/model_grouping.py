@@ -1,7 +1,7 @@
 """Model flow functions for the main script"""
 
 import math
-from typing import Dict, List
+from typing import Any, Dict, List, MutableMapping, Union
 from datetime import datetime
 from mppsteel.multi_run_module.iteration_runs import (
     combine_files_iteration_run,
@@ -15,6 +15,7 @@ from mppsteel.utility.utils import (
     get_currency_rate
 )
 from mppsteel.utility.file_handling_utility import (
+    generate_files_to_path_dict,
     pickle_to_csv,
     create_folder_if_nonexist,
     get_scenario_pkl_path,
@@ -72,7 +73,7 @@ from mppsteel.config.model_config import (
     OUTPUT_FOLDER
 )
 from mppsteel.config.model_scenarios import SCENARIO_OPTIONS, SCENARIO_SETTINGS
-from mppsteel.config.reference_lists import INTERMEDIATE_RESULT_PKL_FILES, FINAL_RESULT_PKL_FILES
+from mppsteel.config.reference_lists import INTERMEDIATE_RESULT_PKL_FILES, FINAL_RESULT_PKL_FILES, SCENARIO_SETTINGS_TO_ITERATE
 from mppsteel.config.mypy_config_settings import (
     MYPY_PKL_PATH_OPTIONAL, 
     MYPY_SCENARIO_ENTRY_TYPE, 
@@ -418,6 +419,34 @@ def half_model_run(
     )
 
 
+def core_run_function(
+    scenario_dict: MutableMapping[str, Any], model_run: str, pkl_paths: Union[dict, None] = None
+) -> None:
+    """Function to run the section of the model that runs multiple times.
+
+    Args:
+        scenario_dict (MutableMapping): The scenario to run.
+        model_run (str): The number of the scenario run.
+        pkl_paths (Union[dict, None], optional): The path where the multiple runs will be stored. Defaults to None.
+    """
+    # Create folders where the multiple runs will be saved.
+    generate_files_to_path_dict(
+        scenarios=[
+            scenario_dict["scenario_name"],
+        ],
+        pkl_paths=pkl_paths,
+        model_run=model_run,
+        create_path=True,
+    )
+    main_solver_flow(
+        scenario_dict=scenario_dict,
+        pkl_paths=pkl_paths,
+        serialize=True,
+        model_run=model_run,
+    )
+    model_results_phase(scenario_dict, pkl_paths=pkl_paths, model_run=model_run)
+
+
 # MULTI RUN / MULTI SCENARIO FUNCTIONS
 def full_multiple_run_flow(
     scenario_name: str, main_scenario_runs: List[str], timestamp: str
@@ -452,6 +481,7 @@ def multi_run_full_function(
     data_import_and_preprocessing_refresh(scenario_dict=scenario_dict)
     data_preprocessing_scenarios(scenario_dict=scenario_dict)
     make_multiple_model_runs(
+        core_run_function,
         scenario_dict=scenario_dict,
         number_of_runs=number_of_runs,
         remove_run_folders=False,
@@ -472,6 +502,7 @@ def multi_run_half_function(
         f"Running half-model {number_of_runs} times for {scenario_name_multi_run_half} scenario"
     )
     make_multiple_model_runs(
+        core_run_function,
         scenario_dict=scenario_dict,
         number_of_runs=number_of_runs,
         remove_run_folders=True,
@@ -502,6 +533,7 @@ def multi_run_multi_scenario(
         preprocessing_function=data_preprocessing_scenarios,
     )
     multiprocessing_scenarios_multiple_scenarios_multiple_runs(
+        core_run_function,
         scenario_options=scenario_options,
         number_of_runs=number_of_runs,
         remove_run_folders=True,
@@ -515,7 +547,7 @@ def multi_run_multi_scenario(
 
 
 def full_model_iteration_run(
-    batch_iteration_scenarios: list, files_to_aggregate: list, timestamp: str
+    batch_iteration_scenarios: list, files_to_aggregate: list, scenario_setting_to_iterate: list, timestamp: str
 ) -> None:
     logger.info(f"Running model iterations for {batch_iteration_scenarios}")
     output_iteration_path = f"{OUTPUT_FOLDER}/iteration_run {timestamp}"
@@ -525,7 +557,7 @@ def full_model_iteration_run(
         ]
     )
     scenario_iteration_reference = generate_scenario_iterations_reference(
-        batch_iteration_scenarios, SCENARIO_OPTIONS, SCENARIO_SETTINGS
+        batch_iteration_scenarios, SCENARIO_OPTIONS, SCENARIO_SETTINGS, scenario_setting_to_iterate
     )
     scenario_iteration_reference.to_csv(
         f"{output_iteration_path}/scenario_iteration_reference.csv", index=False
@@ -533,7 +565,7 @@ def full_model_iteration_run(
     for base_scenario in batch_iteration_scenarios:
         create_scenario_paths(base_scenario)
         scenario_list = make_scenario_iterations(
-            SCENARIO_OPTIONS[base_scenario], SCENARIO_SETTINGS
+            SCENARIO_OPTIONS[base_scenario], SCENARIO_SETTINGS, scenario_setting_to_iterate
         )
         logger.info(f"Running {len(scenario_list)} iterations for {base_scenario}")
         data_import_and_preprocessing_refresh(scenario_list[0])

@@ -107,10 +107,11 @@ def return_best_tech(
             usd_to_eur_rate,
         )
         for technology in TECH_REFERENCE_LIST:
-            current_tco_value = tco_ref_data.loc[year, country_code, technology]["tco"]
-            tco_ref_data.loc[(year, country_code, technology), "tco"] = (
-                current_tco_value - discounted_green_premium_values[technology]
-            )
+            for tco_col in ["tco_regular_capex", "tco_gf_capex"]:
+                current_tco_value = tco_ref_data.loc[(year, country_code, technology), tco_col]
+                tco_ref_data.loc[(year, country_code, technology), tco_col] = (
+                    current_tco_value - discounted_green_premium_values[technology]
+                )
 
     if not base_tech:
         raise ValueError(

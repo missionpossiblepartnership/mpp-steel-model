@@ -1,15 +1,9 @@
 """Script containing functions that include multiprocessing"""
 
 import multiprocessing as mp
-import time
-from typing import Any, Callable, Iterable, Mapping, MutableMapping, Sized, Union, Sequence
-from mppsteel.config.mypy_config_settings import MYPY_SCENARIO_TYPE, MYPY_SCENARIO_TYPE_DICT
 
-
-from mppsteel.model_solver.solver_flow import main_solver_flow
-from mppsteel.config.model_grouping import model_results_phase
-from mppsteel.utility.file_handling_utility import generate_files_to_path_dict
-
+from typing import Any, Callable, MutableMapping, Sized, Sequence
+from mppsteel.config.mypy_config_settings import MYPY_SCENARIO_TYPE_DICT
 from mppsteel.utility.log_utility import get_logger
 
 logger = get_logger(__name__)
@@ -87,33 +81,6 @@ def multiprocessing_scenarios_preprocessing(
     pool.close()
     pool.join()
 
-def core_run_function(
-    scenario_dict: MutableMapping[str, Any], model_run: str, pkl_paths: Union[dict, None] = None
-) -> None:
-    """Function to run the section of the model that runs multiple times.
-
-    Args:
-        scenario_dict (MutableMapping): The scenario to run.
-        model_run (str): The number of the scenario run.
-        pkl_paths (Union[dict, None], optional): The path where the multiple runs will be stored. Defaults to None.
-    """
-    # Create folders where the multiple runs will be saved.
-    generate_files_to_path_dict(
-        scenarios=[
-            scenario_dict["scenario_name"],
-        ],
-        pkl_paths=pkl_paths,
-        model_run=model_run,
-        create_path=True,
-    )
-    main_solver_flow(
-        scenario_dict=scenario_dict,
-        pkl_paths=pkl_paths,
-        serialize=True,
-        model_run=model_run,
-    )
-    model_results_phase(scenario_dict, pkl_paths=pkl_paths, model_run=model_run)
-
 
 def async_error_handler(e):
     print("error")
@@ -121,7 +88,7 @@ def async_error_handler(e):
     logger.info(f"-->{e.__cause__}<--")
 
 
-def multi_run_function(run_range: range, scenario_dict: MutableMapping) -> None:
+def multi_run_function(run_range: range, scenario_dict: MutableMapping, function_to_run: Callable) -> None:
     """Multiprocessing function that uses a pool to run the model multiple times.
 
     Args:
@@ -131,7 +98,7 @@ def multi_run_function(run_range: range, scenario_dict: MutableMapping) -> None:
     pool = create_pool(run_range)
     for model_run in run_range:
         pool.apply_async(
-            core_run_function,
+            function_to_run,
             kwds=dict(
                 scenario_dict=scenario_dict,
                 model_run=str(model_run),

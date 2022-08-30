@@ -94,7 +94,8 @@ if __name__ == "__main__":
         full_model_iteration_run(
             batch_iteration_scenarios=BATCH_ITERATION_SCENARIOS,
             files_to_aggregate=ITERATION_FILES_TO_AGGREGATE,
-            timestamp=timestamp,
+            scenario_setting_to_iterate=["green_premium_scenario",], #SCENARIO_SETTINGS_TO_ITERATE
+            timestamp=timestamp
         )
 
     logger.info(

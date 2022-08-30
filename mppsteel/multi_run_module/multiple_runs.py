@@ -4,7 +4,7 @@ import math
 import shutil
 
 import multiprocessing as mp
-from typing import Dict, MutableMapping
+from typing import Callable, Dict, MutableMapping
 
 import pandas as pd
 import modin.pandas as mpd
@@ -51,6 +51,7 @@ logger = get_logger(__name__)
 
 
 def make_multiple_model_runs(
+    function_to_run: Callable,
     scenario_dict: MYPY_SCENARIO_TYPE,
     number_of_runs: int = DEFAULT_NUMBER_OF_RUNS,
     remove_run_folders: bool = False,
@@ -64,6 +65,7 @@ def make_multiple_model_runs(
 
 
     Args:
+        function_to_run: (Callable): The function to run in the multiprocessing function multi_run_function.
         scenario_dict (MYPY_SCENARIO_TYPE): A mapping object with scenario settings.
         number_of_runs (int, optional): The number of times to run the scenario. Defaults to DEFAULT_NUMBER_OF_RUNS.
         remove_run_folders (bool, optional): Flag to determine whether tho remove the singular files once they have run. Defaults to False.
@@ -76,7 +78,7 @@ def make_multiple_model_runs(
         run_range, math.ceil(len(run_range) / mp.cpu_count())
     )
     for run_range_chunk in run_range_chunks:
-        multi_run_function(run_range_chunk, scenario_dict)
+        multi_run_function(run_range_chunk, scenario_dict, function_to_run)
     run_container = aggregate_results(
         scenario_name, run_range, number_of_runs, remove_run_folders=remove_run_folders
     )
@@ -85,6 +87,7 @@ def make_multiple_model_runs(
 
 
 def multiprocessing_scenarios_multiple_scenarios_multiple_runs(
+    function_to_run: Callable,
     scenario_options: MYPY_SCENARIO_TYPE_DICT,
     number_of_runs: int,
     remove_run_folders: bool = False,
@@ -92,12 +95,14 @@ def multiprocessing_scenarios_multiple_scenarios_multiple_runs(
     """Function used to make multiple model runs of multiple scenarios by passing each scenario to make_multiple_model_runs.
 
     Args:
+        function_to_run (Callable): The function to run in the multiprocessing function make_multiple_model_runs.
         scenario_dict (MYPY_SCENARIO_TYPE): A mapping object with all the scenario settings.
         number_of_runs (int, optional): The number of times to run the scenario. Defaults to DEFAULT_NUMBER_OF_RUNS.
         remove_run_folders (bool, optional): Flag to determine whether tho remove the singular files once they have run. Defaults to False.
     """
     for scenario in scenario_options:
         make_multiple_model_runs(
+            function_to_run,
             scenario_dict=scenario_options[scenario],
             number_of_runs=number_of_runs,
             remove_run_folders=remove_run_folders,
