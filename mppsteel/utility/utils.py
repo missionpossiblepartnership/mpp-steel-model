@@ -194,7 +194,7 @@ def get_dict_keys_by_value(base_dict: dict, value) -> list:
 
     Args:
         base_dict (dict): The base dictionary containing the values to check against.
-        value (_type_): The value that will be checked against the key, value pairs in base_dict.
+        value: The value that will be checked against the key, value pairs in base_dict.
 
     Returns:
         list: A list containing the matching keys.
