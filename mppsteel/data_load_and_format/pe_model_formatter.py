@@ -397,7 +397,7 @@ def subset_power(
     pdf_c = pdf_c[
         (pdf_c["Customer"] == customer)
         & (pdf_c["Grid scenario"] == grid_scenario)
-        & (pdf_c["Cost scenario "] == cost_scenario)
+        & (pdf_c["Cost scenario"] == cost_scenario)
     ]
     years = [year_col for year_col in pdf_c.columns if isinstance(year_col, int)]
     pdf_c = pdf_c.melt(

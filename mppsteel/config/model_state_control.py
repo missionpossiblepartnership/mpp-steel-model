@@ -105,7 +105,7 @@ class ModelStateControl:
         create_folders_if_nonexistant([self.paths["intermediate_path"], self.paths["final_path"]])
 
     def initial_args_management(self, args) -> None:
-        logger.info("""Establishing  base args...""")
+        logger.info("""Establishing base args...""")
         # Manage localhost app for modin operations
         if (
             args.multi_run_half

@@ -545,7 +545,6 @@ def multi_run_multi_scenario(
         timestamp=timestamp,
     )
 
-
 def full_model_iteration_run(
     batch_iteration_scenarios: list, files_to_aggregate: list, scenario_setting_to_iterate: list, timestamp: str
 ) -> None:
