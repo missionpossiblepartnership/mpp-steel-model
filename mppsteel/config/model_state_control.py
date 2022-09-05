@@ -74,13 +74,18 @@ logger = get_logger(__name__)
 
 
 class ModelStateControl:
-    """A class to manage the model at runtime."""
+    """A class to manage the model at runtime.
+    Holds several pieces of Data
+    Scenario Args: 
+    
+    
+    """
 
     def __init__(self, args, timestamp: str, create_folder: bool = True) -> None:
         self.initialize_args(args, timestamp, create_folder)
 
     def initialize_args(self, args, timestamp: str, create_folder: bool = True) -> None:
-        self.scenario_args = DEFAULT_SCENARIO
+        self.scenario_dict = DEFAULT_SCENARIO
         self.number_of_runs = DEFAULT_NUMBER_OF_RUNS
         self.timestamp = timestamp
         self.initial_args_management(args)
@@ -92,7 +97,7 @@ class ModelStateControl:
         logger.info("Created Model State Control Instance")
 
     def set_scenario_name(self) -> None:
-        self.scenario_name = str(self.scenario_args["scenario_name"])
+        self.scenario_name = str(self.scenario_dict["scenario_name"])
         self.model_output_folder = f"{self.scenario_name} {self.timestamp}"
 
     def set_path(self) -> None:
@@ -126,7 +131,7 @@ class ModelStateControl:
         if args.choose_scenario:
             if args.choose_scenario in SCENARIO_OPTIONS.keys():
                 logger.info(f"CORRECT SCENARIO CHOSEN: {args.choose_scenario}")
-                scenario_args = SCENARIO_OPTIONS[args.choose_scenario]
+                scenario_dict = SCENARIO_OPTIONS[args.choose_scenario]
             else:
                 scenario_name_options = list(SCENARIO_OPTIONS.keys())
                 logger.info(
@@ -135,13 +140,13 @@ class ModelStateControl:
 
         if args.custom_scenario:
             logger.info("Including custom parameter inputs.")
-            scenario_args = get_inputted_scenarios(
-                scenario_options=SCENARIO_SETTINGS, default_scenario=scenario_args
+            scenario_dict = get_inputted_scenarios(
+                scenario_options=SCENARIO_SETTINGS, default_scenario=scenario_dict
             )
-            self.scenario_args = scenario_args
-            self.scenario_name = str(scenario_args["scenario_name"])
+            self.scenario_dict = scenario_dict
+            self.scenario_name = str(scenario_dict["scenario_name"])
 
-        self.scenario_args = add_currency_rates_to_scenarios(self.scenario_args)
+        self.scenario_dict = add_currency_rates_to_scenarios(self.scenario_dict)
 
     def parse_multiprocessing_scenarios(self, args) -> None:
         logger.info("""Parsing args for multiprocessing scenario runs...""")
@@ -176,14 +181,14 @@ class ModelStateControl:
 
         if args.multi_run_full:
             multi_run_full_function(
-                scenario_dict=self.scenario_args,
+                scenario_dict=self.scenario_dict,
                 number_of_runs=self.number_of_runs,
                 timestamp=self.timestamp,
             )
 
         if args.multi_run_half:
             multi_run_half_function(
-                scenario_dict=self.scenario_args,
+                scenario_dict=self.scenario_dict,
                 number_of_runs=self.number_of_runs,
                 timestamp=self.timestamp,
             )
@@ -201,25 +206,25 @@ class ModelStateControl:
 
         if args.full_model:
             full_flow(
-                scenario_dict=self.scenario_args,
+                scenario_dict=self.scenario_dict,
                 new_folder=True,
                 output_folder=self.model_output_folder,
                 pkl_paths=None,
             )
 
         if args.solver:
-            main_solver_flow(scenario_dict=self.scenario_args, serialize=True)
+            main_solver_flow(scenario_dict=self.scenario_dict, serialize=True)
 
         if args.output:
             outputs_only(
-                scenario_dict=self.scenario_args,
+                scenario_dict=self.scenario_dict,
                 new_folder=True,
                 output_folder=self.model_output_folder,
             )
 
         if args.scenario_model_run:
             scenario_model_run(
-                scenario_dict=self.scenario_args,
+                scenario_dict=self.scenario_dict,
                 pkl_paths=None,
                 new_folder=True,
                 output_folder=self.model_output_folder,
@@ -227,32 +232,32 @@ class ModelStateControl:
 
         if args.half_model_run:
             half_model_run(
-                scenario_dict=self.scenario_args, output_folder=self.model_output_folder
+                scenario_dict=self.scenario_dict, output_folder=self.model_output_folder
             )
 
         if args.data_import:
             load_import_data(serialize=True)
 
         if args.preprocessing:
-            data_preprocessing_scenarios(scenario_dict=self.scenario_args)
+            data_preprocessing_scenarios(scenario_dict=self.scenario_dict)
 
         if args.presolver:
-            model_presolver(scenario_dict=self.scenario_args)
+            model_presolver(scenario_dict=self.scenario_dict)
 
         if args.results:
-            model_results_phase(scenario_dict=self.scenario_args)
+            model_results_phase(scenario_dict=self.scenario_dict)
 
         if args.generic_preprocessing:
-            generic_data_preprocessing_only(scenario_dict=self.scenario_args)
+            generic_data_preprocessing_only(scenario_dict=self.scenario_dict)
 
         if args.variable_costs:
             generate_variable_plant_summary(
-                scenario_dict=self.scenario_args, serialize=True
+                scenario_dict=self.scenario_dict, serialize=True
             )
 
         if args.levelized_cost:
             generate_levelized_cost_results(
-                scenario_dict=self.scenario_args,
+                scenario_dict=self.scenario_dict,
                 pkl_paths=None,
                 serialize=True,
                 standard_plant_ref=True,
@@ -260,54 +265,54 @@ class ModelStateControl:
 
         if args.results_and_output:
             results_and_output(
-                scenario_dict=self.scenario_args,
+                scenario_dict=self.scenario_dict,
                 new_folder=True,
                 output_folder=self.model_output_folder,
             )
 
         if args.graphs:
             graphs_only(
-                scenario_dict=self.scenario_args,
+                scenario_dict=self.scenario_dict,
                 new_folder=True,
                 output_folder=self.model_output_folder,
             )
 
         if args.total_opex:
-            total_opex_calculations(scenario_dict=self.scenario_args)
+            total_opex_calculations(scenario_dict=self.scenario_dict)
 
         if args.production:
-            production_results_flow(self.scenario_args, pkl_paths=None, serialize=True)
+            production_results_flow(self.scenario_dict, pkl_paths=None, serialize=True)
 
         if args.cos:
             generate_cost_of_steelmaking_results(
-                self.scenario_args, pkl_paths=None, serialize=True
+                self.scenario_dict, pkl_paths=None, serialize=True
             )
 
         if args.metaresults:
-            metaresults_flow(self.scenario_args, pkl_paths=None, serialize=True)
+            metaresults_flow(self.scenario_dict, pkl_paths=None, serialize=True)
 
         if args.investment:
-            investment_results(scenario_dict=self.scenario_args)
+            investment_results(scenario_dict=self.scenario_dict)
 
         if args.tco:
-            tco_presolver_reference(self.scenario_args, pkl_paths=None, serialize=True)
+            tco_presolver_reference(self.scenario_dict, pkl_paths=None, serialize=True)
 
         if args.abatement:
             abatement_presolver_reference(
-                self.scenario_args, pkl_paths=None, serialize=True
+                self.scenario_dict, pkl_paths=None, serialize=True
             )
 
         if args.emissivity:
-            generate_emissions_flow(scenario_dict=self.scenario_args, serialize=True)
+            generate_emissions_flow(scenario_dict=self.scenario_dict, serialize=True)
 
         if args.investment_cycles:
-            investment_cycle_flow(scenario_dict=self.scenario_args, serialize=True)
+            investment_cycle_flow(scenario_dict=self.scenario_dict, serialize=True)
 
         if args.pe_models:
-            format_pe_data(scenario_dict=self.scenario_args)
+            format_pe_data(scenario_dict=self.scenario_dict)
 
         if args.steel_plants:
-            steel_plant_processor(scenario_dict=self.scenario_args)
+            steel_plant_processor(scenario_dict=self.scenario_dict)
 
         time_container = TIME_CONTAINER.return_time_container()
         logger.info(time_container)
