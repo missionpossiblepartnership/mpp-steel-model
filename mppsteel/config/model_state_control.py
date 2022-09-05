@@ -162,7 +162,7 @@ class ModelStateControl:
             full_model_iteration_run(
                 batch_iteration_scenarios=BATCH_ITERATION_SCENARIOS,
                 files_to_aggregate=ITERATION_FILES_TO_AGGREGATE,
-                scenario_setting_to_iterate=SCENARIO_SETTINGS_TO_ITERATE, #["green_premium_scenario",]
+                scenario_setting_to_iterate=SCENARIO_SETTINGS_TO_ITERATE,
                 timestamp=self.timestamp
             )
 

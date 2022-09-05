@@ -16,3 +16,4 @@ mypy==0.960
 bokeh==2.4.3
 dask==2022.1.1
 modin==0.15.2
+distributed==2022.9.0
