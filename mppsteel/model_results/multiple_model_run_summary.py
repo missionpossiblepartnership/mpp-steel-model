@@ -38,10 +38,17 @@ def consumption_summary(df: pd.DataFrame, grouping_cols: list, unit_list: list) 
     total_runs = df["total_runs"].unique()[0]
     resource_cols = [col for col in df.columns if any(ext in col for ext in unit_list)]
     df_c = df[grouping_cols + resource_cols]
+    agg_dict = {colname: "sum" for colname in resource_cols}
+    if "capacity_utilization" in agg_dict:
+        agg_dict["capacity_utilization"] = "mean"
     grouped_df = df_c.groupby(
         by=grouping_cols,
-    ).sum()
-    grouped_df = grouped_df / total_runs
+    ).agg(agg_dict)
+    for colname in resource_cols:
+        if colname == "capacity_utilization":
+            pass
+        else:
+            grouped_df[colname] = grouped_df[colname] / total_runs
     return grouped_df.reset_index()
 
 
