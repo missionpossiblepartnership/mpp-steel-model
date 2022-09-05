@@ -28,7 +28,7 @@ logger = get_logger(__name__)
 
 class PlantInvestmentCycle:
     """Class for managing the the investment cycles for plants.
-    
+
     The Data Structure has four main objects.
     - plant_names: The name of the plants.
     - plant_start_years: The start year of the plants.
@@ -125,8 +125,12 @@ class PlantInvestmentCycle:
         for plant_name in self.plant_cycles_with_off_cycle:
             plant_cycle: list = self.plant_cycles_with_off_cycle[plant_name]
             cycle_length: int = self.plant_investment_cycle_length[plant_name]
-            range_list: List[range] = [range_object for range_object in plant_cycle if isinstance(range_object, range)]
-            if (len(plant_cycle) == 1) and (len(range_list) == 1): # range object
+            range_list: List[range] = [
+                range_object
+                for range_object in plant_cycle
+                if isinstance(range_object, range)
+            ]
+            if (len(plant_cycle) == 1) and (len(range_list) == 1):  # range object
                 start_year: int = range_list[0][0]
                 assert (
                     start_year + cycle_length > MODEL_YEAR_END
@@ -149,4 +153,4 @@ class PlantInvestmentCycle:
             return trans_cycle_switchers
         elif value_type == "no switch":
             return non_switchers
-        return combined_switchers # value_type == "combined"
+        return combined_switchers  # value_type == "combined"

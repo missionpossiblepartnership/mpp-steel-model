@@ -115,6 +115,7 @@ def investment_row_calculator(
         "capital_cost": actual_capex,
     }
 
+
 def create_global_stats(df, operation: str = "sum") -> pd.DataFrame:
     calc = df.groupby(["year"]).sum()
     if operation == "cumsum":
@@ -123,7 +124,10 @@ def create_global_stats(df, operation: str = "sum") -> pd.DataFrame:
 
 
 def create_inv_stats(
-    df: pd.DataFrame, global_results: bool = True, agg: bool = False, operation: str = "sum"
+    df: pd.DataFrame,
+    global_results: bool = True,
+    agg: bool = False,
+    operation: str = "sum",
 ) -> Union[float, dict]:
     """Generates an statistics column for an Investment DataFrame according to parameters set in the function arguments.
 

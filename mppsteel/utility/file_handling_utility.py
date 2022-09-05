@@ -17,7 +17,10 @@ from mppsteel.config.model_config import (
     PKL_FOLDER,
     UNDERSCORE_NUMBER_REGEX,
 )
-from mppsteel.config.mypy_config_settings import MYPY_DOUBLE_STR_DICT, MYPY_PKL_PATH_OPTIONAL
+from mppsteel.config.mypy_config_settings import (
+    MYPY_DOUBLE_STR_DICT,
+    MYPY_PKL_PATH_OPTIONAL,
+)
 
 from mppsteel.utility.log_utility import get_logger
 
@@ -25,7 +28,10 @@ logger = get_logger(__name__)
 
 
 def read_pickle_folder(
-    data_path: Union[str, Path], pkl_file: str = "", mode: str = "dict", log: bool = False
+    data_path: Union[str, Path],
+    pkl_file: str = "",
+    mode: str = "dict",
+    log: bool = False,
 ) -> Union[pd.DataFrame, dict]:
     """Reads a path where pickle files are stores and saves them to a dictionary
 

@@ -23,8 +23,10 @@ NAMED_AGG_DICT = {
 }
 
 
-def consumption_summary(df: pd.DataFrame, grouping_cols: list, unit_list: list) -> pd.DataFrame:
-    """Creates an average consumption summary of a multiple run by subsetting a DataFrame based on 
+def consumption_summary(
+    df: pd.DataFrame, grouping_cols: list, unit_list: list
+) -> pd.DataFrame:
+    """Creates an average consumption summary of a multiple run by subsetting a DataFrame based on
     grouped columns and unit/value columns and divides the sum of the grouped dataframe by the number of model runs.
 
     Args:
@@ -58,7 +60,7 @@ def generic_summary(
     value_cols: list,
     custom_agg_function: Callable,
 ) -> pd.DataFrame:
-    """Creates an average consumption summary of a multiple run by subsetting a DataFrame based on 
+    """Creates an average consumption summary of a multiple run by subsetting a DataFrame based on
     grouped columns and unit/value columns and divides the DataFrame that has been grouped by a custom operation
     by the number of model runs.
 
@@ -110,7 +112,9 @@ def plant_capacity_groupby(df: pd.DataFrame, grouping_cols: list) -> pd.DataFram
     )
 
 
-def plant_capacity_country_breakdown_groupby(df: pd.DataFrame, grouping_cols: list) -> pd.DataFrame:
+def plant_capacity_country_breakdown_groupby(
+    df: pd.DataFrame, grouping_cols: list
+) -> pd.DataFrame:
     """Groups a Plant Capacity by Country Breakdown Summary DataFrame in preparation to create a summary output.
 
     Args:
@@ -144,7 +148,9 @@ def cost_of_steelmaking_groupby(df: pd.DataFrame, grouping_cols: list) -> pd.Dat
     )
 
 
-def levelized_cost_standardized_groupby(df: pd.DataFrame, grouping_cols: list) -> pd.DataFrame:
+def levelized_cost_standardized_groupby(
+    df: pd.DataFrame, grouping_cols: list
+) -> pd.DataFrame:
     """Groups a Levelized Cost Summary DataFrame in preparation to create a summary output.
 
     Args:
@@ -159,7 +165,9 @@ def levelized_cost_standardized_groupby(df: pd.DataFrame, grouping_cols: list) -
     )
 
 
-def calculated_emissivity_combined_groupby(df: pd.DataFrame, grouping_cols: list) -> pd.DataFrame:
+def calculated_emissivity_combined_groupby(
+    df: pd.DataFrame, grouping_cols: list
+) -> pd.DataFrame:
     """Groups an Calculated Emissivity Summary DataFrame in preparation to create a summary output.
 
     Args:
@@ -178,7 +186,9 @@ def calculated_emissivity_combined_groupby(df: pd.DataFrame, grouping_cols: list
 
 
 def summarise_combined_data(
-    df: pd.DataFrame, results_dict: dict, filename: str = "",
+    df: pd.DataFrame,
+    results_dict: dict,
+    filename: str = "",
 ) -> dict:
     """Runs through the flow to create summarised DataFrames based on the filename.
 
@@ -198,7 +208,9 @@ def summarise_combined_data(
             grouping_cols=["scenario", "year", "region_rmi", "technology"],
             unit_list=["production", "_gt", "_mt"],
         )
-        results_dict["production_emissions_summary"].append(production_emissions_summary)
+        results_dict["production_emissions_summary"].append(
+            production_emissions_summary
+        )
 
     elif filename == "production_resource_usage":
         production_resource_usage_summary = consumption_summary(
@@ -220,13 +232,13 @@ def summarise_combined_data(
             value_cols=["capacity", "production", "iron_ore_mt", "scrap_mt"],
             custom_agg_function=plant_capacity_country_breakdown_groupby,
         )
-        results_dict[
-            "production_resource_usage_summary"
-        ].append(production_resource_usage_summary)
+        results_dict["production_resource_usage_summary"].append(
+            production_resource_usage_summary
+        )
         results_dict["plant_capacity_summary"].append(plant_capacity_summary)
-        results_dict[
-            "plant_capacity_summary_country_breakdown"
-        ].append(plant_capacity_summary_country_breakdown)
+        results_dict["plant_capacity_summary_country_breakdown"].append(
+            plant_capacity_summary_country_breakdown
+        )
 
     elif filename == "cost_of_steelmaking":
         cost_of_steelmaking_summary = generic_summary(
@@ -260,9 +272,9 @@ def summarise_combined_data(
             value_cols=["levelized_cost"],
             custom_agg_function=levelized_cost_standardized_groupby,
         )
-        results_dict[
-            "levelized_cost_standardized_summary"
-        ].append(levelized_cost_standardized_summary)
+        results_dict["levelized_cost_standardized_summary"].append(
+            levelized_cost_standardized_summary
+        )
 
     elif filename == "calculated_emissivity_combined":
         calculated_emissivity_combined_summary = generic_summary(
@@ -276,9 +288,9 @@ def summarise_combined_data(
             ],
             custom_agg_function=calculated_emissivity_combined_groupby,
         )
-        results_dict[
-            "calculated_emissivity_combined_summary"
-        ].append(calculated_emissivity_combined_summary)
+        results_dict["calculated_emissivity_combined_summary"].append(
+            calculated_emissivity_combined_summary
+        )
 
     elif filename in {"full_trade_summary", "plant_result_df"}:
         results_dict[filename].append(df)

@@ -55,7 +55,7 @@ def return_best_tech(
     region: str,
     country_code: str,
     base_tech: str = None,
-    transitional_switch_mode: bool = False
+    transitional_switch_mode: bool = False,
 ) -> str:
     """Function generates the best technology choice from a number of key data and scenario inputs.
 
@@ -108,7 +108,9 @@ def return_best_tech(
         )
         for technology in TECH_REFERENCE_LIST:
             for tco_col in ["tco_regular_capex", "tco_gf_capex"]:
-                current_tco_value = tco_ref_data.loc[(year, country_code, technology), tco_col]
+                current_tco_value = tco_ref_data.loc[
+                    (year, country_code, technology), tco_col
+                ]
                 tco_ref_data.loc[(year, country_code, technology), tco_col] = (
                     current_tco_value - discounted_green_premium_values[technology]
                 )
@@ -134,7 +136,9 @@ def return_best_tech(
         # Must be current or transitional tech
         # Must be within the furnace group
         combined_available_list = list(
-            set(combined_available_list).intersection(set(return_furnace_group(FURNACE_GROUP_DICT, base_tech)))
+            set(combined_available_list).intersection(
+                set(return_furnace_group(FURNACE_GROUP_DICT, base_tech))
+            )
         )
 
     # Availability checks

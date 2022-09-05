@@ -295,12 +295,8 @@ def generate_preprocessed_emissions_data(
     Returns:
         Tuple[pd.DataFrame, pd.DataFrame]: A tuple of the commodities data and S3 emission factors data.
     """
-    plastic_prices = read_pickle_folder(
-        PKL_DATA_IMPORTS, "plastic_prices"
-    )
-    commodities_df = format_commodities_data(
-        plastic_prices, COMMODITY_MATERIAL_MAPPER
-    )
+    plastic_prices = read_pickle_folder(PKL_DATA_IMPORTS, "plastic_prices")
+    commodities_df = format_commodities_data(plastic_prices, COMMODITY_MATERIAL_MAPPER)
     s3_emissions_factors_2 = read_pickle_folder(
         PKL_DATA_IMPORTS, "s3_emissions_factors_2"
     )

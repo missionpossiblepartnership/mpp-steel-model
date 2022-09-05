@@ -18,7 +18,7 @@ from mppsteel.utility.log_utility import get_logger
 from mppsteel.config.model_config import (
     MODEL_YEAR_RANGE,
     PKL_DATA_FORMATTED,
-    INVESTMENT_CYCLE_DURATION_YEARS
+    INVESTMENT_CYCLE_DURATION_YEARS,
 )
 
 logger = get_logger(__name__)
@@ -63,7 +63,7 @@ def apply_cos(
     year: int,
     cap_dict: dict,
     variable_costs_ref: pd.DataFrame,
-    capex_ref: dict
+    capex_ref: dict,
 ) -> float:
     """Applies the Cost of Steelmaking function to a given row in a DataFrame.
 
@@ -83,7 +83,9 @@ def apply_cos(
     if row.technology:
         variable_cost = variable_costs_ref[(year, row.country_code, row.technology)]
         other_opex_cost = capex_ref["other_opex"][(year, row.technology)]
-    full_cos_calc = plant_capacity * ((variable_cost * row.capacity_utilization) + other_opex_cost)
+    full_cos_calc = plant_capacity * (
+        (variable_cost * row.capacity_utilization) + other_opex_cost
+    )
 
     return 0 if row.capacity_utilization == 0 else full_cos_calc
 
@@ -95,7 +97,7 @@ def cost_of_steelmaking(
     capacities_dict: dict,
     cols_to_keep: list,
     region_group: str = "region_rmi",
-    regional: bool = False
+    regional: bool = False,
 ) -> dict:
     """Applies the cost of steelmaking function to the Production Stats DataFrame.
 
@@ -154,9 +156,7 @@ def cost_of_steelmaking(
     return dict(zip(years, cos_year_list))
 
 
-def dict_to_df(
-    df_values_dict: dict, region_group: str
-) -> pd.DataFrame:
+def dict_to_df(df_values_dict: dict, region_group: str) -> pd.DataFrame:
     """Turns a dictionary of of cost of steelmaking values into a DataFrame.
 
     Args:

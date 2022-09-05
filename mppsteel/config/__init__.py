@@ -5,5 +5,5 @@ from . import (
     model_state_control,
     reference_lists,
     runtime_args,
-    mypy_config_settings
+    mypy_config_settings,
 )

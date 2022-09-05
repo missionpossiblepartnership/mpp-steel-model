@@ -88,7 +88,9 @@ def async_error_handler(e):
     logger.info(f"-->{e.__cause__}<--")
 
 
-def multi_run_function(run_range: range, scenario_dict: MutableMapping, function_to_run: Callable) -> None:
+def multi_run_function(
+    run_range: range, scenario_dict: MutableMapping, function_to_run: Callable
+) -> None:
     """Multiprocessing function that uses a pool to run the model multiple times.
 
     Args:

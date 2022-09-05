@@ -24,17 +24,18 @@ SwitchingPlant = namedtuple(
 
 
 class PlantCapacityConstraint:
-    """A class to manage the Plant Capacity Constraint. 
+    """A class to manage the Plant Capacity Constraint.
     The purpose of this constraint is to provide the limit to the amount of new capacity that can be produced in a given year.
-    
+
     The Data Structure has four main Mapping objects.
-    - annual_capacity_turnover_limit: The maximum capacity that can be built in a given year. 
+    - annual_capacity_turnover_limit: The maximum capacity that can be built in a given year.
     - capacity_balance: The balance of capacity for a given year.
     - potential_plant_switchers: The plants that can potentially switch in a given year.
     - waiting_list_counter: The plants that are waiting to switch their capacity in a given year.
 
     Plants that are not able to switch their capacity in a given year will be added to the following years potential_plant_switchers.
     """
+
     def __init__(self) -> None:
         self.annual_capacity_turnover_limit: Dict = {}
         self.capacity_balance: Dict = {}

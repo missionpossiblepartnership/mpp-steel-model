@@ -243,9 +243,7 @@ def import_data_tests():
     )
     SCOPE3_EF_SCHEMA_2.validate(s3_emissions_factors_2)
 
-    plastic_prices = read_pickle_folder(
-        PKL_DATA_IMPORTS, "plastic_prices"
-    )
+    plastic_prices = read_pickle_folder(PKL_DATA_IMPORTS, "plastic_prices")
     PLASTIC_SCHEMA.validate(plastic_prices)
 
     s1_emissions_factors = read_pickle_folder(PKL_DATA_IMPORTS, "s1_emissions_factors")

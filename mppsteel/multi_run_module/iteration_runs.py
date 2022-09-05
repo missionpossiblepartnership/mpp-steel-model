@@ -13,14 +13,23 @@ from mppsteel.config.model_config import (
     PKL_FOLDER,
     UNDERSCORE_NUMBER_REGEX,
 )
-from mppsteel.config.mypy_config_settings import MYPY_SCENARIO_SETTINGS_SEQUENCE, MYPY_SCENARIO_TYPE
-from mppsteel.config.reference_lists import PKL_FILE_RESULTS_REFERENCE, SCENARIO_SETTINGS_TO_ITERATE
-from mppsteel.utility.dataframe_utility import change_col_type, move_elements_to_front_of_list
+from mppsteel.config.mypy_config_settings import (
+    MYPY_SCENARIO_SETTINGS_SEQUENCE,
+    MYPY_SCENARIO_TYPE,
+)
+from mppsteel.config.reference_lists import (
+    PKL_FILE_RESULTS_REFERENCE,
+    SCENARIO_SETTINGS_TO_ITERATE,
+)
+from mppsteel.utility.dataframe_utility import (
+    change_col_type,
+    move_elements_to_front_of_list,
+)
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.utils import reverse_dict_with_list_elements
 from mppsteel.utility.file_handling_utility import (
     create_folder_if_nonexist,
-    read_pickle_folder
+    read_pickle_folder,
 )
 
 from mppsteel.utility.log_utility import get_logger
@@ -29,7 +38,9 @@ logger = get_logger(__name__)
 
 
 def make_scenario_iterations(
-    base_scenario: MYPY_SCENARIO_TYPE, scenario_settings: MYPY_SCENARIO_SETTINGS_SEQUENCE, scenario_setting_to_iterate: list
+    base_scenario: MYPY_SCENARIO_TYPE,
+    scenario_settings: MYPY_SCENARIO_SETTINGS_SEQUENCE,
+    scenario_setting_to_iterate: list,
 ) -> list:
     """Creates a list of dictionary scenarios based on a core base scenario dict iterations of scenario settings.
 
@@ -42,14 +53,23 @@ def make_scenario_iterations(
         list: A list of scenario dictionary objects.
     """
     scenario_list = []
-    scenario_iterations = [scenario_settings[scenario_setting] for scenario_setting in scenario_setting_to_iterate]
+    scenario_iterations = [
+        scenario_settings[scenario_setting]
+        for scenario_setting in scenario_setting_to_iterate
+    ]
 
-    product_iteration = list(itertools.product(scenario_iterations)) if len(scenario_setting_to_iterate) > 1 else scenario_settings[scenario_setting_to_iterate[0]]
+    product_iteration = (
+        list(itertools.product(scenario_iterations))
+        if len(scenario_setting_to_iterate) > 1
+        else scenario_settings[scenario_setting_to_iterate[0]]
+    )
 
     for iteration, list_iter in enumerate(product_iteration):
 
         new_scenario_dict = dict(base_scenario)
-        new_scenario_dict["scenario_name"] = f"{base_scenario['scenario_name']}_{iteration + 1}"
+        new_scenario_dict[
+            "scenario_name"
+        ] = f"{base_scenario['scenario_name']}_{iteration + 1}"
 
         if isinstance(list_iter, str):
             new_scenario_dict[scenario_setting_to_iterate[0]] = list_iter
@@ -64,7 +84,10 @@ def make_scenario_iterations(
 
 
 def generate_scenario_iterations_reference(
-    scenarios_to_iterate: list, scenario_options: dict, scenario_settings: dict, scenario_setting_to_iterate: list
+    scenarios_to_iterate: list,
+    scenario_options: dict,
+    scenario_settings: dict,
+    scenario_setting_to_iterate: list,
 ) -> pd.DataFrame:
     """Creates a DataFrame of all the scenario iterations for a list of scenarios to iterate.
 
@@ -154,7 +177,7 @@ def combine_multiple_iterations(
                     "base_scenario",
                     "iteration",
                     "country_code",
-                    "region_rmi"
+                    "region_rmi",
                 ],
                 unit_list=["capacity", "production", "_gt", "_mt", "_gj", "_pj"],
             )
@@ -199,6 +222,7 @@ def serialize_iterations(
         df._to_pandas().to_feather(f"{filename_path}.ftr")
         logger.info(f"Writing complete for {filename}")
     return None
+
 
 @timer_func
 def combine_files_iteration_run(

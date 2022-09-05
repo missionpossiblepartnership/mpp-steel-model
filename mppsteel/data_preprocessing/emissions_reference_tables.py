@@ -32,8 +32,7 @@ logger = get_logger(__name__)
 def generate_s1_s3_emissions(
     business_cases: pd.DataFrame,
     s1_emissivity_factors: pd.DataFrame,
-    s3_emissivity_factors: pd.DataFrame
-
+    s3_emissivity_factors: pd.DataFrame,
 ) -> pd.DataFrame:
     """Creates a DataFrame with emissivity for S1, S2 & S3 for each technology.
     Multiples the emissivity values by the standardized business cases.

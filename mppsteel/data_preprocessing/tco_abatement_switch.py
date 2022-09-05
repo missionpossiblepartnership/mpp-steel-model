@@ -46,7 +46,9 @@ def tco_regions_ref_generator(total_opex_reference: dict) -> pd.DataFrame:
     Returns:
         pd.DataFrame: A DataFrame containing the components necessary to calculate TCO (not including green premium).
     """
-    capex_df: pd.DataFrame = read_pickle_folder(PKL_DATA_FORMATTED, "capex_switching_df", "df")
+    capex_df: pd.DataFrame = read_pickle_folder(
+        PKL_DATA_FORMATTED, "capex_switching_df", "df"
+    )
     capex_df.reset_index(inplace=True)
     capex_df.rename(
         {

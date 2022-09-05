@@ -83,9 +83,7 @@ def load_import_data(serialize: bool = False) -> dict:
     brownfield_capex = extract_data(
         IMPORT_DATA_PATH, "CAPEX OPEX Per Technology", "xlsx", 1
     )
-    other_opex = extract_data(
-        IMPORT_DATA_PATH, "CAPEX OPEX Per Technology", "xlsx", 2
-    )
+    other_opex = extract_data(IMPORT_DATA_PATH, "CAPEX OPEX Per Technology", "xlsx", 2)
     # Import ccs co2 capacity numbers
     ccs_co2 = extract_data(IMPORT_DATA_PATH, "CO2 CCU Capacity", "csv")
     # Import country reference
@@ -110,15 +108,11 @@ def load_import_data(serialize: bool = False) -> dict:
     # Import feedstock prices
     feedstock_prices = extract_data(IMPORT_DATA_PATH, "Feedstock Prices", "xlsx")
     # Import steel plant data
-    steel_plants = extract_data(
-        IMPORT_DATA_PATH, "Steel Plant Data Anon", "xlsx"
-    )
+    steel_plants = extract_data(IMPORT_DATA_PATH, "Steel Plant Data Anon", "xlsx")
     # Import technology availability
     tech_availability = extract_data(IMPORT_DATA_PATH, "Technology Availability", "csv")
     # Import Commodities Data
-    plastic_prices = extract_data(
-        IMPORT_DATA_PATH, "Plastic Prices", "csv"
-    )
+    plastic_prices = extract_data(IMPORT_DATA_PATH, "Plastic Prices", "csv")
     # Import Regional Steel Demand Data
     regional_steel_demand = extract_data(
         IMPORT_DATA_PATH, "Regional Steel Demand", "csv"

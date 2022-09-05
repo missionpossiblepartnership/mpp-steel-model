@@ -26,7 +26,7 @@ from mppsteel.config.reference_lists import (
 from mppsteel.config.mypy_config_settings import (
     MYPY_DICT_STR_LIST,
     MYPY_SCENARIO_TYPE,
-    MYPY_SCENARIO_TYPE_DICT
+    MYPY_SCENARIO_TYPE_DICT,
 )
 from mppsteel.multi_run_module.multiprocessing_functions import multi_run_function
 from mppsteel.model_results.multiple_model_run_summary import summarise_combined_data
@@ -56,11 +56,11 @@ def make_multiple_model_runs(
     number_of_runs: int = DEFAULT_NUMBER_OF_RUNS,
     remove_run_folders: bool = False,
 ) -> None:
-    """Function used to make multiple model runs of a single scenario. 
+    """Function used to make multiple model runs of a single scenario.
     Splits multiple model into chunks of predetermined length and passes list to multiprocessing function.
     The chunk lenght is determined by the number_of_runs variable and the number of cpu's.
 
-    The function runs all of the model run's store the files to pkl, and then aggregates all of the runs 
+    The function runs all of the model run's store the files to pkl, and then aggregates all of the runs
     (deleting the singular files if requested with remove_run_folders, and saves the file to pkl.
 
 
@@ -194,7 +194,9 @@ def aggregate_results(
             scenario_name,
         ]
     )[scenario_name]
-    run_container: MYPY_DICT_STR_LIST = {filename: [] for filename in generic_files_to_path_dict}
+    run_container: MYPY_DICT_STR_LIST = {
+        filename: [] for filename in generic_files_to_path_dict
+    }
     for model_run in run_range:
         model_run_files_to_path = generate_files_to_path_dict(
             scenarios=[
@@ -220,12 +222,15 @@ def aggregate_results(
                 model_run=str(model_run),
             )
             final_path = get_scenario_pkl_path(
-                scenario=scenario_name, pkl_folder_type="final", model_run=str(model_run)
+                scenario=scenario_name,
+                pkl_folder_type="final",
+                model_run=str(model_run),
             )
             shutil.rmtree(intermediate_path)
             shutil.rmtree(final_path)
 
     return run_container
+
 
 @timer_func
 def aggregate_multi_run_scenarios(
@@ -262,10 +267,14 @@ def aggregate_multi_run_scenarios(
     ):
         logger.info(f"Running through summary flow for {filename}")
         filename_dict: Dict[str, pd.DataFrame] = {}
-        for scenario in tqdm(scenario_set, total=len(scenario_set), desc="Scenario loop"):
+        for scenario in tqdm(
+            scenario_set, total=len(scenario_set), desc="Scenario loop"
+        ):
             assign_to_mapping_container(filename_dict, filename, scenario)
         logger.info(f"Creating summary data for {filename}")
-        results_dict: MYPY_DICT_STR_LIST = {file: [] for file in MULTI_RUN_MULTI_SCENARIO_SUMMARY_FILENAMES}
+        results_dict: MYPY_DICT_STR_LIST = {
+            file: [] for file in MULTI_RUN_MULTI_SCENARIO_SUMMARY_FILENAMES
+        }
         scenarios_present = filename_dict.keys()
         for scenario in scenarios_present:
             subset = filename_dict[scenario]
@@ -273,13 +282,22 @@ def aggregate_multi_run_scenarios(
             summarise_combined_data(subset, results_dict, filename)
 
         scenarios_present_set = set(scenarios_present)
-        assert scenarios_present_set == scenario_set, f"Not all scenarios in df. Difference: {scenario_set.difference(scenarios_present_set)}."
+        assert (
+            scenarios_present_set == scenario_set
+        ), f"Not all scenarios in df. Difference: {scenario_set.difference(scenarios_present_set)}."
 
         for summary_filename in results_dict:
             if results_dict[summary_filename]:
-                summary_df = pd.concat(list(results_dict[summary_filename])).reset_index(drop=True)
+                summary_df = pd.concat(
+                    list(results_dict[summary_filename])
+                ).reset_index(drop=True)
                 serialize_file(summary_df, combined_pkl_path, summary_filename)
-                pickle_to_csv(output_save_path, combined_pkl_path, summary_filename, reset_index=False)
+                pickle_to_csv(
+                    output_save_path,
+                    combined_pkl_path,
+                    summary_filename,
+                    reset_index=False,
+                )
 
 
 def add_model_run_metadata_columns(
@@ -389,7 +407,9 @@ def output_folder_path_creation(
     return output_save_path
 
 
-def assign_to_mapping_container(assigning_dict: MutableMapping, filename: str, scenario: str) -> None:
+def assign_to_mapping_container(
+    assigning_dict: MutableMapping, filename: str, scenario: str
+) -> None:
     """Loads a file from a pkl location and assigns it as a value of a Mapping object with a key of scenario.
 
     Args:
@@ -398,7 +418,8 @@ def assign_to_mapping_container(assigning_dict: MutableMapping, filename: str, s
         scenario (str): The name of the scenario.
     """
     assigning_dict[scenario] = read_pickle_folder(
-        pkl_folder_filepath_creation(scenario), filename, "df")
+        pkl_folder_filepath_creation(scenario), filename, "df"
+    )
 
 
 def return_single_scenario(scenario_options: MutableMapping) -> str:

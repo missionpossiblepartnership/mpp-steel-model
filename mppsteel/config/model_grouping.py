@@ -6,13 +6,13 @@ from datetime import datetime
 from mppsteel.multi_run_module.iteration_runs import (
     combine_files_iteration_run,
     generate_scenario_iterations_reference,
-    make_scenario_iterations
+    make_scenario_iterations,
 )
 
 from mppsteel.utility.utils import (
     split_list_into_chunks,
     stdout_query,
-    get_currency_rate
+    get_currency_rate,
 )
 from mppsteel.utility.file_handling_utility import (
     generate_files_to_path_dict,
@@ -70,15 +70,19 @@ from mppsteel.config.model_config import (
     DATETIME_FORMAT,
     PKL_DATA_FORMATTED,
     USD_TO_EUR_CONVERSION_DEFAULT,
-    OUTPUT_FOLDER
+    OUTPUT_FOLDER,
 )
 from mppsteel.config.model_scenarios import SCENARIO_OPTIONS, SCENARIO_SETTINGS
-from mppsteel.config.reference_lists import INTERMEDIATE_RESULT_PKL_FILES, FINAL_RESULT_PKL_FILES, SCENARIO_SETTINGS_TO_ITERATE
+from mppsteel.config.reference_lists import (
+    INTERMEDIATE_RESULT_PKL_FILES,
+    FINAL_RESULT_PKL_FILES,
+    SCENARIO_SETTINGS_TO_ITERATE,
+)
 from mppsteel.config.mypy_config_settings import (
-    MYPY_PKL_PATH_OPTIONAL, 
-    MYPY_SCENARIO_ENTRY_TYPE, 
-    MYPY_SCENARIO_SETTINGS_SEQUENCE, 
-    MYPY_SCENARIO_TYPE
+    MYPY_PKL_PATH_OPTIONAL,
+    MYPY_SCENARIO_ENTRY_TYPE,
+    MYPY_SCENARIO_SETTINGS_SEQUENCE,
+    MYPY_SCENARIO_TYPE,
 )
 from mppsteel.utility.file_handling_utility import (
     create_folder_if_nonexist,
@@ -87,20 +91,23 @@ from mppsteel.utility.file_handling_utility import (
 
 from mppsteel.multi_run_module.multiprocessing_functions import (
     multiprocessing_scenarios_preprocessing,
-    multiprocessing_scenarios_single_run
+    multiprocessing_scenarios_single_run,
 )
 from mppsteel.multi_run_module.multiple_runs import (
-    aggregate_multi_run_scenarios, 
-    join_scenario_data, 
-    make_multiple_model_runs, 
-    multiprocessing_scenarios_multiple_scenarios_multiple_runs
+    aggregate_multi_run_scenarios,
+    join_scenario_data,
+    make_multiple_model_runs,
+    multiprocessing_scenarios_multiple_scenarios_multiple_runs,
 )
 
 logger = get_logger(__name__)
 
 # SCENARIO SET-UP
 def stdout_question(
-    count_iter: int, scenario_type: str, scenario_options: MYPY_SCENARIO_SETTINGS_SEQUENCE, default_dict: MYPY_SCENARIO_TYPE
+    count_iter: int,
+    scenario_type: str,
+    scenario_options: MYPY_SCENARIO_SETTINGS_SEQUENCE,
+    default_dict: MYPY_SCENARIO_TYPE,
 ) -> str:
     return f"""
     Scenario Option {count_iter+1}/{len(scenario_options)}: {scenario_type}
@@ -110,17 +117,26 @@ def stdout_question(
     """
 
 
-def get_inputted_scenarios(scenario_options: MYPY_SCENARIO_SETTINGS_SEQUENCE, default_scenario: MYPY_SCENARIO_TYPE) -> Dict[str, MYPY_SCENARIO_ENTRY_TYPE]:
+def get_inputted_scenarios(
+    scenario_options: MYPY_SCENARIO_SETTINGS_SEQUENCE,
+    default_scenario: MYPY_SCENARIO_TYPE,
+) -> Dict[str, MYPY_SCENARIO_ENTRY_TYPE]:
     inputted_scenario_args = {}
     for count, scenario_option in enumerate(scenario_options.keys()):
-        question = stdout_question(count, scenario_option, scenario_options, default_scenario)
+        question = stdout_question(
+            count, scenario_option, scenario_options, default_scenario
+        )
         inputted_scenario_args[scenario_option] = stdout_query(
-            question, default_scenario[scenario_option], scenario_options[scenario_option]
+            question,
+            default_scenario[scenario_option],
+            scenario_options[scenario_option],
         )
     return inputted_scenario_args
 
 
-def add_currency_rates_to_scenarios(scenario_dict: MYPY_SCENARIO_TYPE, live: bool = False) -> MYPY_SCENARIO_TYPE:
+def add_currency_rates_to_scenarios(
+    scenario_dict: MYPY_SCENARIO_TYPE, live: bool = False
+) -> MYPY_SCENARIO_TYPE:
     eur_to_usd = 1 / USD_TO_EUR_CONVERSION_DEFAULT
     usd_to_eur = USD_TO_EUR_CONVERSION_DEFAULT
     if live:
@@ -131,6 +147,7 @@ def add_currency_rates_to_scenarios(scenario_dict: MYPY_SCENARIO_TYPE, live: boo
     scenario_dict["usd_to_eur"] = usd_to_eur
 
     return scenario_dict
+
 
 # MULTI-RUN / MULTI-SCENARIO
 def data_preprocessing_scenarios(
@@ -162,6 +179,7 @@ def data_preprocessing_scenarios(
     )
     tco_presolver_reference(scenario_dict, pkl_paths=pkl_paths, serialize=True)
     abatement_presolver_reference(scenario_dict, pkl_paths=pkl_paths, serialize=True)
+
 
 def scenario_batch_run(
     scenario_dict: MYPY_SCENARIO_TYPE,
@@ -243,9 +261,7 @@ def data_preprocessing_refresh(
     data_preprocessing_scenarios(scenario_dict, pkl_paths=pkl_paths)
 
 
-def data_import_and_preprocessing_refresh(
-    scenario_dict: MYPY_SCENARIO_TYPE
-) -> None:
+def data_import_and_preprocessing_refresh(scenario_dict: MYPY_SCENARIO_TYPE) -> None:
     load_import_data(serialize=True)
     data_preprocessing_generic_1()
     data_preprocessing_generic_2(scenario_dict)
@@ -273,13 +289,17 @@ def total_opex_calculations(
     tco_presolver_reference(scenario_dict, pkl_paths=pkl_paths, serialize=True)
 
 
-def model_presolver(scenario_dict: MYPY_SCENARIO_TYPE, pkl_paths: MYPY_PKL_PATH_OPTIONAL = None) -> None:
+def model_presolver(
+    scenario_dict: MYPY_SCENARIO_TYPE, pkl_paths: MYPY_PKL_PATH_OPTIONAL = None
+) -> None:
     tco_presolver_reference(scenario_dict, pkl_paths=pkl_paths, serialize=True)
     abatement_presolver_reference(scenario_dict, pkl_paths=pkl_paths, serialize=True)
 
 
 def model_results_phase(
-    scenario_dict: MYPY_SCENARIO_TYPE, pkl_paths: MYPY_PKL_PATH_OPTIONAL = None, model_run: str = ""
+    scenario_dict: MYPY_SCENARIO_TYPE,
+    pkl_paths: MYPY_PKL_PATH_OPTIONAL = None,
+    model_run: str = "",
 ) -> None:
     production_results_flow(
         scenario_dict, pkl_paths=pkl_paths, serialize=True, model_run=model_run
@@ -342,7 +362,7 @@ def results_and_output(
     scenario_dict: MYPY_SCENARIO_TYPE,
     new_folder: bool,
     output_folder: str,
-    pkl_paths: MYPY_PKL_PATH_OPTIONAL = None
+    pkl_paths: MYPY_PKL_PATH_OPTIONAL = None,
 ) -> None:
     model_results_phase(scenario_dict, pkl_paths=pkl_paths)
     model_outputs_phase(
@@ -363,7 +383,7 @@ def outputs_only(
     scenario_dict: MYPY_SCENARIO_TYPE,
     new_folder: bool,
     output_folder: str,
-    pkl_paths: MYPY_PKL_PATH_OPTIONAL = None
+    pkl_paths: MYPY_PKL_PATH_OPTIONAL = None,
 ) -> None:
     model_outputs_phase(
         scenario_dict,
@@ -383,7 +403,7 @@ def graphs_only(
     scenario_dict: MYPY_SCENARIO_TYPE,
     output_folder: str,
     new_folder: bool,
-    pkl_paths: MYPY_PKL_PATH_OPTIONAL = None
+    pkl_paths: MYPY_PKL_PATH_OPTIONAL = None,
 ) -> None:
     model_graphs_phase(
         scenario_dict,
@@ -392,12 +412,13 @@ def graphs_only(
         output_folder=output_folder,
     )
 
+
 # FULL FLOW FUNCTIONS
 def full_flow(
     scenario_dict: MYPY_SCENARIO_TYPE,
     new_folder: bool,
     output_folder: str,
-    pkl_paths: MYPY_PKL_PATH_OPTIONAL = None
+    pkl_paths: MYPY_PKL_PATH_OPTIONAL = None,
 ) -> None:
     data_import_and_preprocessing_refresh(scenario_dict)
     scenario_model_run(
@@ -408,9 +429,7 @@ def full_flow(
     )
 
 
-def half_model_run(
-    scenario_dict: MYPY_SCENARIO_TYPE, output_folder: str
-) -> None:
+def half_model_run(scenario_dict: MYPY_SCENARIO_TYPE, output_folder: str) -> None:
     main_solver_flow(scenario_dict=scenario_dict, serialize=True)
     results_and_output(
         scenario_dict=scenario_dict,
@@ -420,7 +439,9 @@ def half_model_run(
 
 
 def core_run_function(
-    scenario_dict: MutableMapping[str, Any], model_run: str, pkl_paths: Union[dict, None] = None
+    scenario_dict: MutableMapping[str, Any],
+    model_run: str,
+    pkl_paths: Union[dict, None] = None,
 ) -> None:
     """Function to run the section of the model that runs multiple times.
 
@@ -545,8 +566,12 @@ def multi_run_multi_scenario(
         timestamp=timestamp,
     )
 
+
 def full_model_iteration_run(
-    batch_iteration_scenarios: list, files_to_aggregate: list, scenario_setting_to_iterate: list, timestamp: str
+    batch_iteration_scenarios: list,
+    files_to_aggregate: list,
+    scenario_setting_to_iterate: list,
+    timestamp: str,
 ) -> None:
     logger.info(f"Running model iterations for {batch_iteration_scenarios}")
     output_iteration_path = f"{OUTPUT_FOLDER}/iteration_run {timestamp}"
@@ -556,7 +581,10 @@ def full_model_iteration_run(
         ]
     )
     scenario_iteration_reference = generate_scenario_iterations_reference(
-        batch_iteration_scenarios, SCENARIO_OPTIONS, SCENARIO_SETTINGS, scenario_setting_to_iterate
+        batch_iteration_scenarios,
+        SCENARIO_OPTIONS,
+        SCENARIO_SETTINGS,
+        scenario_setting_to_iterate,
     )
     scenario_iteration_reference.to_csv(
         f"{output_iteration_path}/scenario_iteration_reference.csv", index=False
@@ -564,7 +592,9 @@ def full_model_iteration_run(
     for base_scenario in batch_iteration_scenarios:
         create_scenario_paths(base_scenario)
         scenario_list = make_scenario_iterations(
-            SCENARIO_OPTIONS[base_scenario], SCENARIO_SETTINGS, scenario_setting_to_iterate
+            SCENARIO_OPTIONS[base_scenario],
+            SCENARIO_SETTINGS,
+            scenario_setting_to_iterate,
         )
         logger.info(f"Running {len(scenario_list)} iterations for {base_scenario}")
         data_import_and_preprocessing_refresh(scenario_list[0])

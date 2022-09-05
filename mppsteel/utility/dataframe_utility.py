@@ -52,7 +52,9 @@ def create_line_through_points(
         start_value = value_pair[0]
         end_value = value_pair[1] + 1
         if line_shape == "straight":
-            values_array = np.linspace(start=start_value, stop=end_value, num=len(year_range))
+            values_array = np.linspace(
+                start=start_value, stop=end_value, num=len(year_range)
+            )
         df = pd.DataFrame(data={"year": year_range, "values": values_array})
         df_list.append(df)
     # Combine pair DataFrames into one DataFrame
@@ -284,6 +286,7 @@ def change_cols_to_numeric(df: pd.DataFrame, numeric_cols: list) -> pd.DataFrame
         df_c[col] = pd.to_numeric(df[col])
     return df_c
 
+
 def change_col_type(
     df: pd.DataFrame, columns_to_change: list, new_col_type: str
 ) -> pd.DataFrame:
@@ -301,7 +304,6 @@ def change_col_type(
     for col in columns_to_change:
         df_c[col] = df_c[col].astype(new_col_type)
     return df_c
-
 
 
 def extend_df_years(
@@ -352,7 +354,7 @@ def test_dataframes_equal(
     Args:
         df1 (pd.DataFrame): A DataFrame to compare to df2.
         df2 (pd.DataFrame): A DataFrame to compare to df1.
-        common_col (str): The common column to compare 
+        common_col (str): The common column to compare
         common_col_value1 (int): The rows with a value to be matched to df1.
         common_col_value2 (int): The rows with a value to be matched to df2.
     """

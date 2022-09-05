@@ -335,7 +335,9 @@ def record_ranking(
         plant_choice_container.update_records("rank", records)
 
 
-def return_best_choice(best_values: pd.DataFrame, start_tech: str, potential_techs: list):
+def return_best_choice(
+    best_values: pd.DataFrame, start_tech: str, potential_techs: list
+):
     # pick random choice if there is more than one option
     if len(best_values) > 1:
         potential_techs = best_values.index.to_list()
@@ -397,7 +399,7 @@ def get_best_choice(
     """
     cost_value_col = "tco_gf_capex" if transitional_switch_mode else "tco_regular_capex"
     updated_tech_availability = technology_list
-    return_tech: str = "" # Initiate
+    return_tech: str = ""  # Initiate
 
     if solver_logic in {"scaled", "scaled_bins"}:
         # Calculate minimum scaled values
@@ -467,9 +469,9 @@ def get_best_choice(
                     tco_values_scaled[cost_value_col],
                     number_of_items=len(technology_list),
                 )
-                tco_values_scaled["tco_scaled"] = tco_values_scaled[cost_value_col].apply(
-                    lambda x: return_bin_rank(x, bin_dict=binned_rank_dict)
-                )
+                tco_values_scaled["tco_scaled"] = tco_values_scaled[
+                    cost_value_col
+                ].apply(lambda x: return_bin_rank(x, bin_dict=binned_rank_dict))
                 tco_values_scaled.drop(
                     columns=tco_values_scaled.columns.difference(["tco_scaled"]),
                     axis=1,
@@ -523,7 +525,9 @@ def get_best_choice(
 
             elif solver_logic == "scaled_bins":
                 min_value = combined_scales["overall_score"].min()
-                best_values = combined_scales[combined_scales["overall_rank"] == min_value]
+                best_values = combined_scales[
+                    combined_scales["overall_rank"] == min_value
+                ]
 
                 return_tech = return_best_choice(
                     best_values, start_tech, updated_tech_availability
@@ -607,7 +611,9 @@ def get_best_choice(
         combined_ranks.sort_values("overall_rank", axis=0, inplace=True)
         min_value = combined_ranks["overall_rank"].min()
         best_values = combined_ranks[combined_ranks["overall_rank"] == min_value]
-        return_tech = return_best_choice(best_values, start_tech, updated_tech_availability)
+        return_tech = return_best_choice(
+            best_values, start_tech, updated_tech_availability
+        )
 
     return return_tech
 

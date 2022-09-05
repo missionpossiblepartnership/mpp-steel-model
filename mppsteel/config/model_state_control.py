@@ -1,23 +1,23 @@
 """Class to manage the implementation of the state controller class."""
 from mppsteel.config.model_grouping import (
     add_currency_rates_to_scenarios,
-    data_preprocessing_scenarios, 
-    full_flow, 
-    full_model_iteration_run, 
-    full_multiple_run_flow, 
-    generic_data_preprocessing_only, 
-    get_inputted_scenarios, 
-    graphs_only, 
-    half_model_run, 
-    model_presolver, 
-    model_results_phase, 
-    multi_run_full_function, 
-    multi_run_half_function, 
-    multi_run_multi_scenario, 
-    outputs_only, 
-    results_and_output, 
-    scenario_model_run, 
-    total_opex_calculations
+    data_preprocessing_scenarios,
+    full_flow,
+    full_model_iteration_run,
+    full_multiple_run_flow,
+    generic_data_preprocessing_only,
+    get_inputted_scenarios,
+    graphs_only,
+    half_model_run,
+    model_presolver,
+    model_results_phase,
+    multi_run_full_function,
+    multi_run_half_function,
+    multi_run_multi_scenario,
+    outputs_only,
+    results_and_output,
+    scenario_model_run,
+    total_opex_calculations,
 )
 from mppsteel.data_load_and_format.data_import import load_import_data
 from mppsteel.data_load_and_format.pe_model_formatter import format_pe_data
@@ -45,12 +45,12 @@ from mppsteel.config.mypy_config_settings import MYPY_SCENARIO_TYPE
 from mppsteel.utility.function_timer_utility import TIME_CONTAINER
 from mppsteel.utility.file_handling_utility import (
     create_folders_if_nonexistant,
-    get_scenario_pkl_path
+    get_scenario_pkl_path,
 )
 from mppsteel.multi_run_module.multiple_runs import join_scenario_data
 from mppsteel.config.reference_lists import (
-    ITERATION_FILES_TO_AGGREGATE, 
-    SCENARIO_SETTINGS_TO_ITERATE
+    ITERATION_FILES_TO_AGGREGATE,
+    SCENARIO_SETTINGS_TO_ITERATE,
 )
 from distributed import Client
 from mppsteel.config.model_config import (
@@ -72,9 +72,10 @@ from mppsteel.utility.log_utility import get_logger
 
 logger = get_logger(__name__)
 
+
 class ModelStateControl:
-    """A class to manage the model at runtime.
-    """
+    """A class to manage the model at runtime."""
+
     def __init__(self, args, timestamp: str, create_folder: bool = True) -> None:
         self.initialize_args(args, timestamp, create_folder)
 
@@ -96,13 +97,17 @@ class ModelStateControl:
 
     def set_path(self) -> None:
         self.paths = {
-            "intermediate_path": get_scenario_pkl_path(self.scenario_name, "intermediate"),
-            "final_path": get_scenario_pkl_path(self.scenario_name, "final")
+            "intermediate_path": get_scenario_pkl_path(
+                self.scenario_name, "intermediate"
+            ),
+            "final_path": get_scenario_pkl_path(self.scenario_name, "final"),
         }
 
     def folder_creation(self) -> None:
         create_folders_if_nonexistant(FOLDERS_TO_CHECK_IN_ORDER)
-        create_folders_if_nonexistant([self.paths["intermediate_path"], self.paths["final_path"]])
+        create_folders_if_nonexistant(
+            [self.paths["intermediate_path"], self.paths["final_path"]]
+        )
 
     def initial_args_management(self, args) -> None:
         logger.info("""Establishing base args...""")
@@ -135,7 +140,6 @@ class ModelStateControl:
             )
             self.scenario_args = scenario_args
             self.scenario_name = str(scenario_args["scenario_name"])
-        
 
         self.scenario_args = add_currency_rates_to_scenarios(self.scenario_args)
 
@@ -144,40 +148,44 @@ class ModelStateControl:
         if args.main_scenarios:
             logger.info(f"Running {MAIN_SCENARIO_RUNS} scenario options")
             full_multiple_run_flow(
-                scenario_name=self.scenario_name, 
-                main_scenario_runs=MAIN_SCENARIO_RUNS, 
-                timestamp=self.timestamp
+                scenario_name=self.scenario_name,
+                main_scenario_runs=MAIN_SCENARIO_RUNS,
+                timestamp=self.timestamp,
             )
 
         if args.multi_run_multi_scenario:
-            logger.info(f"Running {MAIN_SCENARIO_RUNS} scenario options, {self.number_of_runs} times")
+            logger.info(
+                f"Running {MAIN_SCENARIO_RUNS} scenario options, {self.number_of_runs} times"
+            )
             multi_run_multi_scenario(
-                main_scenario_runs=MAIN_SCENARIO_RUNS, 
-                number_of_runs=self.number_of_runs, 
-                timestamp=self.timestamp
+                main_scenario_runs=MAIN_SCENARIO_RUNS,
+                number_of_runs=self.number_of_runs,
+                timestamp=self.timestamp,
             )
 
         if args.model_iterations_run:
-            logger.info(f"Running {BATCH_ITERATION_SCENARIOS} scenarios, by iterating the following scenarios {SCENARIO_SETTINGS_TO_ITERATE}")
+            logger.info(
+                f"Running {BATCH_ITERATION_SCENARIOS} scenarios, by iterating the following scenarios {SCENARIO_SETTINGS_TO_ITERATE}"
+            )
             full_model_iteration_run(
                 batch_iteration_scenarios=BATCH_ITERATION_SCENARIOS,
                 files_to_aggregate=ITERATION_FILES_TO_AGGREGATE,
                 scenario_setting_to_iterate=SCENARIO_SETTINGS_TO_ITERATE,
-                timestamp=self.timestamp
+                timestamp=self.timestamp,
             )
 
         if args.multi_run_full:
             multi_run_full_function(
-                scenario_dict=self.scenario_args, 
+                scenario_dict=self.scenario_args,
                 number_of_runs=self.number_of_runs,
-                timestamp=self.timestamp
+                timestamp=self.timestamp,
             )
 
         if args.multi_run_half:
             multi_run_half_function(
-                scenario_dict=self.scenario_args, 
+                scenario_dict=self.scenario_args,
                 number_of_runs=self.number_of_runs,
-                timestamp=self.timestamp
+                timestamp=self.timestamp,
             )
 
         if args.join_final_data:
@@ -196,14 +204,11 @@ class ModelStateControl:
                 scenario_dict=self.scenario_args,
                 new_folder=True,
                 output_folder=self.model_output_folder,
-                pkl_paths=None
+                pkl_paths=None,
             )
 
         if args.solver:
-            main_solver_flow(
-                scenario_dict=self.scenario_args, 
-                serialize=True
-            )
+            main_solver_flow(scenario_dict=self.scenario_args, serialize=True)
 
         if args.output:
             outputs_only(
@@ -222,8 +227,7 @@ class ModelStateControl:
 
         if args.half_model_run:
             half_model_run(
-                scenario_dict=self.scenario_args,
-                output_folder=self.model_output_folder
+                scenario_dict=self.scenario_args, output_folder=self.model_output_folder
             )
 
         if args.data_import:
@@ -289,7 +293,9 @@ class ModelStateControl:
             tco_presolver_reference(self.scenario_args, pkl_paths=None, serialize=True)
 
         if args.abatement:
-            abatement_presolver_reference(self.scenario_args, pkl_paths=None, serialize=True)
+            abatement_presolver_reference(
+                self.scenario_args, pkl_paths=None, serialize=True
+            )
 
         if args.emissivity:
             generate_emissions_flow(scenario_dict=self.scenario_args, serialize=True)
@@ -298,7 +304,7 @@ class ModelStateControl:
             investment_cycle_flow(scenario_dict=self.scenario_args, serialize=True)
 
         if args.pe_models:
-            format_pe_data (scenario_dict=self.scenario_args)
+            format_pe_data(scenario_dict=self.scenario_args)
 
         if args.steel_plants:
             steel_plant_processor(scenario_dict=self.scenario_args)

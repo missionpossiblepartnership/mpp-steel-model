@@ -84,7 +84,7 @@ def calculate_metric(
     conversion_factor: float = 1,
 ) -> pd.DataFrame:
     """Performas a number of operations on a DataFrame.
-    1) Subsets a DataFrame, 
+    1) Subsets a DataFrame,
     2) Convert a column old_value_column to a new column new_value_column based on the conversion_factor.
     3) Rename the region column name.
     4) Groups the final DataFrame.
@@ -213,7 +213,7 @@ def create_demand_summary(
         final_metadata_columns (list): The columns that will be used to group the final DataFrame.
 
     Returns:
-        pd.DataFrame: A combined demand summary of production summary and emissions summary DataFrames. 
+        pd.DataFrame: A combined demand summary of production summary and emissions summary DataFrames.
     """
     dfs = []
     for resource in tqdm(

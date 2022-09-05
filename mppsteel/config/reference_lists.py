@@ -500,7 +500,7 @@ PKL_FILE_RESULTS_REFERENCE = {
 }
 
 MULTI_RUN_MULTI_SCENARIO_SUMMARY_FILENAMES = [
-    "production_emissions_summary", 
+    "production_emissions_summary",
     "production_resource_usage_summary",
     "plant_capacity_summary",
     "plant_capacity_summary_country_breakdown",
@@ -509,7 +509,7 @@ MULTI_RUN_MULTI_SCENARIO_SUMMARY_FILENAMES = [
     "levelized_cost_standardized_summary",
     "calculated_emissivity_combined_summary",
     "full_trade_summary",
-    "plant_result_df"
+    "plant_result_df",
 ]
 
 # OUTPUT FILE NAMES
@@ -543,12 +543,12 @@ ITERATION_FILES_TO_AGGREGATE = [
     "tco_summary_data",
 ]
 
-SCENARIO_SETTINGS_TO_ITERATE =[
+SCENARIO_SETTINGS_TO_ITERATE = [
     "carbon_tax_scenario",
     "hydrogen_cost_scenario",
     "electricity_cost_scenario",
     "steel_demand_scenario",
-    "grid_scenario"
+    "grid_scenario",
 ]
 
 DATA_OBJECTS = {
@@ -566,14 +566,12 @@ DATA_OBJECTS = {
         "plastic_prices",
         "power_model",
         "regional_steel_demand",
-        "s1_emissions_factors"
-        "s3_emissions_factors_1"
-        "s1_emissions_factors_2",
+        "s1_emissions_factors" "s3_emissions_factors_1" "s1_emissions_factors_2",
         "static_energy_prices",
         "steel_plants",
         "tech_availability",
         "technology_business_cases",
-        "wsa_production"
+        "wsa_production",
     ],
     "formatted_import_data": [
         "business_case_reference",
@@ -584,7 +582,7 @@ DATA_OBJECTS = {
         "greenfield_switching_df",
         "plant_investment_cycle_container",
         "standardised_business_cases",
-        "steel_plants_processed"
+        "steel_plants_processed",
     ],
     "intermediate_data": [
         "active_check_results_dict",
@@ -642,6 +640,6 @@ DATA_OBJECTS = {
         "investment_results",
         "levelized_cost_results",
         "production_emissions",
-        "production_resource_usage"
-    ]
+        "production_resource_usage",
+    ],
 }

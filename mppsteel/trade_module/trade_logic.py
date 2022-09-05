@@ -21,7 +21,8 @@ logger = get_logger(__name__)
 
 
 MarketBalanceContainer = namedtuple(
-    "MarketBalanceContainer", ["mkt_balance", "import_adjusted_demand", "imports", "exports"]
+    "MarketBalanceContainer",
+    ["mkt_balance", "import_adjusted_demand", "imports", "exports"],
 )
 ClosePlantsContainer = namedtuple(
     "ClosePlantsContainer",
@@ -85,7 +86,9 @@ def create_plant_change_dict(
 
 
 # Helper Logic Functions
-def calculate_mkt_balance(production: float, demand: float, trade_status: TradeStatus) -> MarketBalanceContainer:
+def calculate_mkt_balance(
+    production: float, demand: float, trade_status: TradeStatus
+) -> MarketBalanceContainer:
     """Determines a new market balance given the inputs of production, demand and a region's trade_status.
 
     Args:

@@ -109,8 +109,7 @@ class MarketContainerClass:
             return regional_demand_minus_imports + imports
         elif account_type == "production":
             return regional_demand_minus_imports + exports
-        return regional_demand_minus_imports + exports + imports # defaults to all
-        
+        return regional_demand_minus_imports + exports + imports  # defaults to all
 
     def trade_container_aggregator(
         self, year: int, agg_type: str, region: str = None

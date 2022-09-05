@@ -47,7 +47,9 @@ def create_list_permutations(list1: list, list2: list) -> list:
     return list(itertools.chain(*comb))
 
 
-def stdout_query(question: str, default: Union[bool, str, float], options: Sequence) -> Union[bool, str, float]:
+def stdout_query(
+    question: str, default: Union[bool, str, float], options: Sequence
+) -> Union[bool, str, float]:
     """Ask a yes/no question via raw_input() and return their answer.
 
     "question" is a string that is presented to the user.
@@ -115,7 +117,7 @@ def cast_to_float(val: Union[float, int, Sequence[Union[int, float]]]) -> float:
     Returns:
         float: The float value.
     """
-    return float(sum(val)) if isinstance(val, Iterable) else val # was .sum()
+    return float(sum(val)) if isinstance(val, Iterable) else val  # was .sum()
 
 
 def create_bin_rank_dict(
@@ -137,7 +139,9 @@ def create_bin_rank_dict(
     bins = min(number_of_items, max_bin_size)
     bins_linspaced: Sized = np.linspace(start=data.min(), stop=data.max(), num=bins)
     digitized = np.digitize(data, bins_linspaced)
-    new_data_list: List = [data[digitized == i].mean() for i in range(1, len(bins_linspaced))]
+    new_data_list: List = [
+        data[digitized == i].mean() for i in range(1, len(bins_linspaced))
+    ]
     new_data_list = [round(x, rounding) for x in new_data_list]
     if reverse:
         new_data_list.reverse()
@@ -167,8 +171,8 @@ def return_bin_rank(x: float, bin_dict: dict) -> Union[float, None]:
             f"Value provided {x} is bigger than the last bin size {bin_dict_vals[-1]}"
         )
     for val in bin_dict_vals:
-            if x <= val:
-                return bin_dict[val]
+        if x <= val:
+            return bin_dict[val]
     return None
 
 
@@ -288,7 +292,9 @@ def get_intersection_of_ordered_list(
     return [x for x in mapping_list if x in frozenset(ordered_list)]
 
 
-def generate_random_string_with_prefix(prefix: str = "MPP", chars: str = string.digits, n: int = 5) -> str:
+def generate_random_string_with_prefix(
+    prefix: str = "MPP", chars: str = string.digits, n: int = 5
+) -> str:
     """Generates a unique ID with an "MPP" prefix from the collection of characters.
 
     Args:
@@ -301,7 +307,9 @@ def generate_random_string_with_prefix(prefix: str = "MPP", chars: str = string.
     return f"{prefix}" + "".join(random.choice(chars) for _ in range(n))
 
 
-def combine_and_order_list_and_range(number_list: list, range_list: List[range]) -> list:
+def combine_and_order_list_and_range(
+    number_list: list, range_list: List[range]
+) -> list:
     """Combine a list of numbers and a list of ranges into one.
     Orders the list based on the the numbers in the number list and the start number of the range.
 

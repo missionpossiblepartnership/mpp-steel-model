@@ -3,11 +3,13 @@
 import pandas as pd
 from mppsteel.utility.utils import generate_random_string_with_prefix
 
+
 class PlantIdContainer:
     """A class to manage the creation and track the existence of Plant IDs.
-    Plant Ids are stored in a list container. 
+    Plant Ids are stored in a list container.
     New plant Ids are generated and checked if they exist already in the list container before being added to the list.
     """
+
     def __init__(self):
         self.id_container = []
 

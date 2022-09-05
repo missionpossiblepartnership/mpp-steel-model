@@ -76,7 +76,9 @@ def least_consuming_tech(
         )
     ]
     resource_value_dict = {
-        tech[0]: business_case_ref[tech] for tech in techs if tech[0] in combined_available_list
+        tech[0]: business_case_ref[tech]
+        for tech in techs
+        if tech[0] in combined_available_list
     }
     return min(resource_value_dict.keys(), key=(lambda tech: resource_value_dict[tech]))
 
@@ -328,9 +330,9 @@ def return_oldest_plant(
 
     Args:
         investment_dict (pd.DataFrame): Dictionary with plant names as keys and main investment cycles as values.
-        plant_start_years (pd.DataFrame): 
-        plant_start_years (dict): 
-        plant_cycle_lengths (dict): 
+        plant_start_years (pd.DataFrame):
+        plant_start_years (dict):
+        plant_cycle_lengths (dict):
         current_year (int): The current model year.
         plant_list (Sequence): A list of plant names. Defaults to None.
 

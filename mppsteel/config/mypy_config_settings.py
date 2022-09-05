@@ -1,13 +1,5 @@
 """Contains types for mypy"""
-from typing import (
-    Any,
-    Dict,
-    MutableMapping,
-    List,
-    Sequence,
-    Tuple,
-    Union
-)
+from typing import Any, Dict, MutableMapping, List, Sequence, Tuple, Union
 
 MYPY_SCENARIO_ENTRY_TYPE = Union[bool, str, float]
 MYPY_SCENARIO_TYPE = MutableMapping[str, MYPY_SCENARIO_ENTRY_TYPE]

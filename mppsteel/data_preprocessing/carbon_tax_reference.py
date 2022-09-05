@@ -24,7 +24,9 @@ logger = get_logger(__name__)
 
 
 def carbon_tax_estimate(
-    s1_emissions_value: pd.DataFrame, s2_emissions_value: pd.DataFrame, carbon_tax_value: float
+    s1_emissions_value: pd.DataFrame,
+    s2_emissions_value: pd.DataFrame,
+    carbon_tax_value: float,
 ) -> pd.DataFrame:
     """Creates a carbon tax based on the scope 1 & 2 emissivity as a standardised unit and a technology and a carbon tax value per ton of steel.
 
@@ -93,7 +95,9 @@ def generate_carbon_tax_reference(
         scenario_name=scenario_dict["scenario_name"], paths=pkl_paths
     )
     # Carbon Tax preprocessing
-    carbon_tax_df: pd.DataFrame = read_pickle_folder(intermediate_path, "carbon_tax_timeseries", "df")
+    carbon_tax_df: pd.DataFrame = read_pickle_folder(
+        intermediate_path, "carbon_tax_timeseries", "df"
+    )
     carbon_tax_df = carbon_tax_df.set_index("year")
     carbon_tax_ref = carbon_tax_df.to_dict()["value"]
 

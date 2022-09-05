@@ -339,7 +339,10 @@ def create_investment_line_graph(
     if filepath:
         filename = f"{filepath}/{filename}"
     return investment_line_chart(
-        investment_results, global_results=global_results, operation=operation, save_filepath=filename
+        investment_results,
+        global_results=global_results,
+        operation=operation,
+        save_filepath=filename,
     )
 
 

@@ -364,7 +364,9 @@ def choose_technology_core(cti: ChooseTechnologyInput) -> dict:
     }
     MaterialUsageContainer = MaterialUsage()
     MaterialUsageContainer.initiate_years_and_regions(
-        model_year_range, resource_list=list(resource_models.keys()), region_list=region_list
+        model_year_range,
+        resource_list=list(resource_models.keys()),
+        region_list=region_list,
     )
 
     for resource in resource_models:

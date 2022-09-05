@@ -14,7 +14,10 @@ from mppsteel.config.model_config import (
     PROJECT_PATH,
     USD_TO_EUR_CONVERSION_DEFAULT,
 )
-from mppsteel.config.mypy_config_settings import MYPY_PKL_PATH_OPTIONAL, MYPY_SCENARIO_TYPE
+from mppsteel.config.mypy_config_settings import (
+    MYPY_PKL_PATH_OPTIONAL,
+    MYPY_SCENARIO_TYPE,
+)
 from mppsteel.config.reference_lists import RESOURCE_CATEGORY_MAPPER
 from mppsteel.utility.utils import cast_to_float
 from mppsteel.utility.function_timer_utility import timer_func
@@ -164,7 +167,9 @@ class PlantVariableCostsInput:
         ccs_model_storage_ref = read_pickle_folder(
             intermediate_path_ref, "ccs_model_storage_ref", "df"
         )
-        fossil_fuel_ref = read_pickle_folder(intermediate_path_ref, "fossil_fuel_ref", "df")
+        fossil_fuel_ref = read_pickle_folder(
+            intermediate_path_ref, "fossil_fuel_ref", "df"
+        )
         business_cases: pd.DataFrame = read_pickle_folder(
             project_dir / PKL_DATA_FORMATTED, "standardised_business_cases", "df"
         )
@@ -465,7 +470,9 @@ def format_variable_costs(
 
 @timer_func
 def generate_variable_plant_summary(
-    scenario_dict: dict, pkl_paths: MYPY_PKL_PATH_OPTIONAL = None, serialize: bool = False
+    scenario_dict: dict,
+    pkl_paths: MYPY_PKL_PATH_OPTIONAL = None,
+    serialize: bool = False,
 ) -> pd.DataFrame:
     """The complete flow for creating variable costs.
 

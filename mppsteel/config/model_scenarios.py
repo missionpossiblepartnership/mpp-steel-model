@@ -3,10 +3,10 @@
 from typing import Dict, List, MutableMapping, Sequence, Tuple, Union
 from mppsteel.config.mypy_config_settings import (
     MYPY_SCENARIO_SETTINGS_DICT,
-    MYPY_SCENARIO_SETTINGS_SEQUENCE, 
-    MYPY_SCENARIO_SETTINGS_TUPLE, 
+    MYPY_SCENARIO_SETTINGS_SEQUENCE,
+    MYPY_SCENARIO_SETTINGS_TUPLE,
     MYPY_SCENARIO_TYPE,
-    MYPY_STR_DICT
+    MYPY_STR_DICT,
 )
 
 
@@ -55,7 +55,11 @@ BIOMASS_SCENARIOS: MYPY_STR_DICT = {
 CCS_SCENARIOS: MYPY_STR_DICT = {"high": "high", "low": "low"}
 CCS_CAPACITY_SCENARIOS: MYPY_STR_DICT = {"low": "Low", "high": "High"}
 
-SOLVER_LOGICS: MYPY_STR_DICT = {"rank": "ranked", "scale": "scaled", "bins": "scaled_bins"}
+SOLVER_LOGICS: MYPY_STR_DICT = {
+    "rank": "ranked",
+    "scale": "scaled",
+    "bins": "scaled_bins",
+}
 
 SCENARIO_SETTINGS: MYPY_SCENARIO_SETTINGS_SEQUENCE = {
     "tech_moratorium": [True, False],

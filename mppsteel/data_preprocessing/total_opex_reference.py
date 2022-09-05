@@ -101,7 +101,9 @@ def generate_total_opex_cost_reference(
     test_negative_df_values(variable_cost_summary)
 
     # Other opex processing
-    opex_values_dict: pd.DataFrame = read_pickle_folder(PKL_DATA_FORMATTED, "capex_dict", "df")
+    opex_values_dict: pd.DataFrame = read_pickle_folder(
+        PKL_DATA_FORMATTED, "capex_dict", "df"
+    )
     other_opex_df = opex_values_dict["other_opex"].swaplevel().copy()
     other_opex_df.drop(TECHNOLOGIES_TO_DROP, level="Technology", inplace=True)
 

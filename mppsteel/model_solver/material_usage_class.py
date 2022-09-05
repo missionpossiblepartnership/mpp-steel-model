@@ -86,7 +86,9 @@ class MaterialUsage:
     def print_year_summary(self, year: int, regional_scrap: bool):
         for model_type in self.resources:
             if model_type == "scrap":
-                constraint: MYPY_NUMERICAL = sum(self.constraint[model_type][year].values())
+                constraint: MYPY_NUMERICAL = sum(
+                    self.constraint[model_type][year].values()
+                )
                 usage: MYPY_NUMERICAL = sum(self.usage[year][model_type].values())
                 balance: MYPY_NUMERICAL = sum(self.balance[year][model_type].values())
             else:
@@ -94,7 +96,7 @@ class MaterialUsage:
                 usage = self.usage[year][model_type]
                 balance = self.balance[year][model_type]
             pct_used: MYPY_NUMERICAL = 100
-            pct_remaining: MYPY_NUMERICAL  = 0
+            pct_remaining: MYPY_NUMERICAL = 0
             try:
                 pct_used = (usage / constraint) * 100
                 pct_remaining = (balance / constraint) * 100

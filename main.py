@@ -4,9 +4,7 @@ from datetime import datetime
 from mppsteel.config.model_state_control import ModelStateControl
 
 from mppsteel.utility.log_utility import get_logger
-from mppsteel.config.model_config import (
-    DATETIME_FORMAT
-)
+from mppsteel.config.model_config import DATETIME_FORMAT
 
 from mppsteel.config.runtime_args import parser
 

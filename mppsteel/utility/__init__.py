@@ -6,5 +6,5 @@ from . import (
     file_handling_utility,
     dataframe_utility,
     function_timer_utility,
-    df_tests
+    df_tests,
 )
