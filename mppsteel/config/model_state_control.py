@@ -89,8 +89,6 @@ class ModelStateControl:
         self.number_of_runs = DEFAULT_NUMBER_OF_RUNS
         self.timestamp = timestamp
         self.initial_args_management(args)
-        self.set_scenario_name()
-        self.set_path()
         if create_folder:
             self.folder_creation()
 
@@ -147,6 +145,8 @@ class ModelStateControl:
             self.scenario_name = str(scenario_dict["scenario_name"])
 
         self.scenario_dict = add_currency_rates_to_scenarios(self.scenario_dict)
+        self.set_scenario_name()
+        self.set_path()
 
     def parse_multiprocessing_scenarios(self, args) -> None:
         logger.info("""Parsing args for multiprocessing scenario runs...""")
