@@ -9,7 +9,7 @@ from mppsteel.utility.log_utility import get_logger
 logger = get_logger(__name__)
 
 
-def create_pool(processes_to_run: Sized) -> mp.Pool:
+def create_pool(processes_to_run: Sized) -> mp.pool.Pool:
     """Creates a Multiprocessing pool with the number of processess based on the length of processes_to_run.
 
     Args:
