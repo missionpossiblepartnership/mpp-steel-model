@@ -7,7 +7,6 @@ import pandas as pd
 
 from mppsteel.model_solver.solver_flow_helpers import active_check_results
 from mppsteel.config.model_config import MODEL_YEAR_RANGE, MODEL_YEAR_START
-from mppsteel.config.reference_lists import TECHNOLOGY_PHASES
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
@@ -17,6 +16,7 @@ from mppsteel.utility.file_handling_utility import (
 )
 from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.utility.log_utility import get_logger
+from mppsteel.data_preprocessing.tco_calculation_functions import tech_status_mapper
 
 
 logger = get_logger(__name__)
@@ -41,19 +41,6 @@ def green_capacity_ratio_predata(
     Returns:
         pd.DataFrame: A DataFrame with all of the required columns to calculate the green capacity ratio.
     """
-
-    def tech_status_mapper(tech_choice: dict, inc_trans: bool) -> bool:
-        check_list = deepcopy(TECHNOLOGY_PHASES["end_state"])
-        if inc_trans:
-            check_list = deepcopy(
-                TECHNOLOGY_PHASES["end_state"] + TECHNOLOGY_PHASES["transitional"]
-            )
-        if tech_choice in check_list:
-            return True
-        elif tech_choice in TECHNOLOGY_PHASES["initial"]:
-            return False
-        return False
-
     def fix_start_year(start_year) -> int:
         if pd.isna(start_year):
             return MODEL_YEAR_START
@@ -62,7 +49,7 @@ def green_capacity_ratio_predata(
         return int(start_year)
 
     df_container = []
-    years = [int(key) for key in tech_choices.keys()]
+    years = [int(key) for key in tech_choices]
     start_year_dict = dict(zip(plant_df["plant_name"], plant_df["start_of_operation"]))
     country_code_dict = dict(zip(plant_df["plant_name"], plant_df["country_code"]))
     inverse_active_plant_checker = active_check_results(

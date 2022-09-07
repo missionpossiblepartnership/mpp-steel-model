@@ -1,9 +1,9 @@
 """TCO Calculations used to derive the Total Cost of Ownership"""
 
+from copy import deepcopy
 from typing import List
 import pandas as pd
 import numpy_financial as npf
-from tqdm import tqdm
 
 from mppsteel.config.model_config import (
     DISCOUNT_RATE,
@@ -11,11 +11,23 @@ from mppsteel.config.model_config import (
     MEGATON_TO_TON,
     MODEL_YEAR_END,
 )
-from mppsteel.config.reference_lists import SWITCH_DICT
+from mppsteel.config.reference_lists import SWITCH_DICT, TECHNOLOGY_PHASES
 from mppsteel.utility.log_utility import get_logger
 from mppsteel.utility.df_tests import test_negative_df_values
 
 logger = get_logger(__name__)
+
+def tech_status_mapper(tech_choice: str, inc_trans: bool) -> bool:
+    check_list = deepcopy(TECHNOLOGY_PHASES["end_state"])
+    if inc_trans:
+        check_list = deepcopy(
+            TECHNOLOGY_PHASES["end_state"] + TECHNOLOGY_PHASES["transitional"]
+        )
+    if tech_choice in check_list:
+        return True
+    elif tech_choice in TECHNOLOGY_PHASES["initial"]:
+        return False
+    return False
 
 
 def calculate_green_premium(
@@ -43,9 +55,9 @@ def calculate_green_premium(
     """
 
     def green_premium_calc(loop_year: int):
-        variable_tech_costs = variable_cost_ref.loc[country_code, loop_year]  # ts
+        variable_tech_costs = variable_cost_ref.loc[country_code, loop_year]
         plant_capacity = capacity_ref[plant_name]  # float
-        green_premium = green_premium_timeseries.loc[loop_year]["value"]  # float
+        green_premium = green_premium_timeseries.loc[loop_year]["value"]
         return (variable_tech_costs * green_premium * usd_eur_rate) / (
             plant_capacity * MEGATON_TO_TON
         )  # ts
@@ -59,10 +71,9 @@ def calculate_green_premium(
     df_combined = pd.concat(df_list)
     technologies = df_combined.index.unique()
     return {
-        technology: npf.npv(DISCOUNT_RATE, df_combined.loc[technology]["cost"].values)
+        technology: (npf.npv(DISCOUNT_RATE, df_combined.loc[technology]["cost"].values) if tech_status_mapper(technology, inc_trans=True) else 0)
         for technology in technologies
     }
-
 
 def calculate_capex(
     capex_df: pd.DataFrame, start_year: int, base_tech: str
