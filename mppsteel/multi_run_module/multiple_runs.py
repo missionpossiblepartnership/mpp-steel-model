@@ -74,9 +74,9 @@ def make_multiple_model_runs(
     logger.info(f"Generating the scenario data for {scenario_name}")
     pkl_output_folder = pkl_folder_filepath_creation(scenario_name, create_folder=True)
     run_range = range(1, number_of_runs + 1)
-    if number_of_runs > 50:
+    if number_of_runs > mp.cpu_count():
         run_range_chunks = split_list_into_chunks(
-            run_range, math.ceil(len(run_range) / mp.cpu_count())
+            run_range, math.ceil(len(run_range) / (mp.cpu_count() * 2))
         )
         for run_range_chunk in run_range_chunks:
             multi_run_function(run_range_chunk, scenario_dict, function_to_run)
