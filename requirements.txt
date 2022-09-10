@@ -13,7 +13,6 @@ coverage==6.4
 typer==0.4.1
 pre-commit==2.19.0
 mypy==0.960
-bokeh==2.4.3
 dask==2022.1.1
 modin==0.15.2
 distributed==2022.9.0
