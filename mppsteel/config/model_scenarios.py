@@ -94,7 +94,7 @@ DEFAULT_SCENARIO: MYPY_SCENARIO_TYPE = {
     "grid_scenario": "low",  # low / high
     "hydrogen_cost_scenario": "low",  # low / average / high
     "biomass_cost_scenario": "average",  # average
-    "ccs_cost_scenario": "low",  # low / average
+    "ccs_cost_scenario": "low",  # low / high
     "ccs_capacity_scenario": "low",  # low / high
     "fossil_fuel_scenario": "low",  # low / high
     "steel_demand_scenario": "average",  # bau / average / high

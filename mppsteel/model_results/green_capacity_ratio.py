@@ -41,6 +41,7 @@ def green_capacity_ratio_predata(
     Returns:
         pd.DataFrame: A DataFrame with all of the required columns to calculate the green capacity ratio.
     """
+
     def fix_start_year(start_year) -> int:
         if pd.isna(start_year):
             return MODEL_YEAR_START

@@ -17,6 +17,7 @@ from mppsteel.utility.df_tests import test_negative_df_values
 
 logger = get_logger(__name__)
 
+
 def tech_status_mapper(tech_choice: str, inc_trans: bool) -> bool:
     check_list = deepcopy(TECHNOLOGY_PHASES["end_state"])
     if inc_trans:
@@ -71,9 +72,14 @@ def calculate_green_premium(
     df_combined = pd.concat(df_list)
     technologies = df_combined.index.unique()
     return {
-        technology: (npf.npv(DISCOUNT_RATE, df_combined.loc[technology]["cost"].values) if tech_status_mapper(technology, inc_trans=True) else 0)
+        technology: (
+            npf.npv(DISCOUNT_RATE, df_combined.loc[technology]["cost"].values)
+            if tech_status_mapper(technology, inc_trans=True)
+            else 0
+        )
         for technology in technologies
     }
+
 
 def calculate_capex(
     capex_df: pd.DataFrame, start_year: int, base_tech: str

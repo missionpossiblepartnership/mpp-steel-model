@@ -216,6 +216,8 @@ def apply_countries_to_steel_plants(
 
 
 class PlantStartYearAssignor:
+    """Class to manage the start years of specific plants that do not currently have a start year."""
+
     def __init__(self):
         self.years_assigned = []
 

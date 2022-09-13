@@ -74,6 +74,7 @@ from mppsteel.config.model_config import (
 )
 from mppsteel.config.model_scenarios import SCENARIO_OPTIONS, SCENARIO_SETTINGS
 from mppsteel.config.reference_lists import (
+    FORMATTED_PKL_FILES,
     INTERMEDIATE_RESULT_PKL_FILES,
     FINAL_RESULT_PKL_FILES,
     SCENARIO_SETTINGS_TO_ITERATE,
@@ -121,7 +122,8 @@ def get_inputted_scenarios(
     scenario_options: MYPY_SCENARIO_SETTINGS_SEQUENCE,
     default_scenario: MYPY_SCENARIO_TYPE,
 ) -> Dict[str, MYPY_SCENARIO_ENTRY_TYPE]:
-    inputted_scenario_args = {}
+    inputted_scenario_args: Dict[str, MYPY_SCENARIO_ENTRY_TYPE] = {}
+    inputted_scenario_args["scenario_name"] = "runtime_scenario"
     for count, scenario_option in enumerate(scenario_options.keys()):
         question = stdout_question(
             count, scenario_option, scenario_options, default_scenario
@@ -331,15 +333,16 @@ def model_outputs_phase(
         create_folder_if_nonexist(folder_filepath)
         save_path = folder_filepath
 
-    # Save Intermediate Pickle Files
     _, intermediate_path, final_path = return_pkl_paths(
         scenario_name=scenario_name, paths=pkl_paths
     )
-    pickle_to_csv(save_path, PKL_DATA_FORMATTED, "capex_switching_df", reset_index=True)
-    # Save Final Pickle Files
+    # Save Formatted Pickle Files
+    for pkl_file in FORMATTED_PKL_FILES:
+        pickle_to_csv(save_path, PKL_DATA_FORMATTED, pkl_file, reset_index=True)
+    # Save Intermediate Pickle Files
     for pkl_file in INTERMEDIATE_RESULT_PKL_FILES:
         pickle_to_csv(save_path, intermediate_path, pkl_file)
-
+    # Save Final Pickle Files
     for pkl_file in FINAL_RESULT_PKL_FILES:
         pickle_to_csv(save_path, final_path, pkl_file)
 

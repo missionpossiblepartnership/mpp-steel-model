@@ -74,12 +74,7 @@ logger = get_logger(__name__)
 
 
 class ModelStateControl:
-    """A class to manage the model at runtime.
-    Holds several pieces of Data
-    Scenario Args: 
-    
-    
-    """
+    """A class to manage the model at runtime."""
 
     def __init__(self, args, timestamp: str, create_folder: bool = True) -> None:
         self.initialize_args(args, timestamp, create_folder)

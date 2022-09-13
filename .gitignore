@@ -167,3 +167,6 @@ experimental.py
 
 # dask
 dask-worker-space/
+
+.VSCodeCounter/
+.github/
