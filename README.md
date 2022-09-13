@@ -96,7 +96,7 @@ Additionally, there are a variety of ways to run the model multiple times.
 - All scenarios multiple times
 - Different iterations of scenario settings
 
-Please check the following link to the documentation to understand the various ways of running the model [Steel Model Documentation](https://mpp.gitbook.io/mpp-steel-model/)
+Please check the following link to the documentation to understand the various ways of running the model in the Model Set-up > Running The Model section [Steel Model Documentation](https://mpp.gitbook.io/mpp-steel-model/)
 
 ### Step 3: Getting the model outputs
 
