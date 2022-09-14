@@ -34,9 +34,9 @@ Change the `Your_GITHUB_TOKEN` to your personal access token. You can create one
 
 ### Step 2: Install the dependencies
 
-    Before running the model, first set up a virtual environment in which to install the model dependencies. Please read [this article](https://docs.python-guide.org/dev/virtualenvs) to understand how to install a virtual environment.
+Before running the model, first set up a virtual environment in which to install the model dependencies. Please read [this article](https://docs.python-guide.org/dev/virtualenvs) to understand how to install a virtual environment.
 
-    Once you have set up your virtual environment, install the model dependencies using the command below.
+Once you have set up your virtual environment, install the model dependencies using the command below.
 
 ```bash
 pip install -r requirements.txt
