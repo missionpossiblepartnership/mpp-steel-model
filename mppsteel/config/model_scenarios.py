@@ -83,6 +83,8 @@ SCENARIO_SETTINGS: MYPY_SCENARIO_SETTINGS_SEQUENCE = {
     "start_year_randomness": [True, False],
 }
 
+## RECCOMMENDED TO RUN MODEL WITH green_premium_scenario SWITCHED OFF AS THIS FEATURE IS NOT FULLY TESTED.
+
 DEFAULT_SCENARIO: MYPY_SCENARIO_TYPE = {
     "scenario_name": "default",
     "tech_moratorium": True,  # bool
