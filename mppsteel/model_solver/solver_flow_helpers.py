@@ -95,7 +95,9 @@ def return_best_tech(
 
     tco_ref_data = tco_reference_data.copy()
 
+    ## ## RECCOMMENDED TO RUN MODEL WITH green_premium_scenario SWITCHED OFF AS THIS FEATURE IS NOT FULLY TESTED.
     if green_premium_scenario != "off":
+        logger.info("Running the model with green_premium_scenario switched off")
         usd_to_eur_rate = float(scenario_dict["usd_to_eur"])
         discounted_green_premium_values = calculate_green_premium(
             variable_costs_df,
