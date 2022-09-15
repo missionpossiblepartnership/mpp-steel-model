@@ -117,7 +117,7 @@ The output folders are timestamped at the moment the model is run.
 
 ## Technical and subject matter expert questions
 
-If you have any questions of a technical or content nature, please get in touch with the Steel Team at Mission Possible Partnership with the following email [steel@missionpossiblepartnership.com](steel@missionpossiblepartnership.com).
+If you have any questions of a technical or content nature, please get in touch with the Steel Team at Mission Possible Partnership with the following email [steel@missionpossiblepartnership.com](mailto:steel@missionpossiblepartnership.com).
 
 ## Ongoing Maintenance
 
