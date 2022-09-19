@@ -51,7 +51,7 @@ def read_pickle_folder(
     if mode == "df":
         if log:
             logger.info(f"||| Loading pickle file {pkl_file} from path {data_path}")
-        with open(fr"{data_path}/{pkl_file}.pickle", "rb") as f:
+        with open(rf"{data_path}/{pkl_file}.pickle", "rb") as f:
             df: pd.DataFrame = pickle.load(f)
 
     elif mode == "dict":
@@ -61,7 +61,7 @@ def read_pickle_folder(
         for pkl_file in os.listdir(data_path):
             if log:
                 logger.info(f"|||| Loading {pkl_file}")
-            with open(fr"{data_path}/{pkl_file}", "rb") as f:
+            with open(rf"{data_path}/{pkl_file}", "rb") as f:
                 new_data_dict[pkl_file.split(".")[0]] = pickle.load(f)
         data_dict: dict = new_data_dict
     return df if mode == "df" else data_dict
@@ -82,7 +82,7 @@ def extract_data(
         pd.DataFrame: A dataframe of the data file
     """
     # Full path of the file
-    full_filename = fr"{data_path}/{filename}.{ext}"
+    full_filename = rf"{data_path}/{filename}.{ext}"
     # If else logic that determines which pandas function to call based on the extension
     logger.info(f"|| Extracting file {filename}.{ext}")
     if ext == "xlsx":
