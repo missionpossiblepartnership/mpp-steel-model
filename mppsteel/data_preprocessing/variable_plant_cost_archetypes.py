@@ -451,9 +451,8 @@ def format_variable_costs(
     df_c = variable_cost_df.copy()
     df_c.reset_index(drop=True, inplace=True)
     df_em = df_c[df_c["material_category"] != "Emissivity"]
-    assert_series_equal(
-        df_em["cost"], df_em["value"] * df_em["price"], check_names=False
-    )
+    df_composed = (df_em["value"] * df_em["price"]).fillna(0)
+    assert_series_equal(df_em["cost"], df_composed, check_names=False)
     if group_data:
         prices_columns = [col for col in df_c.columns if "price" in col]
         non_price_columns_to_drop = ["material_category", "unit", "cost_type", "value"]

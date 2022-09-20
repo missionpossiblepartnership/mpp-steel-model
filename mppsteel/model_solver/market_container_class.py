@@ -169,7 +169,9 @@ class MarketContainerClass:
 
     def create_trade_balance_summary(self, demand_df: pd.DataFrame):
         def map_demand(row, demand_df: pd.DataFrame):
-            return steel_demand_getter(demand_df, row.year, "crude", region=row.region)
+            return steel_demand_getter(
+                df=demand_df, year=row.year, metric="crude", region=row.region
+            )
 
         market_dict = self.trade_container
         df = pd.DataFrame.from_dict(
@@ -219,13 +221,31 @@ class MarketContainerClass:
         if not demand_df.empty:
             trade_account_df = self.create_trade_balance_summary(demand_df)
         if store_type == "market_results":
-            return pd.concat(market_result_list, axis=1)
+            return (
+                pd.concat(market_result_list, axis=1)
+                if market_result_list
+                else pd.DataFrame()
+            )
         if store_type == "competitiveness":
-            return pd.concat(competitiveness_list, axis=1)
+            return (
+                pd.concat(competitiveness_list, axis=1)
+                if competitiveness_list
+                else pd.DataFrame()
+            )
         if store_type == "trade_account":
-            return trade_account_df
+            return trade_account_df if not trade_account_df.empty else pd.DataFrame()
         if store_type == "merge_trade_summary" and not demand_df.empty:
-            competitiveness_df = pd.concat(competitiveness_list, axis=0)
+            competitiveness_df = (
+                pd.concat(competitiveness_list, axis=0)
+                if competitiveness_list
+                else pd.DataFrame()
+            )
+            if competitiveness_df.empty and trade_account_df.empty:
+                return pd.DataFrame()
+            elif competitiveness_df.empty and not trade_account_df.empty:
+                return trade_account_df
+            elif not competitiveness_df.empty and trade_account_df.empty:
+                return competitiveness_df
             return merge_competitiveness_with_trade_account(
                 competitiveness_df, trade_account_df
             )

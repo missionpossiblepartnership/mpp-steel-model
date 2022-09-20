@@ -155,9 +155,13 @@ class PlantCapacityConstraint:
                 f"Some plants burst the waiting list limit of {MAX_WAITING_LIST_YEARS} years -> {burst_limit_dict}"
             )
         else:
-            logger.info(
-                f"No plants burst the limit of {MAX_WAITING_LIST_YEARS} years. Max waiting list time is {max(waiting_list_dict.values())} years."
+            max_waiting_time = (
+                max(waiting_list_dict.values()) if waiting_list_dict.values() else 0
             )
+            if waiting_list_dict.values():
+                logger.info(
+                    f"No plants burst the limit of {MAX_WAITING_LIST_YEARS} years. Max waiting list time is {max_waiting_time} years."
+                )
 
     def print_capacity_summary(self, year: int) -> None:
         capacity_balance = self.capacity_balance[year]

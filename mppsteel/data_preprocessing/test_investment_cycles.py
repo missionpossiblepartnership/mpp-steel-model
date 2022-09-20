@@ -10,7 +10,6 @@ def test_calculate_investment_years():
         cycle_length=23,
         cutoff_end_year=2050,
         cutoff_start_year=2020,
-        bring_forward_before_net_zero_year=True,
     )
     expected_outcome = [2029, 2049]
     assert test_outcome == expected_outcome

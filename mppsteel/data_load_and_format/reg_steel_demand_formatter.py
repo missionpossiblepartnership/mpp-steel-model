@@ -253,7 +253,7 @@ def steel_demand_getter(
 
     if df_c.empty:
         df_c = pd.DataFrame(
-            [["2020", "Africa", 0, "DEU", "Crude steel demand"]],
+            [[2020, "Africa", 0, "DEU", "Crude steel demand"]],
             columns=["year", "region", "value", "country_code", "metric"],
         ).set_index(["year", "metric"])
 
@@ -262,7 +262,7 @@ def steel_demand_getter(
         "scrap": "Scrap availability",
     }
     df_c = df_c.xs(
-        (year, metric_mapper[metric]),
+        key=(year, metric_mapper[metric]),
         level=["year", "metric"],
     )
     df_c.reset_index(drop=True, inplace=True)

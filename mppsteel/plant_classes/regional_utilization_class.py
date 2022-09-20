@@ -8,6 +8,7 @@ from mppsteel.config.model_config import (
     PKL_DATA_IMPORTS,
     PKL_DATA_FORMATTED,
     PROJECT_PATH,
+    MODEL_YEAR_START,
 )
 from mppsteel.utility.file_handling_utility import extract_data, read_pickle_folder
 from mppsteel.plant_classes.capacity_container_class import (
@@ -52,6 +53,7 @@ class UtilizationContainerClass:
         )
 
     def get_utilization_values(self, year: int = None, region: str = None):
+        year = year + 1 if year == MODEL_YEAR_START - 1 else year
         if region and not year:
             # return a year valye time series for a region
             return {

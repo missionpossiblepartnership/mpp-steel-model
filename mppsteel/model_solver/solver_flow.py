@@ -76,7 +76,10 @@ class ChooseTechnologyInput:
     def get_steel_demand_default(cls) -> pd.DataFrame:
         """Returns the default steel demand dataframe."""
         return pd.DataFrame(
-            [["Africa", 0.0, "2020", "Average", "Scrap availability", []]],
+            [
+                ["Africa", 2.0, 2020, "Average", "Crude steel demand", []],
+                ["Africa", 0.0, 2020, "Average", "Scrap availability", []],
+            ],
             columns=["region", "value", "year", "scenario", "metric", "country_code"],
         ).set_index(["year", "scenario", "metric"])
 
