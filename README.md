@@ -30,17 +30,16 @@ To install the library, use `pip` with the following command:
 
 ```bash
 git clone https://github.com/missionpossiblepartnership/mpp-steel-model.git
-cd mpp-steel-model
-pip install -r requirements.txt
 ```
 
 ### Step 2: Install the dependencies
 
 Before running the model, first set up a virtual environment in which to install the model dependencies. Please read [this article](https://docs.python-guide.org/dev/virtualenvs) to understand how to install a virtual environment.
 
-Once you have set up your virtual environment, install the model dependencies using the command below.
+Once you have set up your virtual environment, install the model dependencies using the commands below.
 
 ```bash
+cd mpp-steel-model
 pip install -r requirements.txt
 ```
 
