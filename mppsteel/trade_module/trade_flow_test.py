@@ -147,7 +147,7 @@ def test_trade_flow():
     capex_dict = create_capex_opex_dict(from_csv=True)
     tech_choices_ref = PlantChoices()
     tech_choices_ref.initiate_container(MODEL_YEAR_RANGE)
-    wsa_dict = create_wsa_2020_utilization_dict(from_csv=True)
+    wsa_dict = create_wsa_2020_utilization_dict(from_csv=True, steel_plants_processed=plant_df)
     plant_df["active_check"] = plant_df.apply(
         create_active_check_col, year=YEAR, axis=1
     )

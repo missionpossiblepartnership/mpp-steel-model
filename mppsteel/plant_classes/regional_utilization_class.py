@@ -115,13 +115,21 @@ def return_utilization(
 
 
 def create_wsa_2020_utilization_dict(
-    project_dir=PROJECT_PATH, from_csv: bool = False, utilization_cap: int = 1
+    project_dir=PROJECT_PATH, from_csv: bool = False, utilization_cap: int = 1, steel_plants_processed: pd.DataFrame = pd.DataFrame()
 ) -> dict:
     """Creates the initial utilization dictionary for 2020 based on data from the World Steel Association (WSA).
+
+    Args:
+        project_dir (_type_, optional): A project directpry path. Defaults to PROJECT_PATH.
+        from_csv (bool, optional): Determines whether to load the WSA Production Data from csv or pkl. Defaults to False.
+        utilization_cap (int, optional): Determines the maximum value of the production utilization. Defaults to 1.
+        steel_plants_processed (pd.DataFrame, optional): A dataFrame containing the processed steel plant data. 
+        If empty, creates the processed data from pkl. Defaults to pd.DataFrame().
 
     Returns:
         dict: A dictionary with regions as keys and utilization numbers as values.
     """
+
     logger.info("Creating the utilization dictionary for 2020.")
     if from_csv:
         wsa_production = extract_data(IMPORT_DATA_PATH, "WSA Production 2020", "csv")
@@ -129,9 +137,10 @@ def create_wsa_2020_utilization_dict(
         wsa_production = read_pickle_folder(
             project_dir / PKL_DATA_IMPORTS, "wsa_production", "df"
         )
-    steel_plants_processed = read_pickle_folder(
-        project_dir / PKL_DATA_FORMATTED, "steel_plants_processed", "df"
-    )
+    if steel_plants_processed.empty:
+        steel_plants_processed = read_pickle_folder(
+            project_dir / PKL_DATA_FORMATTED, "steel_plants_processed", "df"
+        )
     wsa_2020_production_dict = format_wsa_production_data(wsa_production, as_dict=True)
     capacity_dict = create_regional_capacity_dict(steel_plants_processed, as_mt=True)
     return return_utilization(
