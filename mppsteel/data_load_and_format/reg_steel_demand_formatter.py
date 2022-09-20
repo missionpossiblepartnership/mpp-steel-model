@@ -56,19 +56,26 @@ def steel_demand_region_assignor(
 
 @pa.check_input(REGIONAL_STEEL_DEMAND_SCHEMA)
 def steel_demand_creator(
-    df: pd.DataFrame, rmi_matcher: dict, index_cols: list
+    df: pd.DataFrame, rmi_matcher: dict, index_cols: list, from_csv: bool = False
 ) -> pd.DataFrame:
     """Formats the Steel Demand data. Assigns country codes to the regions, and melt and indexes them.
 
     Args:
         df (pd.DataFrame): A DataFrame containing the initial Steel Demand Data.
         rmi_matcher (dict): The exception dictionary for regions that do not map precisely.
+        index_cols (list): Determines which column names will be treated as index columns.
+        from_csv (bool, Optional): Determines whether source data should be loaded from csv or pickle. Defaults to False.
 
     Returns:
         pd.DataFrame: The formatted DataFrame.
     """
     logger.info("Formatting the Regional Steel Demand Data")
-    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
+    if from_csv:
+        country_ref = extract_data(
+            IMPORT_DATA_PATH, "Country Reference", "xlsx"
+        ).fillna("")
+    else:
+        country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
     df_c = df.copy()
     df_c["country_code"] = df_c["Region"].apply(
         lambda x: steel_demand_region_assignor(x, country_ref, rmi_matcher)
@@ -109,11 +116,14 @@ def replace_2020_steel_demand_values_with_wsa_production(
     index_cols: list,
     year_to_replace: int = 2020,
     project_dir=PROJECT_PATH,
+    from_csv: bool = False,
 ) -> pd.DataFrame:
-
-    wsa_production: pd.DataFrame = read_pickle_folder(
-        project_dir / PKL_DATA_IMPORTS, "wsa_production", "df"
-    )
+    if from_csv:
+        wsa_production = extract_data(IMPORT_DATA_PATH, "WSA Production 2020", "csv")
+    else:
+        wsa_production: pd.DataFrame = read_pickle_folder(
+            project_dir / PKL_DATA_IMPORTS, "wsa_production", "df"
+        )
     wsa_production.set_index("Region", inplace=True)
     demand_df_c = demand_df.copy()
     demand_df_c.reset_index(inplace=True)
@@ -159,9 +169,11 @@ def get_steel_demand(
             PKL_DATA_IMPORTS, "regional_steel_demand", "df"
         )
     index_cols = ["year", "scenario", "metric"]
-    steel_demand_f = steel_demand_creator(steel_demand, RMI_MATCHER, index_cols)
+    steel_demand_f = steel_demand_creator(
+        steel_demand, RMI_MATCHER, index_cols, from_csv=from_csv
+    )
     steel_demand_f = replace_2020_steel_demand_values_with_wsa_production(
-        steel_demand_f, index_cols
+        steel_demand_f, index_cols, from_csv=from_csv
     )
     steel_demand_f = add_average_values(steel_demand_f)
     scenario_entry = STEEL_DEMAND_SCENARIO_MAPPER[
