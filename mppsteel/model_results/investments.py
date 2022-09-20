@@ -11,6 +11,7 @@ from mppsteel.config.model_config import (
     MODEL_YEAR_START,
     MODEL_YEAR_END,
     PKL_DATA_FORMATTED,
+    PKL_DATA_IMPORTS
 )
 
 from mppsteel.utility.function_timer_utility import timer_func
@@ -289,6 +290,7 @@ def investment_results(
         .to_dict()["value"]
     )
     capex_dict = read_pickle_folder(PKL_DATA_FORMATTED, "capex_dict", "df")
+    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
     greenfield_capex_ref = capex_dict["greenfield"].to_dict()["value"]
     plant_capacity_results = read_pickle_folder(
         intermediate_path, "plant_capacity_results", "df"
@@ -321,7 +323,7 @@ def investment_results(
     investment_results = (
         pd.DataFrame(data_container).set_index(["year"]).sort_values("year")
     )
-    rmi_mapper = create_country_mapper()
+    rmi_mapper = create_country_mapper(country_ref)
     investment_results["country_code"] = investment_results["plant_name"].apply(
         lambda x: plant_country_code_ref[x]
     )

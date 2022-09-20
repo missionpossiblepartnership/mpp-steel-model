@@ -188,12 +188,13 @@ def map_plant_id_to_df(
 
 
 def apply_countries_to_steel_plants(
-    steel_plant_formatted: pd.DataFrame,
+    steel_plant_formatted: pd.DataFrame, country_ref: pd.DataFrame
 ) -> pd.DataFrame:
     """Maps a country codes and region column to the Steel Plants.
 
     Args:
         steel_plant_formatted (pd.DataFrame): A DataFrame of the formatted steel plants.
+        country_ref (pd.DataFrame): The country ref used to map country codes to regions.
 
     Returns:
         pd.DataFrame: A DataFrame with the newly added country code and region.
@@ -208,9 +209,9 @@ def apply_countries_to_steel_plants(
     df_c["cheap_natural_gas"] = df_c["country_code"].apply(
         lambda country_code: 1 if country_code in NATURAL_GAS_COUNTRIES else 0
     )
-    wsa_mapper = create_country_mapper("wsa")
+    wsa_mapper = create_country_mapper(country_ref, "wsa")
     df_c["wsa_region"] = df_c["country_code"].apply(lambda x: wsa_mapper[x])
-    rmi_mapper = create_country_mapper("rmi")
+    rmi_mapper = create_country_mapper(country_ref, "rmi")
     df_c["rmi_region"] = df_c["country_code"].apply(lambda x: rmi_mapper[x])
     return df_c
 
@@ -285,10 +286,12 @@ def steel_plant_processor(
     logger.info("Preprocessing the Steel Plant Data")
     if from_csv:
         steel_plants = extract_data(IMPORT_DATA_PATH, "Steel Plant Data Anon", "xlsx")
+        country_ref = extract_data(IMPORT_DATA_PATH, "Country Reference", "xlsx").fillna("")
     else:
         steel_plants = read_pickle_folder(PKL_DATA_IMPORTS, "steel_plants")
+        country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
     steel_plants = steel_plant_formatter(steel_plants)
-    steel_plants = apply_countries_to_steel_plants(steel_plants)
+    steel_plants = apply_countries_to_steel_plants(steel_plants, country_ref)
 
     plants_to_assign_start_years = len(
         steel_plants[steel_plants["start_of_operation"] == "unknown"]

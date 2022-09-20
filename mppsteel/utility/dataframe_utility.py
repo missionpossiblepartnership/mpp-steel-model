@@ -162,7 +162,7 @@ def add_regions(
         pd.DataFrame: A DataFrame with additional regional metadata column(s).
     """
     df_c = df.copy()
-    country_mapper = create_country_mapper(region_schema)
+    country_mapper = create_country_mapper(country_ref, region_schema)
     df_c[f"region_{region_schema}"] = df_c["country_code"].apply(
         lambda country: country_mapper[country]
     )

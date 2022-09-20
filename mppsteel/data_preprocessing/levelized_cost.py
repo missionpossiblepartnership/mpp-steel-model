@@ -22,6 +22,7 @@ from mppsteel.config.model_config import (
     MODEL_YEAR_RANGE,
     PKL_DATA_FORMATTED,
     DISCOUNT_RATE,
+    PKL_DATA_IMPORTS
 )
 from mppsteel.config.reference_lists import TECH_REFERENCE_LIST
 
@@ -136,7 +137,8 @@ def create_levelized_cost(
     }
 
     country_codes = list(plant_df["country_code"].unique())
-    rmi_mapper = create_country_mapper()
+    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
+    rmi_mapper = create_country_mapper(country_ref)
     df_reference = create_df_reference(
         country_codes, ["greenfield_capex", "total_opex"]
     )

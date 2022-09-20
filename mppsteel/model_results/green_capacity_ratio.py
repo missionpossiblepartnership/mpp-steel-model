@@ -1,12 +1,13 @@
 """Calculates Green Technology Capacity Ratios"""
 
-from copy import deepcopy
 from typing import Union
 
 import pandas as pd
 
 from mppsteel.model_solver.solver_flow_helpers import active_check_results
-from mppsteel.config.model_config import MODEL_YEAR_RANGE, MODEL_YEAR_START
+from mppsteel.config.model_config import (
+    MODEL_YEAR_RANGE, MODEL_YEAR_START, PKL_DATA_IMPORTS
+)
 from mppsteel.utility.function_timer_utility import timer_func
 from mppsteel.utility.dataframe_utility import add_results_metadata
 from mppsteel.utility.file_handling_utility import (
@@ -139,7 +140,8 @@ def generate_gcr_df(
     )
     plant_result_df = read_pickle_folder(intermediate_path, "plant_result_df", "df")
     tech_choice_dict = read_pickle_folder(intermediate_path, "tech_choice_dict", "dict")
-    rmi_mapper = create_country_mapper()
+    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
+    rmi_mapper = create_country_mapper(country_ref)
     plant_capacity_results = read_pickle_folder(
         intermediate_path, "plant_capacity_results", "df"
     )

@@ -8,6 +8,7 @@ from mppsteel.config.model_config import (
     MODEL_YEAR_RANGE,
     NET_ZERO_TARGET_YEAR,
     PKL_DATA_FORMATTED,
+    PKL_DATA_IMPORTS
 )
 from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.utility.function_timer_utility import timer_func
@@ -550,7 +551,8 @@ def create_graphs(
     carbon_tax_timeseries = read_pickle_folder(
         intermediate_path, "carbon_tax_timeseries"
     )
-    rmi_mapper = create_country_mapper()
+    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
+    rmi_mapper = create_country_mapper(country_ref)
     steel_production_area_chart(
         production_emissions,
         filepath=filepath,
