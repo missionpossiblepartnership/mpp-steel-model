@@ -31,6 +31,7 @@ from mppsteel.config.model_config import (
     PKL_DATA_FORMATTED,
     INVESTMENT_CYCLE_DURATION_YEARS,
     DISCOUNT_RATE,
+    PKL_DATA_IMPORTS
 )
 
 from mppsteel.utility.log_utility import get_logger
@@ -256,7 +257,7 @@ def add_gf_capex_values_to_tco_ref(
     return df_c
 
 
-def tco_calculator(tco_ref_df: pd.DataFrame) -> pd.DataFrame:
+def tco_calculator(tco_ref_df: pd.DataFrame, country_ref: pd.DataFrame) -> pd.DataFrame:
     """Generates the final TCO columns to be used as a reference.
     Two TCO columns are created:
         `tco_regular_capex`: based on full capex switching data
@@ -268,7 +269,7 @@ def tco_calculator(tco_ref_df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: The final TCO reference DataFrame.
     """
-    rmi_mapper = create_country_mapper("rmi")
+    rmi_mapper = create_country_mapper(country_ref, "rmi")
     df = tco_ref_df.copy()
     df["tco_regular_capex"] = (
         df["discounted_opex"] + df["capex_value"]
@@ -300,6 +301,7 @@ def tco_presolver_reference(
     _, intermediate_path, _ = return_pkl_paths(
         scenario_name=scenario_dict["scenario_name"], paths=pkl_paths
     )
+    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
     greenfield_switching_df = read_pickle_folder(
         PKL_DATA_FORMATTED, "greenfield_switching_df", "df"
     )
@@ -310,7 +312,7 @@ def tco_presolver_reference(
     opex_capex_reference_data = add_gf_capex_values_to_tco_ref(
         opex_capex_reference_data, greenfield_switching_df
     )
-    tco_summary = tco_calculator(opex_capex_reference_data)
+    tco_summary = tco_calculator(opex_capex_reference_data, country_ref)
     if serialize:
         logger.info("-- Serializing dataframe")
         serialize_file(tco_summary, intermediate_path, "tco_summary_data")

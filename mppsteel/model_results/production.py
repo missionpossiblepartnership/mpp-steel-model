@@ -12,6 +12,7 @@ from mppsteel.config.model_config import (
     PKL_DATA_FORMATTED,
     MET_COAL_ENERGY_DENSITY_MJ_PER_KG,
     TON_TO_KILOGRAM_FACTOR,
+    PKL_DATA_IMPORTS
 )
 
 from mppsteel.config.reference_lists import GJ_RESOURCES, TECHNOLOGY_PHASES
@@ -274,7 +275,8 @@ def production_results_flow(
     utilization_results = read_pickle_folder(
         intermediate_path, "utilization_results", "dict"
     )
-    rmi_mapper = create_country_mapper()
+    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
+    rmi_mapper = create_country_mapper(country_ref)
     calculated_emissivity_combined = read_pickle_folder(
         intermediate_path_preprocessing, "calculated_emissivity_combined", "df"
     )

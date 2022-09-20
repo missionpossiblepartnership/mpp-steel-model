@@ -20,6 +20,7 @@ from mppsteel.utility.file_handling_utility import (
     read_pickle_folder,
     return_pkl_paths,
     serialize_file,
+    extract_data
 )
 from mppsteel.utility.location_utility import create_country_mapper
 from mppsteel.config.model_config import (
@@ -32,6 +33,7 @@ from mppsteel.config.model_config import (
     PKL_DATA_IMPORTS,
     MAIN_REGIONAL_SCHEMA,
     PROJECT_PATH,
+    IMPORT_DATA_PATH
 )
 
 from mppsteel.config.reference_lists import (
@@ -208,7 +210,7 @@ class ChooseTechnologyInput:
         country_ref = read_pickle_folder(
             PROJECT_PATH / PKL_DATA_IMPORTS, "country_ref", "df"
         )
-        rmi_mapper = create_country_mapper(path=str(PROJECT_PATH / PKL_DATA_IMPORTS))
+        rmi_mapper = create_country_mapper(country_ref=country_ref)
         country_ref_f = country_df_formatter(country_ref)
         bio_constraint_model = read_pickle_folder(
             PROJECT_PATH / intermediate_path, "bio_constraint_model_formatted", "df"
@@ -863,7 +865,8 @@ def create_levelized_cost_actuals(
     results_dict: dict, scenario_dict: dict, pkl_paths: Union[dict, None] = None
 ):
     # Create Levelized cost results
-    rmi_mapper = create_country_mapper(path=str(PROJECT_PATH / PKL_DATA_IMPORTS))
+    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
+    rmi_mapper = create_country_mapper(country_ref=country_ref)
     tech_capacity_df = tech_capacity_splits(
         steel_plants=results_dict["plant_result_df"],
         tech_choices=results_dict["tech_choice_dict"],
@@ -912,7 +915,7 @@ def main_solver_flow(
     results_dict = choose_technology(scenario_dict=scenario_dict, pkl_paths=pkl_paths)
 
     levelized_cost_results = create_levelized_cost_actuals(
-        results_dict=results_dict, scenario_dict=scenario_dict, pkl_paths=pkl_paths
+        results_dict=results_dict, scenario_dict=scenario_dict, pkl_paths=pkl_paths,
     )
 
     if serialize:

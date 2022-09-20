@@ -270,7 +270,8 @@ def combine_emissivity(
         pd.DataFrame: A DataFrame with scopes 1, 2 and 3 data.
     """
     logger.info("Combining S2 Emissions with S1 & S3 emissivity")
-    rmi_mapper = create_country_mapper()
+    country_ref = read_pickle_folder(PKL_DATA_IMPORTS, "country_ref", "df")
+    rmi_mapper = create_country_mapper(country_ref)
     s2_ref = s2_ref.reset_index(drop=True).set_index(["year", "technology"]).copy()
     total_emissivity = s2_ref.join(
         s1_ref.rename({"emissions": "s1_emissivity"}, axis=1)
