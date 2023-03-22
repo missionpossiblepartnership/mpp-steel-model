@@ -125,6 +125,8 @@ class ModelStateControl:
             if args.choose_scenario in SCENARIO_OPTIONS.keys():
                 logger.info(f"CORRECT SCENARIO CHOSEN: {args.choose_scenario}")
                 scenario_dict = SCENARIO_OPTIONS[args.choose_scenario]
+                self.scenario_dict = scenario_dict
+                self.scenario_name = str(scenario_dict["scenario_name"])
             else:
                 scenario_name_options = list(SCENARIO_OPTIONS.keys())
                 logger.info(
